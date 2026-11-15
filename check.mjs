@@ -1089,9 +1089,13 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["README.md", "check.mjs", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools"]);
+  assert.deepEqual(files, ["3d", "README.md", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
+  // was die 3D-Ansicht nachlädt, liegt im Ordner
+  const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
+  assert.ok(loads.length >= 5, loads.join(", "));
+  for (const file of loads) assert.ok(fs.existsSync(new URL(file, here)), file);
 });
 
 // ================================================================ Befunde der Durchsicht
@@ -7412,4 +7416,58 @@ test("Rückflusskühler: Beschreibung, Zeichnung und Aufbau als Text", () => {
   }
   clean(L.parts.reflux.draw({ type: "reflux" }, ctx()), "Rückflusskühler für sich");
   assert.match(L.icon("reflux"), /<svg/);
+});
+
+// ================================================================ 3D-Ansicht
+
+test("3D: view und scene in der Beschreibung", () => {
+  const plain = L.normalize({ bench: [] });
+  assert.equal(plain.view, "2d");
+  assert.deepEqual(plain.scene, { base: "lab", gear: {}, quality: "auto" });
+  assert.equal(L.normalize({ view: "3d" }).view, "3d");
+  assert.deepEqual(L.normalize({ scene: "1880" }).scene, { base: "1880", gear: {}, quality: "auto" });
+  assert.deepEqual(L.normalize({ scene: { base: "kitchen", gear: { burner: "lab" }, quality: "low" } }).scene, { base: "kitchen", gear: { burner: "lab" }, quality: "low" });
+  assert.throws(() => L.normalize({ view: "4d" }), (e) => e.code === "view" && e.detail === "4d");
+  for (const scene of [42, ["lab"], "küche zwei", { quality: "ultra" }, { gear: { kettle: "lab" } }, { gear: { burner: "<b>" } }])
+    assert.throws(() => L.normalize({ scene }), (e) => e.code === "scene", JSON.stringify(scene));
+  assert.match(mount({ view: "4d" }).innerHTML, /Diese Ansicht gibt es nicht/);
+});
+
+test("3D: Umschalten tauscht nur die Fläche, Antippen wirkt wie in 2D", async () => {
+  const calls = [];
+  let opened = null;
+  const stage = { build: (items) => calls.push(["build", items.map((i) => i.id)]), item: (d) => calls.push(["item", d.id, d.label, d.selected]), end: () => calls.push(["end"]), stop: () => calls.push(["stop"]) };
+  L.stage3d = (host, opts) => { opened = opts; return Promise.resolve(stage); };
+  try {
+    const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "thermometer", id: "th", in: "b" }], view: "3d", scene: "1880" });
+    assert.match(el.innerHTML, /data-act="view"/, "der Knopf ist da, wenn die 3D-Datei geladen ist");
+    await Promise.resolve(); await Promise.resolve();
+    assert.equal(opened.scene.base, "1880");
+    assert.deepEqual(calls.find((c) => c[0] === "build")[1], ["b", "th"]);
+    assert.ok(calls.some((c) => c[0] === "item" && c[1] === "th" && /20,0 °C/.test(c[2])), "das Thermometer kommt mit seinem Text für Vorleser");
+    assert.equal(part(el, ".cl-stage").attributes["data-view"], "3d");
+    part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML = "";      // bis 3D geladen war, stand 2D da
+    calls.length = 0;
+    opened.tap("b");
+    assert.equal(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, "", "das SVG zeichnet nicht mit");
+    assert.equal(state(el).sel, "b");
+    assert.ok(calls.some((c) => c[0] === "item" && c[1] === "b" && c[3] === true), "die Auswahl geht an die Bühne");
+    opened.escape();
+    assert.equal(state(el).sel, null);
+    press(el, "view");
+    assert.ok(calls.some((c) => c[0] === "stop"), "zurück in 2D endet die Bühne");
+    assert.equal(state(el).view, "2d");
+    assert.match(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, /cl-glass/, "das SVG zeichnet wieder");
+  } finally { delete L.stage3d; }
+});
+
+test("3D: geht es nicht, bleibt die Fläche 2D und sagt warum", async () => {
+  L.stage3d = () => Promise.reject(Object.assign(new Error("lab2"), { code: "scene" }));
+  try {
+    const el = mount({ bench: [{ type: "beaker", id: "b" }], view: "3d", scene: "lab2" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(state(el).view, "2d");
+    assert.match(part(el, ".cl-status").textContent, /Diese Szene gibt es nicht: lab2/);
+    assert.match(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, /cl-glass/);
+  } finally { delete L.stage3d; }
 });

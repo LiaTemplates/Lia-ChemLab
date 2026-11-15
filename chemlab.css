@@ -88,6 +88,14 @@ html.lia-variant-dark .lia-chemlab {
 
 .lia-chemlab .cl-stage { margin-top: 0.5em; border: 1px solid var(--cl-line); border-radius: 0.45em; overflow: hidden; }
 .lia-chemlab .cl-svg { display: block; width: 100%; height: 26em; max-height: 75vh; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+/* 3D: die Leinwand füllt die Fläche; je Gerät ein Knopf für die Tastatur, unsichtbar bis er den Fokus hat */
+.lia-chemlab .cl-stage[data-view="3d"] .cl-svg { display: none; }
+.lia-chemlab .cl-three { position: relative; height: 26em; max-height: 75vh; }
+.lia-chemlab .cl-three[hidden] { display: none; }
+.lia-chemlab .cl-three canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+.lia-chemlab .cl-key { position: absolute; width: 2.6em; height: 2.6em; margin: -1.3em 0 0 -1.3em; padding: 0; border: 0; border-radius: 50%;
+  background: transparent; opacity: 0; pointer-events: none; }
+.lia-chemlab .cl-key:focus-visible { opacity: 1; outline: 3px solid var(--cl-accent); outline-offset: 2px; }
 
 .lia-chemlab .cl-wall { fill: var(--cl-wall); }
 .lia-chemlab .cl-bench { fill: var(--cl-bench); }

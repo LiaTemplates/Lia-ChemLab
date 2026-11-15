@@ -694,6 +694,8 @@
       throw fail("pack", JSON.stringify(d.packs));
     if (d.data) register(d.data);
     if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
+    if (d.view != null && d.view !== "2d" && d.view !== "3d") throw fail("view", String(d.view));
+    var scene = sceneOf(d.scene);
 
     var count = {}, ids = {}, bench = [];
     (Array.isArray(d.bench) ? d.bench : []).forEach(function (raw) {
@@ -784,8 +786,33 @@
       task: d.task == null ? null : readTask(d.task),
       packs: d.packs || [],
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
-      model: d.model == null ? "ideal" : d.model
+      model: d.model == null ? "ideal" : d.model,
+      // view: womit die Fläche beginnt; scene: wie sie in 3D aussieht (Raum und Geräte), an der Rechnung ändert sie nichts
+      view: d.view || "2d",
+      scene: scene
     };
+  }
+
+  // "scene": "1880" oder {"base":"kitchen","gear":{"burner":"lab"},"quality":"low"}.
+  // Ob es die Szene gibt, zeigt sich erst beim Umschalten: eigene Szenen kommen mit eigenen Skripten dazu.
+  function sceneOf(raw) {
+    var name = /^[\w.-]+$/, out = { base: "lab", gear: {}, quality: "auto" };
+    if (raw == null) return out;
+    if (typeof raw === "string") raw = { base: raw };
+    if (typeof raw !== "object" || Array.isArray(raw)) throw fail("scene", String(raw));
+    if (raw.base != null) {
+      if (!name.test(String(raw.base))) throw fail("scene", String(raw.base));
+      out.base = String(raw.base);
+    }
+    if (raw.quality != null) {
+      if (["auto", "high", "low"].indexOf(raw.quality) < 0) throw fail("scene", "quality: " + raw.quality);
+      out.quality = raw.quality;
+    }
+    Object.keys(raw.gear && typeof raw.gear === "object" ? raw.gear : {}).forEach(function (type) {
+      if (!L.parts[type] || !name.test(String(raw.gear[type]))) throw fail("scene", "gear: " + type);
+      out.gear[type] = String(raw.gear[type]);
+    });
+    return out;
   }
 
   // ------------------------------------------------------------------ Gefäße

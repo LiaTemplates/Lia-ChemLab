@@ -82,13 +82,14 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
-        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       stranded = stranded.filter(function (w) { return w.el !== el && w.el.isConnected !== false; }).concat([{ el: el, source: source, text: text }]);
       return;
     }
 
     var show = st.config.show;
+    if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
     if (sound) sound.mute(st.mute);
@@ -96,11 +97,12 @@
     el.innerHTML =
       '<div class="cl-task" hidden><p class="cl-task-text"></p><ul class="cl-goals"></ul><p class="cl-done" role="status" aria-live="polite"></p></div>' +
       '<div class="cl-top"><div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div>' +
-      '<div class="cl-side">' + (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
+      '<div class="cl-side">' + (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false">' + esc(T("view")) + "</button>" : "") + (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
       '<button type="button" class="cl-btn" data-act="copy">' + esc(T("copy")) + "</button> " +
       '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></div>" +
       '<div class="cl-hand" hidden></div>' +
-      '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg></div>' +
+      '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg>' +
+      '<div class="cl-three" role="group" aria-label="' + esc(T("stage")) + '" hidden></div></div>' +
       '<div class="cl-time"></div>' +
       '<p class="cl-status" role="status" aria-live="polite"></p>' +
       '<div class="cl-readings" hidden></div>' +
@@ -111,10 +113,11 @@
       '<ol class="cl-events" aria-live="polite"></ol></div>';
 
     var ui = {};
-    ["task", "shelf", "hand", "svg", "time", "status", "readings", "panel", "eq", "charts", "log"].forEach(function (name) {
+    ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log"].forEach(function (name) {
       ui[name] = el.querySelector(".cl-" + name);
     });
     ui.sound = sound ? el.querySelector(".cl-sound") : null;
+    ui.view = L.stage3d ? el.querySelector('[data-act="view"]') : null;
     ui.events = ui.log.querySelector(".cl-events");
     ui.goals = ui.task.querySelector(".cl-goals");
     ui.done = ui.task.querySelector(".cl-done");
@@ -129,6 +132,7 @@
     var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
     var lensKey = null, lensColors = {};      // was die Legende der Teilchenlupe gerade zeigt, und die Farben ihrer Teilchen
     var shown = [];                 // die Beobachtungen, die gerade in der Liste stehen
+    var three = null;               // die 3D-Bühne, solange sie gezeigt wird; sonst zeichnet das SVG
 
     // ---------------------------------------------------------------- Namen
 
@@ -458,6 +462,7 @@
       nodes = {};
       items.forEach(function (item) { nodes[item.id] = ui.svg.querySelector('[data-id="' + item.id + '"]'); });
       ui.wires = ui.svg.querySelector(".cl-wires");
+      if (three) three.build(items, plan.width, st.run.lab);
     }
 
     // Die Trefferfläche eines Geräts. Nur sie nimmt Zeiger-Ereignisse an (siehe chemlab.css).
@@ -567,7 +572,7 @@
         var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
           sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].condenser && L.vessel(lab, t.to); }) };
-        var v, w, r, host, place, b, content, hang;
+        var v, w, r, host, place, b, content, hang, aria;
         if (item.vessel) {
           v = L.vessel(lab, item.id);
           w = L.view(lab, v);
@@ -582,8 +587,11 @@
             content += ", " + T("aria.tap", { state: T("tap." + L.tapKey(w.tap)) }) +
               (show.numbers && w.given > 0 ? ", " + T("aria.given", { ml: L.num(w.given, 1, lang) }) : "");
           }
-          g.innerHTML = frameBox(def.bounds(v, hang), st.sel === item.id) + def.draw(w, ctx, hang);
-          g.setAttribute("aria-label", T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content }));
+          b = def.bounds(v, hang);
+          aria = T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content });
+          if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
+          else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang);
+          g.setAttribute("aria-label", aria);
         } else {
           r = L.reading(lab, item.id);
           host = L.vessel(lab, r.in);
@@ -601,7 +609,7 @@
           // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
           b = def.under || def.sense === "V" || def.circuit || def.bridge || def.condenser || def.reflux ? def.bounds(r, place)
             : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
-          g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
+          if (!three) g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
@@ -609,11 +617,14 @@
             : def.bridge || def.condenser || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
-          g.setAttribute("aria-label", label[item.id] + (def.bridge || def.condenser ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
-            : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : ""));
+          aria = label[item.id] + (def.bridge || def.condenser ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
+            : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : "");
+          g.setAttribute("aria-label", aria);
+          if (three) three.item({ id: item.id, type: item.type, vessel: false, data: r, place: place, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
         }
       });
-      if (ui.wires) ui.wires.innerHTML = wiring(lab, ends);
+      if (three) three.end(lab);
+      else if (ui.wires) ui.wires.innerHTML = wiring(lab, ends);
       if (st.lens) lensView();
     }
 
@@ -1216,6 +1227,39 @@
       raf = global.requestAnimationFrame(frame);
     }
 
+    // ---------------------------------------------------------------- 2D oder 3D
+
+    // Nur die Fläche wechselt; Zeit, Hand, Auswahl und alles darunter bleiben. Bis die 3D-Bühne geladen ist, bleibt 2D zu sehen.
+    var asked = 0;                  // zählt die Wünsche: eine Bühne, die zu spät fertig wird, kommt nicht mehr zum Zug
+    function setView(view) {
+      var mine = ++asked;
+      st.view = view;
+      if (ui.view) ui.view.setAttribute("aria-pressed", view === "3d" ? "true" : "false");
+      if (view === "2d" || !L.stage3d) { show3d(null); return; }
+      if (three) return;
+      status(T("view.loading"));
+      L.stage3d(ui.three, { scene: st.config.scene, lang: lang, still: still, tap: tap, escape: function () { setHand(null); select(null); } })
+        .then(function (stage) {
+          if (stopped || mine !== asked) { stage.stop(); return; }
+          status("");
+          show3d(stage);
+        }, function (error) {
+          if (stopped || mine !== asked) return;
+          st.view = "2d";
+          if (ui.view) ui.view.setAttribute("aria-pressed", "false");
+          status(T(error && error.code === "scene" ? "view.scene" : "view.failed") + (error && error.message ? ": " + error.message : ""));
+        });
+    }
+
+    function show3d(stage) {
+      if (three && three !== stage) three.stop();
+      three = stage;
+      ui.three.hidden = !stage;
+      ui.stage.setAttribute("data-view", stage ? "3d" : "2d");
+      shape = null;                 // neu einteilen: die Bühne baut ihre Geräte auf
+      paint();
+    }
+
     // ---------------------------------------------------------------- Ereignisse
 
     function onClick(ev) {
@@ -1230,6 +1274,7 @@
         ui.panel.querySelector('[data-act="lens"]').setAttribute("aria-pressed", st.lens ? "true" : "false");      // der Knopf bleibt stehen und behält den Fokus
         renderLens();
       }
+      else if (act === "view") setView(st.view === "3d" ? "2d" : "3d");
       else if (act === "sound") {
         st.mute = !st.mute;
         sound.mute(st.mute);
@@ -1346,6 +1391,7 @@
 
     function stop() {
       stopped = true;
+      if (three) three.stop();
       if (raf && global.cancelAnimationFrame) global.cancelAnimationFrame(raf);
       if (global.removeEventListener) global.removeEventListener("resize", onResize);
       if (watcher) watcher.disconnect();
@@ -1363,6 +1409,7 @@
     renderTime();
     renderReadings();
     refresh();
+    if (st.view === "3d") setView("3d");
     kick();
   }
 

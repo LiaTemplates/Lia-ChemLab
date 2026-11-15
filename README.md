@@ -10,6 +10,7 @@ script:   ./chemlab-engine.js
           ./chemlab-parts.js
           ./chemlab-fx.js
           ./chemlab-ui.js
+          ./chemlab-3d.js
 
 link:     ./chemlab.css
 
@@ -797,6 +798,25 @@ Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas 
  "show":{"charts":["T","n"]}}
 ```
 
+## 3D-Ansicht
+
+Der Knopf **3D** neben „Ton“ zeigt die Arbeitsfläche räumlich; noch einmal antippen schaltet zurück. Der Versuch läuft dabei weiter. In 3D dreht Ziehen die Ansicht, das Mausrad oder zwei Finger zoomen, Antippen wirkt wie in 2D. Mit der Tab-Taste kommt man von Gerät zu Gerät, Enter tippt es an.
+
+> **Vorschau:** Die Geräte sind in 3D noch beschriftete Kästen. Gläser, Flüssigkeiten, Flammen und Messgeräte folgen.
+
+Diese Fläche beginnt in 3D, im Labor um 1880:
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"glas","ml":250,"contains":[{"reagent":"H2O","ml":150}]},
+  {"type":"thermometer","in":"glas"},
+  {"type":"burner","under":"glas","flame":2}
+ ],
+ "view":"3d",
+ "scene":"1880",
+ "show":{"charts":["T"]}}
+```
+
 ## Ohne Zahlen
 
 Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: Farbe, Gasblasen, das steigende Thermometer und die Reaktionsgleichung. Auch Diagramme, Gleichungen und Protokoll lassen sich einzeln abschalten.
@@ -853,6 +873,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
 - `table` – `true`: mit Messwerttabelle; nur, solange Zahlen gezeigt werden.
 - `room` – die Raumtemperatur in °C, Vorgabe 20.
+- `view` – womit die Fläche beginnt: `"2d"` (Vorgabe) oder `"3d"`. Der Knopf **3D** schaltet jederzeit um.
+- `scene` – wie die Fläche in 3D aussieht: `"lab"` (Labor, Vorgabe), `"kitchen"` (Küche) oder `"1880"` (Labor um 1880). Ausführlich als Objekt: `{"base":"kitchen","gear":{"burner":"lab"},"quality":"low"}` – `gear` nimmt für einzelne Geräte das Aussehen einer anderen Szene, `quality` ist `"auto"` (Vorgabe), `"high"` oder `"low"` (ohne Schatten, für schwache Geräte). An der Rechnung ändert die Szene nichts.
 - `model` – womit die Gleichgewichte rechnen: `"ideal"` mit Konzentrationen (Vorgabe) oder `"real"` mit Aktivitäten, siehe „Ideale und reale Lösung“.
 - `data` – eigene Stoffe und Reaktionen, siehe nächster Abschnitt.
 
