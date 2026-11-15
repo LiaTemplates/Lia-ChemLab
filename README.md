@@ -802,7 +802,7 @@ Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas 
 
 Der Knopf **3D** neben „Ton“ zeigt die Arbeitsfläche räumlich; noch einmal antippen schaltet zurück. Der Versuch läuft dabei weiter. In 3D dreht Ziehen die Ansicht, das Mausrad oder zwei Finger zoomen, Antippen wirkt wie in 2D. Mit der Tab-Taste kommt man von Gerät zu Gerät, Enter tippt es an.
 
-> **Vorschau:** Gefäße, Brenner, Wasserbad und Messgeräte sind fertig; Elektroden, Elektrik und die Nachweise mit Span und Stäbchen sind in 3D noch beschriftete Kästen.
+> **Vorschau:** Alle Geräte haben ein 3D-Modell im Labor. Die Szenen Küche und Labor um 1880 haben bisher nur eigene Farben und Licht, noch keine eigenen Geräte.
 
 Diese Fläche beginnt in 3D, im Labor um 1880:
 

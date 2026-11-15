@@ -76,7 +76,8 @@
     for (i = 0; i < 24; i++) steam.add(new THREE.Sprite(new THREE.SpriteMaterial({ map: puff(), transparent: true, depthWrite: false, opacity: 0 })));
     bubbles.count = 0;
     body.renderOrder = surface.renderOrder = 1;
-    group.add(body, surface, ground, crust, solids, bubbles, steam, stream);
+    var burn = fx.burning();
+    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -221,9 +222,111 @@
           stream.scale.set(0.07, shape.rim + 3 - y, 0.07);
           stream.position.set(-r * 0.35 + (ctx.still ? 0 : 0.02 * Math.sin(t * 30)), (shape.rim + 3 + y) / 2, 0);
         }
+        burn.update(w, shape, ctx, tall);
       },
       dispose: function () {
         group.traverse(function (o) { if (o.geometry) o.geometry.dispose(); if (o.material && o.material.map !== puffTexture) o.material.dispose(); });
+      }
+    };
+  };
+
+  fx.puff = puff;
+
+  // Was im Gefäß brennt und was an seiner Öffnung geschieht: Flammen am Boden (w.fire), grelles Licht, Glut, Rauch,
+  // Gas, das an der Öffnung abbrennt (w.torch), der Span oder Glimmspan der Probe und der Blitz einer Verpuffung (ctx.marks)
+  fx.burning = function () {
+    var group = new THREE.Group(), cones = [], smoke = [], i;
+    var additive = function (color) {
+      return new THREE.Sprite(new THREE.SpriteMaterial({ map: puff(), color: color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 }));
+    };
+    for (i = 0; i < 6; i++) { cones.push(fx.cone(0.28, 0xffa040)); group.add(cones[i]); }
+    for (i = 0; i < 8; i++) { smoke.push(new THREE.Sprite(new THREE.SpriteMaterial({ map: puff(), transparent: true, depthWrite: false, opacity: 0 }))); group.add(smoke[i]); }
+    var glow = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), new THREE.MeshBasicMaterial({ color: 0xff7a2a, transparent: true, opacity: 0.6, toneMapped: false }));
+    var glare = additive(0xffffff), core = additive(0xffffff), flash = additive(0xfff2b0), torch = fx.cone(0.3, 0xa9c2ff), tip = fx.cone(0.16, 0xffb040);
+    var stick = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8).translate(0, 1.6, 0), fx.matte(0xc9a06a, 0.8));
+    var ember = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff6a1a, toneMapped: false }));
+    stick.rotation.z = -0.85;
+    group.add(glow, glare, core, flash, torch, tip, stick, ember);
+
+    function puffs(from, n, color, t, seed, rise) {
+      smoke.forEach(function (s, k) {
+        if (k >= n) return;
+        var q = pseudo(seed, k) + t * (0.3 + 0.2 * pseudo(seed + 1, k));
+        q -= Math.floor(q);
+        s.visible = true;
+        s.material.color.set(color);
+        s.position.set(from.x + (pseudo(seed + 2, k) - 0.5) * 1.2 * q, from.y + q * rise, from.z);
+        s.scale.setScalar(0.6 + q * 2.5);
+        s.material.opacity = 0.5 * Math.sin(Math.PI * q);
+      });
+    }
+
+    return {
+      group: group,
+      update: function (w, shape, ctx, tall) {
+        var t = ctx.still ? 0 : ctx.t, seed = ctx.seed || 1, used = 0, floor = shape.floor + 0.05, width = 2 * shape.inner(shape.floor + 0.2), rim = shape.rim;
+        cones.forEach(function (c) { c.visible = false; });
+        smoke.forEach(function (s) { s.visible = false; });
+        glow.visible = glare.visible = core.visible = flash.visible = torch.visible = tip.visible = stick.visible = ember.visible = false;
+        (w.fire || []).forEach(function (one, index) {
+          var k, h, a;
+          if (!(one.rate > 0)) return;
+          if (one.glow) {                                    // Glut statt Flamme
+            glow.visible = true;
+            glow.material.color.set(one.color);
+            glow.material.opacity = 0.45 + (ctx.still ? 0 : 0.2 * Math.sin(t * 3 + seed));
+            glow.scale.set(width * 0.3, 0.3, width * 0.3);
+            glow.position.set(0, floor + 0.1, 0);
+          } else for (k = 0; k < 3 && used < cones.length; k++) {
+            a = ctx.still ? 0 : Math.sin(t * (13 + 3 * k) + seed + k * 1.9);
+            h = (16 + 12 * pseudo(seed + index, k)) / 16 * (1 + 0.18 * a);
+            cones[used].visible = true;
+            cones[used].material.uniforms.color.value.set(one.color);
+            cones[used].material.uniforms.strength.value = 1.6;
+            cones[used].scale.set(1, h, 1);
+            cones[used].position.set((k - 1) * Math.min(0.75, width * 0.2), floor, (pseudo(seed + 4, k) - 0.5) * width * 0.3);
+            used++;
+          }
+          if (one.glare > 0.5) {                             // grelles Licht (Magnesium)
+            glare.visible = core.visible = true;
+            glare.material.opacity = 1;
+            glare.scale.setScalar(46 / 16 * one.glare * 4 * (1 + (ctx.still ? 0 : 0.06 * Math.sin(t * 23 + seed))));
+            glare.position.set(0, floor + 0.75, 0);
+            core.material.opacity = 1;                       // ein kleiner, ganz heller Kern im Schein
+            core.scale.setScalar(46 / 16 * one.glare * 1.2);
+            core.position.copy(glare.position);
+          }
+          if (one.smoke) puffs(new THREE.Vector3(0, rim, 0), 8, one.smoke, t, seed + 31 + index, 8);
+        });
+        if (w.torch) {                                       // Gas brennt an der Öffnung ab: kleine, blasse Flamme
+          torch.visible = true;
+          torch.scale.set(1, 1.3 * (1 + (ctx.still ? 0 : 0.1 * Math.sin(t * 19))), 1);
+          torch.position.set(0, rim, 0);
+        }
+        (ctx.marks || []).forEach(function (mark) {
+          var sx = tall ? 0.25 : shape.inner(rim) * 0.5, at = new THREE.Vector3(sx, rim - 0.25, 0), part, burning, big;
+          if (mark.key === "splint" && mark.age < 2) {
+            burning = mark.kind === "flame" ? mark.result !== "out" && mark.result !== "pop" : mark.result === "relight";
+            big = mark.result === "flare" || mark.result === "relight";
+            stick.visible = true;
+            stick.position.copy(at);
+            if (burning) {
+              tip.visible = true;
+              tip.position.copy(at);
+              tip.scale.set(big ? 1.6 : 1, (big ? 1.5 : 0.8) * (1 + (ctx.still ? 0 : 0.1 * Math.sin(t * 15))), big ? 1.6 : 1);
+            } else if (mark.kind === "glow" && mark.result !== "out") {
+              ember.visible = true;
+              ember.position.copy(at);
+            } else if (mark.result === "out") puffs(at, 3, 0x9a9a9a, t, 5, 2);
+          }
+          if ((mark.key === "pop" || (mark.key === "splint" && mark.result === "pop")) && mark.level > 0 && mark.age >= 0 && mark.age < 0.5) {
+            part = mark.age / 0.5;
+            flash.visible = true;
+            flash.material.opacity = 0.9 * (1 - part);
+            flash.scale.setScalar((10 + 12 * mark.level) / 16 * (0.35 + 0.65 * part) * 2.5);
+            flash.position.set(0, rim + 0.4, 0);
+          }
+        });
       }
     };
   };

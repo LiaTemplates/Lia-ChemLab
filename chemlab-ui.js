@@ -522,32 +522,43 @@
       return { x1: pa.x, y1: pa.rim, x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: (w.ml > 0.005 ? L.parts[far.type].surface(w) : -4) + up };
     }
 
-    // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden
-    function wiring(lab, ends) {
-      var out = "";
-      L.circuits(lab).forEach(function (c) {
-        var a = L.tool(lab, c.a), b = L.tool(lab, c.b), from = ends[c.a] && ends[c.a][0], last = ends[c.b] && ends[c.b][0], n = 0, sign = "";
+    // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden.
+    // Jede Leitung verbindet zwei Anschlüsse [Gerät, Nummer]; cls: Pol (" cl-plus", " cl-minus" oder ""), circuit: Nummer des Stromkreises.
+    // Gilt für 2D und 3D; ends sagt nur, welche Geräte Anschlüsse haben.
+    function links(lab, ends) {
+      var out = [];
+      L.circuits(lab).forEach(function (c, circuit) {
+        var a = L.tool(lab, c.a), b = L.tool(lab, c.b), from = [c.a, 0], sign = "";
         var parts = lab.tools.filter(function (t) { return L.parts[t.type].circuit && ends[t.id] && (t.in === a.in || t.in === b.in); });
-        function line(p, q, cls) {
-          var rail = Math.min(p.y, q.y) - 12 - 7 * n++;
-          out += '<path class="cl-wire' + cls + '" d="M' + p.x + "," + p.y + "L" + p.x + "," + rail + "L" + q.x + "," + rail + "L" + q.x + "," + q.y + '"/>';
-        }
-        if (!from || !last) return;
+        function link(p, q, cls) { out.push({ a: p, b: q, cls: cls, circuit: circuit }); }
+        if (!ends[c.a] || !ends[c.b]) return;
         ["supply", "load", "ammeter"].forEach(function (kind) {
           parts.forEach(function (t) {
             var r = L.reading(lab, t.id);
             if (L.parts[t.type].circuit !== kind) return;
-            line(from, ends[t.id][0], kind === "supply" ? (r.flip ? " cl-minus" : " cl-plus") : sign);
+            link(from, [t.id, 0], kind === "supply" ? (r.flip ? " cl-minus" : " cl-plus") : sign);
             sign = kind === "supply" ? (r.flip ? " cl-plus" : " cl-minus") : sign;
-            from = ends[t.id][1];
+            from = [t.id, 1];
           });
         });
-        if (from !== ends[c.a][0]) line(from, last, sign);
+        if (from[0] !== c.a) link(from, [c.b, 0], sign);
         parts.forEach(function (t) {
           if (L.parts[t.type].circuit !== "voltmeter") return;
-          line(ends[c.a][0], ends[t.id][0], "");
-          line(ends[t.id][1], last, "");
+          link([c.a, 0], [t.id, 0], "");
+          link([t.id, 1], [c.b, 0], "");
         });
+      });
+      return out;
+    }
+
+    // In 2D: rechtwinklig über eine Schiene oberhalb der Anschlüsse; jede weitere Leitung eines Kreises eine Stufe höher
+    function wiring(lab, ends) {
+      var out = "", n = 0, circuit = -1;
+      links(lab, ends).forEach(function (k) {
+        var p = ends[k.a[0]][k.a[1]], q = ends[k.b[0]][k.b[1]], rail;
+        if (k.circuit !== circuit) { circuit = k.circuit; n = 0; }
+        rail = Math.min(p.y, q.y) - 12 - 7 * n++;
+        out += '<path class="cl-wire' + k.cls + '" d="M' + p.x + "," + p.y + "L" + p.x + "," + rail + "L" + q.x + "," + rail + "L" + q.x + "," + q.y + '"/>';
       });
       return out;
     }
@@ -623,7 +634,7 @@
           if (three) three.item({ id: item.id, type: item.type, vessel: false, data: r, place: place, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
         }
       });
-      if (three) three.end(lab);
+      if (three) three.end(lab, links(lab, ends));
       else if (ui.wires) ui.wires.innerHTML = wiring(lab, ends);
       if (st.lens) lensView();
     }

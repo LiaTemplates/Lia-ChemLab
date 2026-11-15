@@ -7,7 +7,8 @@
      hang (bei Büretten: wo sie hängt), place (bei Messgeräten: wo sie stecken), host (Gefäß, an dem es hängt),
      box (Trefferfläche in 2D-Bildpunkten: x0, x1, top, bottom), x und lift (Platz in 2D-Bildpunkten), selected, ctx (t, still, lang, numbers)
    Ein Look ist { build(kit, d) → Object3D, update(obj, d, kit) }. obj.userData.body ist, was Auswahlrahmen und Tastaturknopf umfassen
-   (ohne Schilder); ohne Angabe das ganze Objekt. */
+   (ohne Schilder); ohne Angabe das ganze Objekt. obj.userData.terminals: Anschlüsse für Leitungen (Vector3 im Raum des Geräts),
+   in der Reihenfolge der Anschlüsse in 2D (terminal bzw. terminals). */
 (function (global) {
   "use strict";
 
@@ -111,6 +112,31 @@
     def.build(kit);
 
     var entries = {}, order = [], width = 0, framed = -1, dead = false, queued = 0, sorted = false;
+    // Leitungen: hängende Kabel zwischen den Anschlüssen (obj.userData.terminals, im Raum des Geräts); neu nur, wenn sich etwas bewegt
+    var wires = new THREE.Group(), wiresKey = "", WIRE = { " cl-plus": 0xc62828, " cl-minus": 0x1f4fbf, "": 0x202326 };
+    world.add(wires);
+    function terminal(ref) {
+      var e = entries[ref[0]], t = e && e.obj.userData.terminals && e.obj.userData.terminals[ref[1]];
+      if (!t) return null;
+      e.obj.updateMatrixWorld(true);
+      return e.obj.localToWorld(t.clone());
+    }
+    function wire(list) {
+      var ends = list.map(function (k) { var a = terminal(k.a), b = terminal(k.b); return a && b ? [a, b, k] : null; }).filter(Boolean), count = {};
+      var key = ends.map(function (e) { return e[0].toArray().concat(e[1].toArray()).map(function (v) { return v.toFixed(2); }).join(",") + e[2].cls; }).join("|");
+      if (key === wiresKey) return;
+      wiresKey = key;
+      wires.children.slice().forEach(function (o) { wires.remove(o); o.geometry.dispose(); o.material.dispose(); });
+      ends.forEach(function (e) {
+        var a = e[0], b = e[1], n = count[e[2].circuit] = (count[e[2].circuit] || 0) + 1, rise = 2.2 + 0.9 * n, top = Math.max(a.y, b.y) + rise;
+        var curve = new THREE.CatmullRomCurve3([a, a.clone().add(new THREE.Vector3(0, rise * 0.6, 0)),
+          new THREE.Vector3((a.x + b.x) / 2, top, (a.z + b.z) / 2 + 1 + 0.6 * n), b.clone().add(new THREE.Vector3(0, rise * 0.6, 0)), b]);
+        var m = new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.09, 8), new THREE.MeshStandardMaterial({ color: WIRE[e[2].cls] || WIRE[""], roughness: 0.55 }));
+        m.castShadow = true;
+        wires.add(m);
+      });
+    }
+
     var selection = new THREE.Box3Helper(new THREE.Box3(), new THREE.Color(0x1d8a8c));
     selection.visible = false;
     world.add(selection);
@@ -228,13 +254,14 @@
         e.key.setAttribute("aria-label", d.label);
         e.selected = d.selected;
       },
-      end: function () {
+      end: function (lab, links) {
         var sel = order.filter(function (id) { return entries[id] && entries[id].selected; })[0];
         var all = order.every(function (id) { return entries[id]; });
         if (all && !sorted) { sorted = true; order.forEach(function (id) { keys.appendChild(entries[id].key); }); }      // Tab-Folge wie die Reihe auf dem Tisch
         if (all && framed !== width) { framed = width; size(); frame(); }
         selection.visible = !!sel;
         if (sel) selection.box.setFromObject(entries[sel].obj.userData.body || entries[sel].obj).expandByScalar(0.4);
+        wire(links || []);
         render();
       },
       stop: function () {
