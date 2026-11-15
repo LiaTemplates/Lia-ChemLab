@@ -6084,8 +6084,7 @@ test("Reales Modell: Masse und Ladung bleiben erhalten, und eine Lösung verdamp
 test("Reales Modell: Lösung auf einem heißen Rückstand lässt sich berechnen", () => {
   // Cobaltchlorid, Zinksulfat und Kochsalz eingedampft, dann fließt Kupfersulfat-Lösung darauf. Die ersten Tropfen geben eine
   // Lösung mit sehr kleinen Aktivitätskoeffizienten. Die Probe, ob alle Salze des Rückstands zugleich gesättigt sein können,
-  // verlangt dann Konzentrationen über 1000 mol/L: Gilt die Obergrenze des Lösers der Konzentration statt der Aktivität,
-  // scheitert jede dieser Proben, und jeder Rechenschritt nimmt den Notweg.
+  // verlangte Konzentrationen über 1000 mol/L; der Löser nimmt die Salze deshalb einzeln hinzu.
   const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "CoCl2 2M", ml: 8 }, { reagent: "ZnSO4 1M", ml: 1 }, { reagent: "NaCl 2M", ml: 1 }, { reagent: "NaOH 0.1M", ml: 1 }] },
     { type: "burner", id: "br", under: "b", flame: 2 }, { type: "beaker", id: "c", contains: [{ reagent: "CuSO4 1M", ml: 10 }] }], { room: 22, model: "real" });
   until(l, () => !(amount(l, "H2O(l)") > 0), 900);
@@ -6413,6 +6412,14 @@ test("Reales Modell: Ionenpaare zerfallen beim Eindampfen und stören das ideale
   assert.ok(!(amount(salt, "H2O(l)") > 0), "eingedampft");
   assert.equal(amount(salt, "MgSO4(aq)"), 0, "ideal, eingedampft: kein Magnesiumsulfat-Ionenpaar");
   near(amount(salt, "Mg^2+(aq)"), 1e-4, 1e-7, "Magnesium bleibt als Ion im Rückstand");
+  // und im realen Modell ebenso: Beim Eindampfen zerfallen die Ionenpaare, und sie bilden sich im Rückstand nicht neu
+  const dryReal = heated({ type: "dish", contains: [{ reagent: "H2O", ml: 2 }] }, { model: "real" }), pan = L.vessel(dryReal, "b");
+  pan.n["Mg^2+(aq)"] = 1e-4; pan.n["SO4^2-(aq)"] = 1e-4; pan.dirty = true;
+  L.step(dryReal, 2);
+  assert.ok(amount(dryReal, "MgSO4(aq)") > 1e-6, "real, in Lösung: Ionenpaar");
+  until(dryReal, () => !(amount(dryReal, "H2O(l)") > 0), 900);
+  assert.equal(amount(dryReal, "MgSO4(aq)"), 0, "real, eingedampft: kein Ionenpaar im Rückstand");
+  near(amount(dryReal, "Mg^2+(aq)"), 1e-4, 1e-7, "real: Magnesium als Ion im Rückstand");
   // eingedampft bleibt Salz zurück, kein Ionenpaar; mit Wasser löst es sich wieder
   const l = heated({ type: "dish", contains: [{ reagent: "Na2SO4 0.5M", ml: 4 }] }, { model: "real" }), before = totals(l);
   until(l, () => !(amount(l, "H2O(l)") > 0), 900);
@@ -6435,11 +6442,16 @@ test("Daten: ein Gleichgewicht kann dem realen Modell vorbehalten sein", () => {
     equilibria: [{ eq: "Li+(aq) + SO4^2-(aq) <=> LiSO4-(aq)", logK: 0.64, model, src: "Probe" }], reagents: { "Li2SO4": { name: { de: "Lithiumsulfat-Lösung" }, solution: { "Li+(aq)": 2, "SO4^2-(aq)": 1 }, molar: true } } });
   try {
     for (const model of ["ideal", "echt", 1]) assert.throws(() => L.register(pair(model)), (e) => e.code === "data" && /model/.test(e.message), String(model));
+    // nur für Gleichgewichte in der Lösung: Ein Feststoff oder ein Gas kann nicht einem Modell vorbehalten sein
+    assert.throws(() => L.register({ species: { "Li2SO4(s)": { name: { de: "Lithiumsulfat" }, Hf: null, color: "#f5f5f2", src: "Probe" } },
+      equilibria: [{ eq: "Li2SO4(s) <=> 2 Li+(aq) + SO4^2-(aq)", logK: 0.5, model: "real", src: "Probe" }] }), (e) => e.code === "data" && /model/.test(e.message), "Feststoff");
+    assert.throws(() => L.register({ species: { "HBr(g)": { name: { de: "Bromwasserstoff" }, Hf: null, src: "Probe" } },
+      equilibria: [{ eq: "HBr(g) <=> H+(aq) + Br-(aq)", logK: 0.5, model: "real", src: "Probe" }] }), (e) => e.code === "data" && /model/.test(e.message), "Gas");
     L.register(pair("real"));
     assert.equal(amount(beaker([{ reagent: "Li2SO4 0.5M", ml: 10 }], { room: 25 }), "LiSO4-(aq)"), 0, "ideal: nicht dabei");
     assert.ok(amount(real([{ reagent: "Li2SO4 0.5M", ml: 10 }]), "LiSO4-(aq)") > 1e-4, "real: dabei");
   } finally { L.db = before; }
-  // im Grundpaket: die Ionenpaare des realen Modells stammen aus phreeqc.dat
+  // im Grundpaket: die Ionenpaare des realen Modells stammen aus phreeqc.dat und minteq.v4.dat
   const pairs = L.db.equilibria.filter((e) => e.model === "real");
   assert.deepEqual(pairs.map((e) => e.text).sort(), ["Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)",
     "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)"]);
@@ -6449,15 +6461,16 @@ test("Daten: ein Gleichgewicht kann dem realen Modell vorbehalten sein", () => {
   assert.deepEqual(logK, { "NaSO4-(aq)": [0.94, 8.23], "KSO4-(aq)": [1.18, 3], "CaSO4(aq)": [2.36, 7.1], "CaOH+(aq)": [-12.697, 64.11], "MgSO4(aq)": [2.42, 19], "MgOH+(aq)": [-11.397, 67.81] });
   assert.deepEqual(["NaSO4-(aq)", "KSO4-(aq)", "CaSO4(aq)", "MgSO4(aq)", "MgOH+(aq)", "CaOH+(aq)"].map((id) => L.db.species[id].gamma || null),
     [[3.5, 0.1072], [5.4, 0.19], [0, 0.0445], [0, 0.2], [6.5, 0], null], "Parameter der Aktivitätskoeffizienten aus phreeqc.dat");
-  assert.match(fs.readFileSync(new URL("README.md", here), "utf8"), /"model":"real"` gilt ein Gleichgewicht nur im realen Modell/, "die README beschreibt die Angabe");
+  assert.match(fs.readFileSync(new URL("README.md", here), "utf8"), /"model":"real"` gilt ein Gleichgewicht in der Lösung nur im realen Modell/, "die README beschreibt die Angabe");
 });
 
 test("Viele Niederschläge zugleich: Zufallsgemische vieler Feststoffe in wenig Wasser kommen im Gleichgewicht zur Ruhe", () => {
   // Vier bis siebzehn Feststoffe in 0,06 bis 1,8 mL Wasser. Die Folgen sind so gewählt, dass sie zwei Dinge brauchen: Ein Feststoff,
   // der sich lösen muss, löst sich zunächst ganz (2, 10, 17, 24), und von Feststoffen, deren Zusammensetzungen voneinander
-  // abhängen, scheidet einer aus (4, 8, 12, 19).
+  // abhängen, scheidet einer aus (4, 8, 12, 19). In zwei Folgen führt der Weg im realen Modell über einen Zwischenzustand,
+  // den nur Konzentrationen weit über 1000 mol/L erfüllen (186, 284).
   const solids = L.db.equilibria.filter((e) => e.solid && !e.rate).map((e) => e.solid);
-  for (const model of ["ideal", "real"]) for (const seed of [2, 10, 17, 24, 4, 8, 12, 19]) {
+  for (const model of ["ideal", "real"]) for (const seed of [2, 10, 17, 24, 4, 8, 12, 19].concat(model === "real" ? [186, 284] : [])) {
     let s = (seed * 2654435761) >>> 0;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const n = { "H2O(l)": 10 ** (-2.5 + 1.5 * rnd()) };
@@ -6489,5 +6502,21 @@ test("Löser: viel Bodensatz in einem Rest von Wasser lässt sich berechnen", ()
     assert.equal(l.failed || 0, 0, model + ": jedes Gleichgewicht ließ sich berechnen");
     near(amount(l, "SrSO4(s)"), 2.5e-4, 1e-9, model + ": der Bodensatz liegt noch da");
     near(totals(l).charge, before.charge, 1e-18, model + ": Ladung");
+    // Marmor unter einer tropfenden Bürette: die ersten Tropfen treffen auf 20 mmol Feststoff
+    const drip = lab([{ type: "beaker", id: "b", contains: [{ reagent: "marble", g: 2 }] }, { type: "burette", id: "bu", over: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }], { room: 25, model });
+    L.setTap(drip, "bu", 0.05);
+    L.step(drip, 10);
+    assert.equal(drip.failed || 0, 0, model + ": Marmor unter der Bürette");
+    assert.ok(amount(drip, "Ca^2+(aq)") > 1e-5, model + ": der Marmor reagiert mit der Säure");
+    // eingedampftes Kochsalz und ein Tropfen Indikatorlösung: der Tropfen sättigt sich, der Rest bleibt liegen
+    const salt = lab([{ type: "dish", id: "b", contains: [{ reagent: "NaCl 5M", ml: 20 }] }, { type: "burner", id: "br", under: "b", flame: 2 }], { room: 25, model });
+    until(salt, () => !(amount(salt, "H2O(l)") > 0), 3000);
+    L.setFlame(salt, "br", 0);
+    L.step(salt, 900);
+    L.add(salt, "b", "PP", { drops: 1 });
+    L.step(salt, 30);
+    assert.equal(salt.failed || 0, 0, model + ": Tropfen auf dem Salz");
+    assert.ok(amount(salt, "Na+(aq)") > 2e-4 && amount(salt, "Na+(aq)") < 5e-4, `${model}: der Tropfen ist mit Kochsalz gesättigt (${amount(salt, "Na+(aq)")} mol)`);
+    assert.ok(amount(salt, "NaCl(s)") > 0.09, model + ": das meiste Salz liegt noch da");
   }
 });

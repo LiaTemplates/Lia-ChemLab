@@ -286,6 +286,7 @@
         var solids = ids.filter(function (id) { return next.species[id].phase === "s"; });
         var rest = ids.filter(function (id) { return id !== WATER && next.species[id].phase !== "aq" && next.species[id].phase !== "s"; });
         entry.aq = !solids.length && !rest.length;
+        if (item.model != null && !entry.aq) throw fail("model", String(item.eq));      // nur ein Gleichgewicht in der Lösung kann einem Modell vorbehalten sein
         if (solids.length === 1 && !rest.length) {
           // Löslichkeit eines Feststoffs. d: was beim Lösen von 1 mol an gelösten Teilchen entsteht (+) oder verbraucht wird (−);
           // f rechnet den Umsatz der Auflösung in den der eingetragenen Schreibweise um.
@@ -1178,7 +1179,9 @@
       for (k = 0; k < nf; k++) big = Math.max(big, Math.abs(d[k]));
       if (!isFinite(big)) return null;
       damp = big > 1 ? 1 / big : 1;                    // höchstens eine Zehnerpotenz je Schritt
-      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(3, x[free[k]] + damp * d[k]));
+      // Die Obergrenze liegt weit über allem, was es gibt: Auf dem Weg zum Gleichgewicht vieler Feststoffe kommen Zwischenzustände
+      // vor, die nur mit solchen Konzentrationen aufgehen, bevor der nächste Feststoff dazukommt.
+      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(9, x[free[k]] + damp * d[k]));
       for (p = 0; p < np; p++) s[p] += damp * d[nf + p] * unit;
     }
     return null;
@@ -1197,7 +1200,7 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, keep = null, found, k, round, worst, at, value, melt, out;
+    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, found, k, round, worst, at, value, melt, out;
     // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
@@ -1245,8 +1248,8 @@
       found = attempt();
       if (!found && saved) {
         // Der zuletzt Aufgenommene müsste sich lösen, lässt sich aber nicht sättigen: Das verlangte Konzentrationen, die es nicht
-        // gibt. Dann löst er sich ganz.
-        active = saved; state = keep;
+        // gibt, oder seine Zusammensetzung hängt von den anderen ab. Dann löst er sich ganz.
+        active = saved;
         found = attempt();
       }
       saved = null;
@@ -1263,12 +1266,8 @@
         else if (-value > worst && !used[k] && cur[k] > 0) { worst = -value; at = k; melt = true; }      // liegt da und müsste sich lösen
       }
       // Ein Feststoff, der sich lösen müsste, kommt versuchsweise dazu: Meist löst er sich nur zum Teil, und die Lösung ist dann
-      // mit ihm gesättigt. Hängt seine Zusammensetzung von den anderen ab, zerfällt er stattdessen in sie und löst sich ganz.
-      if (at >= 0 && melt) {
-        used[at] = true;
-        if (!depends(at)) { saved = active.slice(); keep = state; active.push(at); }
-        continue;
-      }
+      // mit ihm gesättigt.
+      if (at >= 0 && melt) { used[at] = true; saved = active.slice(); active.push(at); continue; }
       if (at >= 0) { join(at); continue; }
       out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });
@@ -2533,7 +2532,7 @@
     }
     settle(true);
     L.db.equilibria.forEach(function (e) {                     // Ionen treten zum ungeladenen Molekül zusammen: H+ und OH- zu Wasser,
-      if (!e.aq || (e.model === "real" && !v.real)) return;    // H+ und Acetat zu Essigsäure, Ammonium und OH- zu Ammoniak
+      if (!e.aq || e.model === "real") return;                 // H+ und Acetat zu Essigsäure, Ammonium und OH- zu Ammoniak; keine Ionenpaare
       [[e.left, e.right, -1], [e.right, e.left, 1]].forEach(function (pair) {
         var molecule = null, water = 0, many = false, x = Infinity;
         pair[0].forEach(function (t) { if (t.id === WATER) water = t.n; else if (molecule) many = true; else molecule = t; });
