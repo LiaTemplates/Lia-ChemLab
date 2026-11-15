@@ -1185,9 +1185,28 @@
     }
     // Mehr Feststoffe, als ihre Bausteine hergeben (Hydroxid und Carbonat zweier Metalle), können nicht alle gesättigt sein:
     // die Rechnung ist dann überbestimmt. Einer muss weichen: wenn möglich einer, der danach auch nicht mehr ausfallen will.
-    var barred = {};
+    var barred = {}, unit = 1e-6;
+    total.forEach(function (value) { unit = Math.max(unit, Math.abs(value)); });
+    // Der Löser lässt die Bilanz eines Grundteilchens fallen, von dem nichts da ist. Fehlt einem Versuch aber der Feststoff, der
+    // dieses Teilchen bindet (Iod ohne Iodid: es kann nur mit Iodid in Lösung gehen), geht die Bilanz nicht auf. Ein solches
+    // Ergebnis ist kein Zustand, den das Gefäß annehmen kann: Es gilt als gescheitert.
     function attempt(list) {
-      return solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return cur[q]; }));
+      var found = solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return cur[q]; }));
+      var b, i, p, have, scale, part;
+      if (!found) return null;
+      for (b = 0; b < total.length; b++) {
+        have = 0; scale = Math.abs(total[b]);
+        for (i = 0; i < sys.ids.length; i++) { part = sys.a[i][b] * found.c[i]; have += part; scale += Math.abs(part); }
+        for (p = 0; p < list.length; p++) { part = sys.solids[list[p]].comp[b] * found.s[p]; have += part; scale += Math.abs(part); }
+        if (Math.abs(have - total[b]) > 1e-9 * scale + 1e-12 * unit) return null;
+      }
+      return found;
+    }
+    // Ob die Stoffbilanz mit diesen Feststoffen überhaupt aufgehen kann: Was mehr gebunden ist, als gelöst vorliegt, braucht seinen Feststoff
+    function holds(list) {
+      for (var b = 0; b < total.length; b++)
+        if (sys.plain[b] && total[b] < -1e-12 * unit && !list.some(function (q) { return sys.solids[q].comp[b] !== 0; })) return false;
+      return true;
     }
     function relax() {
       var order, best, i, trial, found, fits, round;
@@ -1207,7 +1226,10 @@
           barred[best.out] = true;
           return best.state;
         }
-        // auch ohne einen von ihnen bleibt es überbestimmt: es gibt mehr als eine Abhängigkeit. Der kleinste weicht, dann von vorn.
+        // auch ohne einen von ihnen bleibt es überbestimmt: es gibt mehr als eine Abhängigkeit. Der kleinste, der weichen kann,
+        // weicht, dann von vorn.
+        order = order.filter(function (out) { return holds(active.filter(function (q) { return q !== out; })); });
+        if (!order.length) return null;
         barred[order[0]] = true;
         active = active.filter(function (q) { return q !== order[0]; });
         found = attempt(active);

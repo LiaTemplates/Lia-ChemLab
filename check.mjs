@@ -5898,6 +5898,23 @@ test("Eisen(III) und Iodid im Gleichgewicht: verdünnt und ohne Überschuss blei
   assert.ok(amount(cu, "CuI(s)") > 1e-4 && amount(cu, "CuI(s)") < 3.9e-4, `mit zu wenig Iodid bleibt Kupfer(II) übrig: ${amount(cu, "CuI(s)")} mol Kupfer(I)-iodid`);
 });
 
+test("Viele Niederschläge zugleich: ein Feststoff, dem zum Auflösen ein Baustein fehlt, bleibt liegen (Iod ohne Iodid)", () => {
+  // Iod löst sich hier nur mit Iodid, als Triiodid. Liegt es neben Niederschlägen, die nicht alle nebeneinander bestehen können,
+  // muss einer von ihnen weichen – aber nicht das Iod: ohne Iodid kann es nicht in Lösung gehen.
+  for (const iodine of [1e-6, 1e-8]) {
+    const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 28 }), glass = L.vessel(mud, "b");
+    glass.n = { "Cu(OH)2(s)": 2e-5, "CaCO3(s)": 0.00101, "CaSO4*2H2O(s)": 0.0000753, "Ca(OH)2(s)": 3e-5, "CuCO3(s)": 1e-5, "H2O(l)": 0.0609, "BaSO4(s)": 0.00000875, "BaCO3(s)": 4e-6, "I2(s)": iodine };
+    glass.lumps = Object.keys(glass.n).filter((id) => /\(s\)$/.test(id)).map((id) => ({ id, n: glass.n[id], n0: glass.n[id], a0: 1, p: 2 / 3, made: true, settled: 1 }));
+    glass.dirty = true;
+    L.step(mud, 600);
+    near(totals(mud).charge, 0, 1e-12, "Ladung entsteht nicht aus dem Nichts");
+    near(amount(mud, "I2(s)"), iodine, 1e-12, "das Iod liegt noch da");
+    assert.ok(amount(mud, "I3-(aq)") < 1e-12, "kein Triiodid ohne Iodid");
+    assert.equal(mud.failed || 0, 0, "jedes Gleichgewicht ließ sich berechnen");
+    assert.deepEqual(settled(mud).filter((line) => !line.startsWith("I2(s)")), [], "die übrigen Feststoffe stehen im Gleichgewicht");
+  }
+});
+
 test("Ruhe: eine sofortige Reaktion, der ein Ausgangsstoff fast fehlt, hält die Uhr nicht an", () => {
   // Permanganat und Eisen(II) brauchen Säure. In Soda-Lösung oder Ammoniak gibt es nur Spuren von H+, die das Wasser nachliefert:
   // der Umsatz bleibt unmerklich klein (weit unter einem Milliardstel Mol je Sekunde).
