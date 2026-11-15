@@ -44,7 +44,7 @@
         if (opts.extra) opts.extra(group, kit, d, shape);
         return group;
       },
-      update: function (group, d) {
+      update: function (group, d, kit) {
         var u = group.userData, w = d.data, shape = opts.shape(d), level;
         if (shape.id !== u.shape.id) {                 // eine andere Größe: das Glas neu formen
           u.glass.geometry.dispose();
@@ -61,7 +61,7 @@
         level = opts.level(w, d);
         u.inside.update(w, shape, level, d.ctx, !!opts.tall);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
-        u.tag.position.set(0, d.lift ? -cm(d.lift) + 0.15 : 0.15, shape.inner(shape.rim) + 1.4);
+        u.tag.position.set(0, 0.15 - kit.up(d.lift), shape.inner(shape.rim) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist
         if (opts.refresh) opts.refresh(group, d, shape);
       }
     };
@@ -166,9 +166,9 @@
       group.userData = { body: glass, glass: glass, tip: tip, column: column, neck: neck, liquid: liquid, cock: cock, grip: grip, foot: foot, rod: rod, arm1: arm1, arm2: arm2, flow: flow, drops: drops, tag: tag, marksKey: null };
       return group;
     },
-    update: function (group, d) {
+    update: function (group, d, kit) {
       var u = group.userData, w = d.data, g = S.buretteAt(d.hang), x = cm(g.x), low = cm(-g.low), high = cm(-g.high), tipY = cm(-g.tip);
-      var level = cm(-L.parts.burette.surface(w, d.hang)), open = w.tap > 0, rod = cm(g.rod), Z = -5, t = d.ctx.still ? 0 : d.ctx.t, k, y, p, B = S.burette;
+      var level = cm(-L.parts.burette.surface(w, d.hang)), open = w.tap > 0, rod = cm(g.rod), Z = -5, t = d.ctx.still ? 0 : d.ctx.t, k, y, p, B = S.burette, floor;
       u.glass.scale.y = high + cm(10) - low; u.glass.position.set(x, (low + high + cm(10)) / 2, 0);
       u.tip.scale.y = low - tipY; u.tip.position.set(x, (low + tipY) / 2, 0);
       u.column.visible = u.neck.visible = w.ml > 0.005;
@@ -182,8 +182,10 @@
       u.grip.rotation.z = open ? 0 : Math.PI / 2;
       u.grip.position.set(0, 0, cm(5));
       // Stativ: Fuß und Stange hinter der Reihe der Geräte, zwei Klemmen nach vorn zur Bürette
-      u.foot.position.set(rod + cm(13), cm(2.5), Z);
-      u.rod.scale.y = cm(-(g.high + 24)); u.rod.position.set(rod, u.rod.scale.y / 2, Z);
+      // steht das Gefäß darunter gehoben (Dreifuß, Wasserbad), reicht das Stativ trotzdem bis auf den Tisch
+      floor = -kit.up(d.lift);
+      u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
+      u.rod.scale.y = cm(-(g.high + 24)) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
       [[u.arm1, cm(-(g.high + 60))], [u.arm2, cm(-(g.low - 30))]].forEach(function (a) {
         var dx = x - rod, len = Math.sqrt(dx * dx + Z * Z);
         a[0].scale.set(len, 1, 1);
@@ -213,7 +215,7 @@
       u.drops.instanceMatrix.needsUpdate = true;
       u.tag.userData.write(d.hang ? " " : String(d.ctx.no || " "));
       u.tag.visible = !d.hang;
-      u.tag.position.set(x, 0.15, 1.6);
+      u.tag.position.set(x, floor + 0.15, 1.6);
     }
   });
 })(typeof globalThis !== "undefined" ? globalThis : this);

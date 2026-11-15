@@ -231,4 +231,85 @@
     }
     return group;
   };
+
+  // ------------------------------------------------------------------ Teile, die sich nur selten ändern
+
+  // Baut die Untergruppe name neu, wenn sich key ändert (Maße aus place, Größe des Gefäßes); sonst bleibt sie
+  fx.rebuild = function (group, name, key, build) {
+    var u = group.userData, sub = u[name];
+    if (sub && u[name + "Key"] === key) return sub;
+    if (sub) { group.remove(sub); sub.traverse(function (o) { if (o.geometry) o.geometry.dispose(); [].concat(o.material || []).forEach(function (m) { if (m.map) m.map.dispose(); m.dispose(); }); }); }
+    sub = u[name] = new THREE.Group();
+    u[name + "Key"] = key;
+    build(sub);
+    group.add(sub);
+    return sub;
+  };
+
+  // Ein Stab von a nach b (Vector3), Radius r
+  fx.rod = function (a, b, r, mat) {
+    var m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, a.distanceTo(b), 12), mat);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    m.castShadow = true;
+    return m;
+  };
+
+  fx.steel = function () { return fx.matte(0xb9c0c7, 0.3, 0.85); };
+  fx.iron = function () { return fx.matte(0x33373d, 0.45, 0.7); };
+
+  // Stativ: Fuß und Stange bei (x, z) vom Boden floor bis top; grips: Klemmen [{ y, x, r, across }] mit Backen um ein Rohr bei x (z = 0)
+  fx.stand = function (sub, x, z, floor, top, grips) {
+    var steel = fx.steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(7, 0.35, 11), fx.matte(0x3a3f45, 0.5, 0.3));
+    foot.position.set(x, floor + 0.175, z - 2);
+    foot.castShadow = foot.receiveShadow = true;
+    sub.add(foot, fx.rod(new THREE.Vector3(x, floor, z), new THREE.Vector3(x, top, z), 0.4, steel));
+    (grips || []).forEach(function (g) {
+      sub.add(fx.rod(new THREE.Vector3(x, g.y, z), new THREE.Vector3(g.x, g.y, 0), 0.22, steel));
+      var jaw = new THREE.Mesh(new THREE.TorusGeometry(g.r + 0.12, 0.12, 8, 20), fx.matte(0x8a5a2b, 0.7));
+      if (g.across) jaw.rotation.y = Math.PI / 2; else jaw.rotation.x = Math.PI / 2;      // across: das Rohr liegt waagrecht (Kolbenprober)
+      jaw.position.set(g.x, g.y, 0); jaw.castShadow = true;
+      sub.add(jaw);
+    });
+  };
+
+  // Flamme: Kegel mit weichem Rand, additiv gemischt (aus der Demo)
+  fx.flameMaterial = function (color) {
+    return new THREE.ShaderMaterial({
+      uniforms: { color: { value: new THREE.Color(color) }, strength: { value: 1 } },
+      vertexShader: "varying vec3 vN; varying vec3 vV; varying float vH;\n" +
+        "void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); vH = uv.y; gl_Position = projectionMatrix * mv; }",
+      fragmentShader: "uniform vec3 color; uniform float strength; varying vec3 vN; varying vec3 vV; varying float vH;\n" +
+        "void main() { float a = pow(abs(dot(vN, vV)), 1.5) * (1.0 - 0.7 * vH) * strength; gl_FragColor = vec4(color * a, a);\n" +
+        "#include <colorspace_fragment>\n}",          // wie die anderen Materialien in sRGB umrechnen, sonst wirkt die Flamme zu blass
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+    });
+  };
+
+  fx.cone = function (r, color) {
+    var geo = new THREE.ConeGeometry(r, 1, 32, 1, true);
+    geo.translate(0, 0.5, 0);
+    var m = new THREE.Mesh(geo, fx.flameMaterial(color));
+    m.renderOrder = 4;
+    return m;
+  };
+
+  // Anzeige eines Geräts: dunkles LCD mit hellen Ziffern, Breite und Höhe in cm; write(text) schreibt nur, wenn sich etwas ändert
+  fx.screen = function (w, h) {
+    var c = doc.createElement("canvas"), g = c.getContext("2d"), tex = new THREE.CanvasTexture(c);
+    var mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
+    c.width = 256; c.height = Math.round(256 * h / w);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    mesh.userData.write = function (text) {
+      if (text === mesh.userData.text) return;
+      mesh.userData.text = text;
+      g.fillStyle = "#1c2722"; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = "#a6f2c4"; g.textAlign = "center"; g.textBaseline = "middle";
+      var size = Math.round(c.height * 0.55);
+      do { g.font = "600 " + size + "px ui-monospace, monospace"; size -= 2; } while (g.measureText(text).width > c.width * 0.9 && size > 10);
+      g.fillText(text, c.width / 2, c.height * 0.54);
+      tex.needsUpdate = true;
+    };
+    return mesh;
+  };
 })(typeof globalThis !== "undefined" ? globalThis : this);

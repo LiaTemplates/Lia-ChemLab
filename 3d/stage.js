@@ -13,6 +13,10 @@
 
   var L = global.LiaChemLab, THREE = L.THREE, doc = global.document;
   var PX = 16;                      // Bildpunkte der 2D-Fläche je cm
+  // Hub (Gefäß auf Dreifuß, Klemme, Wasserbad) wird gestreckt: in 2D steht ein Becherglas 6,5 cm über dem Tisch, ein echter Dreifuß ist gut 16 cm hoch.
+  // Alles am selben Gefäß hebt sich gleich, untereinander bleiben die Maße wie in 2D.
+  var LIFT = 2.5;
+  function up(px) { return px / PX * LIFT; }
 
   // Szene der Konfiguration → Look eines Geräts: eigene Wahl im JSON, dann die Szene, ihre Zuordnung, das Labor, der Kasten
   function lookOf(type, scene, def) {
@@ -103,7 +107,7 @@
     controls.minAzimuthAngle = -1.2; controls.maxAzimuthAngle = 1.2;
     controls.screenSpacePanning = true;
 
-    var kit = { THREE: THREE, L: L, root: world, renderer: renderer, high: high, scene: scene, lang: opts.lang, still: opts.still, label: label, PX: PX };
+    var kit = { THREE: THREE, L: L, root: world, renderer: renderer, high: high, scene: scene, lang: opts.lang, still: opts.still, label: label, PX: PX, up: up };
     def.build(kit);
 
     var entries = {}, order = [], width = 0, framed = -1, dead = false, queued = 0, sorted = false;
@@ -197,6 +201,7 @@
     return {
       // ein Bild der Bühne als data:-URL, für Prüfungen (WebGL leert seinen Puffer nach dem Zeichnen)
       shot: function () { renderer.render(world, camera); return renderer.domElement.toDataURL("image/jpeg", 0.85); },
+      obj: function (id) { return entries[id] && entries[id].obj; },        // das 3D-Objekt eines Geräts, für Prüfungen
       // neue Einteilung: was weg ist, geht; was neu ist, entsteht beim nächsten item()
       build: function (items, total) {
         var keep = {};
@@ -218,7 +223,7 @@
           e.key.setAttribute("data-key", d.id);
           keys.appendChild(e.key);
         }
-        e.obj.position.set((d.x - width / 2) / PX, d.lift / PX, 0);
+        e.obj.position.set((d.x - width / 2) / PX, up(d.lift), 0);
         e.look.update(e.obj, d, kit);
         e.key.setAttribute("aria-label", d.label);
         e.selected = d.selected;
