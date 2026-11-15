@@ -222,7 +222,7 @@ Zur hellblauen Kupfersulfat-Lösung wenig Ammoniaklösung geben: Es fällt hellb
  "show":{"charts":false}}
 ```
 
-Der Baustein braucht hier kräftigeren Überschuss als das Labor, im idealen wie im realen Modell: Mit Ammoniak von 1 mol/L bleibt ein Teil des Niederschlags liegen, mit 5 mol/L löst er sich ganz.
+Der Baustein braucht hier kräftigeren Überschuss als das Labor, im idealen wie im realen Modell: Mit Ammoniak von 1 mol/L bleibt ein Teil des Niederschlags liegen, mit 5 mol/L löst er sich ganz. Wie viel liegen bleibt, hängt an der Konstante für den vierten Ammoniak am Kupfer, und die ist unsicherer als die übrigen: Der Baustein rechnet mit der Stufenkonstante 10^2,13, gemessen in Ammoniumnitrat-Lösung. Der kritisch ausgewertete Wert für unendliche Verdünnung ist kleiner (10^1,48), Lehrbücher nennen für die Gesamtkonstante oft Werte um 10^13 aus konzentrierten Salzlösungen.
 
 ## Erhitzen und Sieden
 

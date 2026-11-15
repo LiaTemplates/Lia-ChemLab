@@ -303,7 +303,9 @@
       { eq: "Cu^2+(aq) + NH3(aq) <=> CuNH3^2+(aq)", logK: 4.04, dH: -22.5, src: LLNL + "NH3 + Cu+2 = CuNH3+2, log_k 4.04" + STEP },
       { eq: "Cu^2+(aq) + 2 NH3(aq) <=> Cu(NH3)2^2+(aq)", logK: 7.4512, dH: -45.13, src: LLNL + "2 NH3 + Cu+2 = Cu(NH3)2+2, log_k 7.4512, delta_H -45.1269 kJ/mol" },
       { eq: "Cu^2+(aq) + 3 NH3(aq) <=> Cu(NH3)3^2+(aq)", logK: 10.2719, dH: -67.28, src: LLNL + "3 NH3 + Cu+2 = Cu(NH3)3+2, log_k 10.2719, delta_H -67.2779 kJ/mol" },
-      { eq: "Cu^2+(aq) + 4 NH3(aq) <=> Cu(NH3)4^2+(aq)", logK: 12.40, dH: -90, src: "Lehrbuchwert: vierte Stufenkonstante 10^2,13 (Bjerrum), auf den Wert für drei Ammoniak aus llnl.dat aufgesetzt" + STEP },
+      { eq: "Cu^2+(aq) + 4 NH3(aq) <=> Cu(NH3)4^2+(aq)", logK: 12.40, dH: -90, src: "Lehrbuchwert: vierte Stufenkonstante 10^2,13 (Bjerrum, in Ammoniumnitrat-Lösung), auf den Wert für drei Ammoniak aus llnl.dat aufgesetzt. " +
+        "Der kritisch ausgewertete Wert bei Ionenstärke 0 ist kleiner: 10^1,48 (Martell und Smith, Critical Stability Constants); Lehrbücher nennen " +
+        "als Gesamtkonstante oft Werte um 10^13 aus konzentrierten Salzlösungen. Gewählt ist der mittlere Wert, weil der Versuch in ammoniakreicher Lösung läuft" + STEP },
       { eq: "Ag+(aq) + 2 NH3(aq) <=> Ag(NH3)2+(aq)", logK: 7.220, dH: -56, src: MINTEQ + "Ag+ + 2 NH4+ = Ag(NH3)2+ + 2 H+, log_k -11.268; umgerechnet mit NH4+ = NH3 + H+. Reaktionsenthalpie: Lehrbuchwert -56 kJ/mol" },
 
       // ---------------------------------------------------------------- Löslichkeit
