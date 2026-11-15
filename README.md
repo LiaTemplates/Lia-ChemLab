@@ -802,9 +802,7 @@ Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas 
 
 Der Knopf **3D** neben „Ton“ zeigt die Arbeitsfläche räumlich; noch einmal antippen schaltet zurück. Der Versuch läuft dabei weiter. In 3D dreht Ziehen die Ansicht, das Mausrad oder zwei Finger zoomen, Antippen wirkt wie in 2D. Mit der Tab-Taste kommt man von Gerät zu Gerät, Enter tippt es an.
 
-> **Vorschau:** Alle Geräte haben ein 3D-Modell im Labor. Die Szenen Küche und Labor um 1880 haben bisher nur eigene Farben und Licht, noch keine eigenen Geräte.
-
-Diese Fläche beginnt in 3D, im Labor um 1880:
+Die Szene bestimmt, wie Raum und Geräte aussehen; die Rechnung ist in jeder Szene dieselbe. Im **Labor um 1880** stehen Messingbrenner, Bechergläser ohne Skala, eine Bürette nach Mohr mit Quetschhahn, Messgeräte im Holzgehäuse mit Papierskala, eine Kupferwanne als Wasserbad und eine Kohlefadenlampe vor einer Ziegelwand:
 
 ```json @ChemLab.sim
 {"bench":[
@@ -814,6 +812,33 @@ Diese Fläche beginnt in 3D, im Labor um 1880:
  ],
  "view":"3d",
  "scene":"1880",
+ "show":{"charts":["T"]}}
+```
+
+Titration um 1880: den Quetschhahn der Bürette öffnen, bis der Indikator umschlägt.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"vorlage","ml":100,"contains":[{"reagent":"HCl 0.1M","ml":20},{"reagent":"PP","drops":3}]},
+  {"type":"burette","over":"vorlage","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
+ ],
+ "view":"3d",
+ "scene":"1880",
+ "show":{"charts":["titration"]}}
+```
+
+In der **Küche** wird auf dem Gaskartuschenkocher erhitzt, das Wasserbad ist ein Glastopf auf der Kochplatte, das Thermometer ein Einstechthermometer, das Becherglas ein Messbecher:
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"becher","ml":600,"contains":[{"reagent":"H2O","ml":400}]},
+  {"type":"thermometer","in":"becher"},
+  {"type":"burner","under":"becher","flame":2},
+  {"type":"testtube","id":"glas","contains":[{"reagent":"H2O","ml":10}]},
+  {"type":"bath","under":"glas","temp":60}
+ ],
+ "view":"3d",
+ "scene":"kitchen",
  "show":{"charts":["T"]}}
 ```
 

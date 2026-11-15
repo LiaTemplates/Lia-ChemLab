@@ -9,6 +9,20 @@
   var L = global.LiaChemLab, THREE = L.THREE, doc = global.document;
   var fx = (L.fx3d = {});
 
+  // Stil der Szene: die Bühne setzt ihn vor jedem Aufruf eines Looks (fx.style = kit.style). Die Looks des Labors lesen ihn,
+  // so sehen dieselben Geräte in der Küche und um 1880 anders aus, ohne eigenen Code.
+  // shortcut: ein Stil für alle Bühnen der Seite zugleich; zwei 3D-Flächen mit verschiedenen Szenen auf einer Folie mischen sich beim Neubau
+  fx.STYLE = {
+    glass: 0xffffff, glassOpacity: 0.2,           // Farbe und Deckkraft des Glases
+    metal: "steel",                                // "steel" oder "brass": Stangen, Rohre, Brenner
+    wood: 0x9a6a3a,                                // Ständer und Halter
+    device: 0xe6e9ec,                              // Gehäuse der Messgeräte
+    display: "lcd",                                // "lcd" oder "paper": Anzeige der Geräte
+    marks: 0xffffff,                               // Farbe der Skala auf Gläsern; null: ohne Skala
+    hose: 0xc0462e                                 // Gasschlauch
+  };
+  fx.style = fx.STYLE;
+
   function pseudo(seed, i) { var x = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453; return x - Math.floor(x); }
   fx.pseudo = pseudo;
 
@@ -17,7 +31,7 @@
   // Glas ist nur durchscheinend, nicht „transmissiv“: eine Flüssigkeit mit Transmission dahinter sähe sonst das Glas nicht
   // und umgekehrt (siehe Demo). Schatten wirft es keinen.
   fx.glass = function () {
-    return new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.03, transparent: true, opacity: 0.2,
+    return new THREE.MeshPhysicalMaterial({ color: fx.style.glass, metalness: 0, roughness: 0.03, transparent: true, opacity: fx.style.glassOpacity,
       clearcoat: 1, clearcoatRoughness: 0.02, specularIntensity: 1, depthWrite: false, side: THREE.DoubleSide });
   };
 
@@ -377,7 +391,8 @@
     return m;
   };
 
-  fx.steel = function () { return fx.matte(0xb9c0c7, 0.3, 0.85); };
+  fx.steel = function () { return fx.style.metal === "brass" ? fx.matte(0xc9a24a, 0.32, 1) : fx.matte(0xb9c0c7, 0.3, 0.85); };
+  fx.wood = function () { return fx.matte(fx.style.wood, 0.65); };
   fx.iron = function () { return fx.matte(0x33373d, 0.45, 0.7); };
 
   // Stativ: Fuß und Stange bei (x, z) vom Boden floor bis top; grips: Klemmen [{ y, x, r, across }] mit Backen um ein Rohr bei x (z = 0)
@@ -418,6 +433,7 @@
 
   // Anzeige eines Geräts: dunkles LCD mit hellen Ziffern, Breite und Höhe in cm; write(text) schreibt nur, wenn sich etwas ändert
   fx.screen = function (w, h) {
+    var paper = fx.style.display === "paper";
     var c = doc.createElement("canvas"), g = c.getContext("2d"), tex = new THREE.CanvasTexture(c);
     var mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: tex, toneMapped: false }));
     c.width = 256; c.height = Math.round(256 * h / w);
@@ -425,10 +441,12 @@
     mesh.userData.write = function (text) {
       if (text === mesh.userData.text) return;
       mesh.userData.text = text;
-      g.fillStyle = "#1c2722"; g.fillRect(0, 0, c.width, c.height);
-      g.fillStyle = "#a6f2c4"; g.textAlign = "center"; g.textBaseline = "middle";
-      var size = Math.round(c.height * 0.55);
-      do { g.font = "600 " + size + "px ui-monospace, monospace"; size -= 2; } while (g.measureText(text).width > c.width * 0.9 && size > 10);
+      // LCD: dunkel mit hellen Ziffern; Papier (1880): vergilbte Skala mit Tinte
+      g.fillStyle = paper ? "#efe3c2" : "#1c2722"; g.fillRect(0, 0, c.width, c.height);
+      g.fillStyle = paper ? "#3b2a1a" : "#a6f2c4"; g.textAlign = "center"; g.textBaseline = "middle";
+      if (paper) { g.strokeStyle = "#8a6a3a"; g.lineWidth = 4; g.strokeRect(4, 4, c.width - 8, c.height - 8); }
+      var size = Math.round(c.height * 0.55), face = paper ? "px Georgia, 'Times New Roman', serif" : "px ui-monospace, monospace";
+      do { g.font = "600 " + size + face; size -= 2; } while (g.measureText(text).width > c.width * 0.9 && size > 10);
       g.fillText(text, c.width / 2, c.height * 0.54);
       tex.needsUpdate = true;
     };

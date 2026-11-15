@@ -11,6 +11,7 @@
 
   // Skala als Textur auf einem Streifen der Glaswand: marks [{ y in cm, long, text }]
   function scale(radius, height, marks, side) {
+    var ink = "#" + new THREE.Color(fx.style.marks == null ? 0xffffff : fx.style.marks).getHexString();
     // schmale Rohre (Bürette) bekommen einen breiteren Bogen, sonst würde die Textur viel zu hoch
     var c = doc.createElement("canvas"), g = c.getContext("2d"), tex, mat, arc = Math.min(1.6, Math.max(0.5, 0.5 / radius)), k;
     c.width = 128; c.height = Math.min(4096, Math.round(128 * height / (radius * arc)));
@@ -18,7 +19,7 @@
     marks.forEach(function (m) {
       var y = c.height * (1 - m.y / height), x0 = side < 0 ? 4 : 128 - (m.long ? 52 : 34);
       for (k = 0; k < 2; k++) {         // erst ein grauer Schatten, dann weiß: lesbar vor heller Wand und vor Farbe
-        g.strokeStyle = g.fillStyle = k ? "rgba(255,255,255,0.95)" : "rgba(60,70,80,0.55)";
+        g.strokeStyle = g.fillStyle = k ? ink : "rgba(60,70,80,0.55)";
         g.beginPath(); g.moveTo(x0 + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.lineTo(x0 + (m.long ? 48 : 30) + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.stroke();
         if (m.text) { g.textAlign = side < 0 ? "left" : "right"; g.fillText(m.text, side < 0 ? 58 + (k ? 0 : 1.5) : 72 + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); }
       }
@@ -74,7 +75,7 @@
     id: "tube", floor: tubeFloor, rim: cm(-T.top),
     inner: function (y) { return y >= tubeCenter ? tubeR : Math.sqrt(Math.max(0, tubeR * tubeR - (tubeCenter - y) * (tubeCenter - y))); }
   };
-  var wood = function () { return fx.matte(0x9a6a3a, 0.65); };
+  var wood = function () { return fx.wood(); };
 
   L.registerLook("testtube", "lab", vessel({
     tall: true, thick: 0.06, lip: 0.08,
@@ -113,7 +114,8 @@
       var u = group.userData, key = shape.id + (d.ctx.numbers ? "#" : ""), marks = [], s = shape.size, i, cap = d.data.cap;
       if (u.marksKey === key) return;
       u.marksKey = key;
-      if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); }
+      if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); u.marks = null; }
+      if (fx.style.marks == null) return;                // Bechergläser um 1880: ohne Skala
       for (i = 1; i <= 4; i++) marks.push({ y: cm(3 + i / 4 * (s[1] - 16)), long: i % 2 === 0, text: d.ctx.numbers && i % 2 === 0 ? String(cap * i / 4) : "" });
       u.marks = scale(cm(s[0] / 2) + 0.012, shape.rim, marks, 1);
       u.marks.position.y = shape.rim / 2;
@@ -138,7 +140,7 @@
 
   // ------------------------------------------------------------------ Bürette am Stativ
 
-  var steel = function () { return fx.matte(0x9aa3ab, 0.35, 0.85); };
+  var steel = function () { return fx.steel(); };
 
   L.registerLook("burette", "lab", {
     build: function (kit, d) {

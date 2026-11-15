@@ -108,7 +108,31 @@
     controls.minAzimuthAngle = -1.2; controls.maxAzimuthAngle = 1.2;
     controls.screenSpacePanning = true;
 
-    var kit = { THREE: THREE, L: L, root: world, renderer: renderer, high: high, scene: scene, lang: opts.lang, still: opts.still, label: label, PX: PX, up: up };
+    var kit = { THREE: THREE, L: L, root: world, renderer: renderer, high: high, scene: scene, lang: opts.lang, still: opts.still, label: label, PX: PX, up: up,
+      style: Object.assign({}, L.fx3d.STYLE, def.style), render: function () { render(); } };
+    var loader = new THREE.TextureLoader();
+    loader.setCrossOrigin("anonymous");
+    // Bild aus dem Ordner des Bausteins (assets/3d/…); color: Farbbild (sRGB), sonst Daten wie Normalen; repeat: [x, y]
+    kit.texture = function (path, color, repeat) {
+      var tex = loader.load(L.base3d + path, render);
+      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+      if (repeat) tex.repeat.set(repeat[0], repeat[1]);
+      if (color) tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 4;
+      return tex;
+    };
+    // Raumlicht aus einem HDR-Bild; bis es geladen ist, gilt das einfache Raumlicht
+    kit.environment = function (path) {
+      new L.three.RGBELoader().load(L.base3d + path, function (hdr) {
+        if (dead) { hdr.dispose(); return; }
+        var env = pmrem.fromEquirectangular(hdr).texture;
+        hdr.dispose();
+        if (world.environment) world.environment.dispose();
+        world.environment = env;
+        render();
+      });
+    };
+    L.fx3d.style = kit.style;
     def.build(kit);
 
     var entries = {}, order = [], width = 0, framed = -1, dead = false, queued = 0, sorted = false;
@@ -241,6 +265,7 @@
         var e = entries[d.id];
         if (!e) {
           e = entries[d.id] = { type: d.type, look: lookOf(d.type, scene, def), key: doc.createElement("button") };
+          L.fx3d.style = kit.style;
           e.obj = e.look.build(kit, d);
           e.obj.userData.chemlab = d.id;
           world.add(e.obj);
@@ -250,6 +275,7 @@
           keys.appendChild(e.key);
         }
         e.obj.position.set((d.x - width / 2) / PX, up(d.lift), 0);
+        L.fx3d.style = kit.style;
         e.look.update(e.obj, d, kit);
         e.key.setAttribute("aria-label", d.label);
         e.selected = d.selected;

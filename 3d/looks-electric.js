@@ -45,7 +45,7 @@
         sub.add(plate, cover, mesh(new THREE.SphereGeometry(0.2, 12, 8), fx.matte(0x8a8f96, 0.3, 0.9), x, cm(-(p.top + 6))));
         // Krokodilklemme am Rand des Glases, sonst ein Halter auf dem Tisch
         if (d.place) sub.add(mesh(new THREE.BoxGeometry(0.9, 0.25, 0.35), fx.matte(0x3a3d42, 0.5), x + (p.x < 0 ? -0.5 : 0.5), cm(-(p.rim - 4))));
-        else sub.add(mesh(new THREE.BoxGeometry(1.8, 0.5, 1.8), fx.matte(0x9a6a3a, 0.65), 0, 0.25));
+        else sub.add(mesh(new THREE.BoxGeometry(1.8, 0.5, 1.8), fx.wood(), 0, 0.25));
       });
       var plate = u.body.getObjectByName("plate"), cover = u.body.getObjectByName("coat");
       // Eine Elektrode, die sich auflöst, wird dünner; was sich abscheidet, liegt als Belag auf dem eingetauchten Teil
@@ -92,7 +92,7 @@
         dial.add(mark);
         var a = post(0xc62828), b = post(0x202326);
         a.position.set(-cm(postX), cm(h) + 0.22, 0.8); b.position.set(cm(postX), cm(h) + 0.22, 0.8);
-        body.add(mesh(new THREE.BoxGeometry(cm(w), cm(h), 4), fx.matte(0xdfe3e7, 0.5), 0, cm(h) / 2), screen, dial, a, b);
+        body.add(mesh(new THREE.BoxGeometry(cm(w), cm(h), 4), fx.matte(fx.style.device, 0.5), 0, cm(h) / 2), screen, dial, a, b);
         screen.position.set(0, cm(knob.screen), 2.01);
         group.add(body);
         group.userData = { body: body, screen: screen, dial: dial, a: a, b: b, terminals: [V(-cm(postX), cm(postY) + 0.2, 0.8), V(cm(postX), cm(postY) + 0.2, 0.8)] };
@@ -162,7 +162,7 @@
         path.add(new THREE.LineCurve3(V(x2, top - r, 0), V(x2, cm(-p.s2), 0)));
         // Glasrohr mit weißem Gel (Kaliumnitrat in Agar)
         sub.add(mesh(new THREE.TubeGeometry(path, 120, 0.24, 12), new THREE.MeshPhysicalMaterial({ color: 0xf1efe8, roughness: 0.35, transparent: true, opacity: 0.9, clearcoat: 1 })));
-        if (!d.place) sub.add(mesh(new THREE.BoxGeometry(3.4, 0.4, 1.4), fx.matte(0x9a6a3a, 0.65), 0, 0.2));
+        if (!d.place) sub.add(mesh(new THREE.BoxGeometry(3.4, 0.4, 1.4), fx.wood(), 0, 0.2));
       });
     }
   });

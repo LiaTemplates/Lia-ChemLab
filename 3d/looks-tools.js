@@ -46,7 +46,7 @@
       body.add(mesh(new THREE.CylinderGeometry(3.0, 3.4, 0.9, 40), iron, 0, 0.45),
         mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.3, 24), steel, 0, 2.2),            // Luftregler
         mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.2, 12).rotateZ(Math.PI / 2), steel, 1.4, 1.6),
-        mesh(new THREE.TubeGeometry(hose, 40, 0.45, 10), fx.matte(0xc0462e, 0.6), 0, 0, 0));
+        mesh(new THREE.TubeGeometry(hose, 40, 0.45, 10), fx.matte(fx.style.hose, 0.6), 0, 0, 0));
       var tube = mesh(new THREE.CylinderGeometry(0.55, 0.55, 1, 24), steel);
       body.add(tube);
       var outer = fx.cone(0.75, 0x3d6dff), inner = fx.cone(0.5, 0x8fd8ff), light = new THREE.PointLight(0x6fa0ff, 0, 0, 2);
@@ -107,9 +107,10 @@
     },
     update: function (group, d, kit) {
       var u = group.userData, r = d.data, p = d.place || { half: 50, depth: BATH.depth, clamp: false }, a = cm(p.half), deep = Math.min(14, 2 * a);
-      var grate = kit.up(BATH.lift), level = grate + cm(p.depth), top = level + cm(BATH.rim), cold = r.temp <= 4;
-      u.body = fx.rebuild(group, "tank", [a, level, p.clamp, cold].join("|"), function (sub) {
-        var glass = fx.glass(), k, wall = function (w, h, x, y, z, ry) {
+      // um 1880 eine Wanne aus Kupfer: undurchsichtig, deshalb reicht ihr Rand nur knapp über das Wasser
+      var copper = fx.style.tank === "copper", grate = kit.up(BATH.lift), level = grate + cm(p.depth), top = level + (copper ? 0.3 : cm(BATH.rim)), cold = r.temp <= 4;
+      u.body = fx.rebuild(group, "tank", [a, level, p.clamp, cold, copper].join("|"), function (sub) {
+        var glass = copper ? new THREE.MeshStandardMaterial({ color: 0xb8693a, metalness: 1, roughness: 0.35, side: THREE.DoubleSide }) : fx.glass(), k, wall = function (w, h, x, y, z, ry) {
           var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glass);
           m.position.set(x, y, z); m.rotation.y = ry || 0; m.renderOrder = 2; sub.add(m);
         };
@@ -133,7 +134,7 @@
           sub.add(ice);
         }
         // Thermostat rechts neben der Wanne, Heizstab über den Rand ins Wasser
-        var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(0xe6e8ea, 0.5), a + 2, 3, 0);
+        var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(fx.style.device, 0.5), a + 2, 3, 0);
         sub.add(box, fx.rod(V(a + 1.2, 6, 0), V(a + 1.2, top + 0.8, 0), 0.18, fx.steel()), fx.rod(V(a + 1.2, top + 0.8, 0), V(a - 0.8, top + 0.8, 0), 0.18, fx.steel()),
           fx.rod(V(a - 0.8, top + 0.8, 0), V(a - 0.8, grate + 1, 0), 0.18, fx.steel()));
         if (p.clamp) fx.stand(sub, -a - 1.3, -4, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
@@ -152,7 +153,7 @@
   function thermoScale(numbers) {
     var c = doc.createElement("canvas"), g = c.getContext("2d"), T, y, tex;
     c.width = 64; c.height = 1024;
-    g.fillStyle = "#f7f7f4"; g.fillRect(0, 0, 64, 1024);
+    g.fillStyle = fx.style.display === "paper" ? "#efe3c2" : "#f7f7f4"; g.fillRect(0, 0, 64, 1024);      // um 1880 auf Papier
     g.fillStyle = "#22262b"; g.font = "bold 22px system-ui, sans-serif"; g.textBaseline = "middle";
     for (T = -10; T <= 110; T += 2) {
       y = 1024 * (1 - (T + 10) / 120);
@@ -188,7 +189,7 @@
         var column = mesh(new THREE.CylinderGeometry(0.055, 0.055, 1, 10), red, x, 0);
         column.name = "column";
         sub.add(column);
-        if (!d.place) sub.add(mesh(new THREE.BoxGeometry(1.8, 0.5, 1.8), fx.matte(0x9a6a3a, 0.65), 0, 0.25));      // Halter, wenn es für sich steht
+        if (!d.place) sub.add(mesh(new THREE.BoxGeometry(1.8, 0.5, 1.8), fx.wood(), 0, 0.25));      // Halter, wenn es für sich steht
       });
       var column = u.body.getObjectByName("column"), y = at(r.value);
       column.scale.y = Math.max(0.01, y - bottom - 0.5);
@@ -207,7 +208,7 @@
       build: function () {
         var group = new THREE.Group(), screen = fx.screen(5, 2);
         var unit = new THREE.Group();
-        unit.add(mesh(new THREE.BoxGeometry(6.5, 9, 3.5), fx.matte(0xe9ecef, 0.45), 0, 4.5), screen);
+        unit.add(mesh(new THREE.BoxGeometry(6.5, 9, 3.5), fx.matte(fx.style.device, 0.45), 0, 4.5), screen);
         screen.position.set(0, 7.3, 1.76);
         group.add(unit);
         group.userData = { unit: unit, screen: screen };

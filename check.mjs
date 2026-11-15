@@ -1089,13 +1089,21 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["3d", "README.md", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools", "vendor"]);
+  assert.deepEqual(files, ["3d", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
   const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
   assert.ok(loads.length >= 5, loads.join(", "));
   for (const file of loads) assert.ok(fs.existsSync(new URL(file, here)), file);
+  // Texturen und Raumlicht der Szenen, mit Herkunft in assets/3d/QUELLEN.md
+  const assets = [...fs.readFileSync(new URL("3d/scenes.js", here), "utf8").matchAll(/"(assets\/3d\/[\w./-]+)"/g)].map((m) => m[1]);
+  const sources = fs.readFileSync(new URL("assets/3d/QUELLEN.md", here), "utf8");
+  assert.ok(assets.length >= 8, assets.join(", "));
+  for (const file of assets) {
+    assert.ok(fs.existsSync(new URL(file, here)), file);
+    assert.ok(sources.includes(file.split("/").pop().replace(/_(diff|nor_gl)_1k\.jpg|_1k\.hdr/, "")), "Quelle für " + file);
+  }
 });
 
 // ================================================================ Befunde der Durchsicht
