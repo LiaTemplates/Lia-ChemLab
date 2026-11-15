@@ -6398,14 +6398,21 @@ test("Reales Modell: Gips und Calciumhydroxid lösen sich etwa wie gemessen", ()
   near(inSolution(soaked("CaSO4*2H2O(s)", 0.01, "ideal"), ["Ca^2+(aq)"]), 0.00495, 0.0002, "Gips, ideal");
 });
 
-test("Reales Modell: Ionenpaare färben die Flamme wie ihr Metall, zerfallen beim Eindampfen und stören das ideale Modell nicht", () => {
-  // Flammenfärbung: auch das Natrium und Calcium, das im Ionenpaar steckt, leuchtet
+test("Reales Modell: Ionenpaare zerfallen beim Eindampfen und stören das ideale Modell nicht", () => {
+  // Flammenfärbung: die freien Natrium-Ionen färben die Flamme wie im idealen Modell
   const flame = lab([{ type: "testtube", id: "a", contains: [{ reagent: "Na2SO4 1M", ml: 5 }] }, { type: "burner", id: "br", flame: 2 }], { room: 20, model: "real" });
   assert.equal(L.flameTest(flame, "a").name, "yellow", "Natriumsulfat");
   // im idealen Modell entsteht auch beim Eindampfen kein Ionenpaar
   const plain = heated({ type: "dish", contains: [{ reagent: "CaCl2 0.1M", ml: 2 }, { reagent: "Na2SO4 0.01M", ml: 2 }] });
   until(plain, () => !(amount(plain, "H2O(l)") > 0), 900);
   for (const id of ["CaSO4(aq)", "NaSO4-(aq)", "CaOH+(aq)"]) assert.equal(amount(plain, id), 0, "ideal, eingedampft: kein " + id);
+  // auch nicht aus Ionen, die bis zuletzt gelöst bleiben: Magnesium und Sulfat bleiben im idealen Modell als Ionen im Rückstand
+  const salt = heated({ type: "dish", contains: [{ reagent: "H2O", ml: 2 }] }), dish = L.vessel(salt, "b");
+  dish.n["Mg^2+(aq)"] = 1e-4; dish.n["SO4^2-(aq)"] = 1e-4; dish.dirty = true;
+  until(salt, () => !(amount(salt, "H2O(l)") > 0), 900);
+  assert.ok(!(amount(salt, "H2O(l)") > 0), "eingedampft");
+  assert.equal(amount(salt, "MgSO4(aq)"), 0, "ideal, eingedampft: kein Magnesiumsulfat-Ionenpaar");
+  near(amount(salt, "Mg^2+(aq)"), 1e-4, 1e-7, "Magnesium bleibt als Ion im Rückstand");
   // eingedampft bleibt Salz zurück, kein Ionenpaar; mit Wasser löst es sich wieder
   const l = heated({ type: "dish", contains: [{ reagent: "Na2SO4 0.5M", ml: 4 }] }, { model: "real" }), before = totals(l);
   until(l, () => !(amount(l, "H2O(l)") > 0), 900);
@@ -6437,5 +6444,34 @@ test("Daten: ein Gleichgewicht kann dem realen Modell vorbehalten sein", () => {
   assert.deepEqual(pairs.map((e) => e.text).sort(), ["Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)",
     "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)"]);
   for (const e of pairs) assert.match(e.src, /phreeqc\.dat|minteq\.v4\.dat/, e.text);
+  // die Werte, wie sie in den Quelldateien stehen
+  const logK = Object.fromEntries(pairs.map((e) => [e.solid || Object.keys(e.nu).find((id) => /SO4-\(aq\)|SO4\(aq\)|OH\+\(aq\)/.test(id) && id !== "SO4^2-(aq)"), [e.logK, e.dH == null ? null : e.dH]]));
+  assert.deepEqual(logK, { "NaSO4-(aq)": [0.94, 8.23], "KSO4-(aq)": [1.18, 3], "CaSO4(aq)": [2.36, 7.1], "CaOH+(aq)": [-12.697, 64.11], "MgSO4(aq)": [2.42, 19], "MgOH+(aq)": [-11.397, 67.81] });
+  assert.deepEqual(["NaSO4-(aq)", "KSO4-(aq)", "CaSO4(aq)", "MgSO4(aq)", "MgOH+(aq)", "CaOH+(aq)"].map((id) => L.db.species[id].gamma || null),
+    [[3.5, 0.1072], [5.4, 0.19], [0, 0.0445], [0, 0.2], [6.5, 0], null], "Parameter der Aktivitätskoeffizienten aus phreeqc.dat");
   assert.match(fs.readFileSync(new URL("README.md", here), "utf8"), /"model":"real"` gilt ein Gleichgewicht nur im realen Modell/, "die README beschreibt die Angabe");
+});
+
+test("Viele Niederschläge zugleich: Zufallsgemische vieler Feststoffe in wenig Wasser kommen im Gleichgewicht zur Ruhe", () => {
+  // Vier bis siebzehn Feststoffe in 0,06 bis 1,8 mL Wasser. Die Folgen sind so gewählt, dass sie zwei Dinge brauchen: Ein Feststoff,
+  // der sich lösen muss, löst sich zunächst ganz (2, 10, 17, 24), und von Feststoffen, deren Zusammensetzungen voneinander
+  // abhängen, scheidet einer aus (4, 8, 12, 19).
+  const solids = L.db.equilibria.filter((e) => e.solid && !e.rate).map((e) => e.solid);
+  for (const model of ["ideal", "real"]) for (const seed of [2, 10, 17, 24, 4, 8, 12, 19]) {
+    let s = (seed * 2654435761) >>> 0;
+    const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+    const n = { "H2O(l)": 10 ** (-2.5 + 1.5 * rnd()) };
+    for (let k = 0, m = 4 + Math.floor(rnd() * 14); k < m; k++) n[solids[Math.floor(rnd() * solids.length)]] = 10 ** (-6 + 2.5 * rnd());
+    const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 25, model }), glass = L.vessel(mud, "b"), where = `${model}, Folge ${seed}`;
+    glass.n = Object.assign({}, n);
+    glass.lumps = Object.keys(n).filter((id) => /\(s\)$/.test(id)).map((id) => ({ id, n: n[id], n0: n[id], a0: 1, p: 2 / 3, made: true, settled: 1 }));
+    glass.dirty = true;
+    const before = totals(mud);
+    assert.ok(restAfter(mud, 3000) < 3000, where + ": kommt zur Ruhe");
+    assert.equal(mud.failed || 0, 0, where + ": jedes Gleichgewicht ließ sich berechnen");
+    near(totals(mud).charge, before.charge, 1e-12, where + ": Ladung");
+    near(totals(mud).mass, before.mass, 1e-9, where + ": Masse");
+    const paste = Object.entries(glass.n).reduce((sum, [id, x]) => sum + (L.species(id).phase === "aq" ? x : 0), 0) > 25 * L.volume(glass);
+    if (!paste) assert.deepEqual(settled(mud), [], where + ": nichts übersättigt, nichts liegt da, was sich lösen müsste");
+  }
 });

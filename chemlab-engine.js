@@ -1114,9 +1114,6 @@
   // Newton-Verfahren über die Stoffbilanzen. Unbekannte: die Logarithmen der Grundteilchen und,
   // für die Feststoffe in "active", deren Menge; für sie gilt zusätzlich: die Lösung ist gerade gesättigt.
   // total: Gesamtmenge je Grundteilchen in mol/L, rhs: Sättigungsbedingung je Feststoff.
-  // lift: nur im realen Modell gesetzt (siehe equilibrate): lg γ der Grundteilchen, um die sich die Obergrenze ihrer
-  // Konzentration verschiebt.
-  var lift = null;
   function solve(sys, logB, total, x0, active, rhs, s0) {
     var ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = active.length, free = [];
     var x = x0.slice(), s = s0.slice(), c = new Array(ns);
@@ -1181,8 +1178,7 @@
       for (k = 0; k < nf; k++) big = Math.max(big, Math.abs(d[k]));
       if (!isFinite(big)) return null;
       damp = big > 1 ? 1 / big : 1;                    // höchstens eine Zehnerpotenz je Schritt
-      // Höchstens 10³ mol/L – als Aktivität: Mit kleinem Aktivitätskoeffizienten braucht dieselbe Sättigung eine größere Konzentration.
-      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(lift ? 3 - Math.min(0, lift[free[k]]) : 3, x[free[k]] + damp * d[k]));
+      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(3, x[free[k]] + damp * d[k]));
       for (p = 0; p < np; p++) s[p] += damp * d[nf + p] * unit;
     }
     return null;
@@ -1201,14 +1197,14 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, have = cur.slice(), state = null, k, round, worst, at, value, melt, out;
-    // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht); have: die Mengen im Arbeitsstand
+    var np = sys.solids.length, active = [], used = {}, state = null, k, round, worst, at, value, melt, out;
+    // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
         for (var q = 0; q < np; q++) if (used[q]) sum += sys.solids[q].comp[b] * cur[q];
         return sum;
       });
-      return solve(sys, logB, total, state ? state.x : x0, active, rhs, active.map(function (q) { return have[q]; }));
+      return solve(sys, logB, total, state ? state.x : x0, active, rhs, active.map(function (q) { return cur[q]; }));
     }
     // Lässt sich die Zusammensetzung von q aus denen der aktiven Feststoffe zusammensetzen? Dann die Anteile alpha mit
     // comp[q] = Σ alpha[i] · comp[active[i]], sonst null. (Kleinste Quadrate; die aktiven sind voneinander unabhängig.)
@@ -1232,33 +1228,22 @@
       }
       return rest <= 1e-18 * size ? alpha : null;
     }
-    // Nimmt q unter die Feststoffe auf, mit denen die Lösung gesättigt sein soll. Hängt seine Zusammensetzung von denen ab, die
-    // schon dabei sind (Oxid und Hydroxid; Hydroxid und Carbonat zweier Metalle), können nicht alle gesättigt sein. Zwischen
-    // ihnen läuft dann eine Reaktion, die an der Lösung nichts ändert: q entsteht aus den anderen oder zerfällt in sie. Sie läuft
-    // in die Richtung, in der die freie Enthalpie sinkt, bis einer der Beteiligten aufgebraucht ist. Der scheidet aus.
+    // Nimmt q unter die Feststoffe auf, mit denen die Lösung gesättigt sein soll: q ist übersättigt, die Lösung mit den aktiven
+    // gerade gesättigt. Hängt seine Zusammensetzung von ihnen ab (Oxid und Hydroxid; Hydroxid und Carbonat zweier Metalle),
+    // können nicht alle gesättigt sein. Dann entsteht q aus den anderen, ohne dass sich an der Lösung etwas ändert, und das
+    // senkt die freie Enthalpie, bis einer von denen, die dabei verbraucht werden, aufgebraucht ist. Der scheidet aus.
     function join(q) {
-      var alpha, drive, grow, step, gone = -1, i, change;
-      if (!used[q]) used[q] = true; else have[q] = 0;           // war er schon aufgebraucht, beginnt er bei null
-      alpha = depends(q);
+      var alpha = depends(q), gone = -1, least = Infinity, i;
+      used[q] = true;
       if (!alpha) { active.push(q); return; }
-      drive = rhs[q];                                           // < 0: q ist beständiger als die anderen zusammen und wächst
-      for (i = 0; i < active.length; i++) drive -= alpha[i] * rhs[active[i]];
-      grow = drive < 0 ? 1 : -1;                                // je Umsatz: q ändert sich um grow, der aktive i um −grow · alpha[i]
-      step = grow < 0 ? have[q] : Infinity;
       for (i = 0; i < active.length; i++) {
-        change = -grow * alpha[i];
-        if (change < -1e-9 && have[active[i]] / -change < step) { step = have[active[i]] / -change; gone = i; }
+        if (alpha[i] > 1e-9 && state.s[i] / alpha[i] < least) { least = state.s[i] / alpha[i]; gone = i; }
       }
-      for (i = 0; i < active.length; i++) have[active[i]] = Math.max(0, have[active[i]] - grow * alpha[i] * step);
-      if (gone < 0) { have[q] = 0; return; }                    // q selbst ist als Erster aufgebraucht
-      have[q] += grow * step;
-      have[active[gone]] = 0;
-      active[gone] = q;
+      if (gone >= 0) active[gone] = q;
     }
     for (round = 0; round < 24 + 6 * np; round++) {
       state = attempt();
       if (!state) return null;
-      for (k = 0; k < active.length; k++) have[active[k]] = Math.max(0, state.s[k]);
       worst = -1e-15; at = -1;                                  // wer aufgebraucht ist, scheidet aus
       for (k = 0; k < active.length; k++) if (state.s[k] < worst) { worst = state.s[k]; at = k; }
       if (at >= 0) { active.splice(at, 1); continue; }
@@ -1272,7 +1257,7 @@
       // Ein Feststoff, der sich lösen müsste, löst sich zunächst ganz: Ob die Lösung ihn überhaupt sättigen kann, zeigt sich
       // danach (dann ist sie übersättigt, und er kommt wieder dazu). Ihn gleich als gesättigt anzusetzen, verlangte sonst
       // unter Umständen Konzentrationen, die es nicht gibt.
-      if (at >= 0 && melt) { used[at] = true; have[at] = 0; continue; }
+      if (at >= 0 && melt) { used[at] = true; continue; }
       if (at >= 0) { join(at); continue; }
       out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });
@@ -1456,8 +1441,7 @@
     for (b = 0; b < nb; b++) {
       id = ids[sys.basis[b]];
       x[b] = id in warm && warm[id] > -60 ? warm[id] : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
-      // cold: ein Startwert, der nur vom jetzigen Inhalt ausgeht; ohne Wasserstoff-Ionen neutral
-      cold[b] = id === PROTON && !(old[sys.basis[b]] > 0) ? -7 : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
+      cold[b] = Math.log10(Math.max(old[sys.basis[b]], 1e-12));        // ein Startwert, der nur vom jetzigen Inhalt ausgeht
     }
 
     // Reales Modell: Bei angenommener Ionenstärke u² sind die Aktivitätskoeffizienten feste Zahlen, die sich in die Konstanten
@@ -1478,7 +1462,6 @@
           for (var q = 0; q < nb; q++) value -= sys.solids[index].comp[q] * lg[sys.basis[q]];
           return value;
         });
-        lift = sys.basis.map(function (q) { return lg[q]; });
       }
       // 1. die Lösung für sich, mit den Feststoffen, wie sie gerade sind
       // Der gemerkte Startwert kann unpassend sein (das Gefäß lief leer und bekam etwas ganz anderes): dann noch einmal von vorn
@@ -1568,14 +1551,12 @@
       return Math.sqrt(sum / 2);
     }
     var out, found;
-    try {
-      if (real) {
-        // Start bei der Ionenstärke, die das Gefäß gerade hat: Hat sich nichts geändert, genügt ein Versuch
-        found = L.selfConsistent(Math.sqrt(strength(v, vol)), function (at, last) { return attempt(at, last ? last.state.x : x); }, rootOf);
-        out = found.out;
-        if (out && !found.ok) out.fails++;                       // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
-      } else out = attempt(0, x);
-    } finally { lift = null; }                                   // gilt nur für diese Rechnung, auch wenn sie abbricht
+    if (real) {
+      // Start bei der Ionenstärke, die das Gefäß gerade hat: Hat sich nichts geändert, genügt ein Versuch
+      found = L.selfConsistent(Math.sqrt(strength(v, vol)), function (at, last) { return attempt(at, last ? last.state.x : x); }, rootOf);
+      out = found.out;
+      if (out && !found.ok) out.fails++;                         // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
+    } else out = attempt(0, x);
     if (!out) { lab.failed = (lab.failed || 0) + 1; return false; }
     if (out.fails) lab.failed = (lab.failed || 0) + out.fails;
     var state = out.state, next = out.next, moving = out.moving, made = out.made, shelf = out.shelf, plain = out.plain, bound = 0;
