@@ -52,7 +52,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 5 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer und Kolbenprober; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Aufgaben mit Selbstkontrolle und Erweiterungspakete folgen in den nächsten Meilensteinen.
+> **Stand:** Meilenstein 5 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer und Kolbenprober; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Aufgaben mit Selbstkontrolle und Erweiterungspakete folgen in den nächsten Meilensteinen.
 
 ## `@ChemLab.sim`
 
@@ -222,7 +222,7 @@ Zur hellblauen Kupfersulfat-Lösung wenig Ammoniaklösung geben: Es fällt hellb
  "show":{"charts":false}}
 ```
 
-Der Baustein rechnet mit Konzentrationen, nicht mit Aktivitäten. Deshalb braucht es hier kräftigeren Überschuss als im Labor: Mit Ammoniak von 1 mol/L bleibt ein Teil des Niederschlags liegen, mit 5 mol/L löst er sich ganz.
+Der Baustein rechnet in der Vorgabe mit Konzentrationen, nicht mit Aktivitäten. Deshalb braucht es hier kräftigeren Überschuss als im Labor: Mit Ammoniak von 1 mol/L bleibt ein Teil des Niederschlags liegen, mit 5 mol/L löst er sich ganz.
 
 ## Erhitzen und Sieden
 
@@ -604,6 +604,39 @@ Das Glas antippen und „Teilchenlupe“ wählen: Sie zeigt, was in einem winzig
  "show":{"charts":["n"]}}
 ```
 
+## Ideale und reale Lösung
+
+Der Baustein kennt zwei Rechenmodelle. In der Vorgabe rechnet er **ideal**, mit Konzentrationen: Salzsäure mit 0,1 mol/L hat dann den pH-Wert 1,00, und am Halbäquivalenzpunkt einer schwachen Säure gilt pH = pKs, wie es im Lehrbuch steht. Mit `"model": "real"` rechnet er mit **Aktivitäten**: Ionen schirmen einander ab und wirken deshalb schwächer, als ihre Konzentration erwarten lässt. Dann zeigt das pH-Meter, was man im Labor misst, bei derselben Salzsäure 1,08.
+
+Beide Gläser enthalten dieselbe Mischung aus Natriumhydrogencarbonat und Natriumcarbonat, je 0,025 mol/L. Sie dient als Eichlösung für pH-Meter und hat bei 25 °C den pH-Wert 10,01. Das ideale Modell zeigt 10,32, das reale 10,01. Kochsalzlösung zugeben: Im idealen Modell ändert sich fast nichts. Im realen sinkt der pH-Wert auf etwa 9,8, obwohl Kochsalz weder Säure noch Base ist. Das Feld des Glases nennt dort auch die Ionenstärke, von der die Aktivitätskoeffizienten abhängen.
+
+Ideal, mit Konzentrationen:
+
+```json @ChemLab.sim
+{"room":25,
+ "bench":[
+  {"type":"beaker","contains":[{"reagent":"NaHCO3 0.05M","ml":20},{"reagent":"Na2CO3 0.05M","ml":20}]},
+  {"type":"phmeter","in":"beaker1"}
+ ],
+ "shelf":["NaCl 2M","HCl 0.1M","H2O"],
+ "show":{"charts":["pH"]}}
+```
+
+Real, mit Aktivitäten:
+
+```json @ChemLab.sim
+{"room":25,
+ "model":"real",
+ "bench":[
+  {"type":"beaker","contains":[{"reagent":"NaHCO3 0.05M","ml":20},{"reagent":"Na2CO3 0.05M","ml":20}]},
+  {"type":"phmeter","in":"beaker1"}
+ ],
+ "shelf":["NaCl 2M","HCl 0.1M","H2O"],
+ "show":{"charts":["pH"]}}
+```
+
+Das reale Modell passt, wenn Messwerte aus dem Labor verglichen werden: bei Puffern, bei der Löslichkeit in Salzlösungen, bei Zellspannungen. Es gilt bis zu einer Ionenstärke von etwa 1 mol/L; was darüber hinausgeht, steht unter „So rechnet der Baustein“.
+
 ## Ohne Zahlen
 
 Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: Farbe, Gasblasen, das steigende Thermometer und die Reaktionsgleichung. Auch Diagramme, Gleichungen und Protokoll lassen sich einzeln abschalten.
@@ -657,6 +690,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 - `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell.
 - `room` – die Raumtemperatur in °C, Vorgabe 20.
+- `model` – womit die Gleichgewichte rechnen: `"ideal"` mit Konzentrationen (Vorgabe) oder `"real"` mit Aktivitäten, siehe „Ideale und reale Lösung“.
 - `data` – eigene Stoffe und Reaktionen, siehe nächster Abschnitt.
 
 | `type` | Gerät | Angaben |
@@ -748,6 +782,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es |
 | `colloid` | `true`: entsteht der Feststoff in einer Lösung, bleibt er fein verteilt in der Schwebe und setzt sich nicht ab (Schwefel aus Thiosulfat) |
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
+| `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`). Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
 | `symbol` | Kurzzeichen für große Moleküle, zum Beispiel `"HInd"` für einen Indikator; ersetzt die Formel in der Anzeige |
 | `bands` | Farbe eines gelösten Teilchens als Absorptionsbanden: je Bande Wellenlänge des Maximums in nm, Halbwertsbreite in nm, molarer Absorptionskoeffizient in L/(mol cm) |
@@ -786,7 +821,8 @@ Was es schon gibt, lässt sich über `data` nicht ändern: Ein Eintrag für eine
 ## So rechnet der Baustein
 
 - **Stoffmengen:** Jedes Gefäß kennt die Stoffmenge jeder Teilchenart. Reaktionen setzen sie nach ihrer Gleichung um; Masse und Ladung bleiben dabei erhalten.
-- **Gleichgewichte in der Lösung** (Säuren, Basen, Indikatoren, Komplexe) stellen sich nach jedem Schritt ein. Gerechnet wird mit dem Newton-Verfahren über die Stoffbilanzen. Der pH-Wert ist der negative Logarithmus der Konzentration der Wasserstoff-Ionen.
+- **Gleichgewichte in der Lösung** (Säuren, Basen, Indikatoren, Komplexe) stellen sich nach jedem Schritt ein. Gerechnet wird mit dem Newton-Verfahren über die Stoffbilanzen. Der pH-Wert ist der negative Logarithmus der Konzentration der Wasserstoff-Ionen, im realen Modell ihrer Aktivität.
+- **Reales Modell:** Mit `"model": "real"` gilt das Massenwirkungsgesetz für Aktivitäten, also Konzentration mal Aktivitätskoeffizient γ. Die Koeffizienten hängen nur von der Ionenstärke I ab (der halben Summe aus Konzentration mal Ladung im Quadrat) und von der Temperatur. Gerechnet wird nach Truesdell und Jones, lg γ = −A z² √I / (1 + B å √I) + b I, mit Ionengröße å und Zusatzglied b aus der Datenbank phreeqc.dat; ein Ion ohne diese Angaben rechnet nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I. Über 6 mol/L Ionenstärke bleiben die Koeffizienten stehen. Bei gegebener Ionenstärke sind die Koeffizienten feste Zahlen, die sich in die Konstanten ziehen lassen; der Löser sucht dann die Ionenstärke, die zu ihrem eigenen Ergebnis passt, und schachtelt sie dazu ein. Auch gelöste Gase und die Potentiale an Elektroden folgen den Aktivitäten, die Geschwindigkeitsgesetze nicht: Sie rechnen in beiden Modellen mit Konzentrationen. Gegen Tabellenwerte bei 25 °C weichen die mittleren Aktivitätskoeffizienten von 19 Salzen und Säuren bis 0,1 mol/L im Mittel um 2 % ab, bei 0,5 mol/L um 11 % und bei 1 mol/L um 20 %; im idealen Modell (γ = 1) sind es 38, 79 und 90 %. Acht geprüfte pH-Werte, darunter drei Eichlösungen, trifft das reale Modell auf 0,02.
 - **Fällungen:** Der Baustein rechnet aus, wie viel von jedem Feststoff im Gleichgewicht vorläge, und nähert sich dem an: Ein Niederschlag wächst in etwa einer Sekunde, ein frischer löst sich in wenigen Sekunden wieder. Dabei kann sich ein Niederschlag in einen schwerer löslichen umwandeln. Er trübt zuerst die Lösung in seiner Farbe und setzt sich dann in einer halben bis ganzen Minute ab. Beim Umgießen wandert mit, was noch schwebt; der Bodensatz bleibt zurück.
 - **Bürette:** Der Hahn gibt einen Tropfen je Sekunde (0,05 mL), 0,5 mL oder 2 mL je Sekunde ab. Ist das Gefäß darunter voll, schließt er. Die Bürette zählt mit, wie viel sie abgegeben hat; daraus entsteht die Titrationskurve. Sie beginnt mit dem ersten Tropfen und für jede Probe neu: Wird das Gefäß ausgeleert, zählt die Bürette wieder von null.
 - **pH-Meter:** Es folgt dem pH-Wert mit einer Verzögerung von etwa einer Sekunde. Ohne Flüssigkeit zeigt es nichts.
@@ -824,7 +860,11 @@ Was es schon gibt, lässt sich über `data` nicht ändern: Ein Eintrag für eine
 **Grenzen:**
 
 - Jedes Gefäß gilt als durchmischt; Schlieren und Schichten gibt es nicht.
-- Lösungen rechnen ideal, mit Konzentrationen statt Aktivitäten. Bei sehr konzentrierten Lösungen weichen die Werte ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
+- In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
+- Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.
+- Dem realen Modell fehlen schwache Ionenpaare, die zu seinen Parametern gehören (Natrium- und Kaliumsulfat, Calciumsulfat, Calciumhydroxid). Deshalb ist der Koeffizient von Natriumsulfat ab 0,1 mol/L zu groß (bei 1 mol/L doppelt so groß), und Gips und Calciumhydroxid lösen sich um 34 und 15 % zu wenig; im idealen Modell sind es 67 und 42 %.
+- Werte, die an Beobachtungen angepasst sind, wurden am idealen Modell angepasst: die Geschwindigkeit des Thiosulfat-Zerfalls (im realen Modell dauert der Versuch etwa doppelt so lange) und das Gleichgewicht des Cobaltchlorids. Für solche Versuche ist das ideale Modell gedacht.
+- Beide Modelle rechnen mit mol/L, wo Tabellen mol/kg Wasser meinen. Bis 1 mol/L macht das wenige Prozent aus; gesättigte Kochsalzlösung hat hier 6,2 statt 5,4 mol/L.
 - Redoxreaktionen laufen an Metallen und Elektroden ab. Zwischen gelösten Teilchen laufen nur die eigens eingetragenen: Peroxodisulfat mit Iodid, Iod mit Thiosulfat, Permanganat mit Eisen(II) und mit Wasserstoffperoxid, Kupfer(II) und Eisen(III) mit Iodid. Andere bleiben ohne Wirkung, etwa Permanganat mit Oxalsäure oder mit Iodid und Dichromat mit Eisen(II). Auch Metalle reduzieren Permanganat nicht, weil dafür kein Redoxpaar eingetragen ist.
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
 - Gelöster Luftsauerstoff wird nicht gerechnet. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.

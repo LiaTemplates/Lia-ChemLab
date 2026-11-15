@@ -6143,3 +6143,25 @@ test("Reales Modell an der Fläche: das Feld eines Gefäßes nennt die Ionenstä
   assert.doesNotMatch(contents(acid("HCl 0.1M", { model: "real", show: { numbers: false } })), /Ionenstärke/);
   assert.equal(L.text("panel.strength", "en"), "ionic strength");
 });
+
+test("README: die Folie zu idealer und realer Lösung hält, was ihr Text verspricht", () => {
+  const readme = fs.readFileSync(new URL("README.md", here), "utf8"), at = readme.indexOf("\n## Ideale und reale Lösung\n");
+  assert.ok(at > 0, "Folie Ideale und reale Lösung");
+  const end = readme.indexOf("\n## ", at + 5), blocks = [...readme.slice(at, end).matchAll(/```+ *json +@ChemLab\.sim\n([\s\S]*?)\n```+/g)].map((m) => L.normalize(m[1]));
+  assert.deepEqual(blocks.map((config) => config.model), ["ideal", "real"], "links ideal, rechts real");
+  const [ideal, real] = blocks.map((config) => L.createLab(config)), id = (config) => config.bench.find((p) => p.type === "beaker").id;
+  const pH = (l, config) => look(l, id(config)).pH;
+  near(pH(ideal, blocks[0]), 10.32, 0.01, "ideal");
+  near(pH(real, blocks[1]), 10.01, 0.01, "real: der Wert der Eichlösung");
+  for (const config of blocks) assert.ok(config.shelf.includes("NaCl 2M"), "Kochsalzlösung steht im Regal");
+  L.add(ideal, id(blocks[0]), "NaCl 2M", { ml: 10 });
+  L.add(real, id(blocks[1]), "NaCl 2M", { ml: 10 });
+  L.step(ideal, 30);
+  L.step(real, 30);
+  near(pH(ideal, blocks[0]), 10.32, 0.02, "ideal: Kochsalz ändert fast nichts");
+  near(pH(real, blocks[1]), 9.84, 0.03, "real: mit Kochsalz sinkt der pH-Wert");
+  near(look(real, id(blocks[1])).strength, 0.48, 0.02, "die Ionenstärke, die das Feld nennt");
+  // die Beschreibung des Aufbaus und der Daten nennt die neuen Angaben
+  assert.match(readme, /- `model` – /);
+  assert.match(readme, /\| `gamma` \| /);
+});
