@@ -64,7 +64,7 @@
     var liquid = new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.04, transmission: 1, thickness: 1, ior: 1.33,
       attenuationColor: new THREE.Color(0xffffff), attenuationDistance: 4, side: THREE.DoubleSide });
     var body = new THREE.Mesh(new THREE.BufferGeometry(), liquid);
-    var surface = new THREE.Mesh(new THREE.RingGeometry(0.001, 1, 48, 10).rotateX(-Math.PI / 2), liquid);
+    var surface = new THREE.Mesh(new THREE.RingGeometry(0.001, 1, 96, 28).rotateX(-Math.PI / 2), liquid);
     var base = surface.geometry.attributes.position.array.slice();
     var ground = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
     var crust = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xf2f0ea, 0.9));
@@ -89,14 +89,26 @@
       mesh.geometry = fx.lathe(pts, 48);
     }
 
-    function wave(boil, r, t, still) {   // Oberfläche: Meniskus am Rand, beim Sieden bewegt
-      var p = surface.geometry.attributes.position, a = p.array, k, x, z, d, h;
+    // Oberfläche: Meniskus am Rand; beim Sieden unruhig. domes: Blasen, die gerade oben ankommen, als [x, z, Höhe, Breite] in cm:
+    // erst wölbt sich das Wasser, dann platzt die Blase und lässt eine Mulde mit einem Ring zurück.
+    function wave(boil, r, t, still, domes) {
+      var p = surface.geometry.attributes.position, a = p.array, k, j, x, z, d, h, X, Z, edge, e, dx, dz, q;
       if (!boil && flat) return;
       flat = !boil;
       for (k = 0; k < a.length; k += 3) {
         x = base[k]; z = base[k + 2]; d = Math.sqrt(x * x + z * z);
         h = 0.05 / r * Math.exp((d - 1) * r / 0.1);
-        if (boil && !still) h += boil * 0.03 * (1 - d * d) * (Math.sin(9 * x + 7.1 * t) + Math.sin(8 * z - 6.3 * t + 1) + Math.sin(13 * (x + z) + 9.7 * t)) / 3;
+        if (boil && !still) {
+          X = x * r; Z = z * r;
+          edge = 1 - Math.pow(d, 6);                    // am Glas bleibt die Oberfläche hängen
+          h += boil * edge * (0.024 * Math.sin(6.1 * X + 9 * t) + 0.02 * Math.sin(7.3 * Z - 11 * t + 1) +
+            0.018 * Math.sin(4.7 * (X + Z) + 13 * t + 2) + 0.014 * Math.sin(9.1 * (X - Z) - 8 * t + 3) + 0.01 * Math.sin(13 * X - 17 * t));
+          for (j = 0; j < domes.length; j++) {
+            e = domes[j]; dx = X - e[0]; dz = Z - e[1]; q = (dx * dx + dz * dz) / (e[3] * e[3]);
+            if (q < 9) h += edge * e[2] * Math.exp(-q);
+            if (e[4] && q < 25) h += edge * e[4] * Math.exp(-Math.pow(Math.sqrt(q) - e[5], 2) * 4);       // Ring nach dem Platzen
+          }
+        }
         a[k + 1] = h;
       }
       p.needsUpdate = true;
@@ -141,13 +153,12 @@
       // shape.id: Name der Form, damit eine neue Form (anderes Gefäß) neu gebaut wird; tall: schmales Glas
       update: function (w, shape, level, ctx, tall) {
         var wet = w.ml > 0.005, r = shape.inner(level), t = ctx.still ? 0 : ctx.t, cloud = w.cloud && w.cloud.alpha > 0.02 ? w.cloud.alpha : 0;
-        var rate = Math.max(w.gas || 0, w.steam || 0), boil = w.steam > 0 ? Math.min(1, 0.3 + w.steam / 0.008) : 0, layer, n, k, p, a, d, size, y, top;
+        var rate = Math.max(w.gas || 0, w.steam || 0), boil = w.steam > 0 ? Math.min(1, 0.3 + w.steam / 0.008) : 0, layer, n, k, p, a, d, size, y, top, domes, q;
         body.visible = surface.visible = wet;
         if (wet) {
           fill(body, shape, shape.floor, level, "body");
           surface.position.y = level;
           surface.scale.set(r - 0.012, 1, r - 0.012);
-          wave(boil, r, t, ctx.still);
           liquid.color.copy(fx.color(w.color.rgb));
           if (cloud) liquid.color.lerp(fx.color(w.cloud.rgb), cloud);
           liquid.attenuationColor.copy(fx.color(w.color.rgb));
@@ -167,6 +178,7 @@
         // Blasen: Gas, das entsteht, und beim Sieden der Dampf. Zahl wie in 2D, beim Sieden mehr und größer.
         n = wet ? Math.min(48, (L.fx && L.fx.count ? L.fx.count(rate) : 0) * 2 + (boil ? 20 : 0)) : 0;
         top = level - 0.05;
+        domes = [];
         for (k = 0; k < n; k++) {
           p = pseudo(ctx.seed + 3, k) + t * (0.6 + 0.6 * pseudo(ctx.seed, k)) * (boil ? 1.8 : 1) * (tall ? 0.5 : 1);
           p -= Math.floor(p);
@@ -176,11 +188,18 @@
           size = (boil ? 0.03 + 0.09 * p : 0.025 + 0.03 * pseudo(ctx.seed + 5, k)) * (tall ? 0.8 : 1);
           dummy.position.set(d * Math.cos(a) + (ctx.still ? 0 : 0.08 * Math.sin(t * 5 + k)), y, d * Math.sin(a));
           dummy.scale.set(size, size * 0.85, size);
+          if (boil && p > 0.82) {                       // oben angekommen: Wölbung, dann Mulde mit Ring
+            q = (p - 0.82) / 0.18;
+            dummy.scale.multiplyScalar(q < 0.7 ? 1 : 0);   // geplatzt: die Blase ist weg
+            domes.push(q < 0.7 ? [dummy.position.x, dummy.position.z, 1.3 * size * q / 0.7, 1.6 * size + 0.05, 0, 0]
+              : [dummy.position.x, dummy.position.z, -0.8 * size * (1 - (q - 0.7) / 0.3), 1.2 * size + 0.04, 0.5 * size * (1 - (q - 0.7) / 0.3), 1 + 3 * (q - 0.7) / 0.3]);
+          }
           dummy.updateMatrix();
           bubbles.setMatrixAt(k, dummy.matrix);
         }
         bubbles.count = n;
         bubbles.instanceMatrix.needsUpdate = true;
+        if (wet) wave(boil, r, t, ctx.still, domes);
 
         // Dampf über dem Rand: weiche Flecken, die aufsteigen und vergehen
         n = w.steam > 0 ? Math.max(6, Math.min(24, Math.round(10 + 5 * Math.log10(w.steam / 1e-3)))) : 0;
