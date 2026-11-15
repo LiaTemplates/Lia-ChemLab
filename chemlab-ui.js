@@ -767,7 +767,7 @@
       }
       box.innerHTML = "<p>" + esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" + (w.pH == null ? "" : " · pH " + L.num(w.pH, 2, lang)) +
         // im realen Modell: die Ionenstärke, von der die Aktivitätskoeffizienten abhängen
-        (w.strength == null ? "" : " · " + esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.1 ? 3 : 2, lang) + " mol/L") + "</p>" +
+        (w.strength == null ? "" : " · " + esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.0995 ? 3 : 2, lang) + " mol/L") + "</p>" +
         '<table class="cl-table"><caption>' + esc(T("panel.contents")) + '</caption><thead><tr><th scope="col" colspan="2">' + esc(T("col.particle")) +
         '</th><th scope="col">' + esc(T("col.amount")) + '</th><th scope="col">' + esc(T("col.conc")) + "</th></tr></thead><tbody>" +
         rows.map(function (s) {

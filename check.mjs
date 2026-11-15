@@ -5971,6 +5971,9 @@ test("Aufbau: das Rechenmodell ist ideal oder real, ohne Angabe ideal", () => {
   assert.equal(ideal.model, "ideal");
   // im idealen Modell ist jeder Aktivitätskoeffizient 1, und eine Ionenstärke wird nicht angegeben
   assert.equal(L.gamma(ideal, "b", "Na+(aq)"), 1);
+  // einen Aktivitätskoeffizienten haben nur gelöste Teilchen
+  for (const id of ["AgCl(s)", "H2O(l)", "CO2(g)", "gibt es nicht"]) assert.equal(L.gamma(l, "b", id), 1, id);
+  assert.equal(L.gamma(l, "fehlt", "Na+(aq)"), 1, "ohne Gefäß");
   assert.equal(look(ideal).strength, null);
   near(look(l).strength, 0.1, 1e-6, "Ionenstärke von Kochsalzlösung 0,1 mol/L");
   near(look(real([{ reagent: "CaCl2 0.1M", ml: 20 }])).strength, 0.3, 1e-6, "zweiwertige Ionen zählen vierfach");
@@ -5992,6 +5995,13 @@ test("Reales Modell: Aktivitätskoeffizienten wie in den Tabellen", () => {
   near(meanGamma(real([{ reagent: "AgNO3 0.1M", ml: 20 }]), [["Ag+(aq)", 1], ["NO3-(aq)", 1]]), 0.734, 0.04, "Silbernitrat 0,1 mol/L");
   // ungeladene Teilchen: lg γ = 0,1 · I
   near(L.gamma(real([{ reagent: "NaCl 2M", ml: 10 }, { reagent: "sugar 0.1M", ml: 10 }]), "b", "C12H22O11(aq)"), 10 ** 0.1, 0.005, "Zucker in Kochsalzlösung 1 mol/L");
+  // gelöstes Kohlenstoffdioxid hat ein eigenes Zusatzglied (0,066 statt 0,1)
+  near(L.gamma(real([{ reagent: "NaCl 2M", ml: 10 }, { reagent: "H2O", ml: 10 }]), "b", "CO2(aq)"), 10 ** 0.066, 0.003, "Kohlenstoffdioxid in Kochsalzlösung 1 mol/L");
+  // die Gleichung von Davies gilt bis 0,5 mol/L; darüber bleibt der Koeffizient eines Ions ohne eigene Parameter stehen
+  const half = real([{ reagent: "NaCl 2M", ml: 5 }, { reagent: "H2O", ml: 15 }]), two = real([{ reagent: "NaCl 2M", ml: 20 }]);
+  near(look(half).strength, 0.5, 1e-6);
+  assert.equal(L.gamma(two, "b", "Ag+(aq)"), L.gamma(half, "b", "Ag+(aq)"), "Silber-Ion nach Davies");
+  assert.ok(L.gamma(two, "b", "Na+(aq)") !== L.gamma(half, "b", "Na+(aq)"), "Natrium-Ion mit eigenen Parametern");
   // in der Wärme sinkt die Dielektrizitätszahl des Wassers: die Ionen spüren einander stärker
   const warm = meanGamma(real([{ reagent: "NaCl 0.1M", ml: 20 }], { room: 60 }), one), cold = meanGamma(real([{ reagent: "NaCl 0.1M", ml: 20 }], { room: 5 }), one);
   assert.ok(warm < 0.768 && cold > 0.779, `bei 60 °C ${warm}, bei 5 °C ${cold}`);
@@ -6023,6 +6033,12 @@ test("Reales Modell: das Massenwirkungsgesetz gilt für die Aktivitäten", () =>
   const l = real([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "NaCl 1M", ml: 10 }]);
   near(Math.log10(act(l, "H+(aq)")) + Math.log10(act(l, "CH3COO-(aq)")) - Math.log10(act(l, "CH3COOH(aq)")), -4.757, 1e-6, "Essigsäure");
   near(Math.log10(act(l, "H+(aq)")) + Math.log10(act(l, "OH-(aq)")), -14, 1e-6, "Wasser");
+  // auch in der Wärme: die Konstante bei 60 °C nach van 't Hoff, die Koeffizienten bei 60 °C
+  const warm = real([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "NaCl 1M", ml: 10 }], { room: 60 });
+  const acid = L.db.equilibria.find((e) => e.text === "CH3COOH(aq) <=> H+(aq) + CH3COO-(aq)"), h = L.heatOf(acid.text);
+  assert.equal(typeof h, "number", "Reaktionsenthalpie der Essigsäure");
+  const logK60 = acid.logK - h * 1000 / (8.314462618 * Math.LN10) * (1 / 333.15 - 1 / 298.15);
+  near(Math.log10(act(warm, "H+(aq)")) + Math.log10(act(warm, "CH3COO-(aq)")) - Math.log10(act(warm, "CH3COOH(aq)")), logK60, 1e-6, "Essigsäure bei 60 °C");
   // Salz macht die schwache Säure stärker: mit Kochsalz ist mehr von ihr zerfallen als ohne
   const plain = real([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "H2O", ml: 10 }]);
   assert.ok(amount(l, "H+(aq)") > 1.2 * amount(plain, "H+(aq)"), `${amount(l, "H+(aq)")} gegen ${amount(plain, "H+(aq)")} mol`);
@@ -6138,6 +6154,8 @@ test("Reales Modell an der Fläche: das Feld eines Gefäßes nennt die Ionenstä
   assert.match(contents(acid("HCl 0.1M", { model: "real" })), /Flüssigkeit 20,0 mL · pH 1,08 · Ionenstärke 0,10 mol\/L/);
   // verdünnt mit einer Stelle mehr
   assert.match(contents(acid("HCl 0.01M", { model: "real" })), /Ionenstärke 0,010 mol\/L/);
+  // knapp unter 0,1 mol/L (hier 0,09999…) steht gerundet 0,10 da und nicht 0,100
+  assert.match(contents({ room: 25, model: "real", bench: [{ type: "beaker", id: "b", contains: [{ reagent: "NaHCO3 0.05M", ml: 20 }, { reagent: "Na2CO3 0.05M", ml: 20 }] }] }), /Ionenstärke 0,10 mol\/L/);
   // im idealen Modell und ohne Zahlen steht davon nichts da
   assert.match(contents(acid("HCl 0.1M")), /Flüssigkeit 20,0 mL · pH 1,00<\/p>/);
   assert.doesNotMatch(contents(acid("HCl 0.1M", { model: "real", show: { numbers: false } })), /Ionenstärke/);
@@ -6164,4 +6182,109 @@ test("README: die Folie zu idealer und realer Lösung hält, was ihr Text verspr
   // die Beschreibung des Aufbaus und der Daten nennt die neuen Angaben
   assert.match(readme, /- `model` – /);
   assert.match(readme, /\| `gamma` \| /);
+});
+
+test("Reales Modell: die äußere Schleife findet die Stelle, an der ein Ergebnis zu seiner Annahme passt – auch in widerspenstigen Fällen", () => {
+  // L.selfConsistent(u, attempt, rootOf) sucht u mit rootOf(attempt(u)) = u; hier mit einfachen Funktionen statt eines Gefäßes
+  const run = (F, start, dead) => {
+    let count = 0;
+    const found = L.selfConsistent(start, (u) => { count++; return dead && dead(u) ? null : { value: F(u) }; }, (out) => out.value);
+    return Object.assign(found, { count });
+  };
+  // gutmütig: jeder Schritt bringt das Ergebnis näher. Die Sekante trifft eine Gerade sofort.
+  const tame = run((u) => 0.2 + 0.3 * u, 0);
+  near(tame.u, 0.2 / 0.7, 1e-9, "Gerade");
+  assert.ok(tame.ok && tame.count <= 4, `${tame.count} Versuche`);
+  near(tame.out.value, tame.u, 1e-9, "das Ergebnis gehört zur gefundenen Stelle");
+  // schon am Ziel: ein Versuch genügt
+  assert.equal(run(() => 0.3, 0.3).count, 1);
+  near(run(() => 0.3, 50).u, 0.3, 1e-9, "weit entfernter Start");
+  // einfaches Einsetzen spränge hier für immer zwischen zwei Werten hin und her
+  const swing = run((u) => 0.9 / (1 + Math.exp(60 * (u - 0.3))), 0);
+  near(0.9 / (1 + Math.exp(60 * (swing.u - 0.3))), swing.u, 1e-8, "steil fallend");
+  assert.ok(swing.ok && swing.count <= 60, `${swing.count} Versuche`);
+  // steil steigend: die mittlere Lösung stößt das Einsetzen ab; gefunden wird eine der drei
+  const steep = run((u) => 0.5 + 0.4 * Math.tanh(8 * (u - 0.5)), 0.45);
+  near(0.5 + 0.4 * Math.tanh(8 * (steep.u - 0.5)), steep.u, 1e-8, "steil steigend");
+  // ein Sprung über die Stelle hinweg: eine Lösung gibt es nicht, aber die Suche endet am Sprung statt zu kreisen
+  const jump = run((u) => (u < 0.4 ? 0.8 : 0.1), 0);
+  near(jump.u, 0.4, 1e-8, "am Sprung");
+  assert.ok(jump.ok && jump.count <= 150, `${jump.count} Versuche`);
+  // links vom Sprung fast eben: Sekante und Einsetzen kämen nur in winzigen Schritten voran; erst das Halbieren führt hin
+  const crawl = run((u) => (u < 0.5 ? u + 1e-6 * (0.6 - u) : 0.01 * u), 0.1);
+  near(crawl.u, 0.5, 1e-8, "am Sprung, trotz flachem Anlauf");
+  assert.ok(crawl.ok && crawl.count <= 150, `${crawl.count} Versuche`);
+  // scheitert ein Versuch, bleibt es beim letzten gelungenen, und das wird gemeldet
+  const broken = run((u) => 0.5 + 0.5 * u, 0, (u) => u > 0.7);
+  assert.equal(broken.ok, false);
+  assert.ok(broken.out && broken.out.value === 0.5 + 0.5 * broken.u && broken.u <= 0.7, "das letzte gelungene Ergebnis");
+  // scheitert schon der erste, gibt es kein Ergebnis
+  assert.equal(run(() => 0.3, 0, () => true).out, null);
+  // im Gefäß: Meldet die Schleife ein Scheitern, zählt das Labor es als nicht berechnet; das letzte gelungene Ergebnis gilt
+  const search = L.selfConsistent;
+  try {
+    L.selfConsistent = (u, attempt) => ({ u, out: attempt(u, null), ok: false });
+    const l = real([{ reagent: "HCl 0.1M", ml: 20 }]);
+    assert.ok(l.failed > 0, "als nicht berechnet gezählt");
+    near(totals(l).charge, 0, 1e-15, "der Zustand ist trotzdem einer, den es geben kann");
+    L.selfConsistent = () => ({ u: 0, out: null, ok: true });
+    assert.ok(real([{ reagent: "HCl 0.1M", ml: 20 }]).failed > 0, "ohne Ergebnis ebenso");
+  } finally { L.selfConsistent = search; }
+  assert.equal(real([{ reagent: "HCl 0.1M", ml: 20 }]).failed || 0, 0);
+});
+
+// ---------------------------------------------------------------- Befunde der Durchsicht des realen Modells
+
+test("Reales Modell: auch das Gleichgewicht einer sofortigen Reaktion gilt für die Aktivitäten", () => {
+  const quotient = (l, how) => 2 * Math.log10(how(l, "Fe^2+(aq)")) + Math.log10(how(l, "I3-(aq)")) - 2 * Math.log10(how(l, "Fe^3+(aq)")) - 3 * Math.log10(how(l, "I-(aq)"));
+  const conc = (l, id) => amount(l, id) / (look(l).ml / 1000);
+  const mixed = (model) => { const l = beaker([{ reagent: "FeCl3 0.01M", ml: 10 }, { reagent: "HCl 0.1M", ml: 5 }], { room: 25, model }); L.add(l, "b", "KI 0.01M", { ml: 10 }); L.step(l, 60); return l; };
+  const r = mixed("real"), i = mixed("ideal");
+  near(quotient(r, act), 7.77, 0.02, "real: der Quotient der Aktivitäten ist K");
+  near(quotient(i, conc), 7.77, 0.02, "ideal: der Quotient der Konzentrationen ist K");
+  assert.ok(Math.abs(quotient(r, conc) - 7.77) > 0.3, "im realen Modell liegt der Quotient der Konzentrationen daneben");
+  near(totals(r).charge, totals(i).charge, 1e-12, "Ladung");
+  assert.equal(r.failed || 0, 0);
+});
+
+test("Reales Modell: Aktivitätskoeffizienten bleiben auch in einem überhitzten Gefäß Zahlen", () => {
+  // Flüssigkeit trifft auf ein heißes, trockenes Gefäß: für einen Augenblick liegt die Temperatur weit über 100 °C
+  const l = real([{ reagent: "AgNO3 0.1M", ml: 20 }]), v = L.vessel(l, "b");
+  for (const T of [150, 370, 800]) {
+    v.T = T;
+    const g = L.gamma(l, "b", "Ag+(aq)");
+    assert.ok(g > 0.5 && g < 1, `${T} °C: γ = ${g}`);
+    assert.ok(Number.isFinite(look(l).pH), `${T} °C: pH ${look(l).pH}`);
+  }
+  // über 100 °C gilt der Wert für 100 °C, unter 0 °C der für 0 °C
+  v.T = 100; const hot = L.gamma(l, "b", "Ag+(aq)");
+  v.T = 400; assert.equal(L.gamma(l, "b", "Ag+(aq)"), hot);
+  v.T = 0; const cold = L.gamma(l, "b", "Ag+(aq)");
+  v.T = -5; assert.equal(L.gamma(l, "b", "Ag+(aq)"), cold);
+  assert.ok(cold > hot, "in der Kälte näher an 1");
+});
+
+test("Daten: unmögliche Parameter für den Aktivitätskoeffizienten sind ein Fehler in den Daten", () => {
+  const before = L.db, ion = (gamma) => ({ species: { "Hg^2+(aq)": { name: { de: "Quecksilber(II)-Ion" }, Hf: null, gamma, src: "Probe" } } });
+  try {
+    // eine negative Ionengröße gäbe eine Polstelle, ein riesiges Zusatzglied Koeffizienten jenseits aller Zahlen
+    for (const gamma of [[-3, 0], [25, 0], [5, 60], [5, -2]]) assert.throws(() => L.register(ion(gamma)), (e) => e.code === "data" && /gamma/.test(e.message), JSON.stringify(gamma));
+    L.register(ion([0, 0.4]));
+  } finally { L.db = before; }
+});
+
+test("Reales Modell: scheitert eine Rechnung mit einer Ausnahme, rechnen die übrigen Flächen unbeirrt weiter", () => {
+  const search = L.selfConsistent, ideal = beaker([{ reagent: "CH3COOH 0.1M", ml: 20 }], { room: 25 }), before = look(ideal).pH;
+  try {
+    L.selfConsistent = (u, attempt) => { attempt(u, null); throw new Error("Probe"); };
+    assert.throws(() => real([{ reagent: "HCl 0.1M", ml: 20 }]), /Probe/);
+  } finally { L.selfConsistent = search; }
+  // die Schalter des realen Modells dürfen danach nicht stehen bleiben: ein ideales Glas rechnet wie zuvor
+  L.add(ideal, "b", "NaOH 0.1M", { ml: 10 });
+  L.step(ideal, 5);
+  assert.equal(ideal.failed || 0, 0);
+  near(look(ideal).pH, 4.757, 0.005, "Halbäquivalenzpunkt im idealen Modell");
+  assert.ok(before < 3);
+  const same = beaker([{ reagent: "CH3COOH 0.1M", ml: 20 }], { room: 25 });
+  assert.equal(look(same).pH, before, "bitgleich mit der Rechnung vor der Ausnahme");
 });

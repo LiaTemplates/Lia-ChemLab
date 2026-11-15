@@ -270,7 +270,8 @@
         // gamma: Ionengröße in Å und Zusatzglied für den Aktivitätskoeffizienten eines gelösten Teilchens (reales Modell)
         var gamma = pack.species[id] && pack.species[id].gamma;
         if (gamma != null && !(parse(id).phase === "aq" && Array.isArray(gamma) && gamma.length === 2 &&
-          gamma.every(function (value) { return typeof value === "number" && isFinite(value); }))) throw fail("gamma", id);
+          gamma.every(function (value) { return typeof value === "number" && isFinite(value); }) &&
+          gamma[0] >= 0 && gamma[0] <= 20 && Math.abs(gamma[1]) <= 1)) throw fail("gamma", id);       // Größe 0 bis 20 Å, Zusatzglied bis ±1
         put(next.species, id, entry(id, pack.species[id]), pack.species[id], id);
       });
     });
@@ -1206,22 +1207,12 @@
     // die Rechnung ist dann überbestimmt. Einer muss weichen: wenn möglich einer, der danach auch nicht mehr ausfallen will.
     var barred = {}, unit = 1e-6;
     total.forEach(function (value) { unit = Math.max(unit, Math.abs(value)); });
-    // Der Löser lässt die Bilanz eines Grundteilchens fallen, von dem nichts da ist. Fehlt einem Versuch aber der Feststoff, der
-    // dieses Teilchen bindet (Iod ohne Iodid: es kann nur mit Iodid in Lösung gehen), geht die Bilanz nicht auf. Ein solches
-    // Ergebnis ist kein Zustand, den das Gefäß annehmen kann: Es gilt als gescheitert.
     function attempt(list) {
-      var found = solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return cur[q]; }));
-      var b, i, p, have, scale, part;
-      if (!found) return null;
-      for (b = 0; b < total.length; b++) {
-        have = 0; scale = Math.abs(total[b]);
-        for (i = 0; i < sys.ids.length; i++) { part = sys.a[i][b] * found.c[i]; have += part; scale += Math.abs(part); }
-        for (p = 0; p < list.length; p++) { part = sys.solids[list[p]].comp[b] * found.s[p]; have += part; scale += Math.abs(part); }
-        if (Math.abs(have - total[b]) > 1e-9 * scale + 1e-12 * unit) return null;
-      }
-      return found;
+      return solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return cur[q]; }));
     }
-    // Ob die Stoffbilanz mit diesen Feststoffen überhaupt aufgehen kann: Was mehr gebunden ist, als gelöst vorliegt, braucht seinen Feststoff
+    // Ob die Stoffbilanz mit diesen Feststoffen überhaupt aufgehen kann. Der Löser lässt die Bilanz eines Grundteilchens fallen,
+    // von dem nichts da ist. Ist aber mehr davon gebunden, als gelöst vorliegt (Iod ohne Iodid: es kann nur mit Iodid in Lösung
+    // gehen), braucht die Bilanz den Feststoff, der es bindet; ohne ihn entstünde Stoff aus dem Nichts.
     function holds(list) {
       for (var b = 0; b < total.length; b++)
         if (sys.plain[b] && total[b] < -1e-12 * unit && !list.some(function (q) { return sys.solids[q].comp[b] !== 0; })) return false;
@@ -1327,6 +1318,7 @@
 
   // Debye-Hückel-Konstanten A und B (B für å in Å) bei t °C, aus Dichte und Dielektrizitätszahl des Wassers
   function debye(t) {
+    t = Math.max(0, Math.min(100, t));                          // die Formeln gelten für flüssiges Wasser; ein überhitztes Gefäß rechnet mit 100 °C
     var rho = 1 - (t - 3.9863) * (t - 3.9863) * (t + 288.9414) / (508929.2 * (t + 68.12963));
     var eps = 87.740 - 0.40008 * t + 9.398e-4 * t * t - 1.410e-6 * t * t * t, T = t + KELVIN;
     return [1.82483e6 * Math.sqrt(rho) / Math.pow(eps * T, 1.5), 50.2916 * Math.sqrt(rho) / Math.sqrt(eps * T)];
@@ -1346,6 +1338,30 @@
     var sum = 0, id, sp;
     for (id in v.n) { sp = L.db.species[id]; if (sp.phase === "aq" && sp.charge && v.n[id] > 0) sum += sp.charge * sp.charge * v.n[id]; }
     return sum / (2 * vol);
+  }
+
+  // Sucht die Stelle u, an der ein Ergebnis zu seiner eigenen Annahme passt: rootOf(attempt(u)) = u. attempt(u, last) rechnet mit
+  // der Annahme u (last: das vorige Ergebnis, als Startwert) und gibt null zurück, wenn das scheitert. Zurück kommt { u, out, ok }:
+  // out ist das Ergebnis bei u, ok ist false, wenn ein Versuch scheiterte (dann bleibt es beim letzten gelungenen).
+  function selfConsistent(u, attempt, rootOf) {
+    var out = attempt(u, null), trial, lo = 0, hi = Infinity, prev = null, round, f, g, cand, width = Infinity;
+    for (round = 0; out; round++) {
+      f = rootOf(out); g = f - u;
+      if (Math.abs(g) < U_TOL) break;                            // die Annahme ist die des Ergebnisses
+      if (g > 0) lo = Math.max(lo, u); else hi = Math.min(hi, u);
+      if (hi - lo < U_TOL) break;
+      // Der nächste Versuch: die Sekante durch die letzten beiden Punkte, sonst das Ergebnis selbst. Führt das aus der Klammer
+      // [lo, hi] heraus oder schrumpft sie zu langsam, wird sie halbiert: Das kann nicht scheitern.
+      cand = prev && g !== prev.g ? u - g * (u - prev.u) / (g - prev.g) : f;
+      if (!(cand > lo && cand < hi)) cand = f;
+      if (!(cand > lo && cand < hi) || (round % 3 === 2 && hi < Infinity && hi - lo > 0.5 * width)) cand = hi < Infinity ? (lo + hi) / 2 : f;
+      if (round % 3 === 2) width = hi - lo;
+      prev = { u: u, g: g };
+      trial = round < 200 ? attempt(cand, out) : null;
+      if (!trial) return { u: u, out: out, ok: false };
+      u = cand; out = trial;
+    }
+    return { u: u, out: out, ok: true };
   }
 
   // lg γ für die Teilchen eines Gefäßes, so wie es gerade ist: eine Funktion id → lg γ. Im idealen Modell überall 0.
@@ -1446,14 +1462,8 @@
     // Reales Modell: Bei angenommener Ionenstärke u² sind die Aktivitätskoeffizienten feste Zahlen, die sich in die Konstanten
     // ziehen lassen; dann rechnen die Stufen 1 bis 4 wie im idealen Modell. Gesucht ist die Ionenstärke, die zu ihrem eigenen
     // Ergebnis passt: eine Gleichung mit einer Unbekannten.
-    var real = !!v.real, dh = real ? debye(v.T) : null, zz = null, spect = 0;
-    if (real) {
-      zz = ids.map(function (q) { var z = L.db.species[q].charge; return z * z; });
-      for (id in v.n) {                                        // Ionen, die an keinem Gleichgewicht teilnehmen: ihr Beitrag steht fest
-        if (!(v.n[id] > 0) || L.db.species[id].phase !== "aq" || ids.indexOf(id) >= 0) continue;
-        spect += L.db.species[id].charge * L.db.species[id].charge * v.n[id] / vol;
-      }
-    }
+    var real = !!v.real, dh = real ? debye(v.T) : null;
+    var zz = real ? ids.map(function (q) { var z = L.db.species[q].charge; return z * z; }) : null;
     function attempt(u, x0) {
       var B = logB, right = rhs, fails = 0, lg;
       if (real) {
@@ -1553,32 +1563,20 @@
       }
       return { state: state, next: next, moving: moving, made: made, shelf: shelf, plain: plain, fails: fails };
     }
-    function rootOf(found) {      // Wurzel aus der Ionenstärke eines Ergebnisses
-      var sum = spect;
+    function rootOf(found) {      // Wurzel aus der Ionenstärke eines Ergebnisses (zum System gehört jedes gelöste Teilchen des Gefäßes)
+      var sum = 0;
       for (var q = 0; q < ns; q++) sum += zz[q] * found.state.c[q];
       return Math.sqrt(sum / 2);
     }
-    var u = real ? (warm["√I"] >= 0 ? warm["√I"] : Math.sqrt(strength(v, vol))) : 0, out, trial, lo = 0, hi = Infinity, prev = null, round, f, g, cand, width = Infinity;
-    var taken = detours;
+    var u = 0, out, found, taken = detours;
     polish = real;
-    out = attempt(u, x);
-    for (round = 0; real && out; round++) {
-      f = rootOf(out); g = f - u;
-      if (Math.abs(g) < U_TOL) break;                            // die angenommene Ionenstärke ist die des Ergebnisses
-      if (g > 0) lo = Math.max(lo, u); else hi = Math.min(hi, u);
-      if (hi - lo < U_TOL) break;
-      // Der nächste Versuch: die Sekante durch die letzten beiden Punkte, sonst das Ergebnis selbst. Führt das aus der Klammer
-      // [lo, hi] heraus oder schrumpft sie zu langsam, wird sie halbiert: Das kann nicht scheitern.
-      cand = prev && g !== prev.g ? u - g * (u - prev.u) / (g - prev.g) : f;
-      if (!(cand > lo && cand < hi)) cand = f;
-      if (!(cand > lo && cand < hi) || (round % 3 === 2 && hi < Infinity && hi - lo > 0.5 * width)) cand = hi < Infinity ? (lo + hi) / 2 : f;
-      if (round % 3 === 2) width = hi - lo;
-      prev = { u: u, g: g };
-      trial = round < 200 ? attempt(cand, out.state.x) : null;
-      if (!trial) { out.fails++; break; }                        // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
-      u = cand; out = trial;
-    }
-    polish = false; lift = null;
+    try {
+      if (real) {
+        found = L.selfConsistent(warm["√I"] >= 0 ? warm["√I"] : Math.sqrt(strength(v, vol)), function (at, last) { return attempt(at, last ? last.state.x : x); }, rootOf);
+        u = found.u; out = found.out;
+        if (out && !found.ok) out.fails++;                       // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
+      } else out = attempt(0, x);
+    } finally { polish = false; lift = null; }                   // die Schalter gelten nur für diese Rechnung, auch wenn sie abbricht
     if (detours > taken) lab.detours = (lab.detours || 0) + detours - taken;       // detours: zur Diagnose, wie failed
     if (!out) { lab.failed = (lab.failed || 0) + 1; return false; }
     if (out.fails) lab.failed = (lab.failed || 0) + out.fails;
@@ -1737,14 +1735,15 @@
   // Umsatz einer sofortigen Reaktion bis zu ihrem Gleichgewicht: so weit, bis der Quotient der Konzentrationen K erreicht.
   // Ohne logK, oder in einem Brei, läuft sie, bis ein Ausgangsstoff verbraucht ist (most). Die Rückreaktion gibt es nicht.
   function upTo(v, r, vol, most) {
-    var lo = 0, hi = most, mid, i;
+    var lo = 0, hi = most, mid, i, lg;
     if (r.logK == null || !(vol > 0)) return most;
+    lg = gammas(v, vol);                                       // im realen Modell zählt die Aktivität
     function over(x) {                                         // läge der Quotient nach dem Umsatz x über K?
       var sum = -r.logK, id, n;
       for (id in r.nu) {
         if (L.db.species[id].phase !== "aq") continue;         // Feststoffe, Wasser und Gase zählen mit 1
         n = (v.n[id] || 0) + r.nu[id] * x;
-        sum += r.nu[id] * Math.log10(n / vol);
+        sum += r.nu[id] * (Math.log10(n / vol) + lg(id));
       }
       return sum > 0;
     }
@@ -3394,6 +3393,7 @@
   L.changed = changed;
   L.DROP = DROP;
   L.gamma = gamma;
+  L.selfConsistent = selfConsistent;
 
   // Der Browser führt die Dateien nicht verlässlich in der Reihenfolge des Kurskopfs aus. Was vor dem Rechenkern ankam
   // und ihn braucht, hat sich in L.pending eingetragen und läuft jetzt.
