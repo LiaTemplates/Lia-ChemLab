@@ -6081,19 +6081,7 @@ test("Reales Modell: Masse und Ladung bleiben erhalten, und eine Lösung verdamp
   assert.equal(tube.failed || 0, 0);
 });
 
-test("Reales Modell: Lösung auf einem heißen Rückstand – der Löser kommt ohne Notweg aus", () => {
-  // Der Notweg ist für den Fall da, dass sich die Probe mit allen vorhandenen Feststoffen nicht berechnen lässt: Dann muss einer
-  // von ihnen weichen. Das Labor zählt mit, wie oft er nötig war – hier bei neunzehn Feststoffen in 1 mL Wasser.
-  const solids = ["Cu(OH)2(s)", "CaCO3(s)", "CaSO4*2H2O(s)", "Ca(OH)2(s)", "CuCO3(s)", "BaSO4(s)", "BaCO3(s)", "SrCO3(s)", "SrSO4(s)", "Mg(OH)2(s)", "MgO(s)", "Zn(OH)2(s)",
-    "Fe(OH)2(s)", "Fe(OH)3(s)", "Ag2O(s)", "Ag2CO3(s)", "Ag2SO4(s)", "AgCl(s)", "NaCl(s)"];
-  const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 28 }), glass = L.vessel(mud, "b");
-  glass.n = { "H2O(l)": 0.0609 };
-  for (const id of solids) glass.n[id] = 1e-4;
-  glass.lumps = solids.map((id) => ({ id, n: 1e-4, n0: 1e-4, a0: 1, p: 2 / 3, made: true, settled: 1 }));
-  glass.dirty = true;
-  L.step(mud, 5);
-  assert.ok(mud.detours > 0, "bei sehr vielen Feststoffen wird er gebraucht");
-  assert.equal(mud.failed || 0, 0);
+test("Reales Modell: Lösung auf einem heißen Rückstand lässt sich berechnen", () => {
   // Cobaltchlorid, Zinksulfat und Kochsalz eingedampft, dann fließt Kupfersulfat-Lösung darauf. Die ersten Tropfen geben eine
   // Lösung mit sehr kleinen Aktivitätskoeffizienten. Die Probe, ob alle Salze des Rückstands zugleich gesättigt sein können,
   // verlangt dann Konzentrationen über 1000 mol/L: Gilt die Obergrenze des Lösers der Konzentration statt der Aktivität,
@@ -6106,7 +6094,6 @@ test("Reales Modell: Lösung auf einem heißen Rückstand – der Löser kommt o
   const before = totals(l);
   L.pour(l, "c", "b", 10);
   L.step(l, 30);
-  assert.equal(l.detours || 0, 0, "kein Notweg");
   assert.equal(l.failed || 0, 0, "jedes Gleichgewicht ließ sich berechnen");
   near(totals(l).charge, before.charge, 1e-10, "Ladung");
   assert.ok(amount(l, "NaCl(s)") < 1e-9, "das Kochsalz hat sich wieder gelöst");

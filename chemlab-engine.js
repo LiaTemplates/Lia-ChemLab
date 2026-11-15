@@ -1195,11 +1195,21 @@
   }
 
   // Das volle Gleichgewicht mit Feststoffen: welche liegen vor, wie viel davon (s, mol/L), und wie sieht die Lösung dann aus (c, x)?
-  // Probiert es mit denen, die da sind; was dabei negativ würde, löst sich ganz, was übersättigt bleibt, fällt aus.
-  var detours = 0;                // wie oft der Notweg (relax) gebraucht wurde; equilibrate bucht es am Labor
-  function balance(sys, logB, rhs, total, x0, cur) {
-    var np = sys.solids.length, active = [], state = null, k, round, worst, at, value, out;
-    var have = cur.slice();                                     // die Mengen im Arbeitsstand: wer bei einer Abhängigkeit zuerst aufgebraucht ist
+  // Der Weg dorthin beginnt beim jetzigen Zustand: bei der Lösung, wie sie ist (dissolved, x0), und den Feststoffen, wie sie
+  // daliegen (cur). Einer nach dem anderen kommen die Feststoffe dazu, die mit der Lösung nicht im Gleichgewicht stehen: die
+  // vorhandenen, die sich lösen oder wachsen müssen, und die fehlenden, die ausfallen müssen. Wer dabei aufgebraucht wird,
+  // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
+  // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
+  function balance(sys, logB, rhs, dissolved, x0, cur) {
+    var np = sys.solids.length, active = [], used = {}, have = cur.slice(), state = null, k, round, worst, at, value, melt, out;
+    // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht); have: die Mengen im Arbeitsstand
+    function attempt() {
+      var total = dissolved.map(function (sum, b) {
+        for (var q = 0; q < np; q++) if (used[q]) sum += sys.solids[q].comp[b] * cur[q];
+        return sum;
+      });
+      return solve(sys, logB, total, state ? state.x : x0, active, rhs, active.map(function (q) { return have[q]; }));
+    }
     // Lässt sich die Zusammensetzung von q aus denen der aktiven Feststoffe zusammensetzen? Dann die Anteile alpha mit
     // comp[q] = Σ alpha[i] · comp[active[i]], sonst null. (Kleinste Quadrate; die aktiven sind voneinander unabhängig.)
     function depends(q) {
@@ -1225,9 +1235,11 @@
     // Nimmt q unter die Feststoffe auf, mit denen die Lösung gesättigt sein soll. Hängt seine Zusammensetzung von denen ab, die
     // schon dabei sind (Oxid und Hydroxid; Hydroxid und Carbonat zweier Metalle), können nicht alle gesättigt sein. Zwischen
     // ihnen läuft dann eine Reaktion, die an der Lösung nichts ändert: q entsteht aus den anderen oder zerfällt in sie. Sie läuft
-    // in die Richtung, in der die freie Enthalpie sinkt, bis einer der Beteiligten aufgebraucht ist. Der weicht.
+    // in die Richtung, in der die freie Enthalpie sinkt, bis einer der Beteiligten aufgebraucht ist. Der scheidet aus.
     function join(q) {
-      var alpha = depends(q), drive, grow, step, gone = -1, i, change;
+      var alpha, drive, grow, step, gone = -1, i, change;
+      if (!used[q]) used[q] = true; else have[q] = 0;           // war er schon aufgebraucht, beginnt er bei null
+      alpha = depends(q);
       if (!alpha) { active.push(q); return; }
       drive = rhs[q];                                           // < 0: q ist beständiger als die anderen zusammen und wächst
       for (i = 0; i < active.length; i++) drive -= alpha[i] * rhs[active[i]];
@@ -1243,67 +1255,26 @@
       have[active[gone]] = 0;
       active[gone] = q;
     }
-    // Der Notweg: Lässt sich die Probe mit allen diesen Feststoffen nicht berechnen (sehr viele Feststoffe in wenig Wasser
-    // verlangen Konzentrationen, die es nicht gibt), muss einer weichen: wenn möglich einer, der danach auch nicht mehr ausfallen will.
-    var barred = {}, unit = 1e-6;
-    total.forEach(function (value) { unit = Math.max(unit, Math.abs(value)); });
-    function attempt(list) {
-      return solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return have[q]; }));
-    }
-    // Ob die Stoffbilanz mit diesen Feststoffen überhaupt aufgehen kann. Der Löser lässt die Bilanz eines Grundteilchens fallen,
-    // von dem nichts da ist. Ist aber mehr davon gebunden, als gelöst vorliegt (Iod ohne Iodid: es kann nur mit Iodid in Lösung
-    // gehen), braucht die Bilanz den Feststoff, der es bindet; ohne ihn entstünde Stoff aus dem Nichts.
-    function holds(list) {
-      for (var b = 0; b < total.length; b++)
-        if (sys.plain[b] && total[b] < -1e-12 * unit && !list.some(function (q) { return sys.solids[q].comp[b] !== 0; })) return false;
-      return true;
-    }
-    function relax() {
-      var order, best, i, trial, found, fits, round;
-      detours++;
-      for (round = 0; round < np && active.length > 1; round++) {
-        order = active.slice().sort(function (a, b) { return cur[a] - cur[b]; });      // die kleinste Menge zuerst
-        best = null;
-        for (i = 0; i < order.length; i++) {
-          trial = active.filter(function (q) { return q !== order[i]; });
-          found = attempt(trial);
-          if (!found) continue;
-          fits = found.s.every(function (value) { return value > -1e-15; }) && saturation(sys, found.x, rhs, order[i]) <= 1e-9;
-          if (fits || !best) best = { state: found, list: trial, out: order[i] };
-          if (fits) break;
-        }
-        if (best) {
-          active = best.list;
-          barred[best.out] = true;
-          return best.state;
-        }
-        // auch ohne einen von ihnen lässt es sich nicht berechnen. Der kleinste, der weichen kann, weicht, dann von vorn.
-        order = order.filter(function (out) { return holds(active.filter(function (q) { return q !== out; })); });
-        if (!order.length) return null;
-        barred[order[0]] = true;
-        active = active.filter(function (q) { return q !== order[0]; });
-        found = attempt(active);
-        if (found) return found;
-      }
-      return null;
-    }
-    for (k = 0; k < np; k++) if (cur[k] > 0) join(k);
-    for (round = 0; round < 24 + 4 * np; round++) {
-      state = attempt(active) || (active.length > 1 ? relax() : null);
+    for (round = 0; round < 24 + 6 * np; round++) {
+      state = attempt();
       if (!state) return null;
-      for (k = 0; k < np; k++) have[k] = 0;                     // in diesem Zustand gibt es nur die aktiven Feststoffe
       for (k = 0; k < active.length; k++) have[active[k]] = Math.max(0, state.s[k]);
-      worst = -1e-15; at = -1;
+      worst = -1e-15; at = -1;                                  // wer aufgebraucht ist, scheidet aus
       for (k = 0; k < active.length; k++) if (state.s[k] < worst) { worst = state.s[k]; at = k; }
       if (at >= 0) { active.splice(at, 1); continue; }
-      worst = 1e-9; at = -1;
+      worst = 1e-9; at = -1; melt = false;                      // wer am weitesten vom Gleichgewicht steht, ist als Nächster dran
       for (k = 0; k < np; k++) {
-        if (active.indexOf(k) >= 0 || barred[k]) continue;
+        if (active.indexOf(k) >= 0) continue;
         value = saturation(sys, state.x, rhs, k);
-        if (value > worst) { worst = value; at = k; }
+        if (value > worst) { worst = value; at = k; melt = false; }
+        else if (-value > worst && !used[k] && cur[k] > 0) { worst = -value; at = k; melt = true; }      // liegt da und müsste sich lösen
       }
+      // Ein Feststoff, der sich lösen müsste, löst sich zunächst ganz: Ob die Lösung ihn überhaupt sättigen kann, zeigt sich
+      // danach (dann ist sie übersättigt, und er kommt wieder dazu). Ihn gleich als gesättigt anzusetzen, verlangte sonst
+      // unter Umständen Konzentrationen, die es nicht gibt.
+      if (at >= 0 && melt) { used[at] = true; have[at] = 0; continue; }
       if (at >= 0) { join(at); continue; }
-      out = sys.solids.map(function () { return 0; });
+      out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });
       return { s: out, c: state.c, x: state.x };
     }
@@ -1473,7 +1444,7 @@
     });
     var own = cur.map(function (value, index) { return held[index] > 0 ? Math.max(0, value - held[index]) : value; });
     var staged = held.some(function (value) { return value > 0; });
-    var dissolved = new Array(nb), total = new Array(nb), x = new Array(nb), cold = new Array(nb), warm = lab.cache[v.id] || {};
+    var dissolved = new Array(nb), x = new Array(nb), cold = new Array(nb), warm = lab.cache[v.id] || {};
     function sumOf(conc) {          // Gesamtmenge je Grundteilchen in der Lösung: eine Summe, keine Differenz, die sich auslöschen könnte
       return sys.basis.map(function (q, index) {
         var sum = 0;
@@ -1483,8 +1454,6 @@
     }
     dissolved = sumOf(old);
     for (b = 0; b < nb; b++) {
-      total[b] = dissolved[b];
-      for (k = 0; k < np; k++) total[b] += sys.solids[k].comp[b] * own[k];
       id = ids[sys.basis[b]];
       x[b] = id in warm && warm[id] > -60 ? warm[id] : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
       // cold: ein Startwert, der nur vom jetzigen Inhalt ausgeht; ohne Wasserstoff-Ionen neutral
@@ -1519,7 +1488,7 @@
       for (k = 0; k < np; k++) if (own[k] > 0 || saturation(sys, state.x, right, k) > 1e-9) need = true;
       if (need && !quick) {
         // 2. wohin es will: das volle Gleichgewicht mit Niederschlägen
-        goal = balance(sys, B, right, total, state.x, own);
+        goal = balance(sys, B, right, dissolved, state.x, own);
         if (!goal) fails++;
         else {
           for (k = 0; k < np; k++) {
@@ -1559,10 +1528,7 @@
             if (!(held[j] > 0)) continue;
             all = made.map(function (value, index) { return index === j ? value + shelf[j] : value; });
             base = sumOf(state.c);
-            goal = balance(sys, B, right, base.map(function (value, index) {
-              for (var q = 0; q < np; q++) value += sys.solids[q].comp[index] * all[q];
-              return value;
-            }), state.x, all);
+            goal = balance(sys, B, right, base, state.x, all);
             if (!goal) { fails++; continue; }
             gap = goal.s[j] - all[j];
             if (!(gap < -1e-12)) continue;
@@ -1601,7 +1567,7 @@
       for (var q = 0; q < ns; q++) sum += zz[q] * found.state.c[q];
       return Math.sqrt(sum / 2);
     }
-    var out, found, taken = detours;
+    var out, found;
     try {
       if (real) {
         // Start bei der Ionenstärke, die das Gefäß gerade hat: Hat sich nichts geändert, genügt ein Versuch
@@ -1610,7 +1576,6 @@
         if (out && !found.ok) out.fails++;                       // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
       } else out = attempt(0, x);
     } finally { lift = null; }                                   // gilt nur für diese Rechnung, auch wenn sie abbricht
-    if (detours > taken) lab.detours = (lab.detours || 0) + detours - taken;       // detours: zur Diagnose, wie failed
     if (!out) { lab.failed = (lab.failed || 0) + 1; return false; }
     if (out.fails) lab.failed = (lab.failed || 0) + out.fails;
     var state = out.state, next = out.next, moving = out.moving, made = out.made, shelf = out.shelf, plain = out.plain, bound = 0;
