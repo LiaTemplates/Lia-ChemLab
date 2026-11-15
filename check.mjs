@@ -6360,3 +6360,95 @@ test("Viele Niederschläge zugleich: neunzehn Feststoffe in wenig Wasser kommen 
     assert.ok(amount(mud, "AgCl(s)") > 1e-5 && amount(mud, "BaSO4(s)") > 5e-5, model + ": Silberchlorid und Bariumsulfat liegen da");
   }
 });
+
+// ================================================================ Ionenpaare des realen Modells
+
+// ein Feststoff im Überschuss in Wasser, bis nichts mehr geschieht; zurück: das Labor
+const soaked = (solid, mol, model) => {
+  const l = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 25, model }), glass = L.vessel(l, "b");
+  glass.n = { "H2O(l)": 50 * 0.997 / 18.015, [solid]: mol };
+  glass.lumps = [{ id: solid, n: mol, n0: mol, a0: 1, p: 2 / 3, made: true, settled: 1 }];
+  glass.dirty = true;
+  restAfter(l, 6000);
+  return l;
+};
+const inSolution = (l, ids) => ids.reduce((sum, id) => sum + amount(l, id), 0) / (look(l).ml / 1000);
+
+test("Reales Modell: schwache Ionenpaare gibt es nur dort; im idealen Modell zerfallen diese Salze vollständig", () => {
+  const sulfate = (model, conc) => beaker([{ reagent: "Na2SO4 " + (conc || 0.5) + "M", ml: 20 }], { room: 25, model });
+  // in beiden Reihenfolgen angelegt: Die Zusammenstellung der Gleichgewichte hängt am Modell, nicht nur an den Stoffen
+  const first = sulfate("ideal"), r = sulfate("real"), i = sulfate("ideal");
+  assert.equal(amount(first, "NaSO4-(aq)"), 0, "ideal: kein Ionenpaar");
+  assert.equal(amount(i, "NaSO4-(aq)"), 0, "ideal, nach einem realen Labor mit denselben Stoffen: kein Ionenpaar");
+  near(amount(i, "SO4^2-(aq)") + amount(i, "HSO4-(aq)"), 0.01, 1e-12, "ideal: alles Sulfat ist frei (bis auf eine Spur Hydrogensulfat)");
+  assert.ok(amount(r, "NaSO4-(aq)") > 1e-3 && amount(r, "NaSO4-(aq)") < 6e-3, `real: ein Teil des Sulfats ist an Natrium gebunden (${amount(r, "NaSO4-(aq)")} mol)`);
+  near(amount(r, "NaSO4-(aq)") + amount(r, "SO4^2-(aq)") + amount(r, "HSO4-(aq)"), 0.01, 1e-12, "Sulfat bleibt erhalten");
+  near(totals(r).charge, 0, 1e-12, "Ladung");
+  // das Massenwirkungsgesetz des Ionenpaars, mit Aktivitäten
+  near(Math.log10(act(r, "NaSO4-(aq)")) - Math.log10(act(r, "Na+(aq)")) - Math.log10(act(r, "SO4^2-(aq)")), 0.94, 1e-6, "lg K = 0,94");
+  // mittlerer Aktivitätskoeffizient von Natriumsulfat, auf die eingewogene Konzentration bezogen: 0,445 / 0,266 / 0,201 in den Tabellen
+  const mean = (conc) => { const l = sulfate("real", conc); return ((act(l, "Na+(aq)") / (2 * conc)) ** 2 * (act(l, "SO4^2-(aq)") / conc)) ** (1 / 3); };
+  near(mean(0.1), 0.445, 0.03, "Natriumsulfat 0,1 mol/L");
+  near(mean(0.5), 0.266, 0.03, "Natriumsulfat 0,5 mol/L");
+  near(mean(1), 0.201, 0.06, "Natriumsulfat 1 mol/L (hier ist das Modell um ein Viertel zu hoch; ohne Ionenpaar wäre es das Doppelte)");
+  // Kalium- und Magnesiumsulfat, Calciumsulfat und die Hydroxo-Ionen von Calcium und Magnesium
+  const mix = real([{ reagent: "Na2SO4 0.1M", ml: 10 }, { reagent: "KNO3 0.1M", ml: 10 }, { reagent: "CaCl2 0.01M", ml: 10 }, { reagent: "NaOH 0.01M", ml: 10 }]);
+  for (const id of ["KSO4-(aq)", "CaSO4(aq)", "CaOH+(aq)"]) assert.ok(amount(mix, id) > 1e-9, id + " liegt vor");
+  const same = beaker([{ reagent: "Na2SO4 0.1M", ml: 10 }, { reagent: "KNO3 0.1M", ml: 10 }, { reagent: "CaCl2 0.01M", ml: 10 }, { reagent: "NaOH 0.01M", ml: 10 }], { room: 25 });
+  for (const id of ["KSO4-(aq)", "CaSO4(aq)", "CaOH+(aq)", "NaSO4-(aq)"]) assert.equal(amount(same, id), 0, id + " fehlt im idealen Modell");
+  assert.equal(r.failed || 0, 0);
+});
+
+test("Reales Modell: Gips und Calciumhydroxid lösen sich etwa wie gemessen", () => {
+  // Gips: 15,2 mmol/L bei 25 °C; gesättigte Calciumhydroxid-Lösung: 20,3 mmol/L, pH 12,45 (Eichlösung)
+  const gypsum = soaked("CaSO4*2H2O(s)", 0.01, "real"), lime = soaked("Ca(OH)2(s)", 0.01, "real");
+  near(inSolution(gypsum, ["Ca^2+(aq)", "CaSO4(aq)"]), 0.0152, 0.0008, "Gips");
+  near(inSolution(lime, ["Ca^2+(aq)", "CaOH+(aq)"]), 0.0203, 0.001, "Calciumhydroxid");
+  near(look(lime).pH, 12.45, 0.03, "pH von Kalkwasser");
+  assert.ok(amount(gypsum, "CaSO4*2H2O(s)") > 1e-3 && amount(lime, "Ca(OH)2(s)") > 1e-3, "Bodenkörper bleibt");
+  assert.deepEqual(settled(gypsum).concat(settled(lime)), []);
+  // im idealen Modell bleibt es bei den alten Werten
+  near(inSolution(soaked("CaSO4*2H2O(s)", 0.01, "ideal"), ["Ca^2+(aq)"]), 0.00495, 0.0002, "Gips, ideal");
+});
+
+test("Reales Modell: Ionenpaare färben die Flamme wie ihr Metall, zerfallen beim Eindampfen und stören das ideale Modell nicht", () => {
+  // Flammenfärbung: auch das Natrium und Calcium, das im Ionenpaar steckt, leuchtet
+  const flame = lab([{ type: "testtube", id: "a", contains: [{ reagent: "Na2SO4 1M", ml: 5 }] }, { type: "burner", id: "br", flame: 2 }], { room: 20, model: "real" });
+  assert.equal(L.flameTest(flame, "a").name, "yellow", "Natriumsulfat");
+  // im idealen Modell entsteht auch beim Eindampfen kein Ionenpaar
+  const plain = heated({ type: "dish", contains: [{ reagent: "CaCl2 0.1M", ml: 2 }, { reagent: "Na2SO4 0.01M", ml: 2 }] });
+  until(plain, () => !(amount(plain, "H2O(l)") > 0), 900);
+  for (const id of ["CaSO4(aq)", "NaSO4-(aq)", "CaOH+(aq)"]) assert.equal(amount(plain, id), 0, "ideal, eingedampft: kein " + id);
+  // eingedampft bleibt Salz zurück, kein Ionenpaar; mit Wasser löst es sich wieder
+  const l = heated({ type: "dish", contains: [{ reagent: "Na2SO4 0.5M", ml: 4 }] }, { model: "real" }), before = totals(l);
+  until(l, () => !(amount(l, "H2O(l)") > 0), 900);
+  assert.ok(!(amount(l, "H2O(l)") > 0), "eingedampft");
+  assert.equal(amount(l, "NaSO4-(aq)"), 0, "das Ionenpaar ist zerfallen");
+  // (Spuren von Hydroxid gehen mit dem Dampf fort und nehmen ihr Gegenion mit)
+  near(amount(l, "Na+(aq)"), 0.004, 1e-7, "Natrium im Rückstand");
+  near(amount(l, "SO4^2-(aq)"), 0.002, 1e-7, "Sulfat im Rückstand");
+  L.setFlame(l, "br", 0);
+  L.step(l, 600);
+  L.add(l, "b", "H2O", { ml: 10 });
+  L.step(l, 60);
+  assert.ok(amount(l, "NaSO4-(aq)") > 1e-5, "wieder gelöst, wieder mit Ionenpaaren");
+  near(totals(l).charge, before.charge, 1e-12, "Ladung");
+  assert.equal(l.failed || 0, 0);
+});
+
+test("Daten: ein Gleichgewicht kann dem realen Modell vorbehalten sein", () => {
+  const before = L.db, pair = (model) => ({ species: { "LiSO4-(aq)": { name: { de: "Lithiumsulfat-Ionenpaar" }, Hf: null, src: "Probe" } },
+    equilibria: [{ eq: "Li+(aq) + SO4^2-(aq) <=> LiSO4-(aq)", logK: 0.64, model, src: "Probe" }], reagents: { "Li2SO4": { name: { de: "Lithiumsulfat-Lösung" }, solution: { "Li+(aq)": 2, "SO4^2-(aq)": 1 }, molar: true } } });
+  try {
+    for (const model of ["ideal", "echt", 1]) assert.throws(() => L.register(pair(model)), (e) => e.code === "data" && /model/.test(e.message), String(model));
+    L.register(pair("real"));
+    assert.equal(amount(beaker([{ reagent: "Li2SO4 0.5M", ml: 10 }], { room: 25 }), "LiSO4-(aq)"), 0, "ideal: nicht dabei");
+    assert.ok(amount(real([{ reagent: "Li2SO4 0.5M", ml: 10 }]), "LiSO4-(aq)") > 1e-4, "real: dabei");
+  } finally { L.db = before; }
+  // im Grundpaket: die Ionenpaare des realen Modells stammen aus phreeqc.dat
+  const pairs = L.db.equilibria.filter((e) => e.model === "real");
+  assert.deepEqual(pairs.map((e) => e.text).sort(), ["Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)",
+    "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)"]);
+  for (const e of pairs) assert.match(e.src, /phreeqc\.dat|minteq\.v4\.dat/, e.text);
+  assert.match(fs.readFileSync(new URL("README.md", here), "utf8"), /"model":"real"` gilt ein Gleichgewicht nur im realen Modell/, "die README beschreibt die Angabe");
+});

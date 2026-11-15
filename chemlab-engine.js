@@ -280,6 +280,8 @@
         var eq = equation(item.eq);
         Object.keys(eq.nu).forEach(known);
         if (typeof item.logK !== "number") throw fail("logK");
+        // model: "real" – das Gleichgewicht gilt nur im realen Modell (schwache Ionenpaare, die zu dessen Parametern gehören)
+        if (item.model != null && item.model !== "real") throw fail("model", String(item.model));
         var ids = Object.keys(eq.nu), entry = Object.assign({}, item, eq, { key: keyOf(eq), rate: null });
         var solids = ids.filter(function (id) { return next.species[id].phase === "s"; });
         var rest = ids.filter(function (id) { return id !== WATER && next.species[id].phase !== "aq" && next.species[id].phase !== "s"; });
@@ -1008,8 +1010,8 @@
   // Stellt zu dem, was im Gefäß ist, das Gleichungssystem auf:
   // alle gelösten Teilchen, die über die eingetragenen Gleichgewichte erreichbar sind, ausgedrückt durch Grundteilchen,
   // und alle Feststoffe, die daraus ausfallen können oder schon da sind.
-  function system(aq, solid) {
-    var key = aq.join("|") + "#" + solid.join("|");
+  function system(aq, solid, real) {
+    var key = (real ? "real#" : "") + aq.join("|") + "#" + solid.join("|");
     if (key in systems) return systems[key];
     var set = {}, here = {}, eqs = [], hets = [], grew = true;
     aq.forEach(function (id) { set[id] = true; });
@@ -1019,6 +1021,7 @@
       grew = false;
       L.db.equilibria.forEach(function (e) {
         var ions;
+        if (e.model === "real" && !real) return;                 // dem realen Modell vorbehalten
         if (e.aq) {
           if (eqs.indexOf(e) >= 0 || !(e.left.every(has) || e.right.every(has))) return;
           eqs.push(e);
@@ -1038,9 +1041,11 @@
 
     var ids = Object.keys(set).sort();
     var uses = ids.map(function (id) { return eqs.filter(function (e) { return e.nu[id]; }).length; });
-    // Spalten, die zuerst aufgelöst werden: seltene Teilchen; H+ bleibt möglichst Grundteilchen
+    // Spalten, die zuerst aufgelöst werden: seltene Teilchen; H+ bleibt möglichst Grundteilchen. Bei Gleichstand das schwerere:
+    // Das zusammengesetzte Teilchen (Ionenpaar, Säuremolekül, Komplex) wird aus den einfacheren aufgebaut, nicht umgekehrt. So
+    // bleibt ein freies Ion Grundteilchen, und ist nichts von ihm da, fällt es mit allem, was es enthält, aus der Rechnung.
     var order = ids.map(function (id, i) { return i; }).sort(function (a, b) {
-      return (ids[a] === PROTON) - (ids[b] === PROTON) || uses[a] - uses[b] || a - b;
+      return (ids[a] === PROTON) - (ids[b] === PROTON) || uses[a] - uses[b] || L.db.species[ids[b]].M - L.db.species[ids[a]].M || a - b;
     });
     var rows = eqs.map(function (e, j) {
       return { c: ids.map(function (id) { return e.nu[id] || 0; }), mix: eqs.map(function (x, k) { return k === j ? 1 : 0; }) };
@@ -1440,7 +1445,7 @@
       phase = L.db.species[id].phase;
       if (phase === "aq") aq.push(id); else if (phase === "s") sol.push(id);
     }
-    var sys = system(aq.sort(), sol.sort());
+    var sys = system(aq.sort(), sol.sort(), !!v.real);
     if (!sys) return false;
 
     var T = v.T + KELVIN, ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = sys.solids.length;
@@ -2546,7 +2551,7 @@
     }
     L.db.equilibria.forEach(function (e) {                     // Komplexe und Ionenpaare zerfallen in ihre Teile
       var whole = e.right.length === 1 ? e.right[0] : e.left.length === 1 ? e.left[0] : null, parts, n;
-      if (!e.aq || !whole || e.nu[WATER] || e.nu[PROTON] || e.nu[HYDROXIDE] || !(v.n[whole.id] > 0)) return;
+      if (!e.aq || !whole || e.nu[WATER] || e.nu[PROTON] || e.nu[HYDROXIDE] || !(v.n[whole.id] > 0)) return;      // (was nur das reale Modell kennt, liegt im idealen nie vor)
       parts = e.right.length === 1 ? e.left : e.right;
       if (parts.length < 2 && parts[0].n < 2) return;
       n = v.n[whole.id] / whole.n;
@@ -2571,7 +2576,7 @@
     }
     settle(true);
     L.db.equilibria.forEach(function (e) {                     // Ionen treten zum ungeladenen Molekül zusammen: H+ und OH- zu Wasser,
-      if (!e.aq) return;                                       // H+ und Acetat zu Essigsäure, Ammonium und OH- zu Ammoniak
+      if (!e.aq || (e.model === "real" && !v.real)) return;    // H+ und Acetat zu Essigsäure, Ammonium und OH- zu Ammoniak
       [[e.left, e.right, -1], [e.right, e.left, 1]].forEach(function (pair) {
         var molecule = null, water = 0, many = false, x = Infinity;
         pair[0].forEach(function (t) { if (t.id === WATER) water = t.n; else if (molecule) many = true; else molecule = t; });

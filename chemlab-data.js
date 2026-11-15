@@ -103,6 +103,13 @@
       "Zn(OH)2(aq)": { name: name("Zinkhydroxid, gelöst", "zinc hydroxide, dissolved"), Hf: null, src: NONE },
       "Zn(OH)3-(aq)": { name: name("Trihydroxozinkat-Ion", "trihydroxozincate ion"), Hf: null, src: NONE },
       "Zn(OH)4^2-(aq)": { name: name("Tetrahydroxozinkat-Ion (Zinkat)", "tetrahydroxozincate ion"), Hf: null, src: NONE },
+      // Schwache Ionenpaare, nur im realen Modell (siehe equilibria): Sie gehören zu den Parametern der Aktivitätskoeffizienten.
+      "NaSO4-(aq)": { name: name("Natriumsulfat-Ion (Ionenpaar)", "sodium sulfate ion pair"), Hf: null, D: 0.4, flame: "#ffd21f", shine: 30, src: NONE + DW + GLOW },
+      "KSO4-(aq)": { name: name("Kaliumsulfat-Ion (Ionenpaar)", "potassium sulfate ion pair"), Hf: null, D: 1.6, flame: "#b08cff", src: NONE + DW + GLOW },
+      "CaSO4(aq)": { name: name("Calciumsulfat, gelöst als Ionenpaar", "calcium sulfate, dissolved ion pair"), Hf: null, flame: "#ff6a2a", src: NONE + GLOW },
+      "CaOH+(aq)": { name: name("Calciumhydroxid-Ion", "calcium hydroxide ion"), Hf: null, flame: "#ff6a2a", src: NONE + GLOW },
+      "MgSO4(aq)": { name: name("Magnesiumsulfat, gelöst als Ionenpaar", "magnesium sulfate, dissolved ion pair"), Hf: null, src: NONE },
+      "MgOH+(aq)": { name: name("Magnesiumhydroxid-Ion", "magnesium hydroxide ion"), Hf: null, src: NONE },
       "ZnSO4(aq)": { name: name("Zinksulfat, gelöst als Ionenpaar", "zinc sulfate, dissolved ion pair"), Hf: null, src: NONE },
       // color und at: nur eine Farbe bekannt; sie gilt für die Konzentration at in mol/L
       "Fe^2+(aq)": { name: name("Eisen(II)-Ion", "iron(II) ion"), Hf: -92.26, D: 0.719, color: "#cfe6c4", at: 0.5,
@@ -253,6 +260,17 @@
       { eq: "Zn^2+(aq) + 3 H2O(l) <=> Zn(OH)3-(aq) + 3 H+(aq)", logK: -28.091, src: MINTEQ + "Zn+2 + 3 H2O = Zn(OH)3- + 3 H+, log_k -28.091" },
       { eq: "Zn^2+(aq) + 4 H2O(l) <=> Zn(OH)4^2-(aq) + 4 H+(aq)", logK: -40.488, src: MINTEQ + "Zn+2 + 4 H2O = Zn(OH)4-2 + 4 H+, log_k -40.488" },
       { eq: "Zn^2+(aq) + SO4^2-(aq) <=> ZnSO4(aq)", logK: 2.34, dH: 6.2, src: MINTEQ + "Zn+2 + SO4-2 = ZnSO4, log_k 2.34, delta_h 6.2 kJ" },
+      // Schwache Ionenpaare, nur im realen Modell (model: "real"). Im idealen Modell, ohne Aktivitätskoeffizienten, wären sie weit
+      // überschätzt; dort zerfallen diese Salze vollständig, wie im Lehrbuch. Die Sulfat-Paare von Natrium, Kalium und Magnesium
+      // stammen aus phreeqc.dat: Mit ihnen zusammen sind dort die Parameter der Aktivitätskoeffizienten bestimmt. Die Paare, zu
+      // denen das Grundpaket einen Feststoff kennt (Gips, Calcium- und Magnesiumhydroxid), stammen wie dessen Löslichkeitsprodukt
+      // aus minteq.v4.dat, damit beide zusammenpassen.
+      { eq: "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)", logK: 0.94, dH: 8.23, model: "real", src: "phreeqc.dat (USGS): Na+ + SO4-2 = NaSO4-, log_k 0.94, delta_h 8.23 kJ" },
+      { eq: "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)", logK: 1.18, dH: 3, model: "real", src: "phreeqc.dat (USGS): K+ + SO4-2 = KSO4-, log_k 1.18, delta_h 3 kJ" },
+      { eq: "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", logK: 2.36, dH: 7.1, model: "real", src: MINTEQ + "Ca+2 + SO4-2 = CaSO4, log_k 2.36, delta_h 7.1 kJ" },
+      { eq: "Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", logK: -12.697, dH: 64.11, model: "real", src: MINTEQ + "Ca+2 + H2O = CaOH+ + H+, log_k -12.697, delta_h 64.11 kJ" },
+      { eq: "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", logK: 2.42, dH: 19, model: "real", src: "phreeqc.dat (USGS): Mg+2 + SO4-2 = MgSO4, log_k 2.42, delta_h 19.0 kJ" },
+      { eq: "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", logK: -11.397, dH: 67.81, model: "real", src: MINTEQ + "Mg+2 + H2O = MgOH+ + H+, log_k -11.397, delta_h 67.81 kJ" },
       { eq: "Fe^2+(aq) + H2O(l) <=> FeOH+(aq) + H+(aq)", logK: -9.397, dH: 55.81, src: MINTEQ + "Fe+2 + H2O = FeOH+ + H+, log_k -9.397, delta_h 55.81 kJ" },
       { eq: "Fe^2+(aq) + SO4^2-(aq) <=> FeSO4(aq)", logK: 2.39, dH: 8, src: MINTEQ + "Fe+2 + SO4-2 = FeSO4, log_k 2.39, delta_h 8 kJ" },
 
@@ -543,7 +561,8 @@
     "Fe^2+(aq)": [6, 0], "FeOH+(aq)": [5, 0], "Fe^3+(aq)": [9, 0], "FeOH^2+(aq)": [5, 0], "Mn^2+(aq)": [6, 0],
     "Zn^2+(aq)": [5, 0], "Cu^2+(aq)": [6, 0], "CuOH+(aq)": [4, 0],
     "OH-(aq)": [3.5, 0], "Cl-(aq)": [3.63, 0.017], "Br-(aq)": [3, 0.045], "NO3-(aq)": [3, 0], "SO4^2-(aq)": [5, -0.04],
-    "CO3^2-(aq)": [5.4, 0], "HCO3-(aq)": [5.4, 0.0078], "CO2(aq)": [0, 0.066]
+    "CO3^2-(aq)": [5.4, 0], "HCO3-(aq)": [5.4, 0.0078], "CO2(aq)": [0, 0.066],
+    "NaSO4-(aq)": [3.5, 0.1072], "KSO4-(aq)": [5.4, 0.19], "CaSO4(aq)": [0, 0.0445], "MgSO4(aq)": [0, 0.2], "MgOH+(aq)": [6.5, 0]
   };
   Object.keys(GAMMA).forEach(function (id) {
     var sp = L.core.species[id];
