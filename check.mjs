@@ -6475,3 +6475,19 @@ test("Viele Niederschläge zugleich: Zufallsgemische vieler Feststoffe in wenig 
     if (!paste) assert.deepEqual(settled(mud), [], where + ": nichts übersättigt, nichts liegt da, was sich lösen müsste");
   }
 });
+
+test("Löser: viel Bodensatz in einem Rest von Wasser lässt sich berechnen", () => {
+  // Ein fast leer gegossenes Glas: 250 µmol Strontiumsulfat und wenige Nanoliter Lösung. Ganz auflösen lässt sich der Feststoff
+  // darin nicht einmal in Gedanken; er bleibt liegen, und die Lösung ist mit ihm gesättigt.
+  for (const model of ["ideal", "real"]) {
+    const l = lab([{ type: "beaker", id: "b" }], { room: 24, model }), glass = L.vessel(l, "b");
+    glass.n = { "Sr^2+(aq)": 3.76e-9, "Cl-(aq)": 7.74e-9, "H2O(l)": 2.36e-7, "Na+(aq)": 2.44e-10, "SrSO4(s)": 2.5e-4 };
+    glass.lumps = [{ id: "SrSO4(s)", n: 2.5e-4, n0: 2.5e-4, a0: 1, p: 2 / 3, made: true, settled: 1 }];
+    glass.dirty = true;
+    const before = totals(l);
+    L.step(l, 5);
+    assert.equal(l.failed || 0, 0, model + ": jedes Gleichgewicht ließ sich berechnen");
+    near(amount(l, "SrSO4(s)"), 2.5e-4, 1e-9, model + ": der Bodensatz liegt noch da");
+    near(totals(l).charge, before.charge, 1e-18, model + ": Ladung");
+  }
+});

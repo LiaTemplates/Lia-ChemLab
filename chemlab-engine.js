@@ -1197,7 +1197,7 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, state = null, k, round, worst, at, value, melt, out;
+    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, keep = null, found, k, round, worst, at, value, melt, out;
     // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
@@ -1242,8 +1242,16 @@
       if (gone >= 0) active[gone] = q;
     }
     for (round = 0; round < 24 + 6 * np; round++) {
-      state = attempt();
-      if (!state) return null;
+      found = attempt();
+      if (!found && saved) {
+        // Der zuletzt Aufgenommene müsste sich lösen, lässt sich aber nicht sättigen: Das verlangte Konzentrationen, die es nicht
+        // gibt. Dann löst er sich ganz.
+        active = saved; state = keep;
+        found = attempt();
+      }
+      saved = null;
+      if (!found) return null;
+      state = found;
       worst = -1e-15; at = -1;                                  // wer aufgebraucht ist, scheidet aus
       for (k = 0; k < active.length; k++) if (state.s[k] < worst) { worst = state.s[k]; at = k; }
       if (at >= 0) { active.splice(at, 1); continue; }
@@ -1254,10 +1262,13 @@
         if (value > worst) { worst = value; at = k; melt = false; }
         else if (-value > worst && !used[k] && cur[k] > 0) { worst = -value; at = k; melt = true; }      // liegt da und müsste sich lösen
       }
-      // Ein Feststoff, der sich lösen müsste, löst sich zunächst ganz: Ob die Lösung ihn überhaupt sättigen kann, zeigt sich
-      // danach (dann ist sie übersättigt, und er kommt wieder dazu). Ihn gleich als gesättigt anzusetzen, verlangte sonst
-      // unter Umständen Konzentrationen, die es nicht gibt.
-      if (at >= 0 && melt) { used[at] = true; continue; }
+      // Ein Feststoff, der sich lösen müsste, kommt versuchsweise dazu: Meist löst er sich nur zum Teil, und die Lösung ist dann
+      // mit ihm gesättigt. Hängt seine Zusammensetzung von den anderen ab, zerfällt er stattdessen in sie und löst sich ganz.
+      if (at >= 0 && melt) {
+        used[at] = true;
+        if (!depends(at)) { saved = active.slice(); keep = state; active.push(at); }
+        continue;
+      }
       if (at >= 0) { join(at); continue; }
       out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });
