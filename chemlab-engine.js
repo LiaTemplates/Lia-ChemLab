@@ -1194,21 +1194,56 @@
   var detours = 0;                // wie oft der Notweg (relax) gebraucht wurde; equilibrate bucht es am Labor
   function balance(sys, logB, rhs, total, x0, cur) {
     var np = sys.solids.length, active = [], state = null, k, round, worst, at, value, out;
-    // Zwei Feststoffe aus denselben Teilchen (Oxid und Hydroxid, Salz und sein Hydrat) können nicht beide gesättigt sein:
-    // der schwerer lösliche bleibt, der andere löst sich ganz.
-    function join(q) {
-      var rival = -1, ratio;
-      active.forEach(function (other, index) { if (alike(sys.solids[other].comp, sys.solids[q].comp)) rival = index; });
-      if (rival < 0) { active.push(q); return; }
-      ratio = alike(sys.solids[q].comp, sys.solids[active[rival]].comp);
-      if (rhs[q] / ratio < rhs[active[rival]]) active[rival] = q;
+    var have = cur.slice();                                     // die Mengen im Arbeitsstand: wer bei einer Abhängigkeit zuerst aufgebraucht ist
+    // Lässt sich die Zusammensetzung von q aus denen der aktiven Feststoffe zusammensetzen? Dann die Anteile alpha mit
+    // comp[q] = Σ alpha[i] · comp[active[i]], sonst null. (Kleinste Quadrate; die aktiven sind voneinander unabhängig.)
+    function depends(q) {
+      var m = active.length, own = sys.solids[q].comp, nb = own.length, G = [], i, j, b, sum, alpha, rest = 0, size = 0;
+      if (!m) return null;
+      for (i = 0; i < m; i++) {
+        G.push(new Array(m + 1));
+        for (j = 0; j <= m; j++) {
+          sum = 0;
+          for (b = 0; b < nb; b++) sum += sys.solids[active[i]].comp[b] * (j < m ? sys.solids[active[j]].comp[b] : own[b]);
+          G[i][j] = sum;
+        }
+      }
+      alpha = gauss(G, m);
+      if (!alpha) return null;
+      for (b = 0; b < nb; b++) {
+        sum = own[b];
+        for (i = 0; i < m; i++) sum -= alpha[i] * sys.solids[active[i]].comp[b];
+        rest += sum * sum; size += own[b] * own[b];
+      }
+      return rest <= 1e-18 * size ? alpha : null;
     }
-    // Mehr Feststoffe, als ihre Bausteine hergeben (Hydroxid und Carbonat zweier Metalle), können nicht alle gesättigt sein:
-    // die Rechnung ist dann überbestimmt. Einer muss weichen: wenn möglich einer, der danach auch nicht mehr ausfallen will.
+    // Nimmt q unter die Feststoffe auf, mit denen die Lösung gesättigt sein soll. Hängt seine Zusammensetzung von denen ab, die
+    // schon dabei sind (Oxid und Hydroxid; Hydroxid und Carbonat zweier Metalle), können nicht alle gesättigt sein. Zwischen
+    // ihnen läuft dann eine Reaktion, die an der Lösung nichts ändert: q entsteht aus den anderen oder zerfällt in sie. Sie läuft
+    // in die Richtung, in der die freie Enthalpie sinkt, bis einer der Beteiligten aufgebraucht ist. Der weicht.
+    function join(q) {
+      var alpha = depends(q), drive, grow, step, gone = -1, i, change;
+      if (!alpha) { active.push(q); return; }
+      drive = rhs[q];                                           // < 0: q ist beständiger als die anderen zusammen und wächst
+      for (i = 0; i < active.length; i++) drive -= alpha[i] * rhs[active[i]];
+      grow = drive < 0 ? 1 : -1;                                // je Umsatz: q ändert sich um grow, der aktive i um −grow · alpha[i]
+      step = grow < 0 ? have[q] : Infinity;
+      for (i = 0; i < active.length; i++) {
+        change = -grow * alpha[i];
+        if (change < -1e-9 && have[active[i]] / -change < step) { step = have[active[i]] / -change; gone = i; }
+      }
+      for (i = 0; i < active.length; i++) have[active[i]] = Math.max(0, have[active[i]] - grow * alpha[i] * step);
+      if (gone < 0) { have[q] = 0; return; }                    // q selbst ist als Erster aufgebraucht
+      have[q] += grow * step;
+      have[active[gone]] = 0;
+      active[gone] = q;
+    }
+    // Der Notweg: Lässt sich die Probe mit allen diesen Feststoffen nicht berechnen (sehr viele Feststoffe in wenig Wasser
+    // verlangen Konzentrationen, die es nicht gibt), muss einer weichen: wenn möglich einer, der danach auch nicht mehr ausfallen will.
     var barred = {}, unit = 1e-6;
     total.forEach(function (value) { unit = Math.max(unit, Math.abs(value)); });
     function attempt(list) {
-      return solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return cur[q]; }));
+      return solve(sys, logB, total, state ? state.x : x0, list, rhs, list.map(function (q) { return have[q]; }));
     }
     // Ob die Stoffbilanz mit diesen Feststoffen überhaupt aufgehen kann. Der Löser lässt die Bilanz eines Grundteilchens fallen,
     // von dem nichts da ist. Ist aber mehr davon gebunden, als gelöst vorliegt (Iod ohne Iodid: es kann nur mit Iodid in Lösung
@@ -1237,8 +1272,7 @@
           barred[best.out] = true;
           return best.state;
         }
-        // auch ohne einen von ihnen bleibt es überbestimmt: es gibt mehr als eine Abhängigkeit. Der kleinste, der weichen kann,
-        // weicht, dann von vorn.
+        // auch ohne einen von ihnen lässt es sich nicht berechnen. Der kleinste, der weichen kann, weicht, dann von vorn.
         order = order.filter(function (out) { return holds(active.filter(function (q) { return q !== out; })); });
         if (!order.length) return null;
         barred[order[0]] = true;
@@ -1249,9 +1283,11 @@
       return null;
     }
     for (k = 0; k < np; k++) if (cur[k] > 0) join(k);
-    for (round = 0; round < 24; round++) {
+    for (round = 0; round < 24 + 4 * np; round++) {
       state = attempt(active) || (active.length > 1 ? relax() : null);
       if (!state) return null;
+      for (k = 0; k < np; k++) have[k] = 0;                     // in diesem Zustand gibt es nur die aktiven Feststoffe
+      for (k = 0; k < active.length; k++) have[active[k]] = Math.max(0, state.s[k]);
       worst = -1e-15; at = -1;
       for (k = 0; k < active.length; k++) if (state.s[k] < worst) { worst = state.s[k]; at = k; }
       if (at >= 0) { active.splice(at, 1); continue; }
@@ -1271,17 +1307,6 @@
 
   // Zeitkonstante, mit der sich ein Feststoff löst. Ein Stück aus dem Regal löst sich über seine Oberfläche:
   // sie schrumpft mit ihm, und so ist es nach endlicher Zeit verschwunden (Körner nach dem Dreifachen von tau).
-  function alike(a, b) {          // ob zwei Zusammensetzungen Vielfache voneinander sind: das Verhältnis a zu b, sonst 0
-    var ratio = 0, i;
-    for (i = 0; i < a.length; i++) {
-      if ((a[i] === 0) !== (b[i] === 0)) return 0;
-      if (a[i] === 0) continue;
-      if (!ratio) ratio = a[i] / b[i];
-      else if (Math.abs(a[i] / b[i] - ratio) > 1e-9 * Math.abs(ratio)) return 0;
-    }
-    return ratio > 0 ? ratio : 0;
-  }
-
   function pace(v, id) {
     var tau = MELT;
     v.lumps.forEach(function (l) { if (l.id === id && !l.made) tau = (l.tau || 15) * Math.max(0.01, Math.pow(l.n / l.n0, 1 - l.p)); });

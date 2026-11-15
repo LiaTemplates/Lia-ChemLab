@@ -2777,7 +2777,7 @@ const settled = (l, id) => {
   const v = L.vessel(l, id || "b"), vol = L.volume(v), T = v.T + 273.15, off = [];
   for (const e of L.db.equilibria.filter((x) => x.solid)) {
     const ions = Object.entries(e.d), here = ions.every(([sp]) => v.n[sp] > 0);
-    const logQ = here ? ions.reduce((sum, [sp, nu]) => sum + nu * Math.log10(v.n[sp] / vol), 0) : -Infinity;
+    const logQ = here ? ions.reduce((sum, [sp, nu]) => sum + nu * Math.log10(v.n[sp] / vol * L.gamma(l, v.id, sp)), 0) : -Infinity;
     const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
     if (logQ - logK > 0.01) off.push(`${e.solid} übersättigt um 10^${(logQ - logK).toFixed(2)}`);
     if (v.n[e.solid] > 0 && logQ - logK < -0.01) off.push(`${e.solid} bleibt liegen`);
@@ -6082,13 +6082,18 @@ test("Reales Modell: Masse und Ladung bleiben erhalten, und eine Lösung verdamp
 });
 
 test("Reales Modell: Lösung auf einem heißen Rückstand – der Löser kommt ohne Notweg aus", () => {
-  // Der Notweg ist für Niederschläge da, die nicht alle nebeneinander bestehen können; das Labor zählt mit, wie oft er nötig war.
+  // Der Notweg ist für den Fall da, dass sich die Probe mit allen vorhandenen Feststoffen nicht berechnen lässt: Dann muss einer
+  // von ihnen weichen. Das Labor zählt mit, wie oft er nötig war – hier bei neunzehn Feststoffen in 1 mL Wasser.
+  const solids = ["Cu(OH)2(s)", "CaCO3(s)", "CaSO4*2H2O(s)", "Ca(OH)2(s)", "CuCO3(s)", "BaSO4(s)", "BaCO3(s)", "SrCO3(s)", "SrSO4(s)", "Mg(OH)2(s)", "MgO(s)", "Zn(OH)2(s)",
+    "Fe(OH)2(s)", "Fe(OH)3(s)", "Ag2O(s)", "Ag2CO3(s)", "Ag2SO4(s)", "AgCl(s)", "NaCl(s)"];
   const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 28 }), glass = L.vessel(mud, "b");
-  glass.n = { "Cu(OH)2(s)": 4.42e-13, "CaCO3(s)": 0.00101, "CaSO4*2H2O(s)": 0.0000753, "Ca(OH)2(s)": 7.36e-12, "CuCO3(s)": 3.67e-15, "H2O(l)": 0.0609, "BaSO4(s)": 0.00000875, "BaCO3(s)": 9.17e-7 };
-  glass.lumps = Object.keys(glass.n).filter((id) => /\(s\)$/.test(id)).map((id) => ({ id, n: glass.n[id], n0: glass.n[id], a0: 1, p: 2 / 3, made: true, settled: 1 }));
+  glass.n = { "H2O(l)": 0.0609 };
+  for (const id of solids) glass.n[id] = 1e-4;
+  glass.lumps = solids.map((id) => ({ id, n: 1e-4, n0: 1e-4, a0: 1, p: 2 / 3, made: true, settled: 1 }));
   glass.dirty = true;
   L.step(mud, 5);
-  assert.ok(mud.detours > 0, "bei abhängigen Niederschlägen wird er gebraucht");
+  assert.ok(mud.detours > 0, "bei sehr vielen Feststoffen wird er gebraucht");
+  assert.equal(mud.failed || 0, 0);
   // Cobaltchlorid, Zinksulfat und Kochsalz eingedampft, dann fließt Kupfersulfat-Lösung darauf. Die ersten Tropfen geben eine
   // Lösung mit sehr kleinen Aktivitätskoeffizienten. Die Probe, ob alle Salze des Rückstands zugleich gesättigt sein können,
   // verlangt dann Konzentrationen über 1000 mol/L: Gilt die Obergrenze des Lösers der Konzentration statt der Aktivität,
@@ -6330,5 +6335,28 @@ test("Löser: beim Eindampfen bleibt die Ladungsbilanz in beiden Modellen genau"
     assert.ok(t < 3000, model + ": eingedampft");
     assert.ok(worst < 1e-13, `${model}: größte Ladungssumme unterwegs ${worst.toExponential(2)} mol`);
     assert.equal(l.failed || 0, 0);
+  }
+});
+
+test("Viele Niederschläge zugleich: neunzehn Feststoffe in wenig Wasser kommen im Gleichgewicht zur Ruhe", () => {
+  // Hydroxide, Carbonate, Sulfate und Chloride von sieben Metallen: viel mehr Feststoffe, als nebeneinander bestehen können.
+  // Zwischen solchen Feststoffen läuft eine Reaktion, bis einer aufgebraucht ist; welcher, entscheidet die freie Enthalpie.
+  const solids = ["Cu(OH)2(s)", "CaCO3(s)", "CaSO4*2H2O(s)", "Ca(OH)2(s)", "CuCO3(s)", "BaSO4(s)", "BaCO3(s)", "SrCO3(s)", "SrSO4(s)", "Mg(OH)2(s)", "MgO(s)", "Zn(OH)2(s)",
+    "Fe(OH)2(s)", "Fe(OH)3(s)", "Ag2O(s)", "Ag2CO3(s)", "Ag2SO4(s)", "AgCl(s)", "NaCl(s)"];
+  for (const model of ["ideal", "real"]) {
+    const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 28, model }), glass = L.vessel(mud, "b");
+    glass.n = { "H2O(l)": 0.0609 };
+    for (const id of solids) glass.n[id] = 1e-4;
+    glass.lumps = solids.map((id) => ({ id, n: 1e-4, n0: 1e-4, a0: 1, p: 2 / 3, made: true, settled: 1 }));
+    glass.dirty = true;
+    const before = totals(mud);
+    const t = restAfter(mud, 4000);
+    assert.ok(t < 4000, model + ": kommt zur Ruhe");
+    assert.deepEqual(settled(mud), [], model + ": nichts ist übersättigt, und nichts liegt da, was sich lösen müsste");
+    assert.equal(mud.failed || 0, 0, model + ": jedes Gleichgewicht ließ sich berechnen");
+    near(totals(mud).charge, before.charge, 1e-12, model + ": Ladung");
+    near(totals(mud).mass, before.mass, 1e-9, model + ": Masse");
+    // das schwerer lösliche Silberchlorid bleibt, das leichter lösliche Silberoxid ist umgewandelt
+    assert.ok(amount(mud, "AgCl(s)") > 1e-5 && amount(mud, "BaSO4(s)") > 5e-5, model + ": Silberchlorid und Bariumsulfat liegen da");
   }
 });
