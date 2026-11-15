@@ -1865,15 +1865,15 @@ test("Oberfläche: leere Kurven, ausgeblendete Zahlen, trockener Bodensatz, Hinw
 
 // ================================================================ Belastung
 
-test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungssätze noch Gleichgewichte", () => {
+const stress = (model, seeds) => {
   const ids = ["t1", "t2", "b1", "b2", "bu"], names = Object.keys(L.core.reagents);
   const massOf = (l) => totals(l).mass;
-  for (const seed of [3, 11]) {
+  for (const seed of seeds) {
     let s = seed * 7919;
     const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
     const pick = (list) => list[Math.floor(rnd() * list.length)];
     const l = lab([{ type: "testtube", id: "t1" }, { type: "testtube", id: "t2" }, { type: "beaker", id: "b1" }, { type: "beaker", id: "b2", ml: 250 },
-      { type: "burette", id: "bu", over: "b2" }, { type: "thermometer", in: "b1" }, { type: "phmeter", in: "b2" }], { room: 22 });
+      { type: "burette", id: "bu", over: "b2" }, { type: "thermometer", in: "b1" }, { type: "phmeter", in: "b2" }], { room: 22, model });
     const trail = [];
     for (let i = 0; i < 40; i++) {
       const kind = rnd(), before = massOf(l);
@@ -1913,7 +1913,8 @@ test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungss�
       if (!(vol > 1e-9)) continue;
       for (const e of L.db.equilibria.filter((x) => x.solid)) {
         const ions = Object.entries(e.d), here = ions.every(([id]) => v.n[id] > 0);
-        const logQ = here ? ions.reduce((sum, [id, nu]) => sum + nu * Math.log10(v.n[id] / vol), 0) : -Infinity;
+        // mit Aktivitäten; im idealen Modell ist jeder Koeffizient 1
+        const logQ = here ? ions.reduce((sum, [id, nu]) => sum + nu * Math.log10(v.n[id] / vol * L.gamma(l, v.id, id)), 0) : -Infinity;
         const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
         assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
         // (ein Stück mit eigenem Geschwindigkeitsgesetz darf liegen bleiben, wenn es sich unmerklich langsam löst: Marmor in Wasser)
@@ -1921,7 +1922,11 @@ test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungss�
       }
     }
   }
-});
+};
+
+test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungssätze noch Gleichgewichte", () => stress("ideal", [3, 11]));
+
+test("Belastung im realen Modell: dieselben Mischungen mit Aktivitäten", () => stress("real", [3, 11]));
 
 // ================================================================ Kleinere Befunde der ersten Durchsicht
 
@@ -5940,4 +5945,201 @@ test("Daten: logK gibt es nur für sofortige Reaktionen, und nur als Zahl", () =
     const made = amount(l, "Br2(aq)");
     assert.ok(made > 1e-9 && made < 1e-6, `eine Spur Brom: ${made} mol`);
   } finally { L.db = before; }
+});
+
+// ================================================================ Reales Modell: Aktivitäten statt Konzentrationen
+
+const real = (contains, more) => beaker(contains, Object.assign({ room: 25, model: "real" }, more));
+// Aktivität eines gelösten Teilchens: Konzentration mal Aktivitätskoeffizient
+const act = (l, sp, id) => { const v = L.vessel(l, id || "b"); return (v.n[sp] || 0) / L.volume(v) * L.gamma(l, v.id, sp); };
+// mittlerer Aktivitätskoeffizient eines Salzes, wie er in den Tabellen steht: geometrisches Mittel über seine Ionen
+const meanGamma = (l, ions) => {
+  let lg = 0, n = 0;
+  for (const [id, nu] of ions) { lg += nu * Math.log10(L.gamma(l, "b", id)); n += nu; }
+  return 10 ** (lg / n);
+};
+
+test("Aufbau: das Rechenmodell ist ideal oder real, ohne Angabe ideal", () => {
+  assert.equal(L.normalize({ bench: [] }).model, "ideal");
+  assert.equal(L.normalize({ bench: [], model: "real" }).model, "real");
+  assert.equal(L.normalize({ bench: [], model: "ideal" }).model, "ideal");
+  assert.throws(() => L.normalize({ bench: [], model: "echt" }), (e) => e.code === "model" && e.detail === "echt");
+  assert.ok(L.text("err.model", "de").length > 10 && L.text("err.model", "en").length > 10);
+  assert.match(mount({ bench: [], model: "echt" }).innerHTML, /Rechenmodell.*echt/);
+  const l = real([{ reagent: "NaCl 0.1M", ml: 20 }]), ideal = beaker([{ reagent: "NaCl 0.1M", ml: 20 }], { room: 25 });
+  assert.equal(l.model, "real");
+  assert.equal(ideal.model, "ideal");
+  // im idealen Modell ist jeder Aktivitätskoeffizient 1, und eine Ionenstärke wird nicht angegeben
+  assert.equal(L.gamma(ideal, "b", "Na+(aq)"), 1);
+  assert.equal(look(ideal).strength, null);
+  near(look(l).strength, 0.1, 1e-6, "Ionenstärke von Kochsalzlösung 0,1 mol/L");
+  near(look(real([{ reagent: "CaCl2 0.1M", ml: 20 }])).strength, 0.3, 1e-6, "zweiwertige Ionen zählen vierfach");
+  // das Modell gehört zum Labor: es bleibt beim Zurückspulen erhalten
+  const run = L.createRun(L.normalize({ room: 25, model: "real", bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }] }));
+  L.advance(run, 2);
+  L.toStart(run);
+  near(L.view(run.lab, L.vessel(run.lab, "b")).pH, 1.083, 0.01, "nach dem Zurückspulen rechnet es weiter real");
+});
+
+test("Reales Modell: Aktivitätskoeffizienten wie in den Tabellen", () => {
+  const one = [["Na+(aq)", 1], ["Cl-(aq)", 1]];
+  near(meanGamma(real([{ reagent: "NaCl 0.001M", ml: 20 }]), one), 0.965, 0.003, "Kochsalz 0,001 mol/L");
+  near(meanGamma(real([{ reagent: "NaCl 0.1M", ml: 20 }]), one), 0.778, 0.008, "Kochsalz 0,1 mol/L");
+  near(meanGamma(real([{ reagent: "NaCl 1M", ml: 20 }]), one), 0.657, 0.02, "Kochsalz 1 mol/L");
+  near(meanGamma(real([{ reagent: "HCl 0.1M", ml: 20 }]), [["H+(aq)", 1], ["Cl-(aq)", 1]]), 0.796, 0.008, "Salzsäure 0,1 mol/L");
+  near(meanGamma(real([{ reagent: "CaCl2 0.1M", ml: 20 }]), [["Ca^2+(aq)", 1], ["Cl-(aq)", 2]]), 0.518, 0.008, "Calciumchlorid 0,1 mol/L");
+  // ein Ion ohne eigene Parameter rechnet nach Davies: Silbernitrat 0,1 mol/L steht mit 0,734 in den Tabellen
+  near(meanGamma(real([{ reagent: "AgNO3 0.1M", ml: 20 }]), [["Ag+(aq)", 1], ["NO3-(aq)", 1]]), 0.734, 0.04, "Silbernitrat 0,1 mol/L");
+  // ungeladene Teilchen: lg γ = 0,1 · I
+  near(L.gamma(real([{ reagent: "NaCl 2M", ml: 10 }, { reagent: "sugar 0.1M", ml: 10 }]), "b", "C12H22O11(aq)"), 10 ** 0.1, 0.005, "Zucker in Kochsalzlösung 1 mol/L");
+  // in der Wärme sinkt die Dielektrizitätszahl des Wassers: die Ionen spüren einander stärker
+  const warm = meanGamma(real([{ reagent: "NaCl 0.1M", ml: 20 }], { room: 60 }), one), cold = meanGamma(real([{ reagent: "NaCl 0.1M", ml: 20 }], { room: 5 }), one);
+  assert.ok(warm < 0.768 && cold > 0.779, `bei 60 °C ${warm}, bei 5 °C ${cold}`);
+  // über 6 mol/L Ionenstärke bleiben die Koeffizienten stehen: so weit reichen die Parameter
+  const strong = real([{ reagent: "NaCl 2M", ml: 5 }, { reagent: "HCl 12M", ml: 15 }]), stronger = real([{ reagent: "NaCl 2M", ml: 2 }, { reagent: "HCl 12M", ml: 18 }]);
+  assert.ok(look(strong).strength > 9 && look(stronger).strength > look(strong).strength + 1);
+  assert.equal(L.gamma(strong, "b", "Na+(aq)"), L.gamma(stronger, "b", "Na+(aq)"));
+});
+
+test("Reales Modell: der pH-Wert ist der negative Logarithmus der Aktivität", () => {
+  near(look(real([{ reagent: "HCl 0.1M", ml: 20 }])).pH, 1.09, 0.012, "Salzsäure 0,1 mol/L");
+  near(look(real([{ reagent: "HCl 0.01M", ml: 20 }])).pH, 2.04, 0.008, "Salzsäure 0,01 mol/L");
+  near(look(real([{ reagent: "NaOH 0.1M", ml: 20 }])).pH, 12.88, 0.015, "Natronlauge 0,1 mol/L");
+  near(look(real([{ reagent: "H2O", ml: 20 }])).pH, 7, 0.002, "reines Wasser");
+  // Eichlösungen: Acetatpuffer 0,1/0,1 mol/L und Carbonatpuffer 0,025/0,025 mol/L (pH 10,012 bei 25 °C)
+  near(look(real([{ reagent: "CH3COOH 0.2M", ml: 10 }, { reagent: "CH3COONa 0.2M", ml: 10 }])).pH, 4.65, 0.015, "Acetatpuffer");
+  near(look(real([{ reagent: "NaHCO3 0.05M", ml: 10 }, { reagent: "Na2CO3 0.05M", ml: 10 }])).pH, 10.012, 0.01, "Carbonatpuffer");
+  // dieselben Lösungen im idealen Modell: die Lehrbuchwerte
+  near(look(beaker([{ reagent: "HCl 0.1M", ml: 20 }], { room: 25 })).pH, 1, 1e-6, "ideal: pH 1");
+  near(look(beaker([{ reagent: "CH3COOH 0.2M", ml: 10 }, { reagent: "CH3COONa 0.2M", ml: 10 }], { room: 25 })).pH, 4.757, 0.002, "ideal: pH = pKs");
+  // das pH-Meter zeigt, was das Gefäß angibt
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "phmeter", id: "p", in: "b" }], { room: 25, model: "real" });
+  L.step(l, 10);
+  near(L.reading(l, "p").value, look(l).pH, 0.005, "pH-Meter");
+  near(L.reading(l, "p").value, 1.083, 0.01);
+});
+
+test("Reales Modell: das Massenwirkungsgesetz gilt für die Aktivitäten", () => {
+  const l = real([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "NaCl 1M", ml: 10 }]);
+  near(Math.log10(act(l, "H+(aq)")) + Math.log10(act(l, "CH3COO-(aq)")) - Math.log10(act(l, "CH3COOH(aq)")), -4.757, 1e-6, "Essigsäure");
+  near(Math.log10(act(l, "H+(aq)")) + Math.log10(act(l, "OH-(aq)")), -14, 1e-6, "Wasser");
+  // Salz macht die schwache Säure stärker: mit Kochsalz ist mehr von ihr zerfallen als ohne
+  const plain = real([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "H2O", ml: 10 }]);
+  assert.ok(amount(l, "H+(aq)") > 1.2 * amount(plain, "H+(aq)"), `${amount(l, "H+(aq)")} gegen ${amount(plain, "H+(aq)")} mol`);
+  // im idealen Modell ändert das Salz nichts
+  const a = beaker([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "NaCl 1M", ml: 10 }], { room: 25 }), b = beaker([{ reagent: "CH3COOH 0.1M", ml: 10 }, { reagent: "H2O", ml: 10 }], { room: 25 });
+  near(amount(a, "H+(aq)") / amount(b, "H+(aq)"), 1, 0.01, "ideal");
+  assert.equal(l.failed || 0, 0);
+});
+
+test("Reales Modell: ein fremdes Salz erhöht die Löslichkeit (Silberchlorid in Kaliumnitrat-Lösung)", () => {
+  const silver = (model, reagent) => {
+    const l = beaker([{ reagent: "AgNO3 0.01M", ml: 10 }, { reagent: "NaCl 0.01M", ml: 10 }, { reagent, ml: 20 }], { room: 25, model });
+    L.step(l, 300);
+    assert.equal(l.failed || 0, 0);
+    return l;
+  };
+  const salt = silver("real", "KNO3 0.2M"), water = silver("real", "H2O"), c = (l) => amount(l, "Ag+(aq)") / (look(l).ml / 1000);
+  near(c(salt), 1.72e-5, 0.05e-5, "in Kaliumnitrat 0,1 mol/L");
+  near(c(water), 1.41e-5, 0.03e-5, "fast ohne fremdes Salz");
+  near(Math.log10(act(salt, "Ag+(aq)")) + Math.log10(act(salt, "Cl-(aq)")), -9.75, 0.002, "das Produkt der Aktivitäten ist das Löslichkeitsprodukt");
+  near(c(silver("ideal", "KNO3 0.2M")), 1.333e-5, 0.01e-5, "ideal: das Salz ändert nichts");
+  assert.ok(L.atRest(salt), "danach ruht das Glas");
+});
+
+test("Reales Modell: Masse und Ladung bleiben erhalten, und eine Lösung verdampft ohne Rest", () => {
+  const l = real([{ reagent: "CuSO4 0.5M", ml: 10 }, { reagent: "CaCl2 1M", ml: 5 }]), before = totals(l);
+  L.add(l, "b", "NaOH 1M", { ml: 6 });
+  L.add(l, "b", "Na2CO3 1M", { ml: 4 });
+  L.step(l, 120);
+  const added = 10 * 0.997 + 0.006 * (22.99 + 17.007) + 0.004 * (2 * 22.99 + 60.008);
+  near(totals(l).mass - before.mass, added, 0.01, "Masse");
+  near(totals(l).charge, before.charge, 1e-12, "Ladung");
+  assert.ok(amount(l, "Cu(OH)2(s)") + amount(l, "CuCO3(s)") > 1e-3 && amount(l, "CaCO3(s)") > 1e-3, "Niederschläge");
+  assert.equal(l.failed || 0, 0);
+  // Ammoniak-Lösung über dem Brenner: bleibt die Ladungsbilanz nicht genau, steht am Ende ein Rest Ammonium ohne Gegenion im Glas
+  const tube = heated({ type: "testtube", contains: [{ reagent: "NH3 1M", ml: 5 }] }, { model: "real" }), seen = collect(tube, 300);
+  const dry = seen.find((e) => e.key === "dry");
+  assert.ok(dry && dry.left === false, "kein fester Rückstand");
+  assert.deepEqual(Object.keys(L.vessel(tube, "b").n), []);
+  assert.equal(tube.failed || 0, 0);
+});
+
+test("Reales Modell: Lösung auf einem heißen Rückstand – der Löser kommt ohne Notweg aus", () => {
+  // Der Notweg ist für Niederschläge da, die nicht alle nebeneinander bestehen können; das Labor zählt mit, wie oft er nötig war.
+  const mud = lab([{ type: "beaker", id: "b", ml: 250 }], { room: 28 }), glass = L.vessel(mud, "b");
+  glass.n = { "Cu(OH)2(s)": 4.42e-13, "CaCO3(s)": 0.00101, "CaSO4*2H2O(s)": 0.0000753, "Ca(OH)2(s)": 7.36e-12, "CuCO3(s)": 3.67e-15, "H2O(l)": 0.0609, "BaSO4(s)": 0.00000875, "BaCO3(s)": 9.17e-7 };
+  glass.lumps = Object.keys(glass.n).filter((id) => /\(s\)$/.test(id)).map((id) => ({ id, n: glass.n[id], n0: glass.n[id], a0: 1, p: 2 / 3, made: true, settled: 1 }));
+  glass.dirty = true;
+  L.step(mud, 5);
+  assert.ok(mud.detours > 0, "bei abhängigen Niederschlägen wird er gebraucht");
+  // Cobaltchlorid, Zinksulfat und Kochsalz eingedampft, dann fließt Kupfersulfat-Lösung darauf. Die ersten Tropfen geben eine
+  // Lösung mit sehr kleinen Aktivitätskoeffizienten. Die Probe, ob alle Salze des Rückstands zugleich gesättigt sein können,
+  // verlangt dann Konzentrationen über 1000 mol/L: Gilt die Obergrenze des Lösers der Konzentration statt der Aktivität,
+  // scheitert jede dieser Proben, und jeder Rechenschritt nimmt den Notweg.
+  const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "CoCl2 2M", ml: 8 }, { reagent: "ZnSO4 1M", ml: 1 }, { reagent: "NaCl 2M", ml: 1 }, { reagent: "NaOH 0.1M", ml: 1 }] },
+    { type: "burner", id: "br", under: "b", flame: 2 }, { type: "beaker", id: "c", contains: [{ reagent: "CuSO4 1M", ml: 10 }] }], { room: 22, model: "real" });
+  until(l, () => !(amount(l, "H2O(l)") > 0), 900);
+  assert.ok(!(amount(l, "H2O(l)") > 0) && amount(l, "NaCl(s)") > 1e-3, "eingedampft, Kochsalz liegt als Rückstand da");
+  L.step(l, 30);
+  const before = totals(l);
+  L.pour(l, "c", "b", 10);
+  L.step(l, 30);
+  assert.equal(l.detours || 0, 0, "kein Notweg");
+  assert.equal(l.failed || 0, 0, "jedes Gleichgewicht ließ sich berechnen");
+  near(totals(l).charge, before.charge, 1e-10, "Ladung");
+  assert.ok(amount(l, "NaCl(s)") < 1e-9, "das Kochsalz hat sich wieder gelöst");
+});
+
+test("Reales Modell: Zellspannung und gelöste Gase folgen den Aktivitäten", () => {
+  // Konzentrationszelle: zwei Zehnerpotenzen im Gehalt sind weniger als zwei in der Aktivität
+  const cell = (model) => lab([{ type: "beaker", id: "l", contains: [{ reagent: "AgNO3 0.01M", ml: 60 }] }, { type: "beaker", id: "r", contains: [{ reagent: "AgNO3 1M", ml: 60 }] },
+    { type: "electrode-Ag", id: "e1", in: "l" }, { type: "electrode-Ag", id: "e2", in: "r" }, { type: "bridge", id: "s", in: "l", to: "r" }, { type: "voltmeter", id: "u", in: "l" }], { room: 25, model });
+  const expected = 0.05916 * Math.log10(act(cell("real"), "Ag+(aq)", "r") / act(cell("real"), "Ag+(aq)", "l"));
+  near(volts(cell("real")), expected, 0.002, "Nernst mit Aktivitäten");
+  assert.ok(expected < 0.116 && expected > 0.105, `${expected} V statt 0,118 V`);
+  near(volts(cell("ideal")), 2 * 0.05916, 0.002, "ideal: 0,118 V");
+  // Kohlenstoffdioxid löst sich in Salzlösung schlechter: nach dem Ausperlen bleibt weniger gelöst
+  const fizzed = (model) => {
+    const l = beaker([{ reagent: "NaHCO3 1M", ml: 10 }, { reagent: "NaCl 2M", ml: 20 }], { room: 25, model });
+    L.add(l, "b", "HCl 2M", { ml: 10 });
+    L.step(l, 900);
+    return l;
+  };
+  const salty = fizzed("real"), plain = fizzed("ideal"), co2 = (l) => amount(l, "CO2(aq)") / (look(l).ml / 1000);
+  near(co2(plain) / co2(salty), L.gamma(salty, "b", "CO2(aq)"), 0.03, "um den Aktivitätskoeffizienten weniger");
+  assert.ok(L.gamma(salty, "b", "CO2(aq)") > 1.15, "Aussalzen: γ über 1");
+});
+
+test("Daten: Parameter für den Aktivitätskoeffizienten sind zwei Zahlen an einem gelösten Teilchen", () => {
+  const before = L.db;
+  try {
+    assert.throws(() => L.register({ species: { "Hg^2+(aq)": { name: { de: "Quecksilber(II)-Ion" }, Hf: null, gamma: [5], src: "Probe" } } }), (e) => e.code === "data" && /gamma/.test(e.message));
+    assert.throws(() => L.register({ species: { "Hg^2+(aq)": { name: { de: "Quecksilber(II)-Ion" }, Hf: null, gamma: [5, "0"], src: "Probe" } } }), (e) => e.code === "data" && /gamma/.test(e.message));
+    assert.throws(() => L.register({ species: { "HgS(s)": { name: { de: "Quecksilbersulfid" }, Hf: null, gamma: [5, 0], src: "Probe" } } }), (e) => e.code === "data" && /gamma/.test(e.message));
+    L.register({ species: { "Hg^2+(aq)": { name: { de: "Quecksilber(II)-Ion" }, Hf: null, gamma: [5, 0], src: "Probe" } }, reagents: { "HgCl2": { name: { de: "Quecksilberchlorid-Lösung" }, solution: { "Hg^2+(aq)": 1, "Cl-(aq)": 2 }, molar: true } } });
+    const l = real([{ reagent: "HgCl2 0.1M", ml: 20 }]);
+    // Ionengröße 5 Å, kein Zusatzglied: bei I = 0,3 mol/L ist lg γ = −A · 4 · √I / (1 + B · 5 · √I)
+    near(Math.log10(L.gamma(l, "b", "Hg^2+(aq)")), -0.5108 * 4 * Math.sqrt(0.3) / (1 + 0.3287 * 5 * Math.sqrt(0.3)), 0.002, "nach Truesdell und Jones");
+  } finally { L.db = before; }
+  // im Grundpaket: jedes Teilchen mit Parametern ist gelöst, und die Quelle ist genannt
+  const withGamma = Object.keys(L.db.species).filter((id) => L.db.species[id].gamma);
+  assert.ok(withGamma.length >= 20, `${withGamma.length} Teilchen mit Parametern`);
+  for (const id of withGamma) {
+    assert.equal(L.db.species[id].phase, "aq", id);
+    assert.match(L.db.species[id].src, /phreeqc\.dat/, id + ": Quelle");
+  }
+  assert.deepEqual(L.db.species["Na+(aq)"].gamma, [4.08, 0.082]);
+});
+
+test("Reales Modell an der Fläche: das Feld eines Gefäßes nennt die Ionenstärke", () => {
+  const contents = (config) => { const el = mount(config); tap(el, "b"); return part(el, ".cl-panel").querySelector(".cl-contents").innerHTML; };
+  const acid = (reagent, more) => Object.assign({ room: 25, bench: [{ type: "beaker", id: "b", contains: [{ reagent, ml: 20 }] }] }, more);
+  assert.match(contents(acid("HCl 0.1M", { model: "real" })), /Flüssigkeit 20,0 mL · pH 1,08 · Ionenstärke 0,10 mol\/L/);
+  // verdünnt mit einer Stelle mehr
+  assert.match(contents(acid("HCl 0.01M", { model: "real" })), /Ionenstärke 0,010 mol\/L/);
+  // im idealen Modell und ohne Zahlen steht davon nichts da
+  assert.match(contents(acid("HCl 0.1M")), /Flüssigkeit 20,0 mL · pH 1,00<\/p>/);
+  assert.doesNotMatch(contents(acid("HCl 0.1M", { model: "real", show: { numbers: false } })), /Ionenstärke/);
+  assert.equal(L.text("panel.strength", "en"), "ionic strength");
 });

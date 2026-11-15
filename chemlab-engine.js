@@ -267,6 +267,10 @@
           var color = pack.species[id] && pack.species[id][key];
           if (color != null && !/^#[0-9a-f]{6}$/i.test(color)) throw fail("color", String(color));
         });
+        // gamma: Ionengröße in Å und Zusatzglied für den Aktivitätskoeffizienten eines gelösten Teilchens (reales Modell)
+        var gamma = pack.species[id] && pack.species[id].gamma;
+        if (gamma != null && !(parse(id).phase === "aq" && Array.isArray(gamma) && gamma.length === 2 &&
+          gamma.every(function (value) { return typeof value === "number" && isFinite(value); }))) throw fail("gamma", id);
         put(next.species, id, entry(id, pack.species[id]), pack.species[id], id);
       });
     });
@@ -580,6 +584,7 @@
     }
     if (!d || typeof d !== "object" || Array.isArray(d)) throw fail("json", "");
     if (d.data) register(d.data);
+    if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
 
     var count = {}, ids = {}, bench = [];
     (Array.isArray(d.bench) ? d.bench : []).forEach(function (raw) {
@@ -663,7 +668,9 @@
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
-      room: typeof d.room === "number" && d.room >= 0 && d.room < 100 ? d.room : 20
+      room: typeof d.room === "number" && d.room >= 0 && d.room < 100 ? d.room : 20,
+      // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
+      model: d.model == null ? "ideal" : d.model
     };
   }
 
@@ -732,6 +739,7 @@
   function makeVessel(lab, item) {
     return {
       id: item.id, type: item.type, size: item.size, n: {}, out: {}, lumps: [], T: lab.room,
+      real: lab.model === "real",                               // rechnet dieses Gefäß mit Aktivitäten?
       ext: {}, rate: {}, gas: 0, q: 0, dirty: true, Teq: lab.room,
       over: item.over || null, tap: 0, given: 0,                // nur für Büretten: Gefäß darunter, Hahn in mL/s, abgegeben in mL
       // air: Gase im Gasraum über der Flüssigkeit, taken: was aus der Luft dazukam, lit: was brennt, boil: Dampf in mol/s
@@ -769,7 +777,7 @@
   }
 
   function createLab(config) {
-    var lab = { tick: 0, t: 0, room: config.room, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {} };
+    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {} };
     config.bench.forEach(function (item) {
       var v;
       lab.used[item.id] = true;
@@ -1100,10 +1108,13 @@
   // Newton-Verfahren über die Stoffbilanzen. Unbekannte: die Logarithmen der Grundteilchen und,
   // für die Feststoffe in "active", deren Menge; für sie gilt zusätzlich: die Lösung ist gerade gesättigt.
   // total: Gesamtmenge je Grundteilchen in mol/L, rhs: Sättigungsbedingung je Feststoff.
+  // polish, lift: nur im realen Modell gesetzt (siehe equilibrate). polish: nach dem Erreichen der Schranke folgt noch ein Schritt;
+  // lift: lg γ der Grundteilchen, um die sich die Obergrenze ihrer Konzentration verschiebt.
+  var polish = false, lift = null;
   function solve(sys, logB, total, x0, active, rhs, s0) {
     var ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = active.length, free = [];
     var x = x0.slice(), s = s0.slice(), c = new Array(ns);
-    var unit = 1e-6, it, i, b, k, r, p, q, sum, worst, A, d, big, damp, comp, nf, n, res, size;
+    var unit = 1e-6, it, i, b, k, r, p, q, sum, worst, A, d, big, damp, comp, nf, n, res, size, ready = false;
     for (b = 0; b < nb; b++) {
       unit = Math.max(unit, Math.abs(total[b]));
       // Ein Grundteilchen, von dem nichts da ist, fällt aus der Rechnung: alles, was es enthält, hat die Konzentration null.
@@ -1134,7 +1145,13 @@
         res[nf + p] = sum;
         worst = Math.max(worst, Math.abs(sum) * 1e-3);
       }
-      if (worst < 1e-12) return { x: x, c: c, s: s };
+      // Im realen Modell ändern sich die Konstanten von Aufruf zu Aufruf ein wenig. Bliebe es beim Erreichen der Schranke, stünde
+      // jedes Mal ein Fehler knapp darunter in der Stoffbilanz, und über viele Schritte wüchse daraus eine Ladung. Ein Schritt
+      // mehr verdoppelt die Zahl der gültigen Stellen: Der Fehler liegt danach bei der Rechengenauigkeit.
+      if (worst < 1e-12) {
+        if (!polish || ready || worst < 1e-15) return { x: x, c: c, s: s };
+        ready = true;
+      }
       A = [];
       for (r = 0; r < nf; r++) {
         A.push(new Array(n + 1));
@@ -1158,7 +1175,8 @@
       for (k = 0; k < nf; k++) big = Math.max(big, Math.abs(d[k]));
       if (!isFinite(big)) return null;
       damp = big > 1 ? 1 / big : 1;                    // höchstens eine Zehnerpotenz je Schritt
-      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(3, x[free[k]] + damp * d[k]));
+      // Höchstens 10³ mol/L – als Aktivität: Mit kleinem Aktivitätskoeffizienten braucht dieselbe Sättigung eine größere Konzentration.
+      for (k = 0; k < nf; k++) x[free[k]] = Math.max(-60, Math.min(lift ? 3 - Math.min(0, lift[free[k]]) : 3, x[free[k]] + damp * d[k]));
       for (p = 0; p < np; p++) s[p] += damp * d[nf + p] * unit;
     }
     return null;
@@ -1172,6 +1190,7 @@
 
   // Das volle Gleichgewicht mit Feststoffen: welche liegen vor, wie viel davon (s, mol/L), und wie sieht die Lösung dann aus (c, x)?
   // Probiert es mit denen, die da sind; was dabei negativ würde, löst sich ganz, was übersättigt bleibt, fällt aus.
+  var detours = 0;                // wie oft der Notweg (relax) gebraucht wurde; equilibrate bucht es am Labor
   function balance(sys, logB, rhs, total, x0, cur) {
     var np = sys.solids.length, active = [], state = null, k, round, worst, at, value, out;
     // Zwei Feststoffe aus denselben Teilchen (Oxid und Hydroxid, Salz und sein Hydrat) können nicht beide gesättigt sein:
@@ -1210,6 +1229,7 @@
     }
     function relax() {
       var order, best, i, trial, found, fits, round;
+      detours++;
       for (round = 0; round < np && active.length > 1; round++) {
         order = active.slice().sort(function (a, b) { return cur[a] - cur[b]; });      // die kleinste Menge zuerst
         best = null;
@@ -1295,6 +1315,53 @@
     if (!cold) v.q -= xi * (heatOf(entry) || 0) * 1000;
   }
 
+  // ------------------------------------------------------------------ Aktivitäten (reales Modell)
+
+  // Im realen Modell gilt das Massenwirkungsgesetz für Aktivitäten: Konzentration mal Aktivitätskoeffizient γ. Die Koeffizienten
+  // hängen nur von der Ionenstärke I ab. Gerechnet wird nach Truesdell und Jones, lg γ = −A z² √I / (1 + B å √I) + b I, mit der
+  // Ionengröße å und dem Zusatzglied b aus den Stoffdaten (gamma); ein Ion ohne diese Angaben nach Davies, ein ungeladenes
+  // Teilchen mit lg γ = 0,1 · I (oder seinem b).
+  var I_MAX = 6;              // mol/L: darüber bleiben die Koeffizienten stehen; so weit reichen die Parameter
+  var I_DAVIES = 0.5;         // mol/L: so weit gilt die Gleichung von Davies
+  var U_TOL = 1e-9;           // so genau wird die Wurzel aus der Ionenstärke bestimmt
+
+  // Debye-Hückel-Konstanten A und B (B für å in Å) bei t °C, aus Dichte und Dielektrizitätszahl des Wassers
+  function debye(t) {
+    var rho = 1 - (t - 3.9863) * (t - 3.9863) * (t + 288.9414) / (508929.2 * (t + 68.12963));
+    var eps = 87.740 - 0.40008 * t + 9.398e-4 * t * t - 1.410e-6 * t * t * t, T = t + KELVIN;
+    return [1.82483e6 * Math.sqrt(rho) / Math.pow(eps * T, 1.5), 50.2916 * Math.sqrt(rho) / Math.sqrt(eps * T)];
+  }
+
+  // lg γ eines gelösten Teilchens; u ist die Wurzel aus der Ionenstärke, dh das Paar aus debye()
+  function lgGamma(id, u, dh) {
+    var sp = L.db.species[id], z = sp.charge, par = sp.gamma, I;
+    u = Math.min(u, Math.sqrt(I_MAX)); I = u * u;
+    if (!z) return (par ? par[1] : 0.1) * I;
+    if (par) return -dh[0] * z * z * u / (1 + dh[1] * par[0] * u) + par[1] * I;
+    if (I > I_DAVIES) { I = I_DAVIES; u = Math.sqrt(I); }
+    return -dh[0] * z * z * (u / (1 + u) - 0.3 * I);
+  }
+
+  function strength(v, vol) {     // Ionenstärke in mol/L: die halbe Summe aus Konzentration mal Ladung im Quadrat
+    var sum = 0, id, sp;
+    for (id in v.n) { sp = L.db.species[id]; if (sp.phase === "aq" && sp.charge && v.n[id] > 0) sum += sp.charge * sp.charge * v.n[id]; }
+    return sum / (2 * vol);
+  }
+
+  // lg γ für die Teilchen eines Gefäßes, so wie es gerade ist: eine Funktion id → lg γ. Im idealen Modell überall 0.
+  function gammas(v, vol) {
+    var u, dh;
+    if (!v.real || !(vol > 0)) return function () { return 0; };
+    u = Math.sqrt(strength(v, vol)); dh = debye(v.T);
+    return function (id) { return lgGamma(id, u, dh); };
+  }
+
+  // Aktivitätskoeffizient eines gelösten Teilchens in einem Gefäß; 1 im idealen Modell und ohne Flüssigkeit
+  function gamma(lab, vesselId, id) {
+    var v = vessel(lab, vesselId), vol = v ? volume(v) : 0;
+    return v && L.db.species[id] && L.db.species[id].phase === "aq" ? Math.pow(10, gammas(v, vol)(id)) : 1;
+  }
+
   // Gleichgewichtskonstante bei der Temperatur T (in K) nach van 't Hoff; h: Reaktionsenthalpie in kJ/mol oder null
   function shift(logK, h, T) {
     return logK - (h == null ? 0 : h * 1000 / (R * LN10) * (1 / T - 1 / (T_REF + KELVIN)));
@@ -1376,88 +1443,146 @@
       x[b] = id in warm && warm[id] > -60 ? warm[id] : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
     }
 
-    // 1. die Lösung für sich, mit den Feststoffen, wie sie gerade sind
-    var state = solve(sys, logB, dissolved, x, [], rhs, []);
-    if (!state) { lab.failed = (lab.failed || 0) + 1; return false; }
-    var next = own.slice(), moving = false, need = false, slow = 0, goal, gap, part, target, again, plain = state, bound = 0, base, all, made = null, shelf = null, j;
-    for (k = 0; k < np; k++) if (own[k] > 0 || saturation(sys, state.x, rhs, k) > 1e-9) need = true;
-    if (need && !quick) {
-      // 2. wohin es will: das volle Gleichgewicht mit Niederschlägen
-      goal = balance(sys, logB, rhs, total, state.x, own);
-      if (!goal) lab.failed = (lab.failed || 0) + 1;
-      else {
-        for (k = 0; k < np; k++) {
-          gap = goal.s[k] - own[k];
-          if (!(Math.abs(gap) > 1e-4 * Math.max(goal.s[k], own[k]) + 1e-12)) continue;
-          part = gap > 0 ? GROW : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
-          // Was dabei langsamer überginge, als man sehen kann (REST), gilt als angekommen: sonst hielte ein Niederschlag,
-          // dem eine unmerklich langsame Reaktion Stoff nachliefert, das Gefäß für immer in Bewegung.
-          if (Math.abs(gap) * vol / part > REST) slow = Math.max(slow, part);
+    // Reales Modell: Bei angenommener Ionenstärke u² sind die Aktivitätskoeffizienten feste Zahlen, die sich in die Konstanten
+    // ziehen lassen; dann rechnen die Stufen 1 bis 4 wie im idealen Modell. Gesucht ist die Ionenstärke, die zu ihrem eigenen
+    // Ergebnis passt: eine Gleichung mit einer Unbekannten.
+    var real = !!v.real, dh = real ? debye(v.T) : null, zz = null, spect = 0;
+    if (real) {
+      zz = ids.map(function (q) { var z = L.db.species[q].charge; return z * z; });
+      for (id in v.n) {                                        // Ionen, die an keinem Gleichgewicht teilnehmen: ihr Beitrag steht fest
+        if (!(v.n[id] > 0) || L.db.species[id].phase !== "aq" || ids.indexOf(id) >= 0) continue;
+        spect += L.db.species[id].charge * L.db.species[id].charge * v.n[id] / vol;
+      }
+    }
+    function attempt(u, x0) {
+      var B = logB, right = rhs, fails = 0, lg;
+      if (real) {
+        lg = ids.map(function (q) { return lgGamma(q, u, dh); });
+        B = logB.map(function (value, index) {
+          var sum = value - lg[index];
+          for (var q = 0; q < nb; q++) sum += sys.a[index][q] * lg[sys.basis[q]];
+          return sum;
+        });
+        right = rhs.map(function (value, index) {
+          for (var q = 0; q < nb; q++) value -= sys.solids[index].comp[q] * lg[sys.basis[q]];
+          return value;
+        });
+        lift = sys.basis.map(function (q) { return lg[q]; });
+      }
+      // 1. die Lösung für sich, mit den Feststoffen, wie sie gerade sind
+      var state = solve(sys, B, dissolved, x0, [], right, []);
+      if (!state) return null;
+      var next = own.slice(), moving = false, need = false, slow = 0, goal, gap, part, target, again, plain = state, bound = 0, base, all, made = null, shelf = null, j;
+      for (k = 0; k < np; k++) if (own[k] > 0 || saturation(sys, state.x, right, k) > 1e-9) need = true;
+      if (need && !quick) {
+        // 2. wohin es will: das volle Gleichgewicht mit Niederschlägen
+        goal = balance(sys, B, right, total, state.x, own);
+        if (!goal) fails++;
+        else {
+          for (k = 0; k < np; k++) {
+            gap = goal.s[k] - own[k];
+            if (!(Math.abs(gap) > 1e-4 * Math.max(goal.s[k], own[k]) + 1e-12)) continue;
+            part = gap > 0 ? GROW : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
+            // Was dabei langsamer überginge, als man sehen kann (REST), gilt als angekommen: sonst hielte ein Niederschlag,
+            // dem eine unmerklich langsame Reaktion Stoff nachliefert, das Gefäß für immer in Bewegung.
+            if (Math.abs(gap) * vol / part > REST) slow = Math.max(slow, part);
+          }
+          if (!slow) {                                   // angekommen: der Zustand des Gleichgewichts selbst gilt
+            next = goal.s.slice();
+            state = goal;
+          } else {
+            // 3. ein Stück des Wegs, für alle Feststoffe derselbe Bruchteil. So kann sich ein Niederschlag in einen anderen
+            //    umwandeln: zwischen dem Zustand jetzt und dem Gleichgewicht ist jede Mischung der beiden möglich.
+            part = 1 - Math.exp(-DT / slow);
+            target = sumOf(goal.c);
+            again = solve(sys, B, dissolved.map(function (value, index) { return value + part * (target[index] - value); }), state.x, [], right, []);
+            if (!again) fails++;
+            else {
+              for (k = 0; k < np; k++) next[k] = own[k] + part * (goal.s[k] - own[k]);
+              state = again;
+              moving = true;
+            }
+          }
         }
-        if (!slow) {                                   // angekommen: der Zustand des Gleichgewichts selbst gilt
-          next = goal.s.slice();
-          state = goal;
-        } else {
-          // 3. ein Stück des Wegs, für alle Feststoffe derselbe Bruchteil. So kann sich ein Niederschlag in einen anderen
-          //    umwandeln: zwischen dem Zustand jetzt und dem Gleichgewicht ist jede Mischung der beiden möglich.
-          part = 1 - Math.exp(-DT / slow);
-          target = sumOf(goal.c);
-          again = solve(sys, logB, dissolved.map(function (value, index) { return value + part * (target[index] - value); }), state.x, [], rhs, []);
-          if (!again) lab.failed = (lab.failed || 0) + 1;
-          else {
-            for (k = 0; k < np; k++) next[k] = own[k] + part * (goal.s[k] - own[k]);
+      }
+      if (staged) {
+        // 4. die Stücke mit Geschwindigkeitsgesetz, jedes für sich: das Gleichgewicht mit diesem Stück als Ziel, und davon so viel,
+        //    wie sein Gesetz in diesem Schritt erlaubt. Was dabei mitgeht (Gips, während sich Marmor in Schwefelsäure löst), geht im
+        //    selben Anteil mit. Die anderen Stücke bleiben so lange, wie sie sind: ein träges hält ein flinkes nicht auf.
+        made = next.slice();                                     // Niederschlag je Feststoff in mol/L, nach der ersten Stufe
+        shelf = held.slice();                                    // was noch in den Stücken steckt
+        if (!quick && mode !== "still") {
+          for (j = 0; j < np; j++) {
+            if (!(held[j] > 0)) continue;
+            all = made.map(function (value, index) { return index === j ? value + shelf[j] : value; });
+            base = sumOf(state.c);
+            goal = balance(sys, B, right, base.map(function (value, index) {
+              for (var q = 0; q < np; q++) value += sys.solids[q].comp[index] * all[q];
+              return value;
+            }), state.x, all);
+            if (!goal) { fails++; continue; }
+            gap = goal.s[j] - all[j];
+            if (!(gap < -1e-12)) continue;
+            part = dissolving(v, sys.solids[j], function (ion) { return ids.indexOf(ion) < 0 ? 0 : state.c[ids.indexOf(ion)]; });
+            bound = shelf[j] * vol;                                // so viel steckt noch in den Stücken
+            // Ein Rest von einem Millionstel geht in diesem Schritt ganz auf, wenn die Lösung ihn lösen kann.
+            if (goal.s[j] <= 0 && bound < 1e3 * dust(v, sys.solids[j].id)) part = 1;
+            // Unmerklich langsam (keine Blasen, und das Stück wird nicht sichtbar kleiner): es bleibt liegen.
+            else if (!(part > REST) || (part < SLOW && part < 1e-4 * bound)) continue;
+            else part = Math.min(1, part * DT / (-gap * vol));
+            target = sumOf(goal.c);
+            again = part >= 1 ? goal : solve(sys, B, base.map(function (value, index) { return value + part * (target[index] - value); }), state.x, [], right, []);
+            if (!again) { fails++; continue; }
+            for (k = 0; k < np; k++) {
+              gap = part * (goal.s[k] - all[k]);
+              if (k !== j) made[k] = Math.max(0, made[k] + gap);
+              else {
+                shelf[j] += gap;
+                if (shelf[j] < 0) { made[j] = Math.max(0, made[j] + shelf[j]); shelf[j] = 0; }      // mehr, als in den Stücken steckt, kommt vom Niederschlag
+              }
+            }
+            if (part >= 1 && goal.s[j] <= 0) { shelf[j] = 0; made[j] = 0; }
             state = again;
             moving = true;
           }
         }
+        next = made.map(function (value, index) {
+          return held[index] > 0 && value === own[index] && shelf[index] === held[index] ? cur[index] : value + shelf[index];
+        });
+        bound = 0;
       }
+      return { state: state, next: next, moving: moving, made: made, shelf: shelf, plain: plain, fails: fails };
     }
-    if (staged) {
-      // 4. die Stücke mit Geschwindigkeitsgesetz, jedes für sich: das Gleichgewicht mit diesem Stück als Ziel, und davon so viel,
-      //    wie sein Gesetz in diesem Schritt erlaubt. Was dabei mitgeht (Gips, während sich Marmor in Schwefelsäure löst), geht im
-      //    selben Anteil mit. Die anderen Stücke bleiben so lange, wie sie sind: ein träges hält ein flinkes nicht auf.
-      made = next.slice();                                     // Niederschlag je Feststoff in mol/L, nach der ersten Stufe
-      shelf = held.slice();                                    // was noch in den Stücken steckt
-      if (!quick && mode !== "still") {
-        for (j = 0; j < np; j++) {
-          if (!(held[j] > 0)) continue;
-          all = made.map(function (value, index) { return index === j ? value + shelf[j] : value; });
-          base = sumOf(state.c);
-          goal = balance(sys, logB, rhs, base.map(function (value, index) {
-            for (var q = 0; q < np; q++) value += sys.solids[q].comp[index] * all[q];
-            return value;
-          }), state.x, all);
-          if (!goal) { lab.failed = (lab.failed || 0) + 1; continue; }
-          gap = goal.s[j] - all[j];
-          if (!(gap < -1e-12)) continue;
-          part = dissolving(v, sys.solids[j], function (ion) { return ids.indexOf(ion) < 0 ? 0 : state.c[ids.indexOf(ion)]; });
-          bound = shelf[j] * vol;                                // so viel steckt noch in den Stücken
-          // Ein Rest von einem Millionstel geht in diesem Schritt ganz auf, wenn die Lösung ihn lösen kann.
-          if (goal.s[j] <= 0 && bound < 1e3 * dust(v, sys.solids[j].id)) part = 1;
-          // Unmerklich langsam (keine Blasen, und das Stück wird nicht sichtbar kleiner): es bleibt liegen.
-          else if (!(part > REST) || (part < SLOW && part < 1e-4 * bound)) continue;
-          else part = Math.min(1, part * DT / (-gap * vol));
-          target = sumOf(goal.c);
-          again = part >= 1 ? goal : solve(sys, logB, base.map(function (value, index) { return value + part * (target[index] - value); }), state.x, [], rhs, []);
-          if (!again) { lab.failed = (lab.failed || 0) + 1; continue; }
-          for (k = 0; k < np; k++) {
-            gap = part * (goal.s[k] - all[k]);
-            if (k !== j) made[k] = Math.max(0, made[k] + gap);
-            else {
-              shelf[j] += gap;
-              if (shelf[j] < 0) { made[j] = Math.max(0, made[j] + shelf[j]); shelf[j] = 0; }      // mehr, als in den Stücken steckt, kommt vom Niederschlag
-            }
-          }
-          if (part >= 1 && goal.s[j] <= 0) { shelf[j] = 0; made[j] = 0; }
-          state = again;
-          moving = true;
-        }
-      }
-      next = made.map(function (value, index) {
-        return held[index] > 0 && value === own[index] && shelf[index] === held[index] ? cur[index] : value + shelf[index];
-      });
-      bound = 0;
+    function rootOf(found) {      // Wurzel aus der Ionenstärke eines Ergebnisses
+      var sum = spect;
+      for (var q = 0; q < ns; q++) sum += zz[q] * found.state.c[q];
+      return Math.sqrt(sum / 2);
     }
+    var u = real ? (warm["√I"] >= 0 ? warm["√I"] : Math.sqrt(strength(v, vol))) : 0, out, trial, lo = 0, hi = Infinity, prev = null, round, f, g, cand, width = Infinity;
+    var taken = detours;
+    polish = real;
+    out = attempt(u, x);
+    for (round = 0; real && out; round++) {
+      f = rootOf(out); g = f - u;
+      if (Math.abs(g) < U_TOL) break;                            // die angenommene Ionenstärke ist die des Ergebnisses
+      if (g > 0) lo = Math.max(lo, u); else hi = Math.min(hi, u);
+      if (hi - lo < U_TOL) break;
+      // Der nächste Versuch: die Sekante durch die letzten beiden Punkte, sonst das Ergebnis selbst. Führt das aus der Klammer
+      // [lo, hi] heraus oder schrumpft sie zu langsam, wird sie halbiert: Das kann nicht scheitern.
+      cand = prev && g !== prev.g ? u - g * (u - prev.u) / (g - prev.g) : f;
+      if (!(cand > lo && cand < hi)) cand = f;
+      if (!(cand > lo && cand < hi) || (round % 3 === 2 && hi < Infinity && hi - lo > 0.5 * width)) cand = hi < Infinity ? (lo + hi) / 2 : f;
+      if (round % 3 === 2) width = hi - lo;
+      prev = { u: u, g: g };
+      trial = round < 200 ? attempt(cand, out.state.x) : null;
+      if (!trial) { out.fails++; break; }                        // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
+      u = cand; out = trial;
+    }
+    polish = false; lift = null;
+    if (detours > taken) lab.detours = (lab.detours || 0) + detours - taken;       // detours: zur Diagnose, wie failed
+    if (!out) { lab.failed = (lab.failed || 0) + 1; return false; }
+    if (out.fails) lab.failed = (lab.failed || 0) + out.fails;
+    var state = out.state, next = out.next, moving = out.moving, made = out.made, shelf = out.shelf, plain = out.plain, bound = 0;
     if (mode === "probe") return moving;
 
     // Feststoffe mit Kristallwasser binden Wasser. Reicht es dafür nicht, bleibt die Lösung in diesem Schritt übersättigt.
@@ -1467,6 +1592,7 @@
     // Ergebnis eintragen; das Wasser nimmt auf oder gibt ab, was an Wasserstoff übrig ist
     var c = state.c, change = new Array(ns), hydrogen = 0, ds, xi, row, e;
     warm = lab.cache[v.id] = {};
+    if (real) warm["√I"] = u;
     for (b = 0; b < nb; b++) warm[ids[sys.basis[b]]] = state.x[b];
     for (i = 0; i < ns; i++) {
       change[i] = (c[i] - old[i]) * vol;
@@ -1732,7 +1858,7 @@
   // ghost: Diese Richtung bräuchte einen Feststoff, der an der Oberfläche (noch) nicht vorliegt. Sie zählt nur als Gegenspieler:
   // ein Metall scheidet sich erst ab, wenn die Abscheidung seine eigene Auflösung überwiegt.
   function processes(v, vol, face) {
-    var T = v.T + KELVIN, b = 2 * R * T / FARADAY, out = [];
+    var T = v.T + KELVIN, b = 2 * R * T / FARADAY, out = [], lg = gammas(v, vol);
     var feed = FARADAY * face.area * K_FILM * Math.exp(-EA_FILM * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) / 1000;
     function reach(id) { var sp = L.db.species[id]; return Math.pow(typeof sp.D === "number" ? sp.D : 1, 2 / 3) * (v.n[id] || 0) / vol; }
     L.db.couples.forEach(function (c) {
@@ -1745,7 +1871,7 @@
           if (!ok || t.id === WATER) return;
           if (sp.phase === "s") { if (!face.has(t.id)) ghost = true; return; }
           if (sp.phase !== "aq" || !(v.n[t.id] > 0)) { ok = false; return; }      // ein Gas steht nicht als Ausgangsstoff bereit
-          q += t.n / c.n * Math.log(v.n[t.id] / vol);
+          q += t.n / c.n * (Math.log(v.n[t.id] / vol) + LN10 * lg(t.id));       // Nernst: mit der Aktivität
           supply = reach(t.id);
           (L.db.carriers[t.id] || []).forEach(function (y) { supply += y.n * reach(y.id); });
           lim = Math.min(lim, c.n / t.n * feed * supply);
@@ -2343,14 +2469,14 @@
 
   // Gelöste Gase: bei welchem Druck (bar) stünde jedes im Gleichgewicht mit der Lösung, und wie viel davon (most, mol) kann höchstens entweichen?
   function above(v, vol) {
-    var out = [];
+    var out = [], lg = gammas(v, vol);
     if (!(vol > 0)) return out;
     L.db.equilibria.forEach(function (e) {
       var logQ = 0, most = Infinity, id, h;
       if (!e.gas) return;
       for (id in e.d) {
         if (!(v.n[id] > 0)) return;
-        logQ += e.d[id] * Math.log10(v.n[id] / vol);
+        logQ += e.d[id] * (Math.log10(v.n[id] / vol) + lg(id));
         most = Math.min(most, v.n[id] / e.d[id]);
       }
       h = heatOf(e);
@@ -2372,10 +2498,10 @@
 
   // Was über dem Luftdruck gelöst ist, perlt aus, bis die Lösung bei Luftdruck gerade gesättigt ist
   function fizz(v, g, vol) {
-    var lo = 0, hi = g.most, mid, i, sum, id, left;
+    var lo = 0, hi = g.most, mid, i, sum, id, left, lg = gammas(v, vol);
     for (i = 0; i < 40; i++) {
       mid = (lo + hi) / 2; sum = -g.logK - Math.log10(P_AIR);
-      for (id in g.e.d) { left = v.n[id] - g.e.d[id] * mid; sum += left > 0 ? g.e.d[id] * Math.log10(left / vol) : -Infinity; }
+      for (id in g.e.d) { left = v.n[id] - g.e.d[id] * mid; sum += left > 0 ? g.e.d[id] * (Math.log10(left / vol) + lg(id)) : -Infinity; }
       if (sum > 0) lo = mid; else hi = mid;
     }
     release(v, g, lo * (1 - Math.exp(-DT / FIZZ)));
@@ -2760,7 +2886,7 @@
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
     if (kind !== "pH") return null;
-    return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) : null;
+    return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null;
   }
 
   function tick(lab, emit) {
@@ -2950,7 +3076,9 @@
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
       cloud: { rgb: cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), alpha: vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0 },
       sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: loose },
-      pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) : null,
+      // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell
+      pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
+      strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
@@ -3265,6 +3393,7 @@
   L.curve = curve;
   L.changed = changed;
   L.DROP = DROP;
+  L.gamma = gamma;
 
   // Der Browser führt die Dateien nicht verlässlich in der Reihenfolge des Kurskopfs aus. Was vor dem Rechenkern ankam
   // und ihn braucht, hat sich in L.pending eingetragen und läuft jetzt.

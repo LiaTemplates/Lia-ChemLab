@@ -101,7 +101,7 @@
       "time.end": "Zum Ende", "time.speed": "Tempo", "time.slider": "Zeitpunkt",
       "rest": "Es ändert sich nichts mehr, die Uhr steht.",
       "cut": "Ab hier geht es neu weiter. Was danach aufgezeichnet war, ist verworfen.",
-      "panel.contents": "Inhalt", "panel.empty": "leer", "panel.volume": "Flüssigkeit", "panel.shows": "zeigt",
+      "panel.contents": "Inhalt", "panel.empty": "leer", "panel.volume": "Flüssigkeit", "panel.strength": "Ionenstärke", "panel.shows": "zeigt",
       "panel.given": "abgegeben:",
       "panel.pour": "Umgießen in", "panel.pourGo": "Umgießen", "panel.emptyOut": "Ausleeren", "panel.remove": "Wegräumen",
       "panel.none": "Ein Gefäß antippen, um hineinzusehen.",
@@ -148,6 +148,7 @@
       "err.place": "Dieser Name ist doppelt vergeben oder gehört zu keinem Gefäß",
       "err.amount": "Die Menge fehlt, passt nicht zum Stoff (Feststoff in g, Flüssigkeit in ml oder drops) oder ist zu groß für das Gefäß",
       "err.size": "Diese Größe gibt es für das Gefäß nicht",
+      "err.model": "Dieses Rechenmodell gibt es nicht (ideal oder real)",
       "err.data": "Fehler in den eigenen Stoffdaten",
       "err.other": "Der Aufbau lässt sich nicht anzeigen"
     },
@@ -241,7 +242,7 @@
       "time.end": "To the end", "time.speed": "Speed", "time.slider": "Point in time",
       "rest": "Nothing changes any more, the clock has stopped.",
       "cut": "From here on it starts anew. What was recorded after this point is discarded.",
-      "panel.contents": "Contents", "panel.empty": "empty", "panel.volume": "Liquid", "panel.shows": "shows",
+      "panel.contents": "Contents", "panel.empty": "empty", "panel.volume": "Liquid", "panel.strength": "ionic strength", "panel.shows": "shows",
       "panel.given": "delivered:",
       "panel.pour": "Pour into", "panel.pourGo": "Pour", "panel.emptyOut": "Empty", "panel.remove": "Put away",
       "panel.none": "Tap a vessel to look inside.",
@@ -288,6 +289,7 @@
       "err.place": "This name is used twice or does not belong to a vessel",
       "err.amount": "The amount is missing, does not fit the substance (solid in g, liquid in ml or drops) or is too large for the vessel",
       "err.size": "The vessel does not come in this size",
+      "err.model": "There is no such calculation model (ideal or real)",
       "err.data": "Error in the custom substance data",
       "err.other": "The setup cannot be shown"
     }

@@ -59,7 +59,7 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
-        amount: "err.amount", size: "err.size" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       return;
     }
@@ -765,7 +765,9 @@
         }).join("") + "</ul>";
         return;
       }
-      box.innerHTML = "<p>" + esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" + (w.pH == null ? "" : " · pH " + L.num(w.pH, 2, lang)) + "</p>" +
+      box.innerHTML = "<p>" + esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" + (w.pH == null ? "" : " · pH " + L.num(w.pH, 2, lang)) +
+        // im realen Modell: die Ionenstärke, von der die Aktivitätskoeffizienten abhängen
+        (w.strength == null ? "" : " · " + esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.1 ? 3 : 2, lang) + " mol/L") + "</p>" +
         '<table class="cl-table"><caption>' + esc(T("panel.contents")) + '</caption><thead><tr><th scope="col" colspan="2">' + esc(T("col.particle")) +
         '</th><th scope="col">' + esc(T("col.amount")) + '</th><th scope="col">' + esc(T("col.conc")) + "</th></tr></thead><tbody>" +
         rows.map(function (s) {

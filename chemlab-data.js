@@ -534,5 +534,22 @@
     }
   };
 
+  // Aktivitätskoeffizienten für das reale Modell: Ionengröße å in Å und Zusatzglied b der Gleichung von Truesdell und Jones,
+  // lg γ = −A z² √I / (1 + B å √I) + b I, aus phreeqc.dat (USGS), "-gamma". Ein Ion, das hier fehlt, rechnet nach Davies,
+  // ein ungeladenes Teilchen mit lg γ = 0,1 · I.
+  var GAMMA = {
+    "H+(aq)": [9, 0], "Li+(aq)": [6, 0], "Na+(aq)": [4.08, 0.082], "K+(aq)": [3.5, 0.015], "NH4+(aq)": [2.5, 0],
+    "Mg^2+(aq)": [5.5, 0.2], "Ca^2+(aq)": [5, 0.165], "Sr^2+(aq)": [5.26, 0.121], "Ba^2+(aq)": [7.1, 0.0553],
+    "Fe^2+(aq)": [6, 0], "FeOH+(aq)": [5, 0], "Fe^3+(aq)": [9, 0], "FeOH^2+(aq)": [5, 0], "Mn^2+(aq)": [6, 0],
+    "Zn^2+(aq)": [5, 0], "Cu^2+(aq)": [6, 0], "CuOH+(aq)": [4, 0],
+    "OH-(aq)": [3.5, 0], "Cl-(aq)": [3.63, 0.017], "Br-(aq)": [3, 0.045], "NO3-(aq)": [3, 0], "SO4^2-(aq)": [5, -0.04],
+    "CO3^2-(aq)": [5.4, 0], "HCO3-(aq)": [5.4, 0.0078], "CO2(aq)": [0, 0.066]
+  };
+  Object.keys(GAMMA).forEach(function (id) {
+    var sp = L.core.species[id];
+    sp.gamma = GAMMA[id];
+    sp.src += "; Aktivitätskoeffizient: phreeqc.dat (USGS), -gamma " + GAMMA[id].join(" ");
+  });
+
   L.register(L.core);
 })(typeof globalThis !== "undefined" ? globalThis : this);
