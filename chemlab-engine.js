@@ -1109,9 +1109,9 @@
   // Newton-Verfahren über die Stoffbilanzen. Unbekannte: die Logarithmen der Grundteilchen und,
   // für die Feststoffe in "active", deren Menge; für sie gilt zusätzlich: die Lösung ist gerade gesättigt.
   // total: Gesamtmenge je Grundteilchen in mol/L, rhs: Sättigungsbedingung je Feststoff.
-  // polish, lift: nur im realen Modell gesetzt (siehe equilibrate). polish: nach dem Erreichen der Schranke folgt noch ein Schritt;
-  // lift: lg γ der Grundteilchen, um die sich die Obergrenze ihrer Konzentration verschiebt.
-  var polish = false, lift = null;
+  // lift: nur im realen Modell gesetzt (siehe equilibrate): lg γ der Grundteilchen, um die sich die Obergrenze ihrer
+  // Konzentration verschiebt.
+  var lift = null;
   function solve(sys, logB, total, x0, active, rhs, s0) {
     var ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = active.length, free = [];
     var x = x0.slice(), s = s0.slice(), c = new Array(ns);
@@ -1146,11 +1146,11 @@
         res[nf + p] = sum;
         worst = Math.max(worst, Math.abs(sum) * 1e-3);
       }
-      // Im realen Modell ändern sich die Konstanten von Aufruf zu Aufruf ein wenig. Bliebe es beim Erreichen der Schranke, stünde
-      // jedes Mal ein Fehler knapp darunter in der Stoffbilanz, und über viele Schritte wüchse daraus eine Ladung. Ein Schritt
-      // mehr verdoppelt die Zahl der gültigen Stellen: Der Fehler liegt danach bei der Rechengenauigkeit.
+      // Bliebe es beim Erreichen der Schranke, stünde jedes Mal ein Fehler knapp darunter in der Stoffbilanz, und über viele
+      // Schritte, in denen sich die Lösung ändert (Eindampfen), wüchse daraus eine Ladung. Ein Schritt mehr verdoppelt die Zahl
+      // der gültigen Stellen: Der Fehler liegt danach bei der Rechengenauigkeit.
       if (worst < 1e-12) {
-        if (!polish || ready || worst < 1e-15) return { x: x, c: c, s: s };
+        if (ready || worst < 1e-15) return { x: x, c: c, s: s };
         ready = true;
       }
       A = [];
@@ -1443,7 +1443,7 @@
     });
     var own = cur.map(function (value, index) { return held[index] > 0 ? Math.max(0, value - held[index]) : value; });
     var staged = held.some(function (value) { return value > 0; });
-    var dissolved = new Array(nb), total = new Array(nb), x = new Array(nb), warm = lab.cache[v.id] || {};
+    var dissolved = new Array(nb), total = new Array(nb), x = new Array(nb), cold = new Array(nb), warm = lab.cache[v.id] || {};
     function sumOf(conc) {          // Gesamtmenge je Grundteilchen in der Lösung: eine Summe, keine Differenz, die sich auslöschen könnte
       return sys.basis.map(function (q, index) {
         var sum = 0;
@@ -1457,6 +1457,8 @@
       for (k = 0; k < np; k++) total[b] += sys.solids[k].comp[b] * own[k];
       id = ids[sys.basis[b]];
       x[b] = id in warm && warm[id] > -60 ? warm[id] : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
+      // cold: ein Startwert, der nur vom jetzigen Inhalt ausgeht; ohne Wasserstoff-Ionen neutral
+      cold[b] = id === PROTON && !(old[sys.basis[b]] > 0) ? -7 : Math.log10(Math.max(old[sys.basis[b]], 1e-12));
     }
 
     // Reales Modell: Bei angenommener Ionenstärke u² sind die Aktivitätskoeffizienten feste Zahlen, die sich in die Konstanten
@@ -1480,7 +1482,8 @@
         lift = sys.basis.map(function (q) { return lg[q]; });
       }
       // 1. die Lösung für sich, mit den Feststoffen, wie sie gerade sind
-      var state = solve(sys, B, dissolved, x0, [], right, []);
+      // Der gemerkte Startwert kann unpassend sein (das Gefäß lief leer und bekam etwas ganz anderes): dann noch einmal von vorn
+      var state = solve(sys, B, dissolved, x0, [], right, []) || solve(sys, B, dissolved, cold, [], right, []);
       if (!state) return null;
       var next = own.slice(), moving = false, need = false, slow = 0, goal, gap, part, target, again, plain = state, bound = 0, base, all, made = null, shelf = null, j;
       for (k = 0; k < np; k++) if (own[k] > 0 || saturation(sys, state.x, right, k) > 1e-9) need = true;
@@ -1569,7 +1572,6 @@
       return Math.sqrt(sum / 2);
     }
     var out, found, taken = detours;
-    polish = real;
     try {
       if (real) {
         // Start bei der Ionenstärke, die das Gefäß gerade hat: Hat sich nichts geändert, genügt ein Versuch
@@ -1577,7 +1579,7 @@
         out = found.out;
         if (out && !found.ok) out.fails++;                       // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
       } else out = attempt(0, x);
-    } finally { polish = false; lift = null; }                   // die Schalter gelten nur für diese Rechnung, auch wenn sie abbricht
+    } finally { lift = null; }                                   // gilt nur für diese Rechnung, auch wenn sie abbricht
     if (detours > taken) lab.detours = (lab.detours || 0) + detours - taken;       // detours: zur Diagnose, wie failed
     if (!out) { lab.failed = (lab.failed || 0) + 1; return false; }
     if (out.fails) lab.failed = (lab.failed || 0) + out.fails;

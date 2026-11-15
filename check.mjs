@@ -6288,3 +6288,47 @@ test("Reales Modell: scheitert eine Rechnung mit einer Ausnahme, rechnen die üb
   const same = beaker([{ reagent: "CH3COOH 0.1M", ml: 20 }], { room: 25 });
   assert.equal(look(same).pH, before, "bitgleich mit der Rechnung vor der Ausnahme");
 });
+
+// ---------------------------------------------------------------- Ältere Befunde aus der Durchsicht
+
+test("Löser: ein unpassender gemerkter Startwert bringt die Rechnung nicht zum Scheitern", () => {
+  // Die Bürette enthielt Natronlauge und lief leer. Der gemerkte Startwert (pH 14) passt nicht zur sauren Kupferchlorid-Lösung,
+  // die danach hineinkommt: Die erste Matrix des Newton-Verfahrens wäre damit singulär.
+  for (const model of ["ideal", "real"]) {
+    const l = lab([{ type: "beaker", id: "b2", ml: 250 }, { type: "burette", id: "bu", over: "b2" }], { model, room: 20 });
+    L.add(l, "bu", "NaOH 1M", { ml: 2 });
+    L.step(l, 3);
+    L.setTap(l, "bu", 0.5);
+    L.step(l, 10);
+    assert.deepEqual(L.vessel(l, "bu").n, {}, "die Bürette ist leergelaufen");
+    const before = totals(l);
+    L.add(l, "bu", "CuCl2 5M", { ml: 0.5 });
+    L.step(l, 10);
+    assert.equal(l.failed || 0, 0, model + ": jedes Gleichgewicht ließ sich berechnen");
+    near(totals(l).charge, before.charge, 1e-12, model + ": Ladung");
+    assert.ok(amount(l, "Cu(OH)2(s)", "b2") > 1e-4, model + ": im Becherglas fällt Kupferhydroxid aus");
+    // und in der Bürette selbst, solange die Lösung darin steht
+    const still = lab([{ type: "burette", id: "bu" }], { model, room: 20 });
+    L.add(still, "bu", "NaOH 1M", { ml: 2 });
+    L.step(still, 2);
+    L.empty(still, "bu");
+    L.add(still, "bu", "CuCl2 5M", { ml: 5 });
+    L.step(still, 5);
+    assert.equal(still.failed || 0, 0, model + ": stehende Lösung");
+    assert.ok(look(still, "bu").pH < 4, `${model}: Kupferchlorid-Lösung reagiert sauer (pH ${look(still, "bu").pH})`);
+  }
+});
+
+test("Löser: beim Eindampfen bleibt die Ladungsbilanz in beiden Modellen genau", () => {
+  // Zinksulfat in starker Natronlauge über dem Brenner: Tausende Rechenschritte, in denen sich die Lösung ständig ändert.
+  // Bleibt in jedem ein Fehler knapp unter der Schranke des Newton-Verfahrens stehen, wächst daraus eine Ladung.
+  for (const model of ["ideal", "real"]) {
+    const l = lab([{ type: "dish", id: "b", contains: [{ reagent: "ZnSO4 1M", ml: 3 }, { reagent: "NaOH 5M", ml: 6 }] }, { type: "burner", id: "br", under: "b", flame: 2 }], { model, room: 22 });
+    const charge = () => Object.entries(L.vessel(l, "b").n).reduce((sum, [id, n]) => sum + n * L.species(id).charge, 0);
+    let t = 0, worst = 0;
+    while (amount(l, "H2O(l)") > 0 && t < 3000) { L.step(l, 5); t += 5; worst = Math.max(worst, Math.abs(charge())); }
+    assert.ok(t < 3000, model + ": eingedampft");
+    assert.ok(worst < 1e-13, `${model}: größte Ladungssumme unterwegs ${worst.toExponential(2)} mol`);
+    assert.equal(l.failed || 0, 0);
+  }
+});
