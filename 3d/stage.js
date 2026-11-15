@@ -135,15 +135,15 @@
 
     // Die Kamera blickt so auf den Tisch, dass alle Geräte zu sehen sind; danach gehört sie den Lernenden
     function frame() {
-      var box = new THREE.Box3(), center = new THREE.Vector3(), extent = new THREE.Vector3(), fit, dist;
+      var box = new THREE.Box3(), sphere = new THREE.Sphere(), half, dist;
       order.forEach(function (id) { if (entries[id]) box.expandByObject(entries[id].obj); });
       if (box.isEmpty()) box.set(new THREE.Vector3(-20, 0, -5), new THREE.Vector3(20, 20, 5));
-      box.getCenter(center); box.getSize(extent);
-      fit = Math.max(extent.x / camera.aspect, extent.y) * 1.25 + 8;
-      dist = fit / 2 / Math.tan(camera.fov * Math.PI / 360);
-      center.y = Math.max(center.y, 8);
-      controls.target.copy(center);
-      camera.position.set(center.x, center.y + dist * 0.32, center.z + dist);
+      box.getBoundingSphere(sphere);
+      // eine Kugel um alles passt in jeder Blickrichtung ins Bild; der engere der beiden Bildwinkel zählt
+      half = Math.min(camera.fov * Math.PI / 360, Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect));
+      dist = sphere.radius / Math.sin(half) * 0.92;
+      controls.target.copy(sphere.center);
+      camera.position.copy(sphere.center).add(new THREE.Vector3(0, 0.45, 0.89).multiplyScalar(dist));
       controls.update();
     }
 
@@ -195,6 +195,8 @@
     }
 
     return {
+      // ein Bild der Bühne als data:-URL, für Prüfungen (WebGL leert seinen Puffer nach dem Zeichnen)
+      shot: function () { renderer.render(world, camera); return renderer.domElement.toDataURL("image/jpeg", 0.85); },
       // neue Einteilung: was weg ist, geht; was neu ist, entsteht beim nächsten item()
       build: function (items, total) {
         var keep = {};
@@ -210,7 +212,6 @@
           e = entries[d.id] = { type: d.type, look: lookOf(d.type, scene, def), key: doc.createElement("button") };
           e.obj = e.look.build(kit, d);
           e.obj.userData.chemlab = d.id;
-          e.obj.traverse(function (o) { if (o.isMesh) o.castShadow = true; });
           world.add(e.obj);
           e.key.type = "button";
           e.key.className = "cl-key";

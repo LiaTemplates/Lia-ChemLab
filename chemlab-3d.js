@@ -31,7 +31,7 @@
 
   var THREE_FILE = "vendor/three/three.module.min.js";
   var ADDONS = { OrbitControls: "vendor/three/addons/OrbitControls.js", RoomEnvironment: "vendor/three/addons/RoomEnvironment.js" };
-  var FILES = ["3d/stage.js", "3d/scenes.js"];       // klassische Skripte, die sich in L eintragen
+  var FILES = ["3d/stage.js", "3d/effects.js", "3d/looks-lab.js", "3d/scenes.js"];       // klassische Skripte, die sich in L eintragen
 
   function fetchText(url) {
     return global.fetch(url).then(function (res) {

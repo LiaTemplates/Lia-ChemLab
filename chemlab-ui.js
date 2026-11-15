@@ -1402,7 +1402,7 @@
       el.removeEventListener("focusout", onLeave);
       TOUCH.forEach(function (type) { el.removeEventListener(type, onTouch); });
     }
-    el._cl = { stop: stop };
+    el._cl = { stop: stop, stage: function () { return three; } };       // stage: die 3D-Bühne, für Prüfungen im Browser
 
     renderShelf();
     renderHand();
