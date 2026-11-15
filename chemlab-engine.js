@@ -1568,12 +1568,13 @@
       for (var q = 0; q < ns; q++) sum += zz[q] * found.state.c[q];
       return Math.sqrt(sum / 2);
     }
-    var u = 0, out, found, taken = detours;
+    var out, found, taken = detours;
     polish = real;
     try {
       if (real) {
-        found = L.selfConsistent(warm["√I"] >= 0 ? warm["√I"] : Math.sqrt(strength(v, vol)), function (at, last) { return attempt(at, last ? last.state.x : x); }, rootOf);
-        u = found.u; out = found.out;
+        // Start bei der Ionenstärke, die das Gefäß gerade hat: Hat sich nichts geändert, genügt ein Versuch
+        found = L.selfConsistent(Math.sqrt(strength(v, vol)), function (at, last) { return attempt(at, last ? last.state.x : x); }, rootOf);
+        out = found.out;
         if (out && !found.ok) out.fails++;                       // es bleibt beim letzten Ergebnis; gezählt wird es als nicht berechnet
       } else out = attempt(0, x);
     } finally { polish = false; lift = null; }                   // die Schalter gelten nur für diese Rechnung, auch wenn sie abbricht
@@ -1590,7 +1591,6 @@
     // Ergebnis eintragen; das Wasser nimmt auf oder gibt ab, was an Wasserstoff übrig ist
     var c = state.c, change = new Array(ns), hydrogen = 0, ds, xi, row, e;
     warm = lab.cache[v.id] = {};
-    if (real) warm["√I"] = u;
     for (b = 0; b < nb; b++) warm[ids[sys.basis[b]]] = state.x[b];
     for (i = 0; i < ns; i++) {
       change[i] = (c[i] - old[i]) * vol;
