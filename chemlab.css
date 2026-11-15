@@ -1,0 +1,262 @@
+/* ChemLab – Aussehen. Wird über "link:" geladen und gilt deshalb auch in Kursen, die den Baustein importieren.
+   Farben der Oberfläche folgen dem Thema des Kurses (--color-…); Schriftgrößen in em, weil rem in LiaScript 10 px ist. */
+
+.lia-chemlab {
+  --cl-ink: rgb(var(--color-text, 40, 48, 60));
+  --cl-bg: rgb(var(--color-background, 255, 255, 255));
+  --cl-line: rgb(var(--color-border, 205, 211, 219));
+  --cl-accent: var(--color-accent, rgb(var(--color-highlight, 20, 115, 117)));
+  --cl-wall: #f4f6f8;
+  --cl-bench: #d9c9ae;
+  --cl-edge: #a8906a;
+  --cl-wood: #c29a62;
+  --cl-glass: #55677a;
+  --cl-shine: #ffffff;
+  --cl-mercury: #d8322c;
+  --cl-s0: #c0392b; --cl-s1: #1f6fb2; --cl-s2: #2e8b57; --cl-s3: #8e44ad; --cl-s4: #b9770e; --cl-s5: #5d6d7e;
+  color: var(--cl-ink);
+  font-size: 1em;
+  line-height: 1.4;
+  border: 1px solid var(--cl-line);
+  border-radius: 0.6em;
+  padding: 0.6em;
+  background: var(--cl-bg);
+  max-width: 60em;
+}
+
+html.lia-variant-dark .lia-chemlab {
+  --cl-wall: #232a33;
+  --cl-bench: #5a4a35;
+  --cl-edge: #86704c;
+  --cl-wood: #9a7748;
+  --cl-glass: #c3cfdb;
+  --cl-shine: #e8eef5;
+  --cl-s0: #ff8a80; --cl-s1: #7fc4ff; --cl-s2: #7fe0a8; --cl-s3: #d6a2f2; --cl-s4: #f5c46b; --cl-s5: #b8c4d0;
+}
+
+.lia-chemlab [hidden] { display: none !important; }
+.lia-chemlab h4 { font-size: 1em; margin: 0.8em 0 0.3em; }
+.lia-chemlab p { margin: 0.3em 0; }
+
+/* ---------- Regal und Knöpfe */
+
+.lia-chemlab .cl-top { display: flex; gap: 0.5em; align-items: flex-start; }
+.lia-chemlab .cl-shelf { display: flex; flex-wrap: wrap; gap: 0.35em; flex: 1; }
+.lia-chemlab .cl-group { flex-basis: 100%; font-size: 0.85em; opacity: 0.75; margin-top: 0.2em; }
+.lia-chemlab .cl-tap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0.3em 0; }
+.lia-chemlab .cl-read { margin-left: 0.6em; font-variant-numeric: tabular-nums; }
+
+.lia-chemlab .cl-btn,
+.lia-chemlab .cl-pick {
+  font: inherit;
+  color: var(--cl-ink);
+  background: var(--cl-bg);
+  border: 1px solid var(--cl-line);
+  border-radius: 0.45em;
+  min-height: 2.4em;
+  padding: 0.25em 0.7em;
+  cursor: pointer;
+}
+.lia-chemlab .cl-pick { display: inline-flex; align-items: center; gap: 0.35em; padding: 0.15em 0.6em 0.15em 0.3em; text-align: left; }
+.lia-chemlab .cl-pick[aria-pressed="true"],
+.lia-chemlab .cl-btn[aria-pressed="true"] { border-color: var(--cl-accent); box-shadow: inset 0 0 0 2px var(--cl-accent); }
+.lia-chemlab .cl-btn:hover,
+.lia-chemlab .cl-pick:hover { border-color: var(--cl-accent); }
+.lia-chemlab .cl-btn:focus-visible,
+.lia-chemlab .cl-pick:focus-visible,
+.lia-chemlab .cl-svg:focus-visible,
+.lia-chemlab select:focus-visible,
+.lia-chemlab input:focus-visible { outline: 3px solid var(--cl-accent); outline-offset: 2px; }
+.lia-chemlab .cl-round { min-width: 2.4em; padding: 0.25em; display: inline-flex; align-items: center; justify-content: center; }
+.lia-chemlab .cl-round svg { fill: currentColor; }
+.lia-chemlab select,
+.lia-chemlab input[type="text"] {
+  font: inherit; color: var(--cl-ink); background: var(--cl-bg);
+  border: 1px solid var(--cl-line); border-radius: 0.4em; min-height: 2.2em; padding: 0 0.4em;
+}
+
+.lia-chemlab .cl-hand {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em;
+  margin-top: 0.5em; padding: 0.35em 0.6em;
+  border: 1px dashed var(--cl-accent); border-radius: 0.45em;
+}
+.lia-chemlab .cl-stepper { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
+.lia-chemlab .cl-amount { min-width: 5.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-hint { opacity: 0.75; }
+
+/* ---------- Arbeitsfläche */
+
+.lia-chemlab .cl-stage { margin-top: 0.5em; border: 1px solid var(--cl-line); border-radius: 0.45em; overflow: hidden; }
+.lia-chemlab .cl-svg { display: block; width: 100%; height: 26em; max-height: 75vh; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+
+.lia-chemlab .cl-wall { fill: var(--cl-wall); }
+.lia-chemlab .cl-bench { fill: var(--cl-bench); }
+.lia-chemlab .cl-edge { stroke: var(--cl-edge); stroke-width: 3; }
+.lia-chemlab .cl-wood { fill: var(--cl-wood); stroke: var(--cl-edge); stroke-width: 1; }
+
+.lia-chemlab .cl-item { cursor: pointer; outline: none; }
+/* Ein Gerät wird nur über seine Trefferfläche angetippt. So fängt ein Thermometer im Glas keine Klicks ab, die dem Glas gelten. */
+.lia-chemlab .cl-item > :not(.cl-hit) { pointer-events: none; }
+.lia-chemlab .cl-hit { fill: transparent; stroke: none; }
+.lia-chemlab .cl-hit.cl-sel { stroke: var(--cl-accent); stroke-width: 2; stroke-dasharray: 6 4; }
+.lia-chemlab .cl-item:focus-visible .cl-hit { stroke: var(--cl-accent); stroke-width: 3; }
+
+.lia-chemlab .cl-glass { fill: none; stroke: var(--cl-glass); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.lia-chemlab .cl-shine { stroke: var(--cl-shine); stroke-width: 2.5; stroke-linecap: round; opacity: 0.45; }
+.lia-chemlab .cl-surface { stroke: var(--cl-glass); stroke-width: 1; opacity: 0.55; }
+.lia-chemlab .cl-solid { stroke: #4a5059; }
+.lia-chemlab polyline.cl-solid { stroke-opacity: 1; }
+.lia-chemlab .cl-solid-edge { stroke: #4a5059; }
+.lia-chemlab .cl-bubble { fill: #ffffff; fill-opacity: 0.75; stroke: #6f8296; stroke-width: 0.6; }
+.lia-chemlab .cl-stream { fill: #bcdcf5; fill-opacity: 0.85; stroke: #7fa9cc; stroke-width: 0.4; }
+.lia-chemlab .cl-mark { stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.7; }
+.lia-chemlab .cl-mark-text { fill: var(--cl-glass); font-size: 7px; }
+.lia-chemlab .cl-thermo { fill: var(--cl-bg); fill-opacity: 0.85; stroke: var(--cl-glass); stroke-width: 1; }
+.lia-chemlab .cl-mercury { fill: var(--cl-mercury); }
+.lia-chemlab .cl-tag rect { fill: var(--cl-bg); stroke: var(--cl-line); }
+.lia-chemlab .cl-tag text { fill: var(--cl-ink); font-size: 11px; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-label { fill: #2b2118; font-size: 11px; }
+.lia-chemlab .cl-badge { fill: #fffaf0; stroke: var(--cl-edge); stroke-width: 1; }
+.lia-chemlab .cl-badge-text { fill: #2b2118; font-size: 10px; font-weight: bold; }
+html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
+.lia-chemlab .cl-cap { fill: var(--cl-glass); }
+.lia-chemlab .cl-cloud { stroke: none; }
+.lia-chemlab .cl-sediment { stroke: none; }
+.lia-chemlab .cl-drop { fill: #bcdcf5; stroke: #7fa9cc; stroke-width: 0.4; }
+.lia-chemlab .cl-probe { fill: #7d8894; stroke: var(--cl-glass); stroke-width: 0.6; }
+.lia-chemlab .cl-cable { fill: none; stroke: #3b434d; stroke-width: 1.5; }
+.lia-chemlab .cl-meter rect { fill: #1d2630; stroke: #55677a; stroke-width: 1; }
+.lia-chemlab .cl-meter text { fill: #b8f5c8; font-size: 11px; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-stand { fill: #6f7780; }
+.lia-chemlab .cl-rod { stroke: #6f7780; stroke-width: 3; stroke-linecap: round; }
+.lia-chemlab .cl-cock { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 1; }
+.lia-chemlab .cl-cock-grip { stroke: #2c6fb5; stroke-width: 3.5; stroke-linecap: round; }
+
+.lia-chemlab .cl-side { display: flex; flex-direction: column; gap: 0.35em; }
+.lia-chemlab .cl-porcelain { fill: none; stroke: #f1eee6; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.lia-chemlab .cl-porcelain-edge { fill: none; stroke: var(--cl-glass); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.7; }
+.lia-chemlab .cl-crust { fill: #ece8dc; stroke: #bdb6a4; stroke-width: 0.5; }
+.lia-chemlab .cl-shard { fill: #dfeaf3; fill-opacity: 0.6; stroke: var(--cl-glass); stroke-width: 1; stroke-linejoin: round; }
+.lia-chemlab .cl-burner { fill: #8b949e; stroke: #4f5760; stroke-width: 0.8; }
+.lia-chemlab .cl-hose { fill: none; stroke: #b5533c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.lia-chemlab .cl-tripod { fill: none; stroke: #4f5760; stroke-width: 3; stroke-linecap: round; }
+.lia-chemlab .cl-gauze { fill: #9aa3ad; stroke: #4f5760; stroke-width: 0.5; }
+.lia-chemlab .cl-clamp { fill: none; stroke: #6f7780; stroke-width: 3; stroke-linecap: round; }
+.lia-chemlab .cl-flame.cl-luminous { fill: #ffc531; fill-opacity: 0.92; }
+.lia-chemlab .cl-flame-core.cl-luminous { fill: #fff3b0; }
+.lia-chemlab .cl-flame.cl-roaring { fill: #5b8cff; fill-opacity: 0.75; }
+.lia-chemlab .cl-flame-core.cl-roaring { fill: #c9e6ff; }
+.lia-chemlab .cl-steam { fill: #ffffff; stroke: #b9c4cf; stroke-width: 0.4; stroke-opacity: 0.5; }
+.lia-chemlab .cl-smoke { fill: #c9ccd0; }
+.lia-chemlab .cl-fire { stroke: none; fill-opacity: 0.9; }
+.lia-chemlab .cl-glare { stroke: #ffd95a; stroke-width: 1; stroke-opacity: 0.6; }
+.lia-chemlab .cl-glare-ray { stroke: #ffc531; stroke-width: 2.2; stroke-linecap: round; }
+.lia-chemlab .cl-flash { fill: #fff6c2; stroke: #ffb300; stroke-width: 1; }
+.lia-chemlab .cl-flash-ray { stroke: #ffb300; stroke-width: 2; stroke-linecap: round; }
+.lia-chemlab .cl-splint { stroke: #b98a4e; stroke-width: 3; stroke-linecap: round; }
+.lia-chemlab .cl-splint-flame { fill: #ffb52e; stroke: #e2671c; stroke-width: 0.6; }
+.lia-chemlab .cl-splint-glow { fill: #ff5a1f; stroke: #7a2a10; stroke-width: 0.6; }
+.lia-chemlab .cl-rodlet { stroke: #f1eee6; stroke-width: 3.5; stroke-linecap: round; }
+.lia-chemlab .cl-stopper { fill: #b5533c; stroke: #7a3526; stroke-width: 0.8; }
+.lia-chemlab .cl-plunger { fill: #55677a; }
+.lia-chemlab .cl-gasroom { fill: #dfeaf3; fill-opacity: 0.5; }
+.lia-chemlab .cl-electrode { stroke: #3b434d; stroke-width: 0.8; }
+.lia-chemlab .cl-coat { stroke: none; }
+.lia-chemlab .cl-clip { stroke: #6f7780; stroke-width: 4; stroke-linecap: round; }
+.lia-chemlab .cl-terminal { fill: #c9a227; stroke: #6b560f; stroke-width: 1; }
+.lia-chemlab .cl-terminal.cl-plus { fill: #d8322c; stroke: #7a1410; }
+.lia-chemlab .cl-terminal.cl-minus { fill: #2c6fb5; stroke: #143a63; }
+.lia-chemlab .cl-pole, .lia-chemlab .cl-sign { fill: var(--cl-ink); font-size: 13px; font-weight: bold; }
+.lia-chemlab .cl-device { fill: #e3e7eb; stroke: #55677a; stroke-width: 1.2; }
+.lia-chemlab .cl-knob { fill: #f7f9fb; stroke: #55677a; stroke-width: 1; }
+.lia-chemlab .cl-knob-mark { stroke: #d8322c; stroke-width: 2; stroke-linecap: round; }
+.lia-chemlab .cl-letter { fill: #2b3440; font-size: 10px; font-weight: bold; }
+.lia-chemlab .cl-bulb { fill: #f4f6f8; fill-opacity: 0.85; stroke: var(--cl-glass); stroke-width: 1.2; }
+.lia-chemlab .cl-filament { fill: none; stroke: #7a6a3a; stroke-width: 1; }
+.lia-chemlab .cl-glow { fill: #ffd95a; stroke: none; }
+.lia-chemlab .cl-bridge { fill: none; stroke: var(--cl-glass); stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+.lia-chemlab .cl-bridge-core { fill: none; stroke: #e9f0e4; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+.lia-chemlab .cl-wires { pointer-events: none; }
+.lia-chemlab .cl-wire { fill: none; stroke: #2b3440; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.lia-chemlab .cl-wire.cl-plus { stroke: #d8322c; }
+.lia-chemlab .cl-wire.cl-minus { stroke: #2c6fb5; }
+.lia-chemlab .cl-volts, .lia-chemlab .cl-dial { accent-color: var(--cl-accent); min-width: 10em; vertical-align: middle; }
+.lia-chemlab .cl-swatch { display: inline-block; width: 1em; height: 1em; border-radius: 50%; border: 1px solid var(--cl-line, #8a96a3); vertical-align: -0.15em; }
+.lia-chemlab .cl-bath-water { fill: #9fd2ee; fill-opacity: 0.28; stroke: none; }
+.lia-chemlab .cl-bath-water.cl-cold { fill: #b9e4ff; fill-opacity: 0.36; }
+.lia-chemlab .cl-bath-water.cl-hot { fill: #ffc9a8; fill-opacity: 0.3; }
+.lia-chemlab .cl-ice { fill: #f4fbff; fill-opacity: 0.9; stroke: #9cc3dc; stroke-width: 0.8; }
+.lia-chemlab .cl-heater { fill: none; stroke: #6d7884; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.lia-chemlab .cl-light { stroke: #1d2630; stroke-width: 0.6; }
+.lia-chemlab .cl-lens { display: flex; flex-wrap: wrap; gap: 0.4em 1.2em; align-items: flex-start; }
+.lia-chemlab .cl-lens:empty { display: none; }
+.lia-chemlab .cl-lens-view { width: 12em; height: 12em; flex: none; }
+.lia-chemlab .cl-lens-legend { list-style: none; margin: 0.3em 0; padding: 0; flex: 1 1 12em; }
+.lia-chemlab .cl-lens .cl-hint { flex: 1 1 100%; margin: 0; }
+.lia-chemlab .cl-swatch.cl-square { border-radius: 2px; }
+.lia-chemlab .cl-lens-back { fill: #eaf4fb; }
+.lia-chemlab .cl-lens-glass { fill: none; stroke: #55677a; stroke-width: 3; }
+.lia-chemlab .cl-water { fill: #9cc3dc; fill-opacity: 0.35; }
+.lia-chemlab .cl-dot { stroke: #2c3640; stroke-width: 0.8; }
+.lia-chemlab .cl-dot-sign { font-size: 7.5px; font-weight: bold; fill: #1d2630; pointer-events: none; }
+.lia-chemlab .cl-grain { stroke: #2c3640; stroke-width: 0.8; }
+html.lia-variant-dark .lia-chemlab .cl-lens-back { fill: #22303c; }
+html.lia-variant-dark .lia-chemlab .cl-lens-glass { stroke: #c3cfdb; }
+html.lia-variant-dark .lia-chemlab .cl-wire { stroke: #c3cfdb; }
+html.lia-variant-dark .lia-chemlab .cl-wire.cl-plus { stroke: #ff8a80; }
+html.lia-variant-dark .lia-chemlab .cl-wire.cl-minus { stroke: #7fc4ff; }
+html.lia-variant-dark .lia-chemlab .cl-device { fill: #3a444f; stroke: #c3cfdb; }
+html.lia-variant-dark .lia-chemlab .cl-knob { fill: #55606c; stroke: #c3cfdb; }
+html.lia-variant-dark .lia-chemlab .cl-letter { fill: #f0f4f8; }
+html.lia-variant-dark .lia-chemlab .cl-steam { fill: #dfe6ee; }
+html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
+
+/* ---------- Zeitleiste */
+
+.lia-chemlab .cl-time { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; margin-top: 0.5em; }
+.lia-chemlab .cl-seek { flex: 1; min-width: 8em; accent-color: var(--cl-accent); }
+.lia-chemlab .cl-clock { font-variant-numeric: tabular-nums; min-width: 6.5em; text-align: right; }
+.lia-chemlab .cl-speed { display: inline-flex; align-items: center; gap: 0.3em; }
+.lia-chemlab .cl-status { min-height: 1.4em; font-style: italic; }
+
+/* ---------- Inhalt, Gleichungen, Diagramme, Protokoll */
+
+.lia-chemlab .cl-panel,
+.lia-chemlab .cl-eq,
+.lia-chemlab .cl-log { border-top: 1px solid var(--cl-line); margin-top: 0.5em; padding-top: 0.2em; }
+.lia-chemlab .cl-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin-top: 0.5em; }
+.lia-chemlab .cl-contents { overflow-x: auto; }      /* auf schmalen Bildschirmen lässt sich die Tabelle seitlich schieben */
+.lia-chemlab .cl-table { border-collapse: collapse; margin: 0.3em 0; }
+.lia-chemlab .cl-table caption { text-align: left; font-weight: bold; }
+.lia-chemlab .cl-table th,
+.lia-chemlab .cl-table td { border-bottom: 1px solid var(--cl-line); padding: 0.15em 0.9em 0.15em 0; text-align: left; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-list { margin: 0.2em 0; padding-left: 1.2em; }
+.lia-chemlab .cl-formula { font-size: 1.1em; white-space: nowrap; }
+.lia-chemlab small { font-size: 0.7em; opacity: 0.8; }
+.lia-chemlab .cl-meta { opacity: 0.8; margin-left: 0.6em; }
+.lia-chemlab .cl-running { color: var(--cl-accent); font-weight: bold; }
+.lia-chemlab .cl-where { font-weight: bold; margin-top: 0.4em; }
+
+.lia-chemlab .cl-charts { display: flex; flex-wrap: wrap; gap: 0.8em; border-top: 1px solid var(--cl-line); margin-top: 0.5em; padding-top: 0.5em; }
+.lia-chemlab .cl-chart { flex: 1 1 17em; max-width: 30em; margin: 0; }
+.lia-chemlab .cl-chart figcaption { font-weight: bold; }
+.lia-chemlab .cl-chart > svg { display: block; width: 100%; height: auto; }
+.lia-chemlab .cl-axis { stroke: var(--cl-ink); stroke-width: 1; }
+.lia-chemlab .cl-grid { stroke: var(--cl-line); stroke-width: 0.6; }
+.lia-chemlab .cl-tick { fill: var(--cl-ink); font-size: 8px; }
+.lia-chemlab .cl-line { fill: none; stroke-width: 1.8; stroke-linejoin: round; }
+.lia-chemlab .cl-s0 { stroke: var(--cl-s0); }
+.lia-chemlab .cl-s1 { stroke: var(--cl-s1); }
+.lia-chemlab .cl-s2 { stroke: var(--cl-s2); }
+.lia-chemlab .cl-s3 { stroke: var(--cl-s3); }
+.lia-chemlab .cl-s4 { stroke: var(--cl-s4); }
+.lia-chemlab .cl-s5 { stroke: var(--cl-s5); }
+.lia-chemlab .cl-cursor { stroke: var(--cl-accent); stroke-width: 1; stroke-dasharray: 3 2; }
+.lia-chemlab .cl-legend { list-style: none; display: flex; flex-wrap: wrap; gap: 0.2em 1em; margin: 0.2em 0 0; padding: 0; }
+.lia-chemlab .cl-legend li { display: inline-flex; align-items: center; gap: 0.3em; }
+
+.lia-chemlab .cl-events { margin: 0.2em 0; padding-left: 0; list-style: none; max-height: 11em; overflow-y: auto; }
+.lia-chemlab .cl-events time { display: inline-block; min-width: 3em; opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+.lia-chemlab .cl-error,
+.cl-error { color: #b00020; border: 1px solid currentColor; border-radius: 0.4em; padding: 0.5em 0.8em; }

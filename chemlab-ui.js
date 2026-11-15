@@ -1,0 +1,1215 @@
+/* ChemLab – Oberfläche: mount(), Regal, Arbeitsfläche, Zeitleiste, Gleichungen, Diagramme, Protokoll.
+   Der Zustand einer Fläche liegt in LiaChemLab.store[el.id] und übersteht so den Folienwechsel:
+   LiaScript baut das DOM beim Zurückkehren neu auf, die id bleibt dieselbe. */
+(function (global) {
+  "use strict";
+
+  var L = (global.LiaChemLab = global.LiaChemLab || {});
+  L.store = L.store || {};
+
+  var SPEEDS = [0.25, 0.5, 1, 2, 5, 20, 60];
+  var BUDGET = 400;               // Rechenschritte je Bild höchstens (20 simulierte Sekunden)
+  var BENCH = 300, FRONT = 48;    // Tischkante (mindestens) und Höhe der Tischfront in Bildpunkten
+  var GROUPS = ["water", "acid", "salt", "other", "indicator", "solid"];
+  var SHOWN = 2;                  // s: so lange bleibt eine Probe (Span, Blitz) an der Öffnung zu sehen
+  var DASH = ["", "7 3", "2 3", "9 3 2 3", "1 4", "12 4"];
+  var STEPS = { ml: [1, 2, 5, 10, 20, 50, 100], drops: [1, 2, 3, 5, 10], g: [0.1, 0.2, 0.5, 1, 2, 5], pieces: [1, 2, 5, 10, 20] };
+  var ICON = {
+    start: "M4,4h2.5v12H4zM17,4v12l-9-6z", back: "M16,4v12L5,10z", play: "M5,4v12l11-6z",
+    pause: "M5,4h3.5v12H5zM11.5,4H15v12h-3.5z", end: "M13.5,4H16v12h-2.5zM3,4l9,6l-9,6z"
+  };
+
+  function glyph(name) {
+    return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
+  }
+
+  // Welche Datei fehlt noch? Eine, die auf den Rechenkern wartet, ist angekommen.
+  function missing() {
+    return [["chemlab-engine.js", L.normalize], ["chemlab-data.js", L.core], ["chemlab-parts.js", L.text && L.icon], ["chemlab-fx.js", L.fx]]
+      .filter(function (file) { return !file[1] && !(L.pending && L.pending[file[0]]); }).map(function (file) { return file[0]; });
+  }
+
+  function mount(el, source) {
+    var doc = global.document;
+    var lang = /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
+    var esc = L.escape;
+    function T(key, vars) { return L.text(key, lang, vars); }
+
+    // Fehlt eine der Dateien, sagt die Fläche das, statt leer zu bleiben oder mit einem Folgefehler zu enden.
+    var gone = missing();
+    if (gone.length) {
+      el.innerHTML = '<p class="cl-error" role="alert">' + (lang === "de" ? "ChemLab ist nicht vollständig geladen. Es fehlt: " : "ChemLab is not completely loaded. Missing: ") +
+        gone.join(", ") + "</p>";
+      return;
+    }
+
+    if (el._cl) el._cl.stop();
+
+    var text = typeof source === "string" ? source : JSON.stringify(source);
+    var st = L.store[el.id];
+    if (st && st.source !== text) st = null;       // geänderte Beschreibung: neuer Aufbau, auch nach einem behobenen Fehler
+    if (!st) {
+      st = L.store[el.id] = { source: text, hand: null, sel: null, play: 0, speed: 1, names: {}, counts: {}, error: null, mute: false };
+      try {
+        st.config = L.normalize(source);
+        st.run = L.createRun(st.config);
+      } catch (error) {
+        st.error = { code: error.code || "other", detail: error.detail || (error.code ? "" : error.message) || "" };
+      }
+    }
+    if (st.error) {
+      var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
+        amount: "err.amount", size: "err.size" }[st.error.code] || "err.other";
+      el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
+      return;
+    }
+
+    var show = st.config.show;
+    var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
+    if (sound) sound.mute(st.mute);
+
+    el.innerHTML =
+      '<div class="cl-top"><div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div>' +
+      '<div class="cl-side">' + (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
+      '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></div>" +
+      '<div class="cl-hand" hidden></div>' +
+      '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg></div>' +
+      '<div class="cl-time"></div>' +
+      '<p class="cl-status" role="status" aria-live="polite"></p>' +
+      '<div class="cl-panel"></div>' +
+      '<div class="cl-eq"></div>' +
+      '<div class="cl-charts"></div>' +
+      '<div class="cl-log"><h4>' + esc(T("log.title")) + '</h4><p class="cl-hint cl-none">' + esc(T("log.none")) + "</p>" +
+      '<ol class="cl-events" aria-live="polite"></ol></div>';
+
+    var ui = {};
+    ["shelf", "hand", "svg", "time", "status", "panel", "eq", "charts", "log"].forEach(function (name) {
+      ui[name] = el.querySelector(".cl-" + name);
+    });
+    ui.sound = sound ? el.querySelector(".cl-sound") : null;
+    ui.events = ui.log.querySelector(".cl-events");
+    ui.none = ui.log.querySelector(".cl-none");
+    ui.eq.hidden = !show.equations;
+    ui.charts.hidden = !show.charts.length;
+    ui.log.hidden = !show.log;
+
+    var bench = BENCH, items = [], nodes = {}, shape = null, raf = 0, last = 0, slowAt = 0, pending = 0, playFrom = 0, stopped = false, down = null;
+    var dragging = null;            // ein Schieber (Spannung, Temperatur, Wellenlänge) wird gerade bewegt: der Wert, auf dem er steht
+    var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
+    var lensKey = null, lensColors = {};      // was die Legende der Teilchenlupe gerade zeigt, und die Farben ihrer Teilchen
+    var shown = [];                 // die Beobachtungen, die gerade in der Liste stehen
+
+    // ---------------------------------------------------------------- Namen
+
+    // "Reagenzglas 1": bleibt einem Gerät, auch wenn andere weggeräumt werden
+    function names() {
+      var lab = st.run.lab;
+      lab.vessels.concat(lab.tools).forEach(function (p) {
+        if (st.names[p.id]) return;
+        st.counts[p.type] = (st.counts[p.type] || 0) + 1;
+        st.names[p.id] = L.partName(p.type, lang) + " " + st.counts[p.type];
+      });
+      return st.names;
+    }
+
+    function ordinal(id) { return +(/(\d+)$/.exec(st.names[id] || "") || [0, 0])[1]; }
+
+    function status(text) { ui.status.textContent = text || ""; }
+
+    // ---------------------------------------------------------------- Regal und Hand
+
+    // Was im Regal steht: die Auswahl des Kurses, sonst alles, nach Fächern geordnet
+    function shelfGroups() {
+      if (st.config.shelf) return [{ title: "", ids: st.config.shelf }];
+      var all = Object.keys(L.db.reagents), rest = all.filter(function (id) { return GROUPS.indexOf(L.db.reagents[id].group) < 0; });
+      return GROUPS.map(function (group) {
+        // Salzlösungen stehen mit 0,1 mol/L bereit, Säuren und Laugen mit 1 mol/L
+        return { title: T("group." + group), ids: all.filter(function (id) { return L.db.reagents[id].group === group; })
+          .map(function (id) { return group === "salt" && L.db.reagents[id].molar ? id + " 0.1M" : id; }) };
+      }).concat([{ title: "", ids: rest },
+        { title: T("group.gear"), ids: Object.keys(L.parts).filter(function (id) { return !electric(L.parts[id]); }) },
+        // eine eigene Elektrode steht nur da, wenn ihr Stoff eingetragen ist
+        { title: T("group.electric"), ids: Object.keys(L.parts).filter(function (id) { return electric(L.parts[id]) && (!L.parts[id].electrode || L.db.species[L.parts[id].electrode]); }) }
+      ]).filter(function (g) { return g.ids.length; });
+    }
+
+    function electric(def) { return !!(def.electrode || def.circuit || def.bridge); }
+
+    // Das Regal entsteht einmal; welcher Stoff gewählt ist, wird danach an den Knöpfen selbst vermerkt.
+    // So behält der Knopf den Fokus, und Vorleseprogramme hören nur die Änderung.
+    function renderShelf() {
+      var ids = [];
+      ui.shelf.innerHTML = shelfGroups().map(function (group) {
+        return (group.title ? '<span class="cl-group">' + esc(group.title) + "</span>" : "") + group.ids.map(function (id) {
+          var label = L.parts[id] ? L.partName(id, lang) : L.nameOf(L.reagent(id), lang);
+          ids.push(id);
+          return '<button type="button" class="cl-pick" data-act="hand" data-id="' + esc(id) + '" data-n="' + (ids.length - 1) + '" aria-pressed="false">' +
+            L.icon(id) + "<span>" + esc(label) + "</span></button>";
+        }).join("");
+      }).join("");
+      ui.picks = ids.map(function (id, n) { return { id: id, node: ui.shelf.querySelector('[data-n="' + n + '"]') }; });
+      syncShelf();
+    }
+
+    function syncShelf() {
+      ui.picks.forEach(function (pick) {
+        pick.node.setAttribute("aria-pressed", st.hand && st.hand.id === pick.id ? "true" : "false");
+      });
+    }
+
+    function unitOf(r) { return r.solid ? (r.piece ? "pieces" : "g") : r.drops ? "drops" : "ml"; }
+
+    // Was gerade in der Hand liegt: Menge für den Rechenkern, für das Protokoll und als Text
+    function portion() {
+      var r = L.reagent(st.hand.id), unit = unitOf(r), n = STEPS[unit][st.hand.i];
+      if (unit === "pieces") return { give: { g: n * r.piece.g }, text: n + " " + L.nameOf(r.piece, lang) + " (" + L.trim(n * r.piece.g, lang) + " g)" };
+      if (unit === "g") return { give: { g: n }, text: L.trim(n, lang) + " g" };
+      if (unit === "drops") return { give: { drops: n }, ml: n * L.DROP, text: n + " " + T("unit.drop") };
+      return { give: { ml: n }, ml: n, text: n + " mL" };
+    }
+
+    function renderHand() {
+      var h = st.hand, name;
+      ui.hand.hidden = !h;
+      if (!h) { ui.hand.innerHTML = ""; return; }
+      if (h.tool || h.test) {
+        name = L.parts[h.id];
+        ui.hand.innerHTML = "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
+          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+            : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1") : "hint.tool")) + "</span>" +
+          // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
+          (name.under ? ' <button type="button" class="cl-btn" data-act="bench">' + esc(T("hand.bench")) + "</button>" : "");
+        return;
+      }
+      name = L.nameOf(L.reagent(h.id), lang);
+      ui.hand.innerHTML = "<strong>" + esc(name) + '</strong> <span class="cl-stepper"><span>' + esc(T("amount")) + ":</span> " +
+        '<button type="button" class="cl-btn cl-round" data-act="less" aria-label="' + esc(T("less")) + '">−</button> ' +
+        '<output class="cl-amount">' + esc(portion().text) + "</output> " +
+        '<button type="button" class="cl-btn cl-round" data-act="more" aria-label="' + esc(T("more")) + '">+</button></span> ' +
+        '<span class="cl-hint">' + esc(T("hint.hand")) + "</span>";
+      syncAmount();
+    }
+
+    function syncAmount() {         // nach „weniger“ oder „mehr“ ändert sich nur die Zahl, die Knöpfe bleiben stehen
+      if (!st.hand || st.hand.tool || st.hand.test) return;
+      ui.hand.querySelector(".cl-amount").textContent = portion().text;
+    }
+
+    function setHand(hand) {
+      st.hand = hand;
+      syncShelf();
+      renderHand();
+    }
+
+    function pick(id) {
+      var def = L.parts[id], type = id;
+      status("");
+      if (def && def.kind === "vessel" && !def.dispenser) {     // ein Gefäß kommt gleich auf den Tisch
+        setHand(null);
+        change(function (lab) { return L.place(lab, { type: type }); }, function (made) { return { key: "placed", part: made }; });
+        return;
+      }
+      setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: 2 });
+    }
+
+    // ---------------------------------------------------------------- Eingriffe
+
+    // Jeder Eingriff läuft über die Aufzeichnung: in der Vergangenheit schneidet er die Zukunft ab
+    function change(work, mark) {
+      var run = st.run, cut = L.inPast(run);
+      var result = L.act(run, work, mark);
+      pending = 0;
+      playFrom = run.time;
+      st.play = 1;
+      status(cut ? T("cut") : "");
+      refresh();
+      kick();
+      return result;
+    }
+
+    function give(id) {
+      var lab = st.run.lab, h = st.hand, p, def, over, kind;
+      if (L.vessel(lab, id).broken) { status(T("brokenGlass")); return; }
+      if (h.test) {                                             // Span an die Öffnung, Stäbchen in die Lösung und dann in die Flamme
+        kind = L.parts[h.id].probe;
+        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T("notHere")); return; }
+        if (kind === "rod" && !lab.tools.some(function (t) { return t.flame === 2; })) { status(T("noFlame")); return; }
+        if (kind !== "rod" && lab.tools.some(function (t) { return t.in === id && L.parts[t.type].sense === "V"; })) { status(T("closed")); return; }
+        change(function (l, emit) { return kind === "rod" ? L.flameTest(l, id, emit) : L.probe(l, id, kind, emit); });
+        return;
+      }
+      if (h.tool) {                                             // Messgerät hinein, Bürette darüber, Brenner darunter
+        def = L.parts[h.id]; over = !!def.dispenser;
+        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T("notHere")); return; }
+        if (def.electrode) {                                    // zwei Elektroden je Becherglas
+          if (!L.parts[L.vessel(lab, id).type].electrodes) { status(T("tooNarrow")); return; }
+          if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
+        } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
+        else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
+        else if (def.bridge && !h.from) {                       // die Salzbrücke braucht zwei Gefäße: das erste merken
+          st.hand = { id: h.id, tool: true, from: id };
+          status("");
+          renderHand();
+          return;
+        } else if (def.bridge && h.from === id) { status(T("sameVessel")); return; }
+        else if (over ? lab.vessels.some(function (v) { return v.over === id; })
+          : lab.tools.some(function (t) { return t.in === id && (def.under ? L.parts[t.type].under : t.type === h.id); })) { status(T("occupied")); return; }      // unter einem Gefäß steht ein Brenner oder ein Wasserbad
+        setHand(null);
+        if (def.bridge) {
+          change(function (l) { return L.place(l, { type: h.id, in: h.from, to: id }); }, function (made) { return { key: "bridged", part: made, vessel: h.from, to: id }; });
+          return;
+        }
+        change(function (l) { return L.place(l, over ? { type: h.id, over: id } : { type: h.id, in: id }); },
+          function (made) { return { key: over ? "hung" : def.under ? "under" : def.sense === "V" || def.circuit ? "joined" : "probe", part: made, vessel: id }; });
+        return;
+      }
+      p = portion();
+      if (p.ml && p.ml > L.free(lab, L.vessel(lab, id)) + 1e-9) { status(T("full")); return; }
+      change(function (l) { return L.add(l, id, h.id, p.give); }, Object.assign({ key: "added", vessel: id, reagent: h.id }, p.give));
+    }
+
+    function select(id) {
+      if (st.sel === id) return;
+      st.sel = id;
+      renderPanel();
+      paint();
+      slow();
+    }
+
+    function tap(id) {
+      var lab = st.run.lab, t = L.tool(lab, id);
+      if (!id) {
+        if (st.hand && st.hand.tool && L.parts[st.hand.id].under) alone();      // ein Brenner darf auch für sich auf dem Tisch stehen
+        else select(null);
+        return;
+      }
+      // mit etwas in der Hand ist das Gefäß gemeint; nur der Brenner darunter bleibt wählbar, damit man ihn anzünden kann
+      if (st.hand && t && !L.parts[t.type].under && !L.parts[t.type].circuit && L.vessel(lab, t.in)) id = t.in;
+      if (st.hand && L.vessel(lab, id)) give(id);
+      else select(st.sel === id ? null : id);
+    }
+
+    function alone() {              // das Gerät aus der Hand für sich auf den Tisch
+      var type = st.hand.id;
+      setHand(null);
+      change(function (l) { return L.place(l, { type: type }); }, function (made) { return { key: "placed", part: made }; });
+    }
+
+    function pourOut() {
+      var lab = st.run.lab, from = L.vessel(lab, st.sel), toId = ui.panel.querySelector(".cl-pour-to").value;
+      var to = L.vessel(lab, toId), ml = parseFloat(String(ui.panel.querySelector(".cl-pour-ml").value).replace(",", "."));
+      if (!from || !to) return;
+      if (!(ml > 0) || !isFinite(ml)) { status(T("badAmount")); return; }
+      if (!(L.pourable(lab, from.id) > 1e-6)) { status(T("nothing")); return; }
+      ml = Math.min(ml, L.pourable(lab, from.id), L.free(lab, to));
+      if (!(ml > 1e-6)) { status(T("full")); return; }
+      change(function (l) { return L.pour(l, from.id, toId, ml); }, { key: "poured", from: from.id, vessel: toId, ml: ml });
+    }
+
+    // Spannung einstellen. Wer den Regler in kleinen Schritten dreht (Pfeiltasten), stellt in Wahrheit einmal ein:
+    // Folgt eine Einstellung auf die vorige, ohne dass die Uhr dazwischen weiterlief und ohne dass etwas anderes
+    // im Protokoll steht, ersetzt sie deren Zeile. Lief die Uhr, hat die vorige Spannung eine Weile gegolten: Ihre Zeile bleibt.
+    var dialed = null;
+    // Ein Schieber wurde losgelassen: Spannung des Netzgeräts ("volts"), Temperatur des Wasserbads ("temp") oder Wellenlänge des
+    // Fotometers ("wave", im Protokoll "nm"). Wer im selben Augenblick weiterdreht, bekommt eine Zeile im Protokoll, nicht viele.
+    function setDial(id, key, value) {
+      var run = st.run, def = L.parts[L.tool(run.lab, id).type], field = key === "wave" ? "nm" : key, mark = { key: key, part: id }, again;
+      var set = key === "volts" ? L.setVolts : key === "temp" ? L.setTemp : L.setWave;
+      var limits = key === "volts" ? [0, def.max] : key === "temp" ? def.range : def.waves;
+      value = Math.max(limits[0], Math.min(limits[1], value));
+      value = key === "volts" ? Math.round(value * 10) / 10 : Math.round(value);
+      mark[field] = value;
+      again = !!dialed && dialed.part === id && dialed.key === key && !L.inPast(run) && run.log[run.log.length - 1] === dialed && run.lab.t === dialed.t;
+      change(function (l) { return set(l, id, value); }, again ? null : mark);
+      if (again) {
+        run.log[run.log.length - 1] = Object.assign({}, dialed, mark);       // ein neues Objekt: so baut das Protokoll die Zeile neu
+        renderLog();
+      }
+      dialed = run.log[run.log.length - 1];
+    }
+
+    function reset() {
+      st.run = L.createRun(st.config);
+      st.sel = null;
+      st.play = 0; st.names = {}; st.counts = {};
+      pending = 0;
+      status("");
+      shape = null;
+      setHand(null);
+      renderPanel();
+      refresh();
+    }
+
+    // ---------------------------------------------------------------- Arbeitsfläche
+
+    function layout() {
+      var lab = st.run.lab, list = [], width = 0, x, free = [], reach = 0;
+      var lifts = {}, room = {}, wide = {};
+      lab.tools.forEach(function (t) {                    // was an einem Gefäß hängt, bestimmt dessen Höhe und Platzbedarf
+        var host = L.vessel(lab, t.in), def = L.parts[t.type];
+        if (!host) return;
+        if (def.under) lifts[host.id] = def.stand(host).lift;
+        if (def.under && def.span) wide[host.id] = def.span(host);          // ein Wasserbad ist breiter als das Gefäß darin
+        if (def.room) room[host.id] = def.room + (lab.vessels.some(function (o) { return o.over === host.id; }) ? 60 : 0);      // an einer Bürette vorbei braucht er mehr Platz
+      });
+      lab.vessels.forEach(function (v) {
+        var host = L.vessel(lab, v.over), def = L.parts[v.type], up = lifts[host ? host.id : v.id] || 0;
+        if (def.reach) reach = Math.max(reach, def.reach(host ? L.parts[host.type].mount(L.view(lab, host)) : null) + up);
+        if (up) reach = Math.max(reach, up - def.bounds(v).top + 8);
+        if (host) free.push({ id: v.id, type: v.type, vessel: true, host: v.over });
+        else {
+          list.push({ id: v.id, type: v.type, vessel: true, w: Math.max(def.width(v), wide[v.id] || 0), lift: up, extra: room[v.id] ? Math.max(0, room[v.id] - def.width(v) / 2 + 30) : 0 });
+          lab.tools.forEach(function (t) {                // Netzgerät, Messgeräte und Lämpchen stehen gleich neben ihrem Gefäß
+            if (t.in === v.id && L.parts[t.type].circuit) list.push({ id: t.id, type: t.type, w: L.parts[t.type].width(t), beside: v.id });
+          });
+        }
+      });
+      lab.tools.forEach(function (t) {
+        var host = L.vessel(lab, t.in), def = L.parts[t.type], place;
+        if (host && def.circuit) return;
+        if (host && (def.electrode || def.bridge)) reach = Math.max(reach, (lifts[host.id] || 0) - L.parts[host.type].bounds(host).top + 96);      // Platz für die Leitungen
+        if (host) {
+          free.push({ id: t.id, type: t.type, host: t.in, under: !!def.under });
+          if (!def.under && !def.electrode && !def.bridge) {             // Messgeräte ragen über das Gefäß hinaus, erst recht über ein gehobenes
+            place = L.parts[host.type].probe(host, t.type);
+            reach = Math.max(reach, (lifts[host.id] || 0) - (place.top != null ? place.top : place.rim - 60) + 44);
+          }
+        } else list.push({ id: t.id, type: t.type, w: def.width(t) });
+      });
+      list.forEach(function (item) { width += item.w + (item.extra || 0); });
+      // Die Fläche hat eine feste Höhe; ihre Breite in Bildpunkten folgt dem Platz auf der Seite,
+      // damit die Geräte ihre Größe behalten und der Tisch über die ganze Breite reicht.
+      bench = Math.max(BENCH, Math.ceil(reach) + 16);
+      if (ui.svg.style) ui.svg.style.height = (26 * (bench + FRONT) / (BENCH + FRONT)).toFixed(1) + "em";     // höher, wenn eine Bürette Platz braucht
+      var box = ui.svg.getBoundingClientRect ? ui.svg.getBoundingClientRect() : null;
+      var total = Math.max(width + 40, box && box.height > 0 ? Math.round((bench + FRONT) * box.width / box.height) : 600);
+      x = (total - width) / 2;
+      list.forEach(function (item) { item.x = x + item.w / 2; x += item.w + (item.extra || 0); });
+      // Stecken mehrere Messgeräte in einem Gefäß, kommt die längste Sonde zuerst: Was später gezeichnet wird, liegt obenauf,
+      // und so steht kein Stab vor der Anzeige einer kürzeren Sonde.
+      free.forEach(function (item) {
+        var def = L.parts[item.type], host = L.vessel(lab, item.host);
+        item.reach = !item.vessel && !item.under && def.sense && def.sense !== "V" && host ? L.parts[host.type].probe(host, item.type).top : null;
+      });
+      free = free.filter(function (item) { return item.reach == null; }).concat(free.filter(function (item) { return item.reach != null; }).sort(function (a, b) {
+        return a.host === b.host ? a.reach - b.reach : a.host < b.host ? -1 : 1;
+      }));
+      free.forEach(function (item) {                      // Messgeräte und Büretten stehen am Platz ihres Gefäßes, darüber gezeichnet
+        var host = list.filter(function (other) { return other.id === item.host; })[0];
+        item.x = host.x;
+        item.lift = item.under ? 0 : host.lift || 0;      // der Brenner bleibt auf dem Tisch, alles andere geht mit dem Gefäß nach oben
+        list.push(item);
+      });
+      return { list: list, width: total };
+    }
+
+    function renderStage() {
+      var plan = layout();
+      items = plan.list;
+      ui.svg.setAttribute("viewBox", "0 0 " + plan.width + " " + (bench + FRONT));
+      ui.svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
+      ui.svg.innerHTML =
+        '<rect class="cl-wall" x="0" y="0" width="' + plan.width + '" height="' + bench + '"/>' +
+        '<rect class="cl-bench" x="0" y="' + bench + '" width="' + plan.width + '" height="' + FRONT + '"/>' +
+        '<line class="cl-edge" x1="0" x2="' + plan.width + '" y1="' + bench + '" y2="' + bench + '"/>' +
+        items.map(function (item) {
+          return '<g class="cl-item" data-id="' + esc(item.id) + '" transform="translate(' + item.x + "," + (bench - (item.lift || 0)) + ')" tabindex="0" role="button"></g>';
+        }).join("") + '<g class="cl-wires"></g>';
+      nodes = {};
+      items.forEach(function (item) { nodes[item.id] = ui.svg.querySelector('[data-id="' + item.id + '"]'); });
+      ui.wires = ui.svg.querySelector(".cl-wires");
+    }
+
+    // Die Trefferfläche eines Geräts. Nur sie nimmt Zeiger-Ereignisse an (siehe chemlab.css).
+    function frameBox(b, selected) {
+      return '<rect class="cl-hit' + (selected ? " cl-sel" : "") + '" x="' + b.x0 + '" y="' + b.top + '" width="' + (b.x1 - b.x0) +
+        '" height="' + ((b.bottom == null ? 2 : b.bottom) - b.top) + '" rx="6"/>';
+    }
+
+    function shownValue(r) {        // Anzeige eines Messgeräts als Text: „20,0 °C“, „pH 7,00“
+      if (r.unit === "pH") return "pH " + (r.value == null ? "–" : L.num(r.value, 2, lang));
+      if (r.over && r.unit !== "E") return "> " + L.num(r.value, 0, lang) + " " + r.unit;      // am Ende der Skala
+      if (r.flame != null) return T("aria.flame", { state: T("flame." + r.flame) });
+      return L.shown(r, lang);
+    }
+
+    // Wo eine Elektrode im Gefäß steht: die erste links, die zweite rechts; eine einzelne im rechten Glas einer Salzbrücke rechts
+    function slotOf(lab, t) {
+      var list = lab.tools.filter(function (o) { return o.in === t.in && L.parts[o.type].electrode; }), far = false;
+      if (list.length === 1) lab.tools.forEach(function (o) {
+        var ends;
+        if (!L.parts[o.type].bridge || (o.in !== t.in && o.to !== t.in)) return;
+        ends = lab.vessels.filter(function (v) { return v.id === o.in || v.id === o.to; });
+        if (ends.length === 2 && ends[1].id === t.in) far = true;
+      });
+      return far ? 1 : list.indexOf(t);
+    }
+
+    function at(id) { return items.filter(function (item) { return item.id === id; })[0]; }
+
+    // Die Salzbrücke reicht vom Gefäß, an dem sie hängt, zum anderen: Stellen in den Koordinaten ihres eigenen Platzes
+    function span(lab, t) {
+      var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), dir, pa, pb, up;
+      if (!host || !a) return null;
+      dir = b && b.x < a.x ? -1 : 1;
+      pa = L.parts[host.type].probe(host, "bridge", dir);
+      // beide Enden tauchen ein Stück unter den Flüssigkeitsspiegel, wenn Flüssigkeit da ist
+      function end(vessel, p) {
+        var w = L.view(lab, vessel), top = w.ml > 0.005 ? L.parts[vessel.type].surface(w) : p.rim + 30;
+        return Math.min(-6, Math.max(p.rim + 30, top + 16));
+      }
+      if (!b) return { x1: pa.x, y1: pa.rim, s1: end(host, pa), x2: pa.x + 30 * dir, y2: pa.rim, s2: pa.rim + 12 };       // das andere Ende hängt frei
+      pb = L.parts[far.type].probe(far, "bridge", -dir);
+      up = (a.lift || 0) - (b.lift || 0);
+      return { x1: pa.x, y1: pa.rim, s1: end(host, pa), x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: end(far, pb) + up };
+    }
+
+    // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden
+    function wiring(lab, ends) {
+      var out = "";
+      L.circuits(lab).forEach(function (c) {
+        var a = L.tool(lab, c.a), b = L.tool(lab, c.b), from = ends[c.a] && ends[c.a][0], last = ends[c.b] && ends[c.b][0], n = 0, sign = "";
+        var parts = lab.tools.filter(function (t) { return L.parts[t.type].circuit && ends[t.id] && (t.in === a.in || t.in === b.in); });
+        function line(p, q, cls) {
+          var rail = Math.min(p.y, q.y) - 12 - 7 * n++;
+          out += '<path class="cl-wire' + cls + '" d="M' + p.x + "," + p.y + "L" + p.x + "," + rail + "L" + q.x + "," + rail + "L" + q.x + "," + q.y + '"/>';
+        }
+        if (!from || !last) return;
+        ["supply", "load", "ammeter"].forEach(function (kind) {
+          parts.forEach(function (t) {
+            var r = L.reading(lab, t.id);
+            if (L.parts[t.type].circuit !== kind) return;
+            line(from, ends[t.id][0], kind === "supply" ? (r.flip ? " cl-minus" : " cl-plus") : sign);
+            sign = kind === "supply" ? (r.flip ? " cl-plus" : " cl-minus") : sign;
+            from = ends[t.id][1];
+          });
+        });
+        if (from !== ends[c.a][0]) line(from, last, sign);
+        parts.forEach(function (t) {
+          if (L.parts[t.type].circuit !== "voltmeter") return;
+          line(ends[c.a][0], ends[t.id][0], "");
+          line(ends[t.id][1], last, "");
+        });
+      });
+      return out;
+    }
+
+    // Zeichnet jedes Gerät neu aus dem Zustand zur Zeit des Zeigers
+    function paint() {
+      var lab = st.run.lab, now = st.run.time + pending, label = names(), marks = {}, ends = {};
+      var sign = lab.vessels.map(function (v) { return v.id + ">" + v.over + (v.broken ? "!" : ""); }).concat(lab.tools.map(function (t) { return t.id + ">" + t.in + ">" + (t.to || ""); })).join("|");
+      // was eben geschah und kurz zu sehen bleibt: der Span an der Öffnung, der Blitz einer Verpuffung
+      st.run.log.slice(Math.max(0, st.run.frames[st.run.cursor].n - 8), st.run.frames[st.run.cursor].n).forEach(function (event) {
+        if ((event.key !== "splint" && event.key !== "pop") || !(now - event.t < SHOWN) || now < event.t) return;
+        (marks[event.vessel] = marks[event.vessel] || []).push(Object.assign({ age: now - event.t }, event));
+      });
+      if (sign !== shape) {
+        shape = sign;
+        if (st.sel && !L.vessel(lab, st.sel) && !L.tool(lab, st.sel)) st.sel = null;
+        renderStage();
+        renderPanel();
+      }
+      items.forEach(function (item, index) {
+        var g = nodes[item.id], def = L.parts[item.type];
+        var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id] };
+        var v, w, r, host, place, b, content, hang;
+        if (item.vessel) {
+          v = L.vessel(lab, item.id);
+          w = L.view(lab, v);
+          host = L.vessel(lab, v.over);
+          hang = host ? L.parts[host.type].mount(L.view(lab, host)) : null;      // nur für Büretten: wo sie hängt
+          content = w.broken ? T("aria.broken") : w.ml > 0.005
+            ? (show.numbers ? T("aria.liquid", { ml: L.trim(Math.round(w.ml * 10) / 10, lang), color: L.colorWord(w.color.name, w.color.pale, lang) })
+              : L.colorWord(w.color.name, w.color.pale, lang)) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : "") + (w.steam > 0 ? ", " + T("aria.boiling") : "")
+            : T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty");
+          if (w.fire.length || w.torch) content += ", " + T("aria.burning");
+          if (def.dispenser) {
+            content += ", " + T("aria.tap", { state: T("tap." + L.tapKey(w.tap)) }) +
+              (show.numbers && w.given > 0 ? ", " + T("aria.given", { ml: L.num(w.given, 1, lang) }) : "");
+          }
+          g.innerHTML = frameBox(def.bounds(v, hang), st.sel === item.id) + def.draw(w, ctx, hang);
+          g.setAttribute("aria-label", T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content }));
+        } else {
+          r = L.reading(lab, item.id);
+          host = L.vessel(lab, r.in);
+          place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
+            : L.parts[host.type].probe(host, item.type, def.electrode ? slotOf(lab, L.tool(lab, item.id)) : 0);
+          if (def.sense === "V" && place && lab.vessels.some(function (o) { return o.over === host.id; })) {
+            // hängt über dem Gefäß eine Bürette, beginnt der Zylinder des Kolbenprobers erst rechts von ihr und ihrem Stativ
+            w = L.parts[host.type].mount(L.view(lab, host));
+            place.off = Math.max(20, Math.max(w.x + 26, (w.edge || 0) + 14) + 10 - place.x);
+          }
+          if (def.electrode && place) {                          // wie hoch die Flüssigkeit steht, in der sie taucht
+            w = L.view(lab, host);
+            place.surface = w.ml > 0.005 ? L.parts[host.type].surface(w) : null;
+          }
+          // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
+          b = def.under || def.sense === "V" || def.circuit || def.bridge ? def.bounds(r, place)
+            : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
+          g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
+          // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
+          if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
+          else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
+          content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
+            : def.bridge ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
+          if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
+          if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
+          g.setAttribute("aria-label", label[item.id] + (def.bridge ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
+            : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : ""));
+        }
+      });
+      if (ui.wires) ui.wires.innerHTML = wiring(lab, ends);
+      if (st.lens) lensView();
+    }
+
+    // ---------------------------------------------------------------- Zeitleiste
+
+    function renderTime() {
+      ui.time.innerHTML =
+        '<button type="button" class="cl-btn cl-round" data-act="start" title="' + esc(T("time.start")) + '" aria-label="' + esc(T("time.start")) + '">' + glyph("start") + "</button>" +
+        '<button type="button" class="cl-btn cl-round" data-act="back" title="' + esc(T("time.back")) + '" aria-label="' + esc(T("time.back")) + '" aria-pressed="false">' + glyph("back") + "</button>" +
+        '<button type="button" class="cl-btn cl-round" data-act="play" title="' + esc(T("time.play")) + '" aria-label="' + esc(T("time.play")) + '" aria-pressed="false">' + glyph("play") + "</button>" +
+        '<button type="button" class="cl-btn cl-round" data-act="end" title="' + esc(T("time.end")) + '" aria-label="' + esc(T("time.end")) + '">' + glyph("end") + "</button>" +
+        '<label class="cl-speed">' + esc(T("time.speed")) + ' <select data-act="speed">' + SPEEDS.map(function (s) {
+          return '<option value="' + s + '"' + (s === st.speed ? " selected" : "") + ">" + L.trim(s, lang) + "×</option>";
+        }).join("") + "</select></label>" +
+        '<input class="cl-seek" type="range" role="slider" data-act="seek" min="0" max="0" step="0.05" value="0" aria-label="' + esc(T("time.slider")) + '">' +
+        '<span class="cl-clock"></span>';
+      ui.play = ui.time.querySelector('[data-act="play"]');
+      ui.back = ui.time.querySelector('[data-act="back"]');
+      ui.seek = ui.time.querySelector(".cl-seek");
+      ui.clock = ui.time.querySelector(".cl-clock");
+    }
+
+    function syncTime() {
+      var run = st.run;
+      ui.play.innerHTML = glyph(st.play > 0 ? "pause" : "play");
+      ui.play.setAttribute("aria-pressed", st.play > 0 ? "true" : "false");
+      ui.play.setAttribute("aria-label", T(st.play > 0 ? "time.pause" : "time.play"));
+      ui.play.setAttribute("title", T(st.play > 0 ? "time.pause" : "time.play"));
+      ui.back.setAttribute("aria-pressed", st.play < 0 ? "true" : "false");
+      ui.seek.setAttribute("max", String(run.end));
+      ui.seek.max = String(run.end);
+      ui.seek.value = String(run.time);
+      ui.seek.setAttribute("aria-valuetext", L.clock(run.time));
+      ui.clock.textContent = L.clock(run.time) + " / " + L.clock(run.end);
+    }
+
+    function setPlay(direction) {
+      var run = st.run;
+      status("");
+      st.force = null;
+      if (direction > 0 && !L.inPast(run) && L.atRest(run.lab)) {
+        // In Ruhe steht die Uhr. Wer gleich noch einmal drückt, lässt sie trotzdem zehn Minuten laufen: für alles, was unmerklich
+        // langsam weitergeht (eine stark verdünnte Ioduhr braucht eine halbe Stunde bis zum Umschlag).
+        if (insist === run.time) st.force = run.time + 600;
+        else { direction = 0; insist = run.time; status(T("rest") + " " + T("restMore")); }
+      }
+      if (direction < 0 && run.cursor === 0) direction = 0;
+      st.play = direction;
+      pending = 0;
+      playFrom = run.time;
+      syncTime();
+      hear();
+      if (st.play) kick();
+    }
+
+    function jump(t) {
+      st.play = 0;
+      pending = 0;
+      if (t >= st.run.end - 1e-9) L.toEnd(st.run); else L.seek(st.run, t);    // t = 0 ist der Aufbau vor dem ersten Eingriff
+      status("");
+      refresh();
+    }
+
+    // ---------------------------------------------------------------- Inhalt des gewählten Geräts
+
+    function renderPanel() {
+      var lab = st.run.lab, v = L.vessel(lab, st.sel), t = L.tool(lab, st.sel), label = names(), others, html;
+      if (v && v.broken) {
+        html = "<h4>" + esc(label[v.id]) + "</h4><p>" + esc(T("brokenGlass")) + '</p><div class="cl-actions">' +
+          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+      } else if (v) {
+        others = lab.vessels.filter(function (o) { return o.id !== v.id && !o.broken; });
+        html = "<h4>" + esc(label[v.id]) + "</h4>" +
+          (L.parts[v.type].dispenser ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
+            L.TAPS.map(function (rate) {
+              return '<button type="button" class="cl-btn" data-act="tap" data-id="' + rate + '" aria-pressed="false">' + esc(T("tap." + L.tapKey(rate))) + "</button>";
+            }).join(" ") + (show.numbers ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
+          '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
+          (show.particles ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
+          (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
+            return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
+          }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
+            '<button type="button" class="cl-btn" data-act="pour">' + esc(T("panel.pourGo")) + "</button> " : "") +
+          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " +
+          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+      } else if (t) {
+        html = "<h4>" + esc(label[t.id]) + "</h4>" +
+          (L.parts[t.type].flames ? '<div class="cl-tap" role="group" aria-label="' + esc(T("flame")) + '"><span>' + esc(T("flame")) + ":</span> " +
+            [0, 1, 2].map(function (level) {
+              return '<button type="button" class="cl-btn" data-act="flame" data-id="' + level + '" aria-pressed="false">' + esc(T("flame." + level)) + "</button>";
+            }).join(" ") + "</div>" : "") +
+          // Netzgerät: die Spannung an einem Schieber (übernommen wird sie beim Loslassen), dazu ein Knopf zum Umpolen
+          (L.parts[t.type].circuit === "supply" ? '<div class="cl-tap"><label>' + esc(T("volts")) + ' <input class="cl-volts" type="range" role="slider" data-act="volts" min="0" max="' +
+            L.parts[t.type].max + '" step="0.1" value="' + t.volts + '"></label> <output class="cl-volts-shown"></output> ' +
+            '<button type="button" class="cl-btn" data-act="flip" aria-pressed="false">' + esc(T("flip")) + "</button></div>" : "") +
+          // Wasserbad und Fotometer: Temperatur oder Wellenlänge an einem Schieber, übernommen beim Loslassen
+          (L.parts[t.type].bath ? dial("temp", L.parts[t.type].range, 1, t.temp) : "") +
+          (L.parts[t.type].sense === "A" ? dial("wave", L.parts[t.type].waves, 5, t.nm) : "") +
+          '<div class="cl-contents"></div><div class="cl-actions">' +
+          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+      } else html = '<p class="cl-hint">' + esc(T("panel.none")) + "</p>";
+      ui.panel.innerHTML = html;
+      lensKey = null;
+      renderContents();
+    }
+
+    function dial(act, range, step, value) {
+      return '<div class="cl-tap"><label>' + esc(T(act)) + ' <input class="cl-dial" type="range" role="slider" data-act="' + act + '" min="' + range[0] + '" max="' + range[1] +
+        '" step="' + step + '" value="' + value + '"></label> <output class="cl-dial-shown"></output></div>';
+    }
+
+    // Teilchenlupe im Feld des gewählten Gefäßes: das Bild (in jedem Bild neu) und darunter die Legende (nur wenn sich etwas ändert)
+    function lensView() {
+      var v = L.vessel(st.run.lab, st.sel), box = v && !v.broken && st.lens && show.particles ? ui.panel.querySelector(".cl-lens-view") : null;
+      if (box) box.innerHTML = L.fx.lens(L.particles(st.run.lab, v.id), pending, 3, still, function (id) { return lensColors[id] || "#9aa7b4"; });
+    }
+
+    function renderLens() {
+      var lab = st.run.lab, v = L.vessel(lab, st.sel), box = ui.panel.querySelector(".cl-lens"), data, rows, key;
+      if (!box) return;
+      if (!v || v.broken || !st.lens || !show.particles) { if (lensKey !== "") { box.innerHTML = ""; lensKey = ""; } return; }
+      data = L.particles(lab, v.id);
+      rows = data.dots.map(function (d) { return { id: d.id, n: d.n, dot: true }; }).concat(data.solids.map(function (s) { return { id: s.id, n: s.n, hang: s.hang > 0.5 }; }));
+      key = v.id + "|" + data.per + "|" + data.wet + data.paste + data.residue + "|" + rows.map(function (r) { return r.id + ":" + r.n + (r.hang ? "~" : ""); }).join(",");
+      if (key !== lensKey) {                                    // die Legende entsteht nur neu, wenn sich die Zusammensetzung geändert hat
+        lensKey = key;
+        lensColors = L.dotColors(rows.map(function (r) { return r.id; }));
+        box.innerHTML = '<svg class="cl-lens-view" viewBox="-74 -74 148 148" role="img" aria-label="' + esc(T("lens") + ": " + (rows.length ? rows.map(function (r) {
+          return (show.numbers ? r.n + " " : "") + L.nameOf(L.species(r.id), lang);
+        }).join(", ") : T(data.paste ? "lens.paste" : data.wet ? "lens.none" : data.residue ? "lens.residue" : "lens.dry"))) + '"></svg><ul class="cl-lens-legend">' + rows.map(function (r) {
+          return '<li><span class="cl-swatch' + (r.dot ? "" : " cl-square") + '" style="background:' + esc(lensColors[r.id]) + '"></span> ' + L.formulaHtml(r.id, true) + " – " +
+            esc(L.nameOf(L.species(r.id), lang)) + (r.dot ? "" : " (" + esc(T(r.hang ? "lens.hang" : "lens.solid")) + ")") + (show.numbers ? ": " + r.n : "") + "</li>";
+        }).join("") + '</ul><p class="cl-hint">' + (!data.wet ? esc(T(data.residue ? "lens.residue" : "lens.dry")) : data.paste ? esc(T("lens.paste")) : (rows.some(function (r) { return r.dot; }) ? "" : esc(T("lens.none")) + " ") +
+          (show.numbers ? esc(T("lens.scale", { c: L.trim(Math.round(data.per * 10000) / 10, lang) })) + " " : "") + esc(T("lens.water"))) + "</p>";
+      }
+      lensView();
+    }
+
+    function renderContents() {
+      var lab = st.run.lab, v = L.vessel(lab, st.sel), t = L.tool(lab, st.sel), box, w, rows;
+      renderLens();
+      if (!v && !t) return;
+      if (v && v.broken) return;
+      box = ui.panel.querySelector(".cl-contents");
+      if (!box) return;
+      if (t) {
+        if (L.parts[t.type].bath || L.parts[t.type].sense === "A") {      // Temperatur oder Wellenlänge an Ort und Stelle nachführen
+          w = ui.panel.querySelector(".cl-dial");
+          rows = dragging == null ? (L.parts[t.type].bath ? t.temp : t.nm) : dragging;      // beim Ziehen folgt die Anzeige dem Schieber
+          if (dragging == null) w.value = String(rows);
+          if (L.parts[t.type].bath) {
+            w.setAttribute("aria-valuetext", show.numbers ? rows + " °C" : Math.round(rows / L.parts[t.type].range[1] * 100) + " %");
+            ui.panel.querySelector(".cl-dial-shown").textContent = show.numbers ? rows + " °C" : "";
+            box.innerHTML = "";
+          } else {
+            w.setAttribute("aria-valuetext", show.numbers ? rows + " nm" : Math.round((rows - L.parts[t.type].waves[0]) / (L.parts[t.type].waves[1] - L.parts[t.type].waves[0]) * 100) + " %");
+            ui.panel.querySelector(".cl-dial-shown").textContent = show.numbers ? rows + " nm" : "";
+            w = L.reading(lab, t.id);
+            // die Farbe des Lichts, die Extinktion und der Anteil des Lichts, der durchkommt
+            box.innerHTML = '<p><span class="cl-swatch" style="background:rgb(' + L.waveRgb(rows).join(",") + ')"></span> ' +
+              (show.numbers ? esc(T("panel.shows")) + " " + esc(shownValue(w)) +
+                (w.value == null ? "" : " · " + esc(T("transmission")) + " " + (w.over ? "< " + L.num(0.1, 1, lang) : L.num(100 * Math.pow(10, -w.value), 1, lang)) + " %") : "") + "</p>";
+          }
+        } else if (L.parts[t.type].flames) {                    // die gewählte Flamme an den Knöpfen vermerken
+          [0, 1, 2].forEach(function (level) {
+            ui.panel.querySelector('[data-act="flame"][data-id="' + level + '"]').setAttribute("aria-pressed", level === t.flame ? "true" : "false");
+          });
+          box.innerHTML = "";
+        } else if (L.parts[t.type].circuit === "supply") {      // Spannung und Polung an Ort und Stelle nachführen
+          w = ui.panel.querySelector(".cl-volts");
+          if (dragging == null) w.value = String(t.volts);
+          rows = dragging == null ? t.volts : dragging;         // beim Ziehen folgt die Anzeige dem Schieber
+          w.setAttribute("aria-valuetext", show.numbers ? L.num(rows, 1, lang) + " V" : Math.round(rows / L.parts[t.type].max * 100) + " %");
+          ui.panel.querySelector(".cl-volts-shown").textContent = show.numbers ? L.num(rows, 1, lang) + " V" : "";
+          ui.panel.querySelector('[data-act="flip"]').setAttribute("aria-pressed", t.flip ? "true" : "false");
+          box.innerHTML = "";
+        } else if (L.parts[t.type].electrode) {                 // woraus die Elektrode besteht, was sie wiegt und was sich auf ihr abgeschieden hat
+          w = L.reading(lab, t.id);
+          box.innerHTML = "<p>" + esc(T("made")) + " " + L.formulaHtml(w.material, true) + " – " + esc(L.nameOf(L.species(w.material), lang)) + "</p>" +
+            (show.numbers ? "<p>" + esc(T("mass")) + " " + L.num(w.g, 3, lang) + " g (" + esc(T("massChange")) + " " + (w.g - w.g0 >= 0 ? "+" : "") + L.num(w.g - w.g0, 3, lang) + " g)</p>" : "") +
+            (w.coat.length ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
+              return esc(L.nameOf(L.species(c.id), lang)) + (show.numbers ? " " + L.amount(c.n, lang) : "");
+            }).join(", ") + "</p>" : "");
+        } else if (L.parts[t.type].bridge) box.innerHTML = "";
+        else if (L.parts[t.type].circuit === "load") {         // das Lämpchen zeigt nichts an: es leuchtet oder nicht
+          w = shownValue(L.reading(lab, t.id));
+          box.innerHTML = "<p>" + esc(w.charAt(0).toUpperCase() + w.slice(1)) + ".</p>";
+        } else box.innerHTML = show.numbers ? "<p>" + esc(T("panel.shows")) + " " + esc(shownValue(L.reading(lab, t.id))) + "</p>" : "";
+        return;
+      }
+      w = L.view(lab, v);
+      if (L.parts[v.type].dispenser) {                          // Hahnstellung und Ablesung an Ort und Stelle nachführen
+        L.TAPS.forEach(function (rate) {
+          ui.panel.querySelector('[data-act="tap"][data-id="' + rate + '"]').setAttribute("aria-pressed", L.tapKey(rate) === L.tapKey(w.tap) ? "true" : "false");
+        });
+        if (show.numbers) ui.panel.querySelector(".cl-given").textContent = L.num(w.given, 1, lang) + " mL";
+      }
+      rows = w.species.filter(function (s) { return s.n > 1e-12; });
+      if (!rows.length) { box.innerHTML = "<p>" + esc(T("panel.empty")) + "</p>"; return; }
+      if (!show.numbers) {
+        box.innerHTML = '<ul class="cl-list">' + rows.map(function (s) {
+          return "<li>" + L.formulaHtml(s.id, true) + " – " + esc(L.nameOf(L.species(s.id), lang)) + "</li>";
+        }).join("") + "</ul>";
+        return;
+      }
+      box.innerHTML = "<p>" + esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" + (w.pH == null ? "" : " · pH " + L.num(w.pH, 2, lang)) + "</p>" +
+        '<table class="cl-table"><caption>' + esc(T("panel.contents")) + '</caption><thead><tr><th scope="col" colspan="2">' + esc(T("col.particle")) +
+        '</th><th scope="col">' + esc(T("col.amount")) + '</th><th scope="col">' + esc(T("col.conc")) + "</th></tr></thead><tbody>" +
+        rows.map(function (s) {
+          return "<tr><td>" + L.formulaHtml(s.id, true) + "</td><td>" + esc(L.nameOf(L.species(s.id), lang)) + "</td><td>" + L.amount(s.n, lang) +
+            "</td><td>" + (s.c == null ? "–" : L.amount(s.c, lang) + "/L") + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    }
+
+    // ---------------------------------------------------------------- Gleichungen
+
+    function side(terms) {
+      return terms.map(function (t) { return (t.n === 1 ? "" : L.trim(t.n, lang) + " ") + L.formulaHtml(t.id, true); }).join(" + ");
+    }
+
+    // Auf welches Gefäß sich Gleichungen und Stoffmengen beziehen: das gewählte; bei einer Bürette das, in das sie tropft
+    function focus() {
+      var lab = st.run.lab, v = L.vessel(lab, st.sel);
+      return v ? (L.vessel(lab, v.over) ? v.over : v.id) : null;
+    }
+
+    function renderEq() {
+      var lab = st.run.lab, label = names(), groups = [], only = focus(), html;
+      if (!show.equations) return;
+      lab.vessels.forEach(function (v) {
+        var list = only && only !== v.id ? [] : L.reactions(lab, v.id);
+        if (list.length) groups.push({ id: v.id, list: list });
+      });
+      html = "<h4>" + esc(T("eq.title")) + "</h4>";
+      if (!groups.length) html += '<p class="cl-hint">' + esc(T("eq.none")) + "</p>";
+      groups.forEach(function (group) {
+        if (lab.vessels.length > 1) html += '<p class="cl-where">' + esc(label[group.id]) + "</p>";
+        html += '<ul class="cl-list">' + group.list.map(function (r) {
+          var meta = [];
+          if (r.catalysts.length) meta.push(esc(T("eq.catalyst")) + ": " + r.catalysts.map(function (id) { return esc(L.nameOf(L.species(id), lang)); }).join(", "));
+          if (show.numbers && r.dH != null) meta.push("ΔH = " + L.num(r.dH, Math.abs(r.dH) < 100 ? 1 : 0, lang) + " kJ/mol");
+          if (show.numbers) meta.push(esc(T("eq.extent")) + " " + L.amount(r.extent, lang));
+          if (r.rate > 0) meta.push('<span class="cl-running">' + esc(T("eq.running")) + "</span>");
+          return "<li>" + (r.at ? '<span class="cl-pole-at">' + esc(T(r.kind === "ox" ? "eq.ox" : "eq.red", { part: label[r.at] || r.at })) + ":</span> " : "") +
+            '<span class="cl-formula">' + side(r.left) + (r.complete ? " → " : " ⇌ ") + side(r.right) + "</span>" +
+            (meta.length ? ' <span class="cl-meta">' + meta.join(" · ") + "</span>" : "") + "</li>";
+        }).join("") + "</ul>";
+      });
+      ui.eq.innerHTML = html;
+    }
+
+    // ---------------------------------------------------------------- Diagramme
+
+    // lines: [{ label (HTML), points: [[x, Wert], …] }]
+    // axis: { span: größter x-Wert, label: Beschriftung, cursor: wo der Zeiger steht }, floor: unterer Rand der Werte
+    function chart(title, lines, hint, axis, floor) {
+      var X0 = 46, X1 = 312, Y0 = 12, Y1 = 128, lo = Infinity, hi = -Infinity, span = axis.span, from = axis.from || 0, out, i, y, value;      // from: wo die Achse beginnt
+      lines = lines.filter(function (line) { return line.points.length; });      // eine Kurve ohne Messwert zählt nicht
+      if (!lines.length && !hint) return "";
+      if (!lines.length) return '<figure class="cl-chart"><figcaption>' + title + '</figcaption><p class="cl-hint">' + esc(hint) + "</p></figure>";
+      lines.forEach(function (line) { line.points.forEach(function (p) { lo = Math.min(lo, p[1]); hi = Math.max(hi, p[1]); }); });
+      if (floor != null) lo = Math.min(lo, floor);
+      if (!(hi - lo > 1e-9)) { hi += 0.5; lo -= floor != null ? 0 : 0.5; }
+      hi += (hi - lo) * 0.06;
+      if (floor == null) lo -= (hi - lo) * 0.06;
+      function px(t) { return (X0 + Math.max(0, Math.min(1, (t - from) / span)) * (X1 - X0)).toFixed(1); }
+      function py(v) { return (Y1 - (v - lo) / (hi - lo) * (Y1 - Y0)).toFixed(1); }
+      out = '<svg viewBox="0 0 320 150" role="img" aria-label="' + esc(title.replace(/<[^>]+>/g, "")) + '">';
+      for (i = 0; i <= 2; i++) {
+        value = lo + (hi - lo) * i / 2; y = py(value);
+        out += '<line class="cl-grid" x1="' + X0 + '" x2="' + X1 + '" y1="' + y + '" y2="' + y + '"/>';
+        if (show.numbers) out += '<text class="cl-tick" x="' + (X0 - 4) + '" y="' + (+y + 3) + '" text-anchor="end">' + L.trim(value, lang) + "</text>";
+      }
+      out += '<line class="cl-axis" x1="' + X0 + '" x2="' + X0 + '" y1="' + Y0 + '" y2="' + Y1 + '"/><line class="cl-axis" x1="' + X0 + '" x2="' + X1 + '" y1="' + Y1 + '" y2="' + Y1 + '"/>' +
+        '<text class="cl-tick" x="' + X0 + '" y="' + (Y1 + 12) + '">' + L.trim(from, lang) + '</text><text class="cl-tick" x="' + X1 + '" y="' + (Y1 + 12) + '" text-anchor="end">' + L.trim(Math.round((from + span) * 10) / 10, lang) + "</text>" +
+        '<text class="cl-tick" x="' + (X0 + X1) / 2 + '" y="' + (Y1 + 20) + '" text-anchor="middle">' + esc(axis.label) + "</text>";
+      lines.forEach(function (line, k) {
+        out += '<polyline class="cl-line cl-s' + k % 6 + '" stroke-dasharray="' + DASH[k % 6] + '" points="' +
+          line.points.map(function (p) { return px(p[0]) + "," + py(p[1]); }).join(" ") + '"/>';
+      });
+      out += '<line class="cl-cursor" x1="' + px(axis.cursor) + '" x2="' + px(axis.cursor) + '" y1="' + Y0 + '" y2="' + Y1 + '"/></svg>';
+      return '<figure class="cl-chart"><figcaption>' + title + "</figcaption>" + out + '<ul class="cl-legend">' + lines.map(function (line, k) {
+        return '<li><svg viewBox="0 0 26 8" width="26" height="8" aria-hidden="true"><line class="cl-line cl-s' + k % 6 + '" stroke-dasharray="' + DASH[k % 6] +
+          '" x1="1" x2="25" y1="4" y2="4"/></svg> <span>' + line.label + "</span></li>";
+      }).join("") + "</ul></figure>";
+    }
+
+    function renderCharts() {
+      var run = st.run, lab = run.lab, label = names(), html = "", lines, vessel = null, ids, top = 0, unit, i, most = 0, at = 0;
+      var time = { span: Math.max(run.end, 10), label: T("chart.time"), cursor: run.time };
+      function where(t) { return esc(label[t.id] + " " + T("aria.in", { vessel: label[t.in] })); }
+      function probes(unitName) { return lab.tools.filter(function (t) { return L.parts[t.type].unit === unitName && L.parts[t.type].sense && L.vessel(lab, t.in); }); }
+      if (!show.charts.length) return;
+      if (show.charts.indexOf("T") >= 0) {
+        lines = probes("°C").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.T")) + (show.numbers ? " in °C" : ""), lines, T("chart.noTool"), time);
+      }
+      if (show.charts.indexOf("n") >= 0) {
+        vessel = focus();
+        for (i = 0; i < lab.vessels.length && !vessel; i++) if (L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
+        ids = vessel ? L.changed(run, vessel).sort() : [];
+        // höchstens sechs Kurven: die Teilchen, deren Menge sich am meisten geändert hat
+        lines = ids.map(function (id) {
+          var points = L.series(run, { vessel: vessel, species: id }), lo = Infinity, hi = -Infinity;
+          points.forEach(function (p) { lo = Math.min(lo, p[1]); hi = Math.max(hi, p[1]); });
+          return { id: id, label: L.formulaHtml(id, true), points: points, swing: hi - lo };
+        }).sort(function (a, b) { return b.swing - a.swing; }).slice(0, 6).sort(function (a, b) { return a.id < b.id ? -1 : 1; });
+        lines.forEach(function (line) { line.points.forEach(function (p) { top = Math.max(top, p[1]); }); });
+        unit = top >= 1 ? [1, "mol"] : top >= 1e-3 ? [1e3, "mmol"] : [1e6, "µmol"];
+        lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
+        html += chart(esc(T("chart.n")) + (show.numbers ? " in " + unit[1] : "") + (vessel && lab.vessels.length > 1 ? " – " + esc(label[vessel]) : ""),
+          lines, T("chart.noChange"), time, 0);
+      }
+      if (show.charts.indexOf("V") >= 0 && probes("mL").length) {         // Gasvolumen: nur mit einem Kolbenprober
+        lines = probes("mL").map(function (t) { return { label: esc(label[t.id] + " " + T("aria.at", { vessel: label[t.in] })), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.V")) + (show.numbers ? " in mL" : ""), lines, "", time, 0);
+      }
+      // pH über der Zeit und über dem zugegebenen Volumen: nur, wenn ein pH-Meter in einem Gefäß steckt
+      if (show.charts.indexOf("pH") >= 0 && probes("pH").length) {
+        lines = probes("pH").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.pH")), lines, "", time);
+      }
+      if (show.charts.indexOf("kappa") >= 0 && probes("mS/cm").length) {
+        lines = probes("mS/cm").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.kappa")) + (show.numbers ? " in mS/cm" : ""), lines, "", time, 0);
+      }
+      // Fotometer: die Extinktion über der Zeit, und das Spektrum der Lösung mit der eingestellten Wellenlänge als Marke
+      if (show.charts.indexOf("A") >= 0 && probes("E").length) {
+        lines = probes("E").map(function (t) { return { label: where(t) + (show.numbers ? " (" + t.nm + " nm)" : ""), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.A")), lines, "", time, 0);
+      }
+      if (show.charts.indexOf("spectrum") >= 0 && probes("E").length) {
+        lines = probes("E").map(function (t) { at = t.nm; return { label: where(t), points: L.spectrum(lab, t.in, L.parts[t.type].d) }; });
+        html += chart(esc(T("chart.spectrum")), lines, "", { from: 380, span: 350, label: T("chart.wave"), cursor: at }, 0);
+      }
+      if (show.charts.indexOf("titration") >= 0) {
+        [["pH", "chart.titration"], ["mS/cm", "chart.conduct"], ["E", "chart.photo"]].forEach(function (kind) {      // mit dem pH-Meter, dem Leitfähigkeitsmessgerät oder dem Fotometer
+          lines = []; most = 0;
+          lab.vessels.forEach(function (v) {
+            if (!L.vessel(lab, v.over)) return;
+            probes(kind[0]).forEach(function (t) {
+              var points;
+              if (t.in !== v.over) return;
+              points = L.curve(run, { burette: v.id, tool: t.id });
+              points.forEach(function (p) { most = Math.max(most, p[0]); });
+              at = v.given;
+              lines.push({ label: esc(label[t.id] + " · " + label[v.id]), points: points });
+            });
+          });
+          if (lines.length) html += chart(esc(T(kind[1])), lines, "", { span: Math.max(most, 10), label: T("chart.volume"), cursor: at }, kind[0] === "pH" ? undefined : 0);
+        });
+      }
+      // Stromkreise: Stromstärke und Spannung über der Zeit, die Kennlinie (Stromstärke über der Spannung des Netzgeräts), die Masse der Elektroden
+      function wired(kind) { return lab.tools.filter(function (t) { return L.parts[t.type].circuit === kind && L.vessel(lab, t.in); }); }
+      function beside(t) { return esc(label[t.id] + " " + T("aria.at", { vessel: label[t.in] })); }
+      if (show.charts.indexOf("I") >= 0 && wired("ammeter").length) {
+        top = 0;
+        lines = wired("ammeter").map(function (t) {
+          var points = L.series(run, { tool: t.id });
+          points.forEach(function (p) { top = Math.max(top, p[1]); });
+          return { label: beside(t), points: points };
+        });
+        unit = top >= 1 ? [1, "A"] : [1e3, "mA"];
+        lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
+        html += chart(esc(T("chart.I")) + (show.numbers ? " in " + unit[1] : ""), lines, "", time, 0);
+      }
+      if (show.charts.indexOf("U") >= 0 && wired("voltmeter").length) {
+        lines = wired("voltmeter").map(function (t) { return { label: beside(t), points: L.series(run, { tool: t.id }) }; });
+        html += chart(esc(T("chart.U")) + (show.numbers ? " in V" : ""), lines, "", time, 0);
+      }
+      if (show.charts.indexOf("IU") >= 0) {
+        lines = []; most = 0; at = 0; top = 0;
+        wired("supply").forEach(function (s) {
+          wired("ammeter").forEach(function (t) {
+            var cell = L.circuit(lab, s.in), points;
+            if (!cell || cell !== L.circuit(lab, t.in)) return;          // beide am selben Stromkreis
+            points = L.curve(run, { x: s.id, tool: t.id });
+            points.forEach(function (p) { most = Math.max(most, p[0]); top = Math.max(top, p[1]); });
+            at = s.volts;
+            lines.push({ label: esc(label[t.id] + " · " + label[s.id]), points: points });
+          });
+        });
+        unit = top >= 1 ? [1, "A"] : [1e3, "mA"];
+        lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
+        if (lines.length && most > 0) html += chart(esc(T("chart.IU")) + (show.numbers ? " (" + unit[1] + ")" : ""), lines, "", { span: Math.max(most, 1), label: T("chart.volts"), cursor: at }, 0);
+      }
+      if (show.charts.indexOf("m") >= 0) {
+        top = 0;
+        lines = lab.tools.filter(function (t) { return L.parts[t.type].electrode && L.vessel(lab, t.in); }).map(function (t) {
+          var points = L.series(run, { tool: t.id }), first = points.length ? points[0][1] : 0;
+          points = points.map(function (p) { top = Math.max(top, Math.abs(p[1] - first)); return [p[0], p[1] - first]; });
+          return { label: where(t), points: points };
+        });
+        unit = top >= 1 ? [1, "g"] : [1e3, "mg"];
+        lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
+        if (top > 1e-6) html += chart(esc(T("chart.m")) + (show.numbers ? ": " + esc(T("chart.mUnit")) + " in " + unit[1] : ""), lines, "", time);
+      }
+      ui.charts.innerHTML = html;
+    }
+
+    // ---------------------------------------------------------------- Protokoll
+
+    function logItems(events, ctx) {
+      return events.map(function (event) {
+        return "<li><time>" + L.clock(event.t) + "</time> " + esc(L.say(event, ctx)) + "</li>";
+      }).join("");
+    }
+
+    // Die Liste bleibt stehen und wächst nur um neue Zeilen: so sagt ein Vorleseprogramm genau das Neue an.
+    // Neu aufgebaut wird sie erst, wenn Zeilen wegfallen (zurückgespult, zurückgesetzt).
+    function renderLog() {
+      var ctx = { lang: lang, numbers: show.numbers, names: names() }, seen, grown, i;
+      if (!show.log) return;
+      seen = L.logAt(st.run).slice(-60);
+      grown = seen.length >= shown.length;
+      for (i = 0; grown && i < shown.length; i++) grown = shown[i] === seen[i];
+      if (!grown) ui.events.innerHTML = logItems(seen, ctx);
+      else if (seen.length > shown.length) {
+        if (ui.events.insertAdjacentHTML) ui.events.insertAdjacentHTML("beforeend", logItems(seen.slice(shown.length), ctx));
+        else ui.events.innerHTML += logItems(seen.slice(shown.length), ctx);
+        if (ui.events.scrollHeight) ui.events.scrollTop = ui.events.scrollHeight;
+      }
+      shown = seen;
+      ui.none.hidden = seen.length > 0;
+    }
+
+    // ---------------------------------------------------------------- Schleife
+
+    // Klang: Dauergeräusche aus dem Zustand, solange die Uhr vorwärts läuft; einzelne Klänge für das, was neu im Protokoll steht
+    function hear() {
+      var run = st.run, n = run.frames[run.cursor].n;
+      if (!sound) return;
+      sound.set(st.play > 0 ? L.fx.levels(run.lab) : {});
+      if (n > heard && st.play > 0) run.log.slice(heard, n).forEach(function (event) {
+        if (event.key === "pop" || (event.key === "splint" && (event.result === "pop" || event.result === "burn"))) sound.shot("pop", event.level);
+        else if (event.key === "splint") sound.shot(event.result === "out" ? "hiss" : event.result === "relight" || event.result === "flare" ? "whoosh" : "", 0);
+        else if (event.key === "ignite") sound.shot("whoosh", 0);
+        else if (event.key === "broken") sound.shot("crash", 0);
+      });
+      heard = n;
+    }
+
+    function slow() {               // alles, was nicht in jedem Bild neu entstehen muss
+      var lab = st.run.lab;
+      if ((lab.failed || 0) > (lab.told || 0)) {                // der Rechenkern kam an einer Stelle nicht zum Ergebnis: das sagen
+        lab.told = lab.failed;
+        status(T("failed"));
+      }
+      syncTime();
+      renderContents();
+      renderEq();
+      renderCharts();
+      renderLog();
+      hear();
+    }
+
+    function refresh() {
+      paint();
+      slow();
+    }
+
+    function move(dt) {
+      var run = st.run, step = dt * st.speed, n, forced;
+      if (st.play > 0) {
+        if (L.inPast(run)) {                             // in der Aufzeichnung: abspielen
+          L.advance(run, Math.min(step, Math.max(0, run.end - run.time)));
+          pending = 0;
+        } else {                                         // am Ende: weiterrechnen, in ganzen Rechenschritten
+          forced = st.force != null && run.time < st.force - 1e-9;      // die Uhr soll trotz Ruhe laufen
+          if (forced || !L.atRest(run.lab)) {            // in Ruhe wird nichts angehängt, auch nicht beim Abspielen bis zum Ende
+            pending += step;
+            n = Math.floor(pending * 20 + 1e-9);
+            if (n > BUDGET) { n = BUDGET; pending = n / 20; }
+            if (forced) n = Math.min(n, Math.round((st.force - run.time) * 20));
+            if (n > 0) { L.advance(run, n / 20); pending -= n / 20; }
+          }
+          if (L.atRest(run.lab) && !(st.force != null && run.time < st.force - 1e-9)) {
+            st.play = 0; pending = 0; st.force = null;
+            if (run.time > playFrom + 1e-9) status(T("rest"));
+          }
+        }
+      } else if (st.play < 0) {
+        L.seek(run, run.time - step);
+        if (run.cursor === 0) st.play = 0;
+      }
+    }
+
+    function frame(now) {
+      raf = 0;
+      if (stopped || !el.isConnected) { if (!stopped) stop(); return; }       // die Folie ist weg: Schleife und Ton enden
+      var dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
+      last = now;
+      move(dt);
+      paint();
+      if (!st.play || now - slowAt >= 200) { slowAt = now; slow(); } else hear();
+      if (st.play) raf = global.requestAnimationFrame(frame);
+    }
+
+    function kick() {
+      if (raf || stopped || !st.play) return;
+      last = 0;
+      raf = global.requestAnimationFrame(frame);
+    }
+
+    // ---------------------------------------------------------------- Ereignisse
+
+    function onClick(ev) {
+      var b = ev.target && ev.target.closest && ev.target.closest("[data-act]"), act, id, r, lab = st.run.lab;
+      if (!b) return;
+      act = b.getAttribute("data-act"); id = b.getAttribute("data-id");
+      if (sound) sound.wake();                                  // Ton gibt der Browser erst nach einer Bedienung frei
+      if (act === "hand") pick(id);
+      else if (act === "bench") { if (st.hand && st.hand.tool) alone(); }
+      else if (act === "lens") {                               // Teilchenlupe auf und zu
+        st.lens = !st.lens;
+        ui.panel.querySelector('[data-act="lens"]').setAttribute("aria-pressed", st.lens ? "true" : "false");      // der Knopf bleibt stehen und behält den Fokus
+        renderLens();
+      }
+      else if (act === "sound") {
+        st.mute = !st.mute;
+        sound.mute(st.mute);
+        ui.sound.setAttribute("aria-pressed", st.mute ? "false" : "true");
+        hear();
+      } else if (act === "flame" && L.tool(lab, st.sel)) {
+        r = parseInt(id, 10);
+        id = st.sel;
+        change(function (l) { return L.setFlame(l, id, r); }, { key: "flame", part: id, level: r });
+      }
+      else if (act === "flip" && L.tool(lab, st.sel)) {
+        id = st.sel;
+        r = !L.tool(lab, id).flip;
+        change(function (l) { return L.setPole(l, id, r); }, { key: "flip", part: id });
+      }
+      else if (act === "less" || act === "more") {
+        if (!st.hand || st.hand.tool || st.hand.test) return;
+        r = STEPS[unitOf(L.reagent(st.hand.id))];
+        st.hand.i = Math.max(0, Math.min(r.length - 1, st.hand.i + (act === "more" ? 1 : -1)));
+        syncAmount();
+      } else if (act === "play") setPlay(st.play > 0 ? 0 : 1);
+      else if (act === "back") setPlay(st.play < 0 ? 0 : -1);
+      else if (act === "start") jump(0);
+      else if (act === "end") jump(st.run.end);
+      else if (act === "reset") reset();
+      else if (act === "tap" && L.vessel(lab, st.sel)) {
+        r = parseFloat(id);
+        id = st.sel;
+        change(function (l) { return L.setTap(l, id, r); }, { key: "tap", vessel: id, rate: r });
+      }
+      else if (act === "pour") pourOut();
+      else if (act === "empty" && L.vessel(lab, st.sel)) {
+        id = st.sel;
+        change(function (l) { return L.empty(l, id); }, { key: "emptied", vessel: id });
+      } else if (act === "remove" && st.sel) {
+        id = st.sel;
+        st.sel = null;
+        change(function (l) { return L.remove(l, id); }, { key: "removed", part: id, label: names()[id] });
+      }
+    }
+
+    function onInput(ev) {
+      var t = ev.target, act = t && t.getAttribute && t.getAttribute("data-act");
+      if (act === "seek") jump(parseFloat(t.value) || 0);
+      else if (act === "speed") { st.speed = parseFloat(t.value) || 1; pending = 0; }
+      else if ((act === "volts" || act === "temp" || act === "wave") && L.tool(st.run.lab, st.sel)) {
+        // beim Ziehen folgt nur die Anzeige; erst beim Loslassen wird eingestellt (ein Eingriff, eine Zeile im Protokoll)
+        dragging = ev.type !== "change" ? parseFloat(String(t.value).replace(",", ".")) || 0 : null;
+        if (dragging != null) { renderContents(); return; }
+        setDial(st.sel, act, parseFloat(String(t.value).replace(",", ".")) || 0);
+      }
+    }
+
+    // Der Schieber wurde losgelassen oder verlassen, ohne dass sich sein Wert geändert hat: die Anzeige gilt wieder der eingestellten Spannung
+    function onLeave(ev) {
+      if (dragging == null || !ev.target || !ev.target.getAttribute || ["volts", "temp", "wave"].indexOf(ev.target.getAttribute("data-act")) < 0) return;
+      dragging = null;
+      renderContents();
+    }
+
+    function onTouch(ev) {          // Wischen auf der Fläche soll nicht die Folie wechseln
+      if (ev.target && ev.target.closest && ev.target.closest(".cl-stage")) ev.stopPropagation();
+    }
+
+    // Ändert sich der Platz auf der Seite, wird die Fläche neu eingeteilt
+    var size = "";
+    function onResize() {
+      if (stopped || !el.isConnected) { stop(); return; }           // die Folie ist weg: nichts mehr festhalten
+      var box = ui.svg.getBoundingClientRect ? ui.svg.getBoundingClientRect() : null;
+      var now = box ? Math.round(box.width) + "x" + Math.round(box.height) : "";
+      if (now === size) return;
+      size = now;
+      shape = null;
+      paint();
+    }
+    var watcher = global.ResizeObserver ? new global.ResizeObserver(onResize) : null;
+    if (watcher) watcher.observe(ui.svg);
+
+    var TOUCH = ["touchstart", "touchmove", "touchend", "touchcancel"];
+    if (global.addEventListener) global.addEventListener("resize", onResize);
+    el.addEventListener("click", onClick);
+    el.addEventListener("input", onInput);
+    el.addEventListener("change", onInput);
+    el.addEventListener("focusout", onLeave);
+    TOUCH.forEach(function (type) { el.addEventListener(type, onTouch, { passive: true }); });
+
+    function itemOf(ev) {
+      var g = ev.target && ev.target.closest && ev.target.closest(".cl-item");
+      return g ? g.getAttribute("data-id") : null;
+    }
+    // Antippen über Zeiger-Ereignisse: der Inhalt eines Geräts wird in jedem Bild neu gezeichnet,
+    // ein "click" fände deshalb oft kein gemeinsames Ziel von Drücken und Loslassen.
+    ui.svg.addEventListener("pointerdown", function (ev) {
+      if (sound) sound.wake();
+      down = ev.button ? null : { id: itemOf(ev), x: ev.clientX, y: ev.clientY };      // nur die linke Taste, der Finger oder der Stift
+    });
+    ui.svg.addEventListener("pointerup", function (ev) {
+      var d = down;
+      down = null;
+      if (d && Math.abs(ev.clientX - d.x) + Math.abs(ev.clientY - d.y) < 10) tap(d.id);
+    });
+    ui.svg.addEventListener("pointercancel", function () { down = null; });
+    ui.svg.addEventListener("keydown", function (ev) {
+      var id = itemOf(ev);
+      if (ev.key === "Escape") { setHand(null); select(null); return; }
+      if (!id || (ev.key !== "Enter" && ev.key !== " ")) return;
+      ev.preventDefault();
+      tap(id);
+    });
+
+    function stop() {
+      stopped = true;
+      if (raf && global.cancelAnimationFrame) global.cancelAnimationFrame(raf);
+      if (global.removeEventListener) global.removeEventListener("resize", onResize);
+      if (watcher) watcher.disconnect();
+      if (sound) sound.close();
+      el.removeEventListener("click", onClick);
+      el.removeEventListener("input", onInput);
+      el.removeEventListener("change", onInput);
+      el.removeEventListener("focusout", onLeave);
+      TOUCH.forEach(function (type) { el.removeEventListener(type, onTouch); });
+    }
+    el._cl = { stop: stop };
+
+    renderShelf();
+    renderHand();
+    renderTime();
+    refresh();
+    kick();
+  }
+
+  L.mount = mount;
+  L.missing = missing;
+  L.loaded = function () { return !missing().length; };
+})(typeof globalThis !== "undefined" ? globalThis : this);
