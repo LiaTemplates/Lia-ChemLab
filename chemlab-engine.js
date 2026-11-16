@@ -2813,6 +2813,12 @@
   // Dampfdruck eines Teils über der Mischung bei T (°C), als Anteil am Luftdruck: Raoult mit Clausius-Clapeyron
   function vapor(c, T) { return c.g * c.x * Math.exp(-c.H / R * (1 / (T + KELVIN) - 1 / (c.Tb + KELVIN))); }
 
+  // Der Dampf eines siedenden Stoffs: sein Gas, wo eines eingetragen ist (Essigsäure-Dampf riecht), sonst der Stoff selbst
+  function vapourOf(id) {
+    var e = L.db.equilibria.filter(function (q) { return q.gas && q.d[id] && Object.keys(q.d).length === 1; })[0];
+    return e ? e.gas : id;
+  }
+
   // Siedetemperatur: bei ihr ist die Summe der Dampfdrücke gleich dem Luftdruck
   function bubble(list) {
     var lo = Infinity, hi = -Infinity, mid, i;
@@ -2842,6 +2848,7 @@
     var back = !!toolAt(lab, v, function (def) { return def.reflux; });      // Rückfluss: was verdampft, läuft wieder zurück
     if (strip && !back) above(v, volume(v)).forEach(function (g) {      // jedes Gas mit seinem Anteil am Druck
       var share = Math.min(0.95, g.p / P_AIR);
+      if (list.some(function (c) { return g.e.d[c.id]; })) return;      // was selbst siedet (Essigsäure), geht schon mit seinem Dampfdruck fort
       if (share > 1e-6) release(v, g, Math.min(g.most, boil * share / (1 - share)));       // Spuren bleiben in der Lösung
     });
     if (back) list = [];                                       // unter Rückfluss bleibt alles im Gefäß: es siedet, ohne dass etwas fortgeht
@@ -2849,12 +2856,12 @@
     if (cool) into = vessel(lab, cool.to);
     if (into && (into.broken || L.parts[into.type].dispenser || free(lab, into) < 1)) into = null;      // die Vorlage läuft nicht über
     list.forEach(function (c) {
-      var x = c.y * boil;
+      var x = Math.min(c.y * boil, v.n[c.id] || 0);             // nie mehr, als noch da ist
       if (!(x > 0)) return;
       if ((v.n[c.id] -= x) < 1e-300) delete v.n[c.id];
       if (into) cold[c.id] = x;
       else if (c.id === WATER) v.out[STEAM] = (v.out[STEAM] || 0) + x;
-      else v.out[c.id] = (v.out[c.id] || 0) + x;
+      else v.out[vapourOf(c.id)] = (v.out[vapourOf(c.id)] || 0) + x;
     });
     if (into) mixIn(into, cold, lab.room);
     v.T = top + (over - boil * heat) / heatCapacity(v);         // reicht die Flüssigkeit nicht für alle Wärme, bleibt das Gefäß heißer

@@ -766,7 +766,7 @@ Ethanol und Eisessig reagieren zu Ethylacetat und Wasser, einem Ester mit frucht
  "show":{"charts":["T","n"]}}
 ```
 
-Schneller geht es beim Sieden. Damit dabei nichts verdampft, steckt im Kolben ein **Rückflusskühler**: Der Dampf wird darin wieder flüssig und läuft zurück. Das Gemisch siedet bei knapp 80 °C, und nach etwa zehn Minuten sind gut sechzig Prozent des Ethanols verestert; mehr wird es nicht, denn dann ist das Gleichgewicht erreicht.
+Schneller geht es beim Sieden. Damit dabei nichts verdampft, steckt im Kolben ein **Rückflusskühler**: Der Dampf wird darin wieder flüssig und läuft zurück. Das Gemisch siedet bei gut 80 °C, und nach etwa zehn Minuten sind gut sechzig Prozent des Ethanols verestert; mehr wird es nicht, denn dann ist das Gleichgewicht erreicht.
 
 ```json @ChemLab.sim
 {"bench":[

@@ -7076,6 +7076,20 @@ test("Sieden ohne Kühler: der Dampf entweicht, das Ethanol zuerst", () => {
   assert.ok(amount(l, "C2H5OH(aq)") < 0.5 * before, `ein Fünftel verdampft, mehr als die Hälfte des Alkohols ist fort (${(amount(l, "C2H5OH(aq)") / before).toFixed(2)})`);
 });
 
+test("Eisessig siedet bei 118 °C und dampft ganz ein; Ethanol erwärmt sich mit seiner eigenen Wärmekapazität", () => {
+  L.register(organic);
+  const acid = heated({ type: "beaker", contains: [{ reagent: "glacial acetic acid", ml: 50 }] });
+  until(acid, () => L.vessel(acid, "b").boil > 0, 900);
+  near(L.vessel(acid, "b").T, 117.9, 1, "Eisessig");
+  until(acid, () => !(L.view(acid, L.vessel(acid, "b")).ml > 0.01), 3000);
+  L.step(acid, 30);
+  assert.ok(Number.isFinite(L.vessel(acid, "b").T), "eingedampft bleibt die Temperatur eine Zahl");
+  // ohne cp zählte gelöstes Ethanol beim Erwärmen nicht mit, und 96 % Ethanol siedete nach einem Neuntel der Zeit von Wasser
+  const time = (reagent) => { const l = heated({ type: "beaker", contains: [{ reagent, ml: 50 }] }); let t = 0; while (!(L.vessel(l, "b").boil > 0) && t < 900) { L.step(l, 1); t++; } return t; };
+  const share = time("ethanol") / time("H2O");
+  assert.ok(share > 0.25 && share < 0.6, `Ethanol braucht ${share.toFixed(2)} der Zeit von Wasser`);
+});
+
 test("Kühler: Beschreibung mit in und to, Fehler und Aufbau als Text", () => {
   L.register(organic);
   const c = L.normalize({ bench: [{ type: "flask", id: "k" }, { type: "condenser", in: "k", to: "v" }, { type: "beaker", id: "v" }] });
@@ -7166,12 +7180,12 @@ test("Oberfläche: den Kühler setzen – erst den Kolben, dann die Vorlage anti
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
   L.register(organic);
   const [ester, boiled] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));
-  // unter Rückfluss: siedet bei knapp 80 °C, nach zehn Minuten gut sechzig Prozent verestert, das Volumen bleibt
+  // unter Rückfluss: siedet bei gut 80 °C (die Essigsäure siedet mit), nach zehn Minuten gut sechzig Prozent verestert, das Volumen bleibt
   const hot = L.createRun(boiled), flask = boiled.bench.find((p) => p.type === "flask").id, ml0 = L.volume(L.vessel(hot.lab, flask));
   L.act(hot, (l) => L.setFlame(l, boiled.bench.find((p) => p.type === "burner").id, 1));
   L.advance(hot, 600);
   const kv = L.vessel(hot.lab, flask);
-  near(kv.T, 79.5, 1.5, "Siedetemperatur unter Rückfluss");
+  near(kv.T, 84, 1.5, "Siedetemperatur unter Rückfluss");
   near(kv.n["CH3COOC2H5(aq)"] / boiled.bench[0].contains.reduce((n, c) => n + (c.reagent === "ethanol" ? c.ml * 16.45 / 1000 : 0), 0), 0.62, 0.05, "gut sechzig Prozent verestert");
   near(L.volume(kv), ml0, 0.001, "nichts verdampft");
   const tube = ester.bench.find((p) => p.type === "testtube").id, bath = ester.bench.find((p) => p.type === "bath").id;

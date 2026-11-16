@@ -170,7 +170,11 @@
 
       // ---------------------------------------------------------------- schwache Säuren und Basen
       // Vm: Eigenvolumen in mL/mol (60,05 g/mol bei 1,049 g/cm³): Konzentrierte Essigsäure enthält entsprechend weniger Wasser
-      "CH3COOH(aq)": { name: name("Essigsäure", "acetic acid"), Hf: null, Vm: 57.25, src: NONE + "; Dichte 1,049 g/cm³: PubChem, Hazardous Substances Data Bank (gemeinfrei)" },
+      // Tb, Hvap: Eisessig siedet. Hvap ist so gewählt, dass der Dampfdruck nach Clausius-Clapeyron vom Siedepunkt aus den gemessenen
+      // bei 25 °C trifft; die gemessene Verdampfungsenthalpie (23,7 kJ/mol beim Siedepunkt) ist kleiner, weil der Dampf zum Teil aus Dimeren besteht
+      "CH3COOH(aq)": { name: name("Essigsäure", "acetic acid"), Hf: null, Vm: 57.25, Tb: 117.9, Hvap: 40.5, cp: 123.1,
+        src: NONE + "; Dichte 1,049 g/cm³, Siedepunkt 117,9 °C, Dampfdruck 15,7 mmHg bei 25 °C: PubChem, Hazardous Substances Data Bank (gemeinfrei); " +
+          "Hvap = R · ln(760/15,7) / (1/298,15 K − 1/391,05 K) = 40,5 kJ/mol; cp der Flüssigkeit 123,1 J/(mol K) bei 298,15 K: NIST Chemistry WebBook (Martin und Andon, 1982)" },
       // dasselbe Eigenvolumen wie die Säure (H+ hat keines): so bleibt das Volumen gleich, wenn sie dissoziiert
       "CH3COO-(aq)": { name: name("Acetat-Ion", "acetate ion"), Hf: null, D: 1.089, Vm: 57.25, src: NONE + DL },
       "NH3(aq)": { name: name("Ammoniak", "ammonia"), Hf: null, src: NONE },
