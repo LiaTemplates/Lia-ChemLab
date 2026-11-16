@@ -1092,7 +1092,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
   assert.deepEqual(files, ["3d", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "tools", "vendor"]);
-  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
+  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
   const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
@@ -2080,7 +2080,7 @@ test("Fehlende Datei: die Fläche sagt, was fehlt, statt leer zu bleiben", () =>
 test("Fehler in eigenen Daten: die Ursache steht in der Sprache des Kurses da", () => {
   const html = (data) => mount({ data, bench: [] }).innerHTML;
   assert.match(html({ reactions: [{ eq: "H2(g) + O2(g) -> H2O(l)", rate: { k: 1 } }] }), /Fehler in den eigenen Stoffdaten: .*nicht ausgeglichen: .*O 2 ≠ 1/);
-  assert.match(html({ reactions: [{ eq: "Li(s) + H+(aq) -> Li+(aq) + H(g)", rate: { k: 1 } }] }), /unbekannter Stoff: Li\(s\)/);
+  assert.match(html({ reactions: [{ eq: "Rb(s) + H+(aq) -> Rb+(aq) + H(g)", rate: { k: 1 } }] }), /unbekannter Stoff: Rb\(s\)/);      // ein Metall, das kein Paket bringt
   assert.match(html({ species: { "Qq(s)": {} } }), /unbekanntes Element: Qq/);
   assert.match(html({ species: { "H2O(l)": { name: { de: "x" }, Hf: 1, src: "x" } } }), /schon anders eingetragen/);
   assert.equal(L.explain("X (balance: a – H 2 ≠ 4); Y (species: Fe(s)); Z (logK)", "en"), "X (not balanced: a – H 2 ≠ 4); Y (unknown substance: Fe(s)); Z (logK is missing)");
@@ -2488,6 +2488,30 @@ test("Zeichnung: Waage für sich und unter einem Glas; Symbol", () => {
   assert.doesNotMatch(L.parts.balance.draw(L.reading(l, "w"), ctx({ numbers: false }), place), /35,71/);
   clean(L.parts.balance.draw({ type: "balance", value: 0, unit: "g" }, ctx()), "Waage für sich");
   assert.match(L.icon("balance"), /<svg/);
+});
+
+const alkali = () => JSON.parse(fs.readFileSync(new URL("packs/alkali.json", here), "utf8"));
+
+test("Alkalimetalle: Kalium vor Natrium vor Lithium; Lauge, Wasserstoff und Wärme", () => {
+  L.register(alkali());
+  const time = {}, result = {};
+  for (const [metal, id] of [["Li", "Li piece"], ["Na", "Na piece"], ["K", "K piece"]]) {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "PP", drops: 3 }] }, { type: "thermometer", id: "th", in: "b" }], { room: 20 });
+    const start = totals(l), seen = [];
+    L.add(l, "b", id, { g: L.reagent(id).piece.g });
+    time[metal] = until(l, () => !(amount(l, metal + "(s)") > 1e-7), 600, seen);
+    L.step(l, 10, (e) => seen.push(e));
+    near(totals(l).mass, start.mass + L.reagent(id).piece.g, 1e-9, metal + ": Masse");
+    result[metal] = { pH: look(l).pH, color: look(l).color.name, gas: seen.some((e) => e.key === "gas"), T: L.reading(l, "th").value };
+  }
+  assert.ok(time.K < time.Na && time.Na < time.Li, `Zeiten: ${JSON.stringify(time)}`);
+  assert.ok(time.Na >= 4 && time.Na <= 30, `Natrium in ${time.Na} s`);
+  for (const metal of ["Li", "Na", "K"]) {
+    assert.ok(result[metal].pH > 11, `${metal}: Lauge, pH ${result[metal].pH}`);
+    assert.ok(["pink", "violet", "red"].includes(result[metal].color), `${metal}: Phenolphthalein ${result[metal].color}`);
+    assert.ok(result[metal].gas, `${metal}: Gasblasen`);
+    assert.ok(result[metal].T > 20.3, `${metal}: wird warm, ${result[metal].T} °C`);
+  }
 });
 
 test("Indikatorpapier: blau über Ammoniak, rot über Kohlenstoffdioxid, grün über Wasser; nicht am verschlossenen Glas", () => {
@@ -7777,6 +7801,21 @@ test("README: die Folie zur unbekannten Probe hält, was ihr Text verspricht", (
     assert.deepEqual(config.task.goals, [{ identify: probe.unknown }]);
   }
   assert.deepEqual(seen, { Natriumchlorid: ["AgCl(s)"], Kaliumbromid: ["AgBr(s)"], Kaliumiodid: ["AgI(s)"] }, "jede Füllung gibt ihren eigenen Niederschlag");
+});
+
+test("README: die Folien zu Ammonium-Nachweis und Alkalimetallen halten, was ihr Text verspricht", () => {
+  const [test] = slide("Ammonium nachweisen").map((b) => L.normalize(b));
+  const l = L.createLab(test), [probe, blank] = test.bench.filter((p) => p.type === "testtube").map((p) => p.id);
+  [probe, blank].forEach((id) => L.add(l, id, "NaOH 1M", { ml: 5 }));
+  L.step(l, 5);
+  assert.ok(["blue", "violet"].includes(L.probe(l, probe, "paper").name), "Ammonium: blau");
+  assert.equal(L.probe(l, blank, "paper").name, "green", "Blindprobe: grün");
+  L.register(alkali());
+  const [metals] = slide("Alkalimetalle und Wasser").map((b) => L.normalize(b));
+  const m = L.createLab(metals), glass = metals.bench.filter((p) => p.type === "beaker").map((p) => p.id);
+  ["Li piece", "Na piece", "K piece"].forEach((id, k) => L.add(m, glass[k], id, { g: L.reagent(id).piece.g }));
+  L.step(m, 120);
+  glass.forEach((id) => assert.ok(["pink", "violet", "red"].includes(look(m, id).color.name), id + ": Phenolphthalein färbt sich"));
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

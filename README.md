@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -311,6 +311,21 @@ Der Span zeigt, was gerade im Gasraum über der Lösung steht. Wasserstoff ist l
  "shelf":["Mg ribbon","MnO2","marble","Na2CO3 1M","NaHCO3 1M","Na2SO3 1M","splint","glowsplint"],
  "show":{"charts":false}}
 ```
+
+## Ammonium nachweisen
+
+Feuchtes **Indikatorpapier** zeigt, was als Gas über einer Lösung steht. In beide Gläser Natronlauge geben und das Papier an die Öffnung halten, ohne die Lösung zu berühren. Über dem Ammoniumchlorid färbt es sich blau: Die Lauge setzt Ammoniak frei, und Ammoniak macht den Wasserfilm des Papiers alkalisch. Über der Kochsalzlösung bleibt es grün. Sie ist die **Blindprobe**: Sie zeigt, dass die Natronlauge allein das Papier nicht färbt.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"ammonium","contains":[{"reagent":"NH4Cl 1M","ml":5}]},
+  {"type":"testtube","id":"blindprobe","contains":[{"reagent":"NaCl 1M","ml":5}]}
+ ],
+ "shelf":["NaOH 1M","paper","burner"],
+ "show":{"charts":false}}
+```
+
+Über Salzsäure mit Marmor färbt sich das Papier rot: Kohlenstoffdioxid macht den Wasserfilm sauer.
 
 ## Gasvolumen messen
 
@@ -897,7 +912,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehört das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -915,6 +930,22 @@ Und so sieht ein Block mit eigenen Daten aus: Er trägt Methanol ein, ab jetzt f
    "src":"PubChem, Hazardous Substances Data Bank: Dichte 0,7866 g/cm³ bei 25 °C, Siedepunkt 64,7 °C, Verdampfungsenthalpie 37,34 kJ/mol bei 25 °C"}},
  "reagents":{
   "methanol":{"name":{"de":"Methanol","en":"methanol"},"solution":{"CH3OH(aq)":24.5},"group":"other"}}}
+```
+
+## Alkalimetalle und Wasser
+
+@[ChemLab.pack](packs/alkali.json)
+
+Das Paket `packs/alkali.json` bringt Lithium, Natrium und Kalium. Je ein Stückchen in das Wasser mit Phenolphthalein geben: Lithium sprudelt ruhig etwa eine Minute lang, Natrium ist in gut zehn Sekunden verbraucht, Kalium in wenigen. Es entsteht Wasserstoff (Knallgasprobe), und die Lösung wird alkalisch und färbt sich rotviolett. Die Flammenfärbung mit dem Magnesiastäbchen zeigt danach, welches Metall es war: Lithium rot, Natrium gelb, Kalium violett.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"contains":[{"reagent":"H2O","ml":50},{"reagent":"PP","drops":3}]},
+  {"type":"beaker","ml":250,"contains":[{"reagent":"H2O","ml":50},{"reagent":"PP","drops":3}]},
+  {"type":"beaker","ml":250,"contains":[{"reagent":"H2O","ml":50},{"reagent":"PP","drops":3}]}
+ ],
+ "shelf":["Li piece","Na piece","K piece","splint","rod","burner"],
+ "show":{"charts":["T"]}}
 ```
 
 ## Veresterung
@@ -1107,7 +1138,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
 | `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
 | `reflux` | Rückflusskühler: steht aufrecht im Gefäß; was verdampft, läuft zurück | `in` |
-| `splint`, `glowsplint`, `rod` | brennender Holzspan, Glimmspan, Magnesiastäbchen: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
+| `splint`, `glowsplint`, `rod`, `paper` | brennender Holzspan, Glimmspan, Magnesiastäbchen, feuchtes Indikatorpapier: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
 
 **Ziele einer Aufgabe** – jedes mit wahlweise `in` (nur dieses Gefäß, mit seinem Namen) und `label` (eigener Text statt des erzeugten):
 
@@ -1116,7 +1147,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `measure` mit `min` und/oder `max` | ein Messgerät zeigt einen Wert in diesem Bereich: `T` (°C), `pH`, `kappa` (mS/cm), `A` (Extinktion), `V` (Gasvolumen im Kolbenprober, mL), `I` (Stromstärke, A), `U` (Spannung, V) oder `m` (Waage, g); Strom und Spannung als Betrag | `{"measure":"pH","min":6.5,"max":7.5,"in":"becher"}` |
 | `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
 | `identify` | die unbekannte Probe mit diesem Namen (`unknown`, mit `oneOf`) ist richtig benannt; im Feld der Probe wählt man „Das ist: …“, die letzte Wahl zählt | `{"identify":"A"}` |
-| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (Metall scheidet sich ab), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
+| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (Metall scheidet sich ab), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
 Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum Beispiel `HCl 0.1M` oder `AgNO3 0.05M`. Ohne Zahl sind es 1 mol/L.
 
@@ -1331,6 +1362,8 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Sieden von Gemischen:** Gelöste Stoffe mit Siedepunkt (`Tb`) sind flüchtig. Die Siedetemperatur einer Mischung ist die Temperatur, bei der die Dampfdrücke von Wasser und den flüchtigen Stoffen zusammen den Luftdruck erreichen: jeder nach dem Raoultschen Gesetz mit seinem Stoffmengenanteil und seinem Dampfdruck nach Clausius-Clapeyron, für Ethanol und Wasser mit Aktivitätskoeffizienten nach Van Laar. Der Dampf hat die Zusammensetzung, die zu diesen Dampfdrücken gehört, und ist deshalb reicher am leichter Flüchtigen. Ein Liebigkühler leitet ihn in die Vorlage, wo er bei Raumtemperatur wieder flüssig wird; ohne Kühler entweicht er. Ein flüchtiger Stoff mit Geruch riecht, sobald sein Dampfdruck über der Lösung 5 mbar erreicht.
 - **Gase über der Lösung:** Kohlenstoffdioxid, Ammoniak und Chlorwasserstoff stehen mit ihrer Lösung im Gleichgewicht. Ist mehr gelöst, als sich bei Luftdruck halten kann, perlt der Überschuss in ein bis zwei Sekunden aus. Deshalb sprudelt Soda mit Salzsäure von 1 mol/L, mit stark verdünnter aber nicht. Beim Sieden nimmt der Dampf gelöste Gase mit. Ein stechender Geruch wird gemeldet, sobald der Druck eines solchen Gases 5 mbar erreicht.
 - **Gasraum:** Entstandenes Gas steht zuerst über der Flüssigkeit. Was dort keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest: Wasserstoff in etwa 8 s, Sauerstoff in 40 s, Kohlenstoffdioxid in 90 s. Im Diagramm der Stoffmengen zählt das entwichene Gas weiter mit.
+- **Indikatorpapier:** Sein Wasserfilm steht mit jedem Gas im Gleichgewicht, das ein Lösungsgleichgewicht hat (Ammoniak, Chlorwasserstoff, Kohlenstoffdioxid, Schwefeldioxid): mit dem Teildruck im Gasraum oder, wenn er höher ist, mit dem Druck, den das Gas über der Lösung hätte. Gerechnet wird wie in 10 mL Wasser mit drei Tropfen Universalindikator; von dort kommen pH-Wert und Farbe.
+- **Alkalimetalle** (Paket): Sie reagieren mit Wasser nach einem Geschwindigkeitsgesetz mit ihrer Oberfläche, wie Magnesium in Säure. Die Konstanten sind geschätzt, nach der Zeit, in der ein Stückchen im Schulversuch verbraucht ist; die Wärme folgt aus den Bildungsenthalpien.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
 - **Kolbenprober:** Er verschließt das Gefäß und zählt alles Gas, das entsteht, als Volumen bei Raumtemperatur und Luftdruck, bis 100 mL. Wird das Gefäß ausgeleert, zählt er von vorn.
 - **Waage:** Sie zeigt die Masse des Glases und von allem, was darin ist: gelöst, fest und im Gasraum darüber. Das Glas wiegt so viel, wie seine Wärmekapazität bei 0,84 J/(g K) ergibt: ein Reagenzglas 20,2 g, ein Becherglas mit 100 mL 35,7 g. Was aus dem offenen Gefäß entweicht, fehlt; ein Kolbenprober hält es im System, bis er voll ist. Die Anzeige folgt mit einer halben Sekunde Verzögerung. „Tara“ zieht ab, was in diesem Augenblick darauf steht.
@@ -1369,6 +1402,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Elektroden passen nur in Bechergläser, zwei je Glas; nur dort lassen sich Netzgerät, Messgeräte und Lämpchen anschließen. Zu einem Glas (oder einem Paar mit Salzbrücke) gehört ein Stromkreis; frei verdrahten lässt sich nichts. An jedem Glas hängt höchstens eine Salzbrücke, und sie erschöpft sich nicht.
 - Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Kalkwasser klärt sich deshalb schneller wieder als im Versuch. Beim Abkühlen steigt keine Flüssigkeit zurück, und Überdruck entsteht nicht.
 - Die Waage rechnet ohne Auftrieb in der Luft, und Elektroden, Messfühler und Kolbenprober zählen nicht mit: Sie hängen am Stativ. Ein Gefäß auf der Waage lässt sich nicht zugleich heizen.
+- Natrium schmilzt auf dem Wasser nicht zur Kugel und flitzt nicht umher; Kalium entzündet sich nicht mit violetter Flamme. Indikatorpapier wird nur über die Öffnung gehalten, nicht eingetaucht, und Chlor bleicht es nicht, weil sich Chlor hier nicht löst.
 - Kalkwasser hat hier 0,011 mol/L statt der rund 0,02 mol/L einer im Labor gesättigten Lösung, denn das ideale Modell rechnet Calciumhydroxid schon bei 0,0117 mol/L als gesättigt.
 - Wasser verdunstet nur beim Sieden; unterhalb von 100 °C verliert ein Gefäß nichts. Gelöste Gase entweichen nur, wenn sie ausperlen oder mit dem Dampf fortgehen.
 - Die Löslichkeit von Kupfersulfat ist auf den gemessenen Wert von 1,4 mol/L eingestellt, weil die ideale Rechnung mit der Konstante der Datenbank zu wenig ergäbe. Solche Werte sind in den Daten als „adjusted“ (angepasst) gekennzeichnet.
