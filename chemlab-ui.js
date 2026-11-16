@@ -544,7 +544,7 @@
         }
       });
       lab.tools.forEach(function (t) {
-        var host = L.vessel(lab, t.in), def = L.parts[t.type], place;
+        var host = L.vessel(lab, t.in), def = L.parts[t.type], place, far;
         if (host && def.circuit) return;
         if (host && (def.electrode || def.bridge)) reach = Math.max(reach, (lifts[host.id] || 0) - L.parts[host.type].bounds(host).top + 96);      // Platz für die Leitungen
         if (host) {
@@ -552,6 +552,8 @@
           if (!def.under && !def.electrode && !def.bridge && !def.condenser) {      // Messgeräte ragen über das Gefäß hinaus, erst recht über ein gehobenes
             place = L.parts[host.type].probe(host, t.type);
             reach = Math.max(reach, (lifts[host.id] || 0) - (place.top != null ? place.top : place.rim - 60) + 44);
+            far = def.pipe && L.vessel(lab, t.to);              // das Rohr steigt auch über ein erhöhtes zweites Gefäß
+            if (far) reach = Math.max(reach, (lifts[far.id] || 0) - L.parts[far.type].probe(far, "tube").top + 44);
           }
         } else list.push({ id: t.id, type: t.type, w: def.width(t) });
       });
@@ -662,7 +664,7 @@
     // Das Gasableitungsrohr: vom Stopfen im ersten Gefäß zum zweiten, dort bis unter den Spiegel oder, ist es leer, fast bis zum Boden.
     // Stellen in den Koordinaten seines Platzes; up wie beim Kühler
     function pipeline(lab, t) {
-      var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), pa, pb, up, w, s2;
+      var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && !far.broken && at(t.to), pa, pb, up, w, s2;
       if (!host || !a) return null;
       pa = L.parts[host.type].probe(host, "tube");
       if (!b) return { x1: pa.x, y1: pa.rim, w: pa.w, x2: pa.x + 60, y2: pa.rim, end: pa.rim + 30, up: 0 };       // das andere Ende hängt frei
@@ -734,7 +736,7 @@
         var g = nodes[item.id], def = L.parts[item.type];
         var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
-          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to); }) };
+          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
         var v, w, r, host, place, b, content, hang, aria;
         if (item.vessel) {
           v = L.vessel(lab, item.id);

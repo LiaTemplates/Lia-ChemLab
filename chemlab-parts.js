@@ -1039,6 +1039,7 @@
 
   // place: { x1, y1, w } Stopfen im ersten Gefäß (Mitte, Rand, Breite); { x2, y2 } Öffnung des zweiten, end: wo das Rohr dort endet
   // (unter dem Spiegel oder nahe am Boden eines leeren Gefäßes). Das Rohr steigt über beide Ränder, läuft hinüber und taucht ein.
+  // Die Blasen zeichnet das zweite Gefäß selbst (wie in 3D).
   function pipeAt(place) {
     var p = place || { x1: -24, y1: -30, w: 16, x2: 24, y2: -30, end: -6 };
     return { x1: p.x1, y1: p.y1, w: p.w, x2: p.x2, top: Math.min(p.y1, p.y2) - PIPE_RISE, end: Math.max(p.end, p.y2 + 8) };
@@ -1058,7 +1059,6 @@
       // Glasrohr mit zwei gerundeten Knien
       out += '<path class="cl-glass cl-pipe" d="M' + f(d.x1) + "," + (d.y1 + 6) + "L" + f(d.x1) + "," + f(d.top + r) + "Q" + f(d.x1) + "," + f(d.top) + " " + f(d.x1 + dir * r) + "," + f(d.top) +
         "L" + f(d.x2 - dir * r) + "," + f(d.top) + "Q" + f(d.x2) + "," + f(d.top) + " " + f(d.x2) + "," + f(d.top + r) + "L" + f(d.x2) + "," + f(d.end) + '"/>';
-      if (place && w.flow > 0 && L.fx) out += L.fx.bubbles({ x0: d.x2 - 6, x1: d.x2 + 6, top: Math.max(place.s2 != null ? place.s2 : d.end - 30, d.end - 60), bottom: d.end }, w.flow, ctx.t || 0, (ctx.seed || 1) + 17, ctx.still);
       return out + (place ? "" : badge(0, 14, ctx.no));
     }
   });

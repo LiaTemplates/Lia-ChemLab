@@ -760,6 +760,7 @@
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
+        if (own.duct && looped(bench.filter(function (o) { return o !== item && L.parts[o.type].duct; }), item.in, item.to)) throw fail("place", item.to);
         slot = (own.duct ? "duct<" : "bridge>") + item.to;                    // in eine Vorlage führt nur ein Kühler oder Rohr
         hung[slot] = (hung[slot] || 0) + 1;
         if (hung[slot] > 1) throw fail("place", item.to);
@@ -901,6 +902,18 @@
     };
   }
 
+  // Führen Kühler und Rohre (links: { in, to }) von to aus im Kreis zurück nach from? Aus jedem Gefäß führt höchstens eines.
+  function looped(links, from, to) {
+    for (var i = 0, at = to; i <= links.length; i++) {
+      if (at === from) return true;
+      var next = links.filter(function (o) { return o.in === at; })[0];
+      if (!next) return false;
+      at = next.to;
+    }
+    return false;
+  }
+  function ducts(lab, skip) { return lab.tools.filter(function (o) { return o !== skip && L.parts[o.type].duct; }); }
+
   function flameLevel(value) { return Math.max(0, Math.min(2, Math.round(+value) || 0)); }
 
   function makeTool(item) {
@@ -1036,7 +1049,7 @@
       }));
     } else {
       var far = (def.bridge || def.duct) && host ? vessel(lab, raw.to) : null;
-      if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].duct && t.to === far.id; })))) far = null;
+      if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].duct && t.to === far.id; }) || looped(ducts(lab), host.id, far.id)))) far = null;
       if ((def.bridge || def.duct) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
       lab.tools.push((made = makeTool({
         id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame),
@@ -1083,8 +1096,10 @@
     if (v && def.electrode && electrodesIn(lab, v.id).filter(function (o) { return o !== t; }).length >= 2) return false;
     if (v && def.bridge && (bridged(lab, v.id, t) || t.to === vesselId)) return false;
     if (v && def.under && lab.tools.some(function (o) { return o !== t && o.in === v.id && L.parts[o.type].under; })) return false;      // dort steht schon ein Brenner oder ein Wasserbad
+    if (v && def.stopper && lab.tools.some(function (o) { return o !== t && o.in === v.id && L.parts[o.type].stopper; })) return false;      // im Stopfen steckt schon etwas
+    if (v && def.duct && (t.to === vesselId || ducts(lab, t).some(function (o) { return o.in === v.id; }) || (t.to && looped(ducts(lab, t), vesselId, t.to)))) return false;
     t.in = v ? vesselId : null;
-    if (def.bridge && !v) t.to = null;
+    if ((def.bridge || def.duct) && !v) t.to = null;
     seat(lab, t);
     survey(lab);
     return true;

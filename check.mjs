@@ -7184,6 +7184,20 @@ test("Gasableitungsrohr: Beschreibung, Platz und Fehler", () => {
   assert.equal(L.tool(placed, L.place(placed, { type: "syringe", in: "a" })).in, null, "der Stopfen sitzt schon");
 });
 
+test("Gasableitungsrohr: kein Kreis, und Anschließen prüft Stopfen und Ziel", () => {
+  const a = { type: "testtube", id: "a" }, z = { type: "testtube", id: "z" }, y = { type: "testtube", id: "y" };
+  for (const bench of [
+    [a, z, { type: "tube", in: "a", to: "z" }, { type: "tube", in: "z", to: "a" }],
+    [a, z, y, { type: "tube", in: "a", to: "z" }, { type: "tube", in: "z", to: "y" }, { type: "tube", in: "y", to: "a" }]
+  ]) assert.throws(() => L.normalize({ bench }), (e) => e.code === "place", JSON.stringify(bench));
+  const l = L.createLab(L.normalize({ bench: [a, z, y, { type: "tube", id: "r", in: "a", to: "z" }, { type: "syringe", id: "kp" }, { type: "tube", id: "s" }] }));
+  assert.equal(L.tool(l, L.place(l, { type: "tube", in: "z", to: "a" })).in, null, "zurück ins erste Glas führt keines");
+  assert.equal(L.attach(l, "kp", "a"), false, "im Stopfen steckt schon das Rohr");
+  assert.equal(L.attach(l, "r", "z"), false, "das Rohr führt nicht in sein eigenes Glas");
+  assert.equal(L.attach(l, "s", "a"), false, "aus dem Glas führt schon ein Rohr");
+  assert.equal(L.attach(l, "kp", "y"), true);
+});
+
 // Gas aus Reagenzglas a durch das Rohr r in Reagenzglas z
 const gasline = (src, dst, more) => lab([{ type: "testtube", id: "a", contains: src }, { type: "tube", id: "r", in: "a", to: "z" },
   { type: "testtube", id: "z", contains: dst }], Object.assign({ room: 20 }, more));
@@ -7342,6 +7356,12 @@ test("Oberfläche: das Gasableitungsrohr setzen – erst die Quelle, dann das Zi
   assert.match(part(el, ".cl-status").textContent, /schon ein solches Gerät/, "im Stopfen ist kein Platz mehr");
 });
 
+test("Oberfläche: steht das zweite Glas erhöht, wird die Fläche so hoch wie umgekehrt", () => {
+  const height = (raised) => +part(mount({ bench: [{ type: "testtube", id: "a" }, { type: "tube", in: "a", to: "z" }, { type: "testtube", id: "z" },
+    { type: "burner", under: raised }] }), ".cl-svg").attributes.viewBox.split(" ")[3];
+  assert.equal(height("z"), height("a"));
+});
+
 test("Oberfläche: an ein Glas mit Gasableitungsrohr kommt kein Span", () => {
   const el = mount({ bench: [{ type: "testtube", id: "a", contains: [{ reagent: "HCl 1M", ml: 5 }] }, { type: "tube", in: "a", to: "z" }, { type: "testtube", id: "z" }],
     shelf: ["splint"] });
@@ -7370,8 +7390,7 @@ test("Zeichnung: Gasableitungsrohr für sich, zwischen zwei Gläsern und mit Bla
   const idle = L.parts.tube.draw({ type: "tube", flow: 0 }, ctx(), place);
   clean(idle, "Rohr");
   assert.match(idle, /cl-stopper/);
-  assert.doesNotMatch(idle, /cl-bubble/);
-  assert.match(L.parts.tube.draw({ type: "tube", flow: 1e-4 }, ctx(), place), /cl-bubble/, "am Ende des Rohrs perlt Gas");
+  assert.doesNotMatch(L.parts.tube.draw({ type: "tube", flow: 1e-4 }, ctx(), place), /cl-bubble/, "die Blasen zeichnet das Glas, nicht das Rohr");
   assert.match(L.icon("tube"), /<svg/);
   const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
   L.step(l, 3);

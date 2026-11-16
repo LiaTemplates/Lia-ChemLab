@@ -89,9 +89,11 @@
       var x1 = p ? cm(p.x1) : -1.5, y1 = p ? cm(-p.y1) : 0.6, x2 = p ? cm(p.x2) : 1.5, end = p ? cm(-p.end) + drop : 0.4;
       var top = p ? Math.max(cm(-p.y1), cm(-p.y2) + drop) + cm(L.shapes.pipeRise) : 2.4;
       group.userData.body = fx.rebuild(group, "pipe", [x1, y1, x2, end, top, !!p].map(String).join("|"), function (sub) {
-        var r = 0.11, a = V(x1, y1 - cm(4), 0), b = V(x1, top, 0), c = V(x2, top, 0), e = V(x2, end, 0);
-        sub.add(pipe(a, b, r, fx.glass()), pipe(b, c, r, fx.glass()), pipe(c, e, r, fx.glass()));
-        [b, c].forEach(function (k) { sub.add(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), fx.glass()).translateX(k.x).translateY(k.y)); });      // Knie
+        var r = 0.13, a = V(x1, y1 - cm(4), 0), b = V(x1, top, 0), c = V(x2, top, 0), e = V(x2, end, 0), glass = fx.glass();
+        glass.color.set(0x8fa6b4);                                  // dünnes Rohr: getönt und dichter, sonst verschwindet es vor der hellen Wand
+        glass.opacity = Math.min(1, glass.opacity * 2.5);
+        sub.add(pipe(a, b, r, glass), pipe(b, c, r, glass), pipe(c, e, r, glass));
+        [b, c].forEach(function (k) { sub.add(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), glass).translateX(k.x).translateY(k.y)); });      // Knie
         if (p) {
           var stopper = new THREE.Mesh(new THREE.CylinderGeometry(cm(p.w / 2), cm(p.w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8));
           stopper.position.set(x1, cm(-(p.y1 + 1.5)), 0);
