@@ -96,8 +96,12 @@
     hotFlame.visible = false;
     // Spritzer: Tropfen über geschmolzenem Metall und beim Verdünnen; ein Stopfen, der herausfliegt
     var drops3 = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.2, metalness: 0.3 }), 16);
-    var flyer = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.4, 0.7, 20), fx.matte(0x4a4d52, 0.8));
+    var flyer = new THREE.Group(), gauge = new THREE.Group();
+    flyer.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.4, 0.7, 20), fx.matte(0x4a4d52, 0.8)), gauge);
+    gauge.add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8).translate(0, 0.9, 0), fx.steel()),
+      new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
+    drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
     group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
@@ -229,7 +233,8 @@
           }
           if (mark.key === "popped" && mark.age < 0.8) {     // der Stopfen fliegt heraus: hinauf, zur Seite, sich drehend
             q = ctx.still ? 0.3 : mark.age;
-            flyer.visible = true;
+            gauge.visible = mark.type === "manometer";
+            flyer.scale.setScalar(shape.inner(shape.rim) / 0.5);    // so breit wie die Öffnung, die er verschlossen hat
             flyer.position.set(q * 3, shape.rim + q * 8 - q * q * 6, 0);
             flyer.rotation.set(q * 6, 0, q * 7);
           }

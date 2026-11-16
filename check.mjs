@@ -2757,7 +2757,7 @@ test("Manometer: zeigt den Druck im verschlossenen Glas, fliegt bei 1,5 bar hera
   let most = 0;
   for (let i = 0; i < 400 && !seen.some((e) => e.key === "popped"); i++) { L.step(l, 0.25, (e) => seen.push(e)); most = Math.max(most, L.reading(l, "m").value); }
   assert.ok(most > 1.3, `der Druck steigt: ${most} bar`);
-  assert.ok(seen.some((e) => e.key === "popped" && e.part === "m"), "und es fliegt heraus");
+  assert.ok(seen.some((e) => e.key === "popped" && e.part === "m" && e.type === "manometer"), "und es fliegt heraus, als Manometer");
   L.step(l, 3);
   near(L.reading(l, "m").value, 1, 0.02, "frei zeigt es wieder den Luftdruck");
   assert.ok("p" in L.MEASURES);
@@ -2846,6 +2846,17 @@ test("Chlor: Bleichlauge entfärbt Indikatoren, mit Säure setzt sie Chlor frei;
   L.add(acid, "b", "HCl 2M", { ml: 10 });
   L.step(acid, 20, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "smell" && e.species === "Cl2(g)"), "Chlorreiniger und Säure: es riecht nach Chlor");
+  // Bleichlauge enthält etwa gleich viel Kochsalz: auch Essig setzt Chlor frei
+  const sour = [], vinegar = beaker([{ reagent: "NaOCl 1M", ml: 10 }], { room: 20 });
+  L.add(vinegar, "b", "CH3COOH 1M", { ml: 20 });      // Essig im Überschuss
+  L.step(vinegar, 20, (e) => sour.push(e));
+  assert.ok(sour.some((e) => e.key === "smell" && e.species === "Cl2(g)"), "Chlorreiniger und Essigreiniger: es riecht nach Chlor");
+  // Chlornachweis: feuchtes Indikatorpapier wird gebleicht
+  const strip = [], tube = lab([{ type: "testtube", id: "t", contains: [{ reagent: "NaOCl 1M", ml: 3 }, { reagent: "HCl 2M", ml: 3 }] }], { room: 20 });
+  L.step(tube, 10);
+  assert.equal(L.probe(tube, "t", "paper", (e) => strip.push(e)).name, "colorless", "Chlor bleicht das Indikatorpapier");
+  assert.equal(L.say(strip[0], { lang: "de", numbers: true, names: { t: "Reagenzglas 1" } }), "Reagenzglas 1: Das feuchte Indikatorpapier wird gebleicht.");
+  assert.match(L.goalText({ seen: "paper", name: "colorless" }, "de"), /Indikatorpapier wird gebleicht/);
   const cell = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 1M", ml: 80 }, { reagent: "PP", drops: 3 }] }, { type: "electrode-C", id: "e1", in: "b" },
     { type: "electrode-C", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts: 6 }], { room: 20 });
   L.step(cell, 120);
@@ -3947,6 +3958,16 @@ test("Kupferchlorid mit Graphit: Kupfer am Minuspol, Chlor am Pluspol", () => {
   assert.ok(halves(l).includes("e1: 2 Cl-(aq) -> Cl2(g) + 2 e-") && halves(l).includes("e2: Cu^2+(aq) + 2 e- -> Cu(s)"));
   near(totalsE(l).mass, before.mass, 1e-9, "Masse");
   near(totalsE(l).charge, before.charge, 1e-12, "Ladung");
+});
+
+test("Elektrodenchlor: was sich löst, zählt nicht gegen Blasen aus anderen Reaktionen; ein Eingriff hinterlässt kein Elektrodengas", () => {
+  const cell = (mg) => lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 80 }].concat(mg ? [{ reagent: "Mg ribbon", g: 0.02 }] : []) },
+    { type: "electrode-C", id: "e1", in: "b" }, { type: "electrode-C", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts: 6 }], { room: 20 });
+  const plain = cell(false), both = cell(true), solo = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 80 }, { reagent: "Mg ribbon", g: 0.02 }] }], { room: 20 });
+  [plain, both, solo].forEach((l) => L.step(l, 5));
+  const g = (l) => L.vessel(l, "b").gas;
+  assert.ok(g(both) - g(plain) > 0.5 * g(solo), `Blasen vom Magnesium: ${g(both)} − ${g(plain)} gegen ${g(solo)}`);
+  assert.deepEqual(L.vessel(cell(false), "b").egas || {}, {}, "nach dem Trockenlauf beim Aufbau steht kein Elektrodengas im Glas");
 });
 
 test("Wasser zerlegen: verdünnte Schwefelsäure an Platin gibt Wasserstoff und Sauerstoff im Verhältnis 2 : 1", () => {
@@ -8181,7 +8202,10 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   L.step(l, 120, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "popped"), "das Magnesium drückt den Stopfen heraus");
   seen = []; l = L.createLab(closed);
-  L.step(l, 600, (e) => seen.push(e));
+  const gauge = closed.bench.find((t) => t.type === "manometer");
+  let most = 0;
+  for (let i = 0; i < 600 && !seen.some((e) => e.key === "popped" && e.part === gauge.id); i++) { L.step(l, 1, (e) => seen.push(e)); most = Math.max(most, L.reading(l, gauge.id).value); }
+  assert.ok(most > 1.3, `die Anzeige steigt: ${most} bar`);
   assert.ok(seen.some((e) => e.key === "popped" && closed.bench.some((t) => t.type === "burner" && t.in === e.vessel)), "das erhitzte Glas auch");
   seen = []; l = L.createLab(back);
   const burner = back.bench.find((p) => p.type === "burner");

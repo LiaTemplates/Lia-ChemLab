@@ -575,7 +575,7 @@
       "K2S2O8": { name: name("potassium peroxodisulfate solution"), solution: { "K+(aq)": 2, "S2O8^2-(aq)": 1 }, molar: true, group: "salt" },
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
       // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
-      "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 1.05, "OCl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
+      "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 2.05, "OCl-(aq)": 1, "Cl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
       "KNO3": { name: name("potassium nitrate solution"), solution: { "K+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "salt" },
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
       // Kristallviolett-Lösung mit 25 µmol/L (10 mg/L), wie für die Fotometrie üblich
@@ -639,14 +639,16 @@
 
   // Bleichen: Hypochlorige Säure und Hypochlorit oxidieren jeden Farbstoff zu einem farblosen Stoff mit einem Sauerstoffatom mehr
   // (vereinfacht; die wirklichen Produkte sind vielfältig). Geschwindigkeit geschätzt: in Sekunden bei einigen mmol/L.
+  // shortcut: feste Liste der Farbstoffe im Kern; ein Indikator aus einem Paket wird nicht gebleicht. Erweitern, wenn ein Paket einen braucht.
   var DYES = ["C27H28Br2O5S(aq)", "C27H27Br2O5S-(aq)", "C20H14O4(aq)", "C20H13O4-(aq)", "C14H15N3O3S(aq)", "C14H14N3O3S-(aq)",
     "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)"];
   DYES.forEach(function (dye) {
     var o = /O(\d*)(?=[A-Z^+\-(]|$)/.exec(dye), done = o ? dye.replace(o[0], "O" + ((+o[1] || 1) + 1)) : dye.replace(/((?:\^\d+)?[+-]?\(aq\))$/, "O$1");
-    L.core.species[done] = { name: name("bleached dye (colourless)"), Hf: null, src: "simplified product of bleaching; colourless" };
+    L.core.species[done] = { name: name("bleached dye (colourless)"), symbol: L.core.species[dye].symbol + "O", Hf: null, src: "simplified product of bleaching; colourless" };
     L.core.reactions.push(
       { eq: dye + " + HOCl(aq) -> " + done + " + H+(aq) + Cl-(aq)", rate: { k: 50, order: (function (o) { o[dye] = 1; o["HOCl(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by hypochlorous acid" },
-      { eq: dye + " + OCl-(aq) -> " + done + " + Cl-(aq)", rate: { k: 5, order: (function (o) { o[dye] = 1; o["OCl-(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by hypochlorite" });
+      { eq: dye + " + OCl-(aq) -> " + done + " + Cl-(aq)", rate: { k: 5, order: (function (o) { o[dye] = 1; o["OCl-(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by hypochlorite" },
+      { eq: dye + " + Cl2(aq) + H2O(l) -> " + done + " + 2 H+(aq) + 2 Cl-(aq)", rate: { k: 1000, order: (function (o) { o[dye] = 1; o["Cl2(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by dissolved chlorine, faster than by hypochlorous acid" });
   });
 
   L.register(L.core);

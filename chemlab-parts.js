@@ -186,8 +186,8 @@
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
       "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
-      "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "part.paper": "indicator paper",
-      "say.paper": "{vessel}: The moist indicator paper turns {color}.",
+      "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "seen.paperWhite": "Indicator paper is bleached", "part.paper": "indicator paper",
+      "say.paper": "{vessel}: The moist indicator paper turns {color}.", "say.paperWhite": "{vessel}: The moist indicator paper is bleached.",
       "part.stopper": "rubber stopper", "part.manometer": "manometer", "measure.p": "Pressure", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
       "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.", "say.spatter": "{vessel}: It spatters!", "seen.spatter": "It spatters",
       "seen.popped": "The stopper pops out", "seen.suckBack": "Liquid is sucked back", "seen.plungerOut": "The plunger pops out",
@@ -289,6 +289,7 @@
         ? text("goal.from", lang) + " " + amount(goal.min, lang) + " " + text("goal.to", lang) + " " + amount(goal.max, lang)
         : goal.min != null ? text("goal.min", lang) + " " + amount(goal.min, lang) : text("goal.max", lang) + " " + amount(goal.max, lang));
     } else if (goal.identify) out = text("goal.identify", lang, { name: text("sample", lang, { name: goal.identify }) });
+    else if (goal.seen === "paper" && goal.name === "colorless") out = text("seen.paperWhite", lang);
     else if (goal.seen === "paper" && goal.name) out = text("seen.paperOf", lang, { color: colorWord(goal.name, false, lang) });
     else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });
     else out = text("seen." + goal.seen, lang) + (goal.species ? ": " + nameOf(L.species(goal.species), lang) : "");
@@ -387,6 +388,7 @@
         break;
       case "ignite": vars.name = nameOf(L.species(event.species), lang); break;
       case "splint":
+        if (event.kind === "paper" && event.name === "colorless") return text("say.paperWhite", lang, vars);
         if (event.kind === "paper") { vars.color = colorWord(event.name, event.pale, lang); return text("say.paper", lang, vars); }
         vars.splint = text(event.kind === "glow" ? "part.glowsplint" : "part.splint", lang);
         vars.result = text("splint." + event.result + (event.result === "pop" ? event.level : ""), lang);

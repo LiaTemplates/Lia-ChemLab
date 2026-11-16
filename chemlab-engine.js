@@ -2643,6 +2643,7 @@
   function survey(lab) {
     lab.vessels.forEach(function (v) { v.eg = 0; });
     electro(lab, null, true);
+    lab.vessels.forEach(function (v) { v.egas = {}; });          // der Trockenlauf hat kein Gas gemacht
   }
 
   // Der Stromkreis, zu dem ein Gefäß gehört: { a, b: die Elektroden, I: Strom in A (positiv: an a wird oxidiert),
@@ -3101,7 +3102,7 @@
     if (plug) {
       if (p > POP || v.boil > 0) {                             // siedet es unter dem Stopfen, kann der Dampf nirgends hin
         plug.in = null; v.seal = null;
-        if (emit) emit({ key: "popped", vessel: v.id, part: plug.id });
+        if (emit) emit({ key: "popped", vessel: v.id, part: plug.id, type: plug.type });
       }
       return;
     }
@@ -3229,6 +3230,7 @@
       if (!eq || !(v.n[id] > 0)) continue;
       x = Math.min(v.n[id], v.egas[id]) * bubbleShare(v, eq);
       v.n[id] -= x;
+      v.eg -= x;                                               // was sich gelöst hat, perlt nicht mehr an der Elektrode
       for (key in eq.d) v.n[key] = (v.n[key] || 0) + eq.d[key] * x;
       tally(v, eq, x * eq.f);
       v.dirty = true;
@@ -3325,6 +3327,8 @@
       c = Math.pow(10, base / sum);
       for (key in e.d) w.n[key] = (w.n[key] || 0) + e.d[key] * c * 0.01;
     }
+    // so lange man es hinhält, läuft im Film auch, was Zeit braucht: Chlor bleicht den Farbstoff
+    for (var i = 0; i < 2 * TICKS; i++) { w.dirty = true; equilibrate(film, w); kinetics(w, null, false); }
     w.dirty = true;
     equilibrate(film, w);
     out = colorOf(w);
