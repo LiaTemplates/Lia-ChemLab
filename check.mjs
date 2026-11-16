@@ -2408,6 +2408,41 @@ test("Waage: unter einem Gefäß, nicht zusammen mit Brenner oder Wasserbad, nic
   assert.ok("m" in L.MEASURES, "Aufgabenziel measure: m");
 });
 
+test("Waage an der Fläche: unter das Glas stellen, Anzeige, Tara und Diagramm der Masse", () => {
+  const el = mount({ room: 20, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }], shelf: ["balance", "marble"], show: { charts: ["m"] } });
+  press(el, "hand", "balance");
+  assert.match(part(el, ".cl-hand").innerHTML, /auf die Waage/);
+  tap(el, "b");
+  assert.match(logOf(el), /Waage 1 unter Becherglas 1 gestellt/);
+  frames(20);
+  assert.match(item(el, "balance1").attributes["aria-label"], /^Waage 1 unter Becherglas 1: \d+,\d\d g$/);
+  assert.match(item(el, "balance1").innerHTML, /cl-scale/);
+  tap(el, "balance1");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="tare"/);
+  press(el, "tare");
+  assert.match(logOf(el), /Waage 1: auf null gestellt/);
+  frames(20);
+  assert.equal(item(el, "balance1").attributes["aria-label"], "Waage 1 unter Becherglas 1: 0,00 g");
+  press(el, "hand", "marble");
+  tap(el, "b");
+  frames(200);
+  assert.match(part(el, ".cl-charts").innerHTML, /Masse/);
+  assert.match(part(el, ".cl-charts").innerHTML, /Waage 1 unter Becherglas 1/);
+});
+
+test("Zeichnung: Waage für sich und unter einem Glas; Symbol", () => {
+  const l = lab([{ type: "beaker", id: "b" }, { type: "balance", id: "w", under: "b" }]);
+  L.step(l, 3);
+  const place = L.parts.balance.stand(L.vessel(l, "b"));
+  assert.ok(place.lift > 0 && place.lift < 40, "hebt das Glas nur wenig an");
+  const drawn = L.parts.balance.draw(L.reading(l, "w"), ctx(), place);
+  clean(drawn, "Waage");
+  assert.match(drawn, /35,71 g/);
+  assert.doesNotMatch(L.parts.balance.draw(L.reading(l, "w"), ctx({ numbers: false }), place), /35,71/);
+  clean(L.parts.balance.draw({ type: "balance", value: 0, unit: "g" }, ctx()), "Waage für sich");
+  assert.match(L.icon("balance"), /<svg/);
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);

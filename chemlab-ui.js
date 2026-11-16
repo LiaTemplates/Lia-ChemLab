@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, flip: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, flip: 1, tare: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -329,7 +329,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -929,6 +929,7 @@
             '<button type="button" class="cl-btn" data-act="flip" aria-pressed="false">' + esc(T("flip")) + "</button></div>" : "") +
           // Wasserbad und Fotometer: Temperatur oder Wellenlänge an einem Schieber, übernommen beim Loslassen
           (L.parts[t.type].bath ? dial("temp", L.parts[t.type].range, 1, t.temp) : "") +
+          (L.parts[t.type].scale ? '<div class="cl-tap"><button type="button" class="cl-btn" data-act="tare">' + esc(T("tare")) + "</button></div>" : "") +
           (L.parts[t.type].sense === "A" ? dial("wave", L.parts[t.type].waves, 5, t.nm) : "") +
           '<div class="cl-contents"></div><div class="cl-actions">' + removal() + "</div>";
       } else if (st.copyText != null) {
@@ -1219,7 +1220,7 @@
     function renderCharts(kinds, box) {
       var run = st.run, lab = run.lab, label = names(), html = "", lines, vessel = null, ids, top = 0, unit, i, most = 0, at = 0;
       var time = { span: Math.max(run.end, 10), label: T("chart.time"), cursor: run.time };
-      function where(t) { return esc(label[t.id] + " " + T("aria.in", { vessel: label[t.in] })); }
+      function where(t) { return esc(label[t.id] + " " + T(L.parts[t.type].under ? "aria.under" : "aria.in", { vessel: label[t.in] })); }
       function probes(unitName) { return lab.tools.filter(function (t) { return L.parts[t.type].unit === unitName && L.parts[t.type].sense && L.vessel(lab, t.in); }); }
       if (!kinds.length) return;
       if (kinds.indexOf("T") >= 0) {
@@ -1317,14 +1318,14 @@
       }
       if (kinds.indexOf("m") >= 0) {
         top = 0;
-        lines = lab.tools.filter(function (t) { return L.parts[t.type].electrode && L.vessel(lab, t.in); }).map(function (t) {
+        lines = lab.tools.filter(function (t) { return (L.parts[t.type].electrode || L.parts[t.type].scale) && L.vessel(lab, t.in); }).map(function (t) {
           var points = L.series(run, { tool: t.id }), first = points.length ? points[0][1] : 0;
           points = points.map(function (p) { top = Math.max(top, Math.abs(p[1] - first)); return [p[0], p[1] - first]; });
           return { label: where(t), points: points };
         });
         unit = top >= 1 ? [1, "g"] : [1e3, "mg"];
         lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
-        if (top > 1e-6) html += chart(esc(T("chart.m")) + (show.numbers ? ": " + esc(T("chart.mUnit")) + " in " + unit[1] : ""), lines, "", time);
+        if (top > 1e-6) html += chart(esc(T(lab.tools.some(function (t) { return L.parts[t.type].scale && L.vessel(lab, t.in); }) ? "chart.mass" : "chart.m")) + (show.numbers ? ": " + esc(T("chart.mUnit")) + " in " + unit[1] : ""), lines, "", time);
       }
       box.innerHTML = html;
     }
@@ -1647,6 +1648,10 @@
         r = parseInt(id, 10);
         id = st.sel;
         change(function (l) { return L.setFlame(l, id, r); }, { key: "flame", part: id, level: r });
+      }
+      else if (act === "tare" && L.tool(lab, st.sel)) {
+        id = st.sel;
+        change(function (l) { return L.tare(l, id); }, { key: "tare", part: id });
       }
       else if (act === "flip" && L.tool(lab, st.sel)) {
         id = st.sel;

@@ -23,6 +23,8 @@
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
       "sameTube": "The tube leads into another vessel.",
+      "part.balance": "balance", "hint.scale": "Now tap the vessel to put on the balance – or the bench.", "tare": "Tare",
+      "say.tare": "{part}: set to zero", "chart.mass": "Mass",
       "eq.catalyst": "catalyst",
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
@@ -303,6 +305,7 @@
     if (r.unit === "A") return v < 0.9995 ? num(v * 1000, 1, lang) + " mA" : num(v, 2, lang) + " A";
     if (r.unit === "V") return num(v, 2, lang) + " V";
     if (r.unit === "mS/cm") return v >= 0.1 ? trim(v, lang) + " mS/cm" : trim(v * 1000, lang) + " µS/cm";
+    if (def.scale) return num(Math.abs(v) < 0.005 ? 0 : v, 2, lang) + " g";      // Waage: auf 0,01 g, ohne „−0,00“
     if (r.unit === "g") return num(v, 3, lang) + " g";
     return num(v, 1, lang) + " " + r.unit;
   }
@@ -691,6 +694,24 @@
         '<path class="cl-hose" d="M4.5,-10L13,-10Q22,-10 22,0"/>';
       if (L.fx) out += L.fx.flame(0, NOZZLE, w.flame, ctx.t || 0, ctx.seed || 1, ctx.still, w.tint && w.tint.rgb);
       return out + badge(place ? (place.clamp ? -30 : 30) : 0, 14, ctx.no);      // unter einem Gefäß steht die Nummer neben dessen Nummer
+    }
+  });
+
+  // ------------------------------------------------------------------ Waage
+
+  var SCALE = { lift: 24, h: 20 };       // Höhe der Waagschale über dem Tisch, Höhe des Gehäuses
+
+  // place: { lift, half } aus stand(), wenn ein Gefäß darauf steht
+  L.registerPart("balance", {
+    width: function () { return 96; },
+    bounds: function (t, place) { var a = place ? place.half : 40; return { x0: -a - 4, x1: a + 4, top: -SCALE.lift - 2 }; },
+    stand: function (host) { var b = L.parts[host.type].bounds(host); return { lift: SCALE.lift, half: Math.max(40, (b.x1 - b.x0) / 2), clamp: false }; },
+    draw: function (w, ctx, place) {
+      var a = place ? place.half : 40;
+      return '<rect class="cl-scale" x="' + (-a) + '" y="' + (-SCALE.h) + '" width="' + 2 * a + '" height="' + SCALE.h + '" rx="3"/>' +
+        '<rect class="cl-scale-pan" x="' + (-a + 6) + '" y="' + (-SCALE.lift) + '" width="' + (2 * a - 12) + '" height="4" rx="1"/>' +
+        '<g class="cl-meter"><rect x="-26" y="-16" width="52" height="13" rx="2"/><text x="0" y="-6" text-anchor="middle">' +
+        (ctx.numbers ? shown(w, ctx.lang) : "") + "</text></g>" + badge(place ? a + 14 : 0, 14, ctx.no);
     }
   });
 
@@ -1181,6 +1202,7 @@
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
         : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
+        : id === "balance" ? '<rect class="cl-scale" x="2" y="16" width="24" height="10" rx="2"/><rect class="cl-scale-pan" x="5" y="13" width="18" height="2.5"/><g class="cl-meter"><rect x="8" y="18" width="12" height="6" rx="1"/></g>'
         : id === "tube" ? '<path class="cl-stopper" d="M2,13L10,13L9,18L3,18Z"/><path class="cl-glass" d="M6,13L6,5Q6,3 8,3L20,3Q22,3 22,5L22,27"/>'
         : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'
         : id === "conductometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:6px">mS</text></g>'

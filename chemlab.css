@@ -204,6 +204,8 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-porcelain-edge { fill: none; stroke: var(--cl-glass); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.7; }
 .lia-chemlab .cl-crust { fill: #ece8dc; stroke: #bdb6a4; stroke-width: 0.5; }
 .lia-chemlab .cl-shard { fill: #dfeaf3; fill-opacity: 0.6; stroke: var(--cl-glass); stroke-width: 1; stroke-linejoin: round; }
+.lia-chemlab .cl-scale { fill: #e3e7eb; stroke: #55677a; stroke-width: 1.2; }
+.lia-chemlab .cl-scale-pan { fill: #b9c2cb; stroke: #55677a; stroke-width: 1; }
 .lia-chemlab .cl-burner { fill: #8b949e; stroke: #4f5760; stroke-width: 0.8; }
 .lia-chemlab .cl-hose { fill: none; stroke: #b5533c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .lia-chemlab .cl-tripod { fill: none; stroke: #4f5760; stroke-width: 3; stroke-linecap: round; }
@@ -274,6 +276,7 @@ html.lia-variant-dark .lia-chemlab .cl-lens-glass { stroke: #c3cfdb; }
 html.lia-variant-dark .lia-chemlab .cl-wire { stroke: #c3cfdb; }
 html.lia-variant-dark .lia-chemlab .cl-wire.cl-plus { stroke: #ff8a80; }
 html.lia-variant-dark .lia-chemlab .cl-wire.cl-minus { stroke: #7fc4ff; }
+html.lia-variant-dark .lia-chemlab .cl-scale { fill: #3a444f; stroke: #c3cfdb; }
 html.lia-variant-dark .lia-chemlab .cl-device { fill: #3a444f; stroke: #c3cfdb; }
 html.lia-variant-dark .lia-chemlab .cl-knob { fill: #55606c; stroke: #c3cfdb; }
 html.lia-variant-dark .lia-chemlab .cl-letter { fill: #f0f4f8; }
