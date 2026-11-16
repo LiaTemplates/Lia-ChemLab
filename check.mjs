@@ -7479,3 +7479,14 @@ test("3D: geht es nicht, bleibt die Fläche 2D und sagt warum", async () => {
     assert.match(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, /cl-glass/);
   } finally { delete L.stage3d; }
 });
+
+test("3D: Erweiterungen eines Kurses warten, bis der Baustein geladen ist", () => {
+  const seen = [], errors = [];
+  const box = vm.createContext({ console: { error: (...a) => errors.push(a) } });
+  box.LiaChemLabReady = [(L) => seen.push(typeof L.registerScene), () => { throw new Error("kaputt"); }, (L) => seen.push("danach")];
+  vm.runInContext(fs.readFileSync(new URL("chemlab-3d.js", import.meta.url), "utf8"), box, { filename: "chemlab-3d.js" });
+  assert.deepEqual(seen, ["function", "danach"]);          // ein Fehler hält die übrigen nicht auf
+  assert.equal(errors.length, 1);
+  box.LiaChemLabReady.push((L) => L.registerScene("werkstatt", { build() {} }));       // später angestellt: läuft sofort
+  assert.ok(box.LiaChemLab.scenes3d.werkstatt);
+});

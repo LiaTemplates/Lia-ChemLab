@@ -2,7 +2,7 @@
    Diese Datei ist klein und wird mit dem Kurs geladen. Three.js und die Dateien in 3d/ kommen erst,
    wenn jemand auf 3D schaltet.
 
-   Erweitern, aus einem eigenen Skript nach dieser Datei:
+   Erweitern, aus einem eigenen Skript (angestellt in LiaChemLabReady, siehe unten und README „Eigene Szenen in 3D“):
      LiaChemLab.registerScene("werkstatt", { build: function (kit) { … }, gear: { burner: "1880" } })
      LiaChemLab.registerLook("beaker", "werkstatt", { build: function (kit, d) { return obj; }, update: function (obj, d, kit) { … } })
    kit.THREE ist Three.js; d ist der Datensatz eines Geräts (siehe 3d/stage.js). */
@@ -84,4 +84,12 @@
   L.stage3d = function (host, opts) {
     return load().then(function () { return L.makeStage3d(host, opts); });
   };
+
+  // Erweiterungen eines Kurses (eigene Szenen, Looks, Geräte). LiaScript führt die Skripte des Kurses vor denen des Bausteins aus,
+  // darum stellen sie sich an: (window.LiaChemLabReady = window.LiaChemLabReady || []).push(function (L) { L.registerScene(…) }).
+  // Diese Datei ist die letzte des Bausteins: hier läuft, was wartet, und danach jeder neue Eintrag sofort.
+  function run(f) { try { f(L); } catch (e) { global.console.error("LiaChemLabReady", e); } }
+  var waiting = global.LiaChemLabReady || [];
+  global.LiaChemLabReady = { push: run };
+  [].concat(waiting).forEach(run);
 })(typeof globalThis !== "undefined" ? globalThis : this);

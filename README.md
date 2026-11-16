@@ -899,7 +899,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 - `table` – `true`: mit Messwerttabelle; nur, solange Zahlen gezeigt werden.
 - `room` – die Raumtemperatur in °C, Vorgabe 20.
 - `view` – womit die Fläche beginnt: `"2d"` (Vorgabe) oder `"3d"`. Der Knopf **3D** schaltet jederzeit um.
-- `scene` – wie die Fläche in 3D aussieht: `"lab"` (Labor, Vorgabe), `"kitchen"` (Küche) oder `"1880"` (Labor um 1880). Ausführlich als Objekt: `{"base":"kitchen","gear":{"burner":"lab"},"quality":"low"}` – `gear` nimmt für einzelne Geräte das Aussehen einer anderen Szene, `quality` ist `"auto"` (Vorgabe), `"high"` oder `"low"` (ohne Schatten, für schwache Geräte). An der Rechnung ändert die Szene nichts.
+- `scene` – wie die Fläche in 3D aussieht: `"lab"` (Labor, Vorgabe), `"kitchen"` (Küche) oder `"1880"` (Labor um 1880). Ausführlich als Objekt: `{"base":"kitchen","gear":{"burner":"lab"},"quality":"low"}` – `gear` nimmt für einzelne Geräte das Aussehen einer anderen Szene, `quality` ist `"auto"` (Vorgabe), `"high"` oder `"low"` (ohne Schatten und Raumlicht-Bild, mit weniger Bildpunkten; „auto“ wählt das am Handy und auf schmalen Flächen). An der Rechnung ändert die Szene nichts.
 - `model` – womit die Gleichgewichte rechnen: `"ideal"` mit Konzentrationen (Vorgabe) oder `"real"` mit Aktivitäten, siehe „Ideale und reale Lösung“.
 - `data` – eigene Stoffe und Reaktionen, siehe nächster Abschnitt.
 
@@ -1043,6 +1043,83 @@ Jede Gleichung wird beim Laden geprüft. Geht die Bilanz der Atome oder der Ladu
 **Stoffe aus offenen Datenbanken:** `node tools/import.mjs <Name oder CAS-Nummer>` füllt einen Eintrag vor. Das Werkzeug fragt PubChem nach Formel und molarer Masse und nimmt aus der dortigen Hazardous Substances Data Bank (gemeinfrei) Siedepunkt, Schmelzpunkt, Dichte und Verdampfungsenthalpie; die Namen kommen aus Wikidata (CC0). Mit `--phreeqc datei.dat …` listet es außerdem die Zeilen dieser PHREEQC-Dateien, die den Stoff nennen, mit `log_k` und `delta_h`. Heraus kommt ein Eintrag im Format der Pakete, mit Quellen, und eine Liste dessen, was noch fehlt: Die Bildungsenthalpie, das Kennzeichen des Stoffs (aus der Summenformel, etwa `C2H6O(aq)`) und die Gleichgewichte prüft und trägt man von Hand ein.
 
 Was es schon gibt, lässt sich über `data` nicht ändern: Ein Eintrag für einen vorhandenen Stoff, eine vorhandene Reaktion oder Vorratsflasche wird nur angenommen, wenn er dem vorhandenen gleicht. So verändert der Aufbau einer Folie nie die Stoffe, mit denen eine andere gerade rechnet. Was aus der Formel folgt – molare Masse, Ladung, Zustand – lässt sich gar nicht überschreiben.
+
+## Eigene Szenen in 3D
+
+Szenen und das Aussehen der Geräte in 3D lassen sich nachtragen, wie Stoffe. Sie stehen in einem eigenen Skript des Kurses:
+
+```
+<!--
+import: <Pfad>/README.md
+script: ./werkstatt.js
+-->
+```
+
+LiaScript führt dieses Skript aus, bevor der Baustein geladen ist. Darum stellt es sich an; seine Funktion läuft, sobald der Baustein da ist. Das gilt auch für eigene Geräte mit `registerPart`:
+
+```js
+(window.LiaChemLabReady = window.LiaChemLabReady || []).push(function (LiaChemLab) {
+  LiaChemLab.registerScene("werkstatt", { … });
+  LiaChemLab.registerLook("beaker", "werkstatt", { … });
+});
+```
+
+In diese Funktion gehören die folgenden Beispiele.
+
+Eine **Szene** hat einen Namen, einen Stil für die Geräte und baut den Raum. `LiaChemLab.fx3d.room` legt Wand, Tischplatte, Unterschrank, Boden und Licht an; Farben stehen als Zahl (`0x9aa3ab`), Bilder als `{ map, normal, repeat, rough }` mit einer Adresse. `build` läuft erst, wenn jemand auf 3D schaltet; dann sind Three.js (`kit.THREE`) und die Helfer in `LiaChemLab.fx3d` da.
+
+```js
+LiaChemLab.registerScene("werkstatt", {
+  style: { metal: "brass", wood: 0x6a4a2a, device: 0x3a3f45, marks: 0xffd040 },
+  gear: { burner: "1880" },           // der Brenner sieht aus wie um 1880
+  build: function (kit) {
+    LiaChemLab.fx3d.room(kit, {
+      top: { map: "https://example.org/werkbank.jpg", repeat: [9, 0.75] },
+      cabinet: 0x555a60, wall: 0x9aa3ab, floor: 0x5a5f66,
+      light: 0xffffff, lightPower: 2, exposure: 0.9
+    });
+    var THREE = kit.THREE, box = new THREE.Mesh(new THREE.BoxGeometry(30, 12, 18), LiaChemLab.fx3d.matte(0xb03020, 0.5));
+    box.position.set(-45, 6, -30);                // Werkzeugkiste hinten links
+    kit.root.add(box);
+  }
+});
+```
+
+Im Aufbau gilt sie dann mit `"scene":"werkstatt"`. Maße sind in cm; die Tischplatte liegt bei y = 0, die Geräte stehen nebeneinander bei z = 0, vorne ist +z. Ein Bild darf auch ein Raumlicht sein: `kit.environment("https://…/raum.hdr")` (ein HDR-Bild, etwa von Poly Haven).
+
+| Stil | Bedeutung | Vorgabe |
+|---|---|---|
+| `glass`, `glassOpacity` | Farbe und Deckkraft des Glases | weiß, 0,2 |
+| `metal` | `"steel"` oder `"brass"`: Stative, Brenner, Klemmen | `"steel"` |
+| `wood` | Ständer und Halter | hellbraun |
+| `device` | Gehäuse der Messgeräte | hellgrau |
+| `display` | `"lcd"` oder `"paper"` (Zeigerskala) | `"lcd"` |
+| `marks` | Farbe der Skala auf Gläsern; `null` ohne Skala | weiß |
+| `hose` | Gasschlauch | rot |
+| `tank` | Wasserbad: `"glass"` oder `"copper"` | `"glass"` |
+
+Mit `gear` übernimmt die Szene für einzelne Geräte das Aussehen einer anderen Szene. Was sie nicht nennt, sieht aus wie im Labor, in ihrem Stil.
+
+Ein **Look** ist das Aussehen eines Geräts in einer Szene: `build(kit, d)` gibt ein Three.js-Objekt zurück, `update(obj, d, kit)` passt es bei jedem Bild an. Am einfachsten nimmt man den Look des Labors und ändert etwas daran, hier ein Becherglas mit einem Etikett:
+
+```js
+LiaChemLab.registerLook("beaker", "werkstatt", {
+  build: function (kit, d) {
+    var obj = LiaChemLab.looks3d.beaker.lab.build(kit, d), THREE = kit.THREE;
+    var etikett = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.2), LiaChemLab.fx3d.matte(0xf4ecd0));
+    obj.add(etikett);
+    obj.userData.etikett = etikett;       // eigener Name: tag, shape, body … nutzt der Look des Labors
+    return obj;
+  },
+  update: function (obj, d, kit) {
+    LiaChemLab.looks3d.beaker.lab.update(obj, d, kit);
+    var shape = obj.userData.shape;               // Form des Glases: floor, rim, inner(y) in cm
+    obj.userData.etikett.position.set(0, shape.rim * 0.4, shape.inner(shape.rim * 0.4) + 0.05);
+  }
+});
+```
+
+`d` ist der Datensatz des Geräts, derselbe wie in 2D: `d.data` die Füllung (`ml`, `color`, `cloud`, `steam`, …) oder der Messwert, `d.label` der Text für Vorleser, `d.place` wo ein Messgerät steckt, `d.ctx.t` die Zeit des Versuchs und `d.ctx.still` bei „weniger Bewegung“ (dann nichts bewegen). Was Auswahlrahmen und Tastatur umfassen, steht in `obj.userData.body`; Anschlüsse für Leitungen in `obj.userData.terminals`. Ein Gerät ohne Look erscheint als Kasten mit seinem Namen. Eine eigene Elektrode (`registerPart`) sieht aus wie die anderen. Wie die Szenen des Bausteins gebaut sind, zeigen `3d/scenes.js`, `3d/looks-kitchen.js` und `3d/looks-1880.js`.
 
 ## So rechnet der Baustein
 

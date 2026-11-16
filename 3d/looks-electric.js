@@ -78,7 +78,7 @@
     }
   };
   Object.keys(L.parts).forEach(function (type) { if (L.parts[type].electrode) L.registerLook(type, "lab", electrode); });
-  L.electrode3d = electrode;        // für eigene Elektroden: L.registerLook("electrode-Pb", "lab", L.electrode3d)
+  L.electrode3d = electrode;        // eigene Elektroden, die später dazukommen, nimmt die Bühne von hier (lookOf in stage.js)
 
   // ------------------------------------------------------------------ Netzgerät, Strom- und Spannungsmesser
 

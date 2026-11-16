@@ -19,10 +19,10 @@
   var LIFT = 2.5;
   function up(px) { return px / PX * LIFT; }
 
-  // Szene der Konfiguration → Look eines Geräts: eigene Wahl im JSON, dann die Szene, ihre Zuordnung, das Labor, der Kasten
+  // Szene der Konfiguration → Look eines Geräts: eigene Wahl im JSON, dann die Szene, ihre Zuordnung, das Labor, eine Elektrode, der Kasten
   function lookOf(type, scene, def) {
     var looks = L.looks3d[type] || {};
-    return looks[scene.gear[type]] || looks[scene.base] || looks[(def.gear || {})[type]] || looks.lab || L.looks3d["*"].lab;
+    return looks[scene.gear[type]] || looks[scene.base] || looks[(def.gear || {})[type]] || looks.lab || (def.electrode && L.electrode3d) || L.looks3d["*"].lab;
   }
 
   // Ein Schild als Sprite: schreibt nur neu, wenn sich der Text ändert. Höhe in cm.
@@ -85,7 +85,8 @@
     var scene = opts.scene, def = L.scenes3d[scene.base], error;
     if (!def) { error = new Error(scene.base); error.code = "scene"; throw error; }
 
-    var narrow = ((host.parentNode && host.parentNode.clientWidth) || 600) < 520;       // host selbst ist noch versteckt, bis die Bühne steht
+    // auto: schmale Fläche oder Handy (kürzere Bildschirmseite, auch quer) → niedrig. host selbst ist noch versteckt, bis die Bühne steht
+    var screen = global.screen || {}, narrow = ((host.parentNode && host.parentNode.clientWidth) || 600) < 520 || Math.min(screen.width || 999, screen.height || 999) < 520;
     var high = scene.quality === "high" || (scene.quality === "auto" && !narrow);
     var renderer = new THREE.WebGLRenderer({ antialias: true });          // ohne WebGL wirft das, und die Fläche bleibt 2D
     renderer.setPixelRatio(high ? Math.min(global.devicePixelRatio || 1, 2) : 1);
@@ -112,18 +113,21 @@
       style: Object.assign({}, L.fx3d.STYLE, def.style), render: function () { render(); } };
     var loader = new THREE.TextureLoader();
     loader.setCrossOrigin("anonymous");
-    // Bild aus dem Ordner des Bausteins (assets/3d/…); color: Farbbild (sRGB), sonst Daten wie Normalen; repeat: [x, y]
+    // Pfade sind relativ zum Ordner des Bausteins (assets/3d/…); eine volle Adresse (https://…) gilt so, wie sie ist
+    function url(path) { return /^([a-z]+:|\/)/i.test(path) ? path : L.base3d + path; }
+    // Bild: color: Farbbild (sRGB), sonst Daten wie Normalen; repeat: [x, y]
     kit.texture = function (path, color, repeat) {
-      var tex = loader.load(L.base3d + path, render);
+      var tex = loader.load(url(path), render);
       tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
       if (repeat) tex.repeat.set(repeat[0], repeat[1]);
       if (color) tex.colorSpace = THREE.SRGBColorSpace;
       tex.anisotropy = 4;
       return tex;
     };
-    // Raumlicht aus einem HDR-Bild; bis es geladen ist, gilt das einfache Raumlicht
+    // Raumlicht aus einem HDR-Bild; bis es geladen ist, gilt das einfache Raumlicht. Bei niedriger Qualität bleibt es dabei (spart 1–2 MB)
     kit.environment = function (path) {
-      new L.three.RGBELoader().load(L.base3d + path, function (hdr) {
+      if (!high) return;
+      new L.three.RGBELoader().load(url(path), function (hdr) {
         if (dead) { hdr.dispose(); return; }
         var env = pmrem.fromEquirectangular(hdr).texture;
         hdr.dispose();

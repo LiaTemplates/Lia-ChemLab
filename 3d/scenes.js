@@ -46,6 +46,8 @@
     if (look.hdr) kit.environment(look.hdr);
   }
 
+  fx.room = room;              // auch für eigene Szenen
+
   function put(root, geo, mat, x, y, z) {
     var m = new THREE.Mesh(geo, mat);
     m.position.set(x, y, z);
