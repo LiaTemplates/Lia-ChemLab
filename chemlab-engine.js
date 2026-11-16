@@ -532,6 +532,78 @@
     return copy;
   }
 
+  // ------------------------------------------------------------------ GHS-Kennzeichnung
+
+  // Massenanteil des gelösten Stoffs in %: ein Liter Lösung aus den gelösten Teilchen und dem Wasser, das neben ihnen Platz hat
+  // per: { species, M }: eingestuft ist nur dieser Stoff (Bleichlauge: das Hypochlorit, nicht das Kochsalz darin)
+  function massPercent(r) {
+    var solute = 0, key, per = r.ghs && r.ghs.per;
+    if (!r.solution) return 100;
+    for (key in r.solution) if (key !== WATER) solute += r.solution[key] * L.db.species[key].M;
+    if (!(solute > 0)) return 0;
+    return 100 * (per ? (r.solution[per.species] || 0) * per.M : solute) / (solute + (1 - taken(r.solution, L.db.species)) * 997);
+  }
+
+  // Kennzeichnung eines Stoffs aus dem Regal, gerechnet aus der Einstufung des reinen Stoffs (ghs) nach den Gemisch-Regeln der
+  // CLP-Verordnung (EG 1272/2008, Anhang I). ghs, Konzentrationen in Massenprozent:
+  //   corr: [hautätzend ab, hautreizend ab, augenschädigend ab, augenreizend ab]   (allgemein 5, 1, 3, 1; sonst die spezifischen Grenzen)
+  //   irrit: haut- oder augenreizend (Kat. 2) ab (allgemein 10)
+  //   ate: Schätzwert der akuten Toxizität oral in mg/kg; das Gemisch hat ate / Anteil
+  //   cmr: [Kategorie 1 oder 2, ab]   stot: [Kategorie 1, 2 oder 3, ab]   sens: hautsensibilisierend ab   resp: atemwegssensibilisierend ab
+  //   aq: { acute: M-Faktor (akut 1), chronic: [Kategorie, M] }
+  //   met: korrosiv gegenüber Metallen ab (H290; dafür gibt es keine Gemisch-Regel, die Grenze folgt der Praxis der Lieferanten): Ätzsymbol mit „Achtung“
+  //   pure: Piktogramme nur des reinen Stoffs (entzündbar, brandfördernd …), pureDanger: mit Signalwort „Gefahr“
+  //   fixed: die Piktogramme einer Fertiglösung, wie auf ihrem Etikett, signal: "danger" oder "warning"
+  // Zurück: { pictograms: ["GHS05", …], signal: "danger" | "warning" | null }
+  function hazards(id) {
+    var r = reagent(id), g = r.ghs, pct, pics = {}, why = {}, danger = false, any = false, cat, limit, out;
+    if (!g) return { pictograms: [], signal: null };
+    if (g.fixed) return { pictograms: g.fixed.slice().sort(), signal: g.signal || null };
+    pct = massPercent(r);
+    function mark(code, serious, reason) {
+      pics[code] = true; any = true;
+      if (serious) danger = true;
+      if (code === "GHS07") why[reason] = true;
+    }
+    if (g.corr) {                                              // null: der Stoff ist nicht hautätzend, nur augenschädigend
+      if (g.corr[0] != null) { if (pct >= g.corr[0]) mark("GHS05", true); else if (pct >= g.corr[1]) mark("GHS07", false, "skin"); }
+      if (pct >= g.corr[2]) mark("GHS05", true); else if (pct >= g.corr[3]) mark("GHS07", false, "skin");
+    }
+    if (g.irrit != null && pct >= g.irrit) mark("GHS07", false, "skin");
+    if (g.met != null && pct >= g.met) mark("GHS05", false);
+    if (g.ate != null && pct > 0) {
+      limit = g.ate / (pct / 100);
+      if (limit <= 300) mark("GHS06", true); else if (limit <= 2000) mark("GHS07", false, "tox");
+    }
+    if (g.cmr && pct >= g.cmr[1]) mark("GHS08", g.cmr[0] === 1);
+    if (g.stot) {
+      cat = g.stot[0];
+      limit = g.stot[1] != null ? g.stot[1] : cat === 3 ? 20 : 10;
+      if (cat === 3) { if (pct >= limit) mark("GHS07", false, "stot"); }
+      else if (pct >= limit) mark("GHS08", cat === 1);
+      else if (cat === 1 && pct >= 1) mark("GHS08", false);                // STOT 1 zwischen 1 und 10 %: Kategorie 2
+    }
+    if (g.sens != null && pct >= g.sens) mark("GHS07", false, "sens");
+    if (g.resp != null && pct >= g.resp) { mark("GHS08", true); why.resp = true; }
+    if (g.aq) {
+      if (g.aq.acute && g.aq.acute * pct >= 25) mark("GHS09", false);
+      if (g.aq.chronic) {
+        cat = g.aq.chronic[0]; limit = g.aq.chronic[1] || 1;
+        if (cat === 1 && (limit * pct >= 25 || 10 * limit * pct >= 25)) mark("GHS09", false);
+        if (cat === 2 && pct >= 25) mark("GHS09", false);
+      }
+    }
+    if (g.pure && !r.solution) g.pure.forEach(function (code) { mark(code, !!g.pureDanger); });
+    // Vorrang (Art. 26): neben dem Totenkopf kein Ausrufezeichen; neben dem Ätzsymbol keins für Reizung; neben dem Symbol
+    // für Atemwegssensibilisierung keins für Hautsensibilisierung oder Reizung
+    if (pics.GHS06) why = {};
+    if (pics.GHS05) delete why.skin;
+    if (why.resp) { delete why.sens; delete why.skin; delete why.resp; }
+    if (!why.skin && !why.tox && !why.stot && !why.sens) delete pics.GHS07;
+    out = Object.keys(pics).sort();
+    return { pictograms: out, signal: danger ? "danger" : any ? "warning" : null };
+  }
+
   // ------------------------------------------------------------------ Geräte (nur die Physik; die Zeichnung steht in chemlab-parts.js)
 
   L.parts = L.parts || {};
@@ -4182,6 +4254,8 @@
   L.sample = sample;
   L.view = view;
   L.reading = reading;
+  L.hazards = hazards;
+  L.massPercent = massPercent;
   L.reactions = reactions;
   L.createRun = createRun;
   L.seek = seek;

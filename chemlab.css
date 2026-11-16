@@ -85,6 +85,11 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-n { font-size: 0.8em; font-weight: normal; opacity: 0.75; margin-left: 0.25em; }
 .lia-chemlab .cl-shelf { display: flex; flex-wrap: nowrap; gap: 0.35em; overflow-x: auto; padding-bottom: 0.25em; scroll-snap-type: x proximity; scrollbar-width: thin; }
 .lia-chemlab .cl-shelf .cl-pick { flex: none; scroll-snap-align: start; }
+/* GHS-Piktogramme: im Regal klein neben dem Namen, an der Flasche in der Hand größer mit Signalwort */
+.lia-chemlab .cl-ghs-row { display: inline-flex; align-items: center; gap: 1px; vertical-align: middle; flex: none; }
+.lia-chemlab .cl-ghs { width: 18px; height: 18px; display: block; }
+.lia-chemlab .cl-hand .cl-ghs { width: 30px; height: 30px; }
+.lia-chemlab .cl-signal { font-weight: 700; margin: 0 .4em 0 .3em; }
 .lia-chemlab .cl-pick span,
 .lia-chemlab .cl-use span { max-width: 9em; white-space: normal; line-height: 1.15; }
 .lia-chemlab .cl-tap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0.3em 0; }

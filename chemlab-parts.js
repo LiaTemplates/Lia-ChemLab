@@ -94,6 +94,9 @@
       "aria.under": "under {vessel}", "aria.at": "connected to {vessel}", "aria.flame": "flame {state}", "aria.boiling": "boiling",
       "aria.residue": "residue", "aria.broken": "shattered", "aria.burning": "on fire",
       "amount": "Amount", "less": "less", "more": "more",
+      "ghs.GHS01": "explosive", "ghs.GHS02": "flammable", "ghs.GHS03": "oxidising", "ghs.GHS04": "gas under pressure", "ghs.GHS05": "corrosive",
+      "ghs.GHS06": "acutely toxic", "ghs.GHS07": "harmful or irritant", "ghs.GHS08": "serious health hazard", "ghs.GHS09": "hazardous to the environment",
+      "ghs.danger": "Danger", "ghs.warning": "Warning",
       "hint.hand": "Now tap a vessel.", "hint.tool": "Now tap the vessel it should go into.",
       "hint.over": "Now tap the vessel it should hang above.",
       "tap": "Tap", "tap.off": "closed", "tap.drop": "dropwise", "tap.slow": "slow", "tap.fast": "fast",
@@ -1308,6 +1311,34 @@
 
   // ------------------------------------------------------------------ Bildchen für das Regal
 
+  // GHS-Piktogramme: rot umrandete Raute, schwarzes Symbol (vereinfacht nach den Vorlagen der UN, GHS Anhang 3)
+  var GHS = {
+    GHS01: '<circle cx="11" cy="14" r="3.6"/><path d="M13.5 11.5l2-2" stroke-width="1.2" fill="none" stroke="#000"/><path d="M16 8l1.2-1.2M16.8 9.6l1.6-.2M14.6 7.4l.2-1.6" stroke="#000" stroke-width=".9" fill="none"/>',
+    GHS02: '<path d="M12 6c1 2.4 3.6 3.6 3.6 7.2a3.6 3.6 0 0 1-7.2 0c0-1.8 1-2.6 1.6-3.6.2 1.2.9 1.8 1.4 2 .2-2.2-.4-3.8.6-5.6z"/><rect x="7.5" y="17.6" width="9" height="1.2"/>',
+    GHS03: '<path d="M12 5.6c.8 1.8 2.8 2.6 2.8 5.2a2.8 2.8 0 0 1-5.6 0c0-1.3.7-1.9 1.2-2.7.2.9.7 1.3 1 1.5.2-1.6-.2-2.6.6-4z"/><circle cx="12" cy="15.6" r="2.6" fill="none" stroke="#000" stroke-width="1.3"/><rect x="7.5" y="18.6" width="9" height="1"/>',
+    GHS04: '<rect x="7" y="10.2" width="10" height="4.4" rx="2.2" transform="rotate(-25 12 12.4)"/><rect x="16.2" y="8.2" width="1.6" height="2.6" transform="rotate(-25 17 9.5)"/>',
+    GHS05: '<path d="M7.6 7.4l2.2 1.2-1 1.8-2.2-1.2zM14.2 7.4l2.2-1.2 1 1.8-2.2 1.2z"/><path d="M8.6 10.6v2.2M15.4 10.6v2.2" stroke="#000" stroke-width=".9"/><path d="M6.6 14.2h5v1.6h-5zM12.6 14.6c1.2-.6 2.4-.4 3.6.2l1.2 1.2h-4.8z"/>',
+    GHS06: '<circle cx="12" cy="9.8" r="3.4"/><circle cx="10.8" cy="9.6" r=".8" fill="#fff"/><circle cx="13.2" cy="9.6" r=".8" fill="#fff"/><path d="M8 14l8 3.6M16 14l-8 3.6" stroke="#000" stroke-width="1.4"/>',
+    GHS07: '<rect x="11" y="6.6" width="2" height="7.6" rx="1"/><circle cx="12" cy="16.6" r="1.2"/>',
+    GHS08: '<circle cx="12" cy="8" r="2"/><path d="M8 18.4c0-4.6 1.6-7.6 4-7.6s4 3 4 7.6z"/><path d="M12 12.4l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#fff"/>',
+    GHS09: '<path d="M8.4 16V9.6M8.4 11.6l-1.8-1.6M8.4 12.6l1.8-1.6M8.4 10.6l1.4-1.2" stroke="#000" stroke-width="1" fill="none"/><path d="M11.2 15.6c1.4-1.6 3.4-1.8 4.8-.4l1.4-1v2.8l-1.4-1c-1.4 1.4-3.4 1.2-4.8-.4z"/><rect x="6.6" y="17.6" width="11" height=".9"/>'
+  };
+
+  function ghsIcon(code) {
+    return '<svg class="cl-ghs" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1.2L22.8 12 12 22.8 1.2 12z" fill="#fff" stroke="#e00" stroke-width="1.8" stroke-linejoin="round"/>' +
+      '<g fill="#000">' + (GHS[code] || "") + "</g></svg>";
+  }
+
+  // Die Kennzeichnung eines Stoffs aus dem Regal als HTML: Piktogramme, beim Wort „signal“ auch das Signalwort. Ohne Gefahr: leer
+  function ghsLabel(id, lang, signal) {
+    var h, words;
+    try { h = L.hazards(id); } catch (e) { return ""; }
+    if (!h.pictograms.length && !h.signal) return "";
+    words = (h.signal ? text("ghs." + h.signal, lang) + ": " : "") + h.pictograms.map(function (code) { return text("ghs." + code, lang); }).join(", ");
+    return '<span class="cl-ghs-row" role="img" aria-label="' + esc(words) + '" title="' + esc(words) + '">' + h.pictograms.map(ghsIcon).join("") +
+      (signal && h.signal ? '<span class="cl-signal" aria-hidden="true">' + esc(text("ghs." + h.signal, lang)) + "</span>" : "") + "</span>";
+  }
+
   function icon(id) {
     var def = L.parts[id], r, rgb, body;
     if (def) {
@@ -1376,6 +1407,8 @@
   L.explain = explain;
   L.escape = esc;
   L.icon = icon;
+  L.ghsIcon = ghsIcon;
+  L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
   L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
