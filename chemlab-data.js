@@ -509,6 +509,10 @@
         eq: "I3-(aq) + 2 S2O3^2-(aq) -> 3 I-(aq) + S4O6^2-(aq)", rate: { fast: true },
         src: "textbook value: iodine and thiosulfate react instantly and completely (basis of iodometry)"
       },
+      // Thiosulfat reduziert auch Hypochlorit und Chlor zu Chlorid, sofort: so macht man Bleichlauge vor dem Ausgießen unschädlich
+      { eq: "4 OCl-(aq) + S2O3^2-(aq) + 2 OH-(aq) -> 4 Cl-(aq) + 2 SO4^2-(aq) + H2O(l)", rate: { fast: true }, src: "textbook: thiosulfate reduces hypochlorite completely (antichlor)" },
+      { eq: "4 HOCl(aq) + S2O3^2-(aq) + H2O(l) -> 4 Cl-(aq) + 2 SO4^2-(aq) + 6 H+(aq)", rate: { fast: true }, src: "textbook: thiosulfate reduces hypochlorous acid completely (antichlor)" },
+      { eq: "4 Cl2(aq) + S2O3^2-(aq) + 5 H2O(l) -> 8 Cl-(aq) + 2 SO4^2-(aq) + 10 H+(aq)", rate: { fast: true }, src: "textbook: thiosulfate reduces dissolved chlorine completely (antichlor)" },
       {
         // Iodid als gelöster Katalysator: dieselbe Gleichung auf einem zweiten Weg. k in L/(mol s)
         eq: "2 H2O2(aq) -> 2 H2O(l) + O2(g)",

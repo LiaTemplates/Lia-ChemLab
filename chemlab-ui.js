@@ -935,7 +935,7 @@
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
             '<button type="button" class="cl-btn" data-act="pour">' + esc(T("panel.pourGo")) + "</button> " : "") +
-          '<div class="cl-dispose" role="group" aria-label="' + esc(T("panel.dispose")) + '"><span>' + esc(T("panel.dispose")) + "</span> " + L.BINS.map(function (bin) {
+          '<div class="cl-dispose" role="group" aria-label="' + esc(T("panel.dispose").replace(/\s*[:：፦]\s*$/, "")) + '"><span>' + esc(T("panel.dispose")) + "</span> " + L.BINS.map(function (bin) {
             return '<button type="button" class="cl-btn cl-bin" data-act="dispose" data-id="' + bin + '">' + L.binIcon(bin) + "<span>" + esc(T("bin." + bin)) + "</span></button>";
           }).join(" ") + "</div> " + removal() + "</div></div>";
       } else if (t) {
@@ -1707,6 +1707,7 @@
       else if (act === "pour") pourOut();
       else if (act === "dispose" && L.vessel(lab, st.sel) && L.BINS.indexOf(id) >= 0) {
         r = st.sel;
+        if (!(L.waste(lab, r) || {}).bin) { status(T("panel.empty")); return; }      // ein leeres Glas: nichts zu entsorgen
         change(function (l) { return L.dispose(l, r, id); }, function (out) { return Object.assign({ key: "disposed" }, out); });
       } else if (act === "remove" && st.sel && !st.config.lock) {
         id = st.sel;

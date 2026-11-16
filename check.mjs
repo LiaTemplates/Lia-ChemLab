@@ -830,7 +830,7 @@ test("Geräte: ein Thermometer im Glas steht der Zugabe nicht im Weg", () => {
   assert.equal(state(el).sel, "th", "ohne Stoff in der Hand wird das Thermometer gewählt");
 });
 
-test("Auswahl: Inhalt ansehen, umgießen, ausleeren, wegräumen", () => {
+test("Auswahl: Inhalt ansehen, umgießen, entsorgen, wegräumen", () => {
   const el = mount({ bench: [{ type: "testtube", id: "rg", contains: [{ reagent: "HCl 1M", ml: 8 }] }, { type: "beaker", id: "b" }] });
   tap(el, "rg");
   assert.equal(state(el).sel, "rg");
@@ -4336,7 +4336,7 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
 });
 
 test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und meldet, ob der gewählte passt", () => {
-  const want = (contains, ml) => { const l = lab([{ type: "beaker", id: "b", contains }], { room: 20 }); L.step(l, 30); return L.waste(l, "b").bin; };
+  const want = (contains, more) => { const l = lab([{ type: "beaker", id: "b", contains }], Object.assign({ room: 20 }, more)); L.step(l, 30); return L.waste(l, "b").bin; };
   assert.equal(want([{ reagent: "NaCl 0.1M", ml: 20 }]), "sink", "Kochsalzlösung: Ausguss");
   assert.equal(want([{ reagent: "HCl 1M", ml: 20 }]), "acid", "Säure");
   assert.equal(want([{ reagent: "NaOH 0.1M", ml: 20 }]), "acid", "Lauge");
@@ -4346,26 +4346,53 @@ test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und mel
   assert.equal(want([{ reagent: "H2O", ml: 20 }, { reagent: "marble", g: 1 }]), "solid", "Feststoffreste");
   assert.equal(want([{ reagent: "Zn granules", g: 1 }]), "solid", "trocken: Feststoffe");
   assert.equal(want([]), null, "leer: nichts zu entsorgen");
+  // ohne berechenbaren pH zählt der Überschuss an Säure oder Lauge: konzentrierte Schwefelsäure, ein Brei aus Natronlauge
+  assert.equal(want([{ reagent: "H2SO4 conc", ml: 2 }]), "acid", "konzentrierte Schwefelsäure");
+  assert.equal(want([{ reagent: "H2O", ml: 2 }, { reagent: "NaOH pellets", g: 2 }]), "acid", "Natronlauge als Brei");
+  assert.equal(want([{ reagent: "HCl 1M", ml: 20 }, { reagent: "marble", g: 1 }]), "acid", "saure Flüssigkeit über Marmorresten: erst abgießen und neutralisieren");
+  // Bleichlauge und Iod erst mit Thiosulfat reduzieren; danach in den Ausguss
+  assert.equal(want([{ reagent: "H2O", ml: 50 }, { reagent: "NaOCl 1M", ml: 1 }]), "reduce", "Bleichlauge");
+  // reduziert ist das Hypochlorit fort; dabei entsteht Säure, die Lösung gehört danach zu den Säuren und Laugen (oder neutralisieren)
+  assert.equal(want([{ reagent: "H2O", ml: 50 }, { reagent: "NaOCl 1M", ml: 1 }, { reagent: "Na2S2O3 1M", ml: 1 }]), "acid", "mit Thiosulfat reduziert");
+  assert.equal(want([{ reagent: "Lugol", ml: 5 }]), "reduce", "Iodlösung");
+  assert.equal(want([{ reagent: "H2O", ml: 20 }, { reagent: "PP", drops: 3 }, { reagent: "Lugol", drops: 1 }]), "sink", "Spuren zählen nicht");
+  // Alkalimetalle nie in einen Behälter: zur Lehrkraft
+  L.register(alkali());
+  assert.equal(want([{ reagent: "Na piece", g: 0.1 }]), "teacher", "Natrium");
   L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
   assert.equal(want([{ reagent: "ethanol", ml: 20 }]), "organic", "Ethanol");
   assert.equal(want([{ reagent: "wine", ml: 20 }]), "sink", "Wein");
+  assert.equal(want([{ reagent: "H2O", ml: 20 }, { reagent: "ethyl acetate", ml: 5 }]), "organic", "Ethylacetat, ab 15 %");
   // entsorgen: das Glas wird leer; zurück kommt, was richtig gewesen wäre
   const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 20 }] }], { room: 20 });
   assert.deepEqual(L.dispose(l, "b", "sink"), { vessel: "b", bin: "sink", want: "heavy", right: false });
   assert.equal(L.volume(L.vessel(l, "b")), 0, "das Glas ist leer");
   L.add(l, "b", "CuSO4 0.1M", { ml: 5 });
+  L.step(l, 5);
   assert.equal(L.dispose(l, "b", "heavy").right, true);
   assert.equal(L.dispose(l, "b", "nowhere"), null, "unbekannter Behälter");
+  assert.equal(L.dispose(l, "b", "sink"), null, "ein leeres Glas gibt es nichts zu entsorgen");
+  // zu vorsichtig ist nicht falsch: Kochsalzlösung in einem Sammelbehälter
+  L.add(l, "b", "NaCl 0.1M", { ml: 5 });
+  L.step(l, 5);
+  assert.deepEqual(L.dispose(l, "b", "acid"), { vessel: "b", bin: "acid", want: "sink", right: true, spare: true });
   const c = { lang: "de", numbers: true, names: { b: "Becherglas 1" } };
   assert.equal(L.say({ key: "disposed", vessel: "b", bin: "heavy", want: "heavy", right: true }, c), "Becherglas 1: entsorgt – Schwermetallsalze. Richtig.");
   assert.equal(L.say({ key: "disposed", vessel: "b", bin: "sink", want: "heavy", right: false }, c),
     "Becherglas 1: entsorgt – Ausguss. Besser: Schwermetallsalze. Schwermetall-Ionen dürfen nicht ins Abwasser.");
+  assert.equal(L.say({ key: "disposed", vessel: "b", bin: "acid", want: "sink", right: true, spare: true }, c), "Becherglas 1: entsorgt – Säuren und Laugen. Geht, aber der Ausguss hätte genügt.");
+  assert.equal(L.say({ key: "disposed", vessel: "b", bin: "sink", want: "heavy", right: false }, Object.assign({ hidden: { b: true } }, c)), "Becherglas 1: entsorgt – Ausguss. Das war nicht der richtige Behälter.", "eine Probe verrät ihren Inhalt nicht");
   // Ziel: richtig entsorgt, alles oder ein bestimmtes Glas
   const task = L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: true }] } }).task;
   const good = [{ key: "disposed", vessel: "b", bin: "heavy", want: "heavy", right: true }], bad = good.concat([{ key: "disposed", vessel: "b", bin: "sink", want: "acid", right: false }]);
   assert.equal(L.checkTask(task, l, []).done, false, "noch nichts entsorgt");
   assert.equal(L.checkTask(task, l, good).done, true);
   assert.equal(L.checkTask(task, l, bad).done, false, "ein Fehlgriff");
+  // „alles“: kein Glas darf noch etwas enthalten
+  const two = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 0.1M", ml: 5 }] }, { type: "beaker", id: "c", contains: [{ reagent: "CuSO4 0.1M", ml: 5 }] }], { room: 20 });
+  const first = [Object.assign({ key: "disposed" }, L.dispose(two, "b", "sink"))];
+  assert.equal(L.checkTask(task, two, first).done, false, "das Kupfersulfat steht noch da");
+  assert.equal(L.checkTask(L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: true, in: "b" }] } }).task, two, first).done, true, "dieses Glas ist erledigt");
   assert.match(L.goalText({ disposed: true }, "de"), /richtig entsorgen/);
   assert.equal(L.goalText({ disposed: true, in: "b" }, "de", { b: "Becherglas 1" }), "Becherglas 1 richtig entsorgen");
   assert.throws(() => L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: "ja" }] } }), (e) => e.code === "task");

@@ -118,8 +118,11 @@
       "panel.contents": "Contents", "panel.empty": "empty", "panel.volume": "Liquid", "panel.strength": "ionic strength", "panel.shows": "shows",
       "panel.given": "delivered:",
       "panel.pour": "Pour into", "panel.pourGo": "Pour", "panel.dispose": "Dispose of:", "panel.remove": "Put away",
-      "bin.sink": "sink", "bin.acid": "acids and bases", "bin.heavy": "heavy metal salts", "bin.organic": "organic solvents", "bin.solid": "solids",
+      "bin.sink": "sink", "bin.acid": "acids and bases", "bin.heavy": "heavy metal salts", "bin.organic": "organic solvents", "bin.solid": "solids", "bin.reduce": "reduce with sodium thiosulfate first", "bin.teacher": "back to the teacher",
       "say.disposed": "{vessel}: disposed of – {bin}. Correct.", "say.disposedWrong": "{vessel}: disposed of – {bin}. Better: {want}. {why}",
+      "say.disposedSpare": "{vessel}: disposed of – {bin}. Fine, but the sink would have done.", "say.disposedHidden": "{vessel}: disposed of – {bin}. That was not the right container.",
+      "why.reduce": "Oxidising agents such as bleach or iodine would release chlorine with acids or harm the waste water.",
+      "why.teacher": "Remains of alkali metals go back under paraffin oil; the teacher destroys them.",
       "why.sink": "Neutral solutions without heavy metals may go down the sink with plenty of water.",
       "why.acid": "Neutralise acidic and alkaline solutions first (pH 6 to 9) or collect them with the acids and bases.",
       "why.heavy": "Heavy metal ions must not get into the waste water.", "why.organic": "Organic solvents are collected separately.",
@@ -350,7 +353,9 @@
     switch (event.key) {
       case "disposed":                                           // in welchen Behälter, und ob er passte
         vars.bin = text("bin." + event.bin, lang);
+        if (event.spare) return text("say.disposedSpare", lang, vars);
         if (event.right) return text("say.disposed", lang, vars);
+        if (ctx.hidden && ctx.hidden[event.vessel]) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
         vars.want = text("bin." + event.want, lang);
         vars.why = text("why." + event.want, lang);
         return text("say.disposedWrong", lang, vars);

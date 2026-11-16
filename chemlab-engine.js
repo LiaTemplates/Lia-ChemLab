@@ -789,9 +789,12 @@
   function checkTask(task, lab, events) {
     var goals = task.goals.map(function (g) {
       var total = 0;
-      if (g.disposed) {                                          // mindestens einmal entsorgt, und jedes Mal richtig
+      if (g.disposed) {                                          // mindestens einmal entsorgt, jedes Mal richtig, und nichts mehr übrig
         var mine = (events || []).filter(function (e) { return e.key === "disposed" && (g.in == null || e.vessel === g.in); });
-        return mine.length > 0 && mine.every(function (e) { return e.right; });
+        return mine.length > 0 && mine.every(function (e) { return e.right; }) && lab.vessels.every(function (v) {
+          var w = (g.in == null || v.id === g.in) && !L.parts[v.type].dispenser ? waste(lab, v.id) : null;
+          return !w || w.bin == null;
+        });
       }
       if (g.identify) {                                          // die letzte Antwort zu dieser Probe zählt
         var s = lab.samples[g.identify];
@@ -1310,42 +1313,66 @@
 
   // ------------------------------------------------------------------ Entsorgen
 
-  // Die Behälter des Schullabors, in der Reihenfolge, in der sie geprüft werden
+  // Die Behälter des Schullabors (Knöpfe); dazu, was nicht in einen Behälter gehört: erst reduzieren (reduce), zur Lehrkraft (teacher)
   var BINS = ["sink", "acid", "heavy", "organic", "solid"];
-  var HEAVY = { Cu: 1, Zn: 1, Ag: 1, Ba: 1, Cr: 1, Co: 1, Mn: 1, Ni: 1, Pb: 1, Cd: 1, Hg: 1, Sn: 1 };      // dürfen nicht ins Abwasser
+  var HEAVY = { Cu: 1, Zn: 1, Ag: 1, Ba: 1, Cr: 1, Co: 1, Mn: 1, Ni: 1, Pb: 1, Cd: 1, Hg: 1, Sn: 1, As: 1, Sb: 1, Tl: 1, Se: 1, V: 1, Mo: 1, Bi: 1, U: 1 };      // dürfen nicht ins Abwasser
+  var ALKALI = { Li: 1, Na: 1, K: 1, Rb: 1, Cs: 1 };              // als Metall: Reste zurück unter Paraffinöl, die Lehrkraft vernichtet sie
+  var OXIDIZER = { "OCl-(aq)": 1, "HOCl(aq)": 1, "Cl2(aq)": 1, "I3-(aq)": 1, "I2(aq)": 1, "I2(s)": 1 };      // erst mit Thiosulfat reduzieren
+  var PH_SINK = [6, 9];                                           // so neutral muss eine Lösung für den Ausguss sein
 
   function elementsOf(id) { return (id.replace(/\([a-z]+\)$/, "").match(/[A-Z][a-z]?/g) || []); }
 
-  // Wohin der Inhalt eines Gefäßes gehört, nach den üblichen Regeln der Schulen (DGUV Regel 113-018):
-  // Schwermetallsalze (gelöst oder gefällt) vor organischen Lösungsmitteln vor Feststoffen vor Säuren und Laugen vor dem Ausguss.
-  // Zurück: { bin, why } oder { bin: null }, wenn nichts darin ist
+  // ob eine Lösung zu sauer oder zu alkalisch für den Ausguss ist; ohne berechenbaren pH (Brei, kein Wasser, reine Säure)
+  // entscheidet der Überschuss an Säure oder Lauge
+  function harsh(v, vol) {
+    var pH, excess;
+    if (vol > 0 && v.n[WATER] > 0 && v.n[PROTON] > 0 && !thick(v, vol)) {
+      pH = -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON);
+      return pH < PH_SINK[0] || pH > PH_SINK[1];
+    }
+    excess = (v.n[PROTON] || 0) + 2 * (v.n["H2SO4(l)"] || 0) + (v.n["HSO4-(aq)"] || 0) - (v.n["OH-(aq)"] || 0);
+    return vol > 0 && Math.abs(excess) / vol > 1e-5;
+  }
+
+  // Wohin der Inhalt eines Gefäßes gehört, nach den üblichen Regeln der Schulen (DGUV Regel 113-018), in dieser Rangfolge:
+  // Alkalimetall zur Lehrkraft, Schwermetallsalze (gelöst oder gefällt), Oxidationsmittel erst reduzieren, organische Lösungsmittel
+  // ab 15 % des Volumens, saure oder alkalische Flüssigkeit (auch über Resten), Feststoffe, sonst der Ausguss.
+  // Zurück: { bin } (bin null: es ist nichts darin) oder null für ein zersprungenes oder unbekanntes Gefäß
   function waste(lab, vesselId) {
-    var v = vessel(lab, vesselId), vol, id, s, el, heavy = false, organic = 0, solid = 0, pH, any = false;
-    if (!v) return null;
+    var v = vessel(lab, vesselId), vol, id, s, el, heavy = false, alkali = false, oxid = 0, organic = 0, solid = 0, any = false;
+    if (!v || v.broken) return null;
     vol = volume(v);
     for (id in v.n) {
       s = L.db.species[id];
       if (!(v.n[id] > 1e-7) || id === WATER) continue;
       any = true;
       el = elementsOf(id);
-      if (el.some(function (e) { return HEAVY[e]; }) && !(s.phase === "s" && el.length === 1)) heavy = true;      // ein Metallstück ist Feststoff, kein Salz
-      if (s.phase === "aq" && s.Tb != null && s.Vm && el.indexOf("C") >= 0) organic += v.n[id] * s.Vm / 1000;  // flüchtiger organischer Stoff
+      if (s.phase === "s" && el.length === 1) { if (ALKALI[el[0]]) alkali = true; }      // ein Metallstück ist Feststoff, kein Salz
+      else if (el.some(function (e) { return HEAVY[e]; })) heavy = true;
+      if (OXIDIZER[id]) oxid += v.n[id];
+      if (el.indexOf("C") >= 0 && el.indexOf("H") >= 0)        // flüssiger oder flüchtiger gelöster organischer Stoff, mit seinem Volumen
+        organic += s.phase === "l" ? v.n[id] * s.M / s.rho / 1000 : s.phase === "aq" && s.Tb != null && s.Vm ? v.n[id] * s.Vm / 1000 : 0;
     }
     v.lumps.forEach(function (l) { if (!l.made) solid += l.n * L.db.species[l.id].M; });
     if (!any && !(vol > 0)) return { bin: null };
+    if (alkali) return { bin: "teacher" };
     if (heavy) return { bin: "heavy" };
-    if (vol > 0 && organic / vol >= 0.2) return { bin: "organic" };
+    if (oxid > 1e-5) return { bin: "reduce" };
+    if (vol > 0 && organic / vol >= 0.15) return { bin: "organic" };
+    if (vol > 0.0005 && harsh(v, vol)) return { bin: "acid" };
     if (solid > 0.01 || (!(vol > 0.0005) && v.lumps.length)) return { bin: "solid" };
-    pH = vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
-    return { bin: pH < 6 || pH > 9 ? "acid" : "sink" };
+    return { bin: harsh(v, vol) ? "acid" : "sink" };
   }
 
-  // Den Inhalt eines Gefäßes in einen Behälter geben: Das Gefäß ist danach leer. Zurück, ob der Behälter passte
+  // Den Inhalt eines Gefäßes in einen Behälter geben: Das Gefäß ist danach leer. Zurück, was richtig gewesen wäre und ob der
+  // Behälter passte; spare: harmlos und doch gesammelt (nicht falsch, nur unnötig). null: unbekannter Behälter oder nichts darin
   function dispose(lab, vesselId, bin) {
-    var w = waste(lab, vesselId);
-    if (!w || BINS.indexOf(bin) < 0) return null;
+    var w = waste(lab, vesselId), out;
+    if (!w || w.bin == null || BINS.indexOf(bin) < 0) return null;
     empty(lab, vesselId);
-    return { vessel: vesselId, bin: bin, want: w.bin, right: w.bin == null || w.bin === bin };
+    out = { vessel: vesselId, bin: bin, want: w.bin, right: w.bin === bin || (w.bin === "sink" && bin !== "sink") };
+    if (w.bin === "sink" && bin !== "sink") out.spare = true;
+    return out;
   }
 
   function remove(lab, id) {
