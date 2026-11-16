@@ -283,16 +283,20 @@
       // der Rückstand im Filter, in seiner Farbe
       u.rest.visible = !!(sed && sed.ml > 0.002);
       if (u.rest.visible) {
-        h = Math.max(0.25, H * 0.6 * Math.pow(Math.min(1, sed.ml / U.cap * 4), 1 / 3));
+        h = Math.max(cm(10), H * 0.7 * Math.pow(Math.min(1, sed.ml / U.cap * 8), 1 / 3));
         u.rest.scale.set(h / H, h, h / H); u.rest.position.set(x, apex + 0.06, 0);
         u.rest.material.color.copy(fx.color(sed.rgb));
       }
+      // das Papier nimmt die Farbe des Rückstands an
+      u.paper.material.color.copy(fx.color(u.rest.visible ? sed.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.55); }) : [251, 251, 246]));
       // Stativ hinter der Reihe der Geräte, ein Ring hält den Trichter
       u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
       u.rod.scale.y = top + cm(16) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
       u.ring.position.set(x, top - cm(8), 0);
-      var dx = x - rod, len = Math.sqrt(dx * dx + Z * Z);
-      u.arm.scale.set(len, 1, 1); u.arm.position.set((x + rod) / 2, top - cm(8), Z / 2); u.arm.rotation.y = Math.atan2(Z, dx);
+      // der Arm endet am Ring, nicht in der Mitte des Trichters
+      var R = cm(U.a) + 0.12, ex = x + R * (rod - x) / Math.sqrt((rod - x) * (rod - x) + Z * Z), ez = R * Z / Math.sqrt((rod - x) * (rod - x) + Z * Z);
+      var dx = ex - rod, dz = ez - Z, len = Math.sqrt(dx * dx + dz * dz);
+      u.arm.scale.set(len, 1, 1); u.arm.position.set((ex + rod) / 2, top - cm(8), (ez + Z) / 2); u.arm.rotation.y = Math.atan2(-dz, dx);
       // das Filtrat tropft ins Gefäß darunter
       y = d.hang ? cm(-g.surface) : 0;
       u.drops.count = w.ml > 0.001 && d.hang ? 3 : 0;

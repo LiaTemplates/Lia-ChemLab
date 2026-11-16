@@ -1327,10 +1327,11 @@
       out = '<rect class="cl-stand" x="' + (g.rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
         '<line class="cl-rod" x1="' + g.rod + '" x2="' + g.rod + '" y1="-5" y2="' + (g.top - 16) + '"/>' +
         '<line class="cl-rod" x1="' + g.rod + '" x2="' + (x + a - 4) + '" y1="' + (g.top + 8) + '" y2="' + (g.top + 8) + '"/>' +
-        '<path class="cl-filter" d="' + cone(g.top + 3) + '"/>';                                  // Filterpapier
+        // Filterpapier; ein Rückstand färbt es in seiner Farbe
+        '<path class="cl-filter" d="' + cone(g.top + 3) + '"' + (sed && sed.ml > 0.002 ? ' style="fill:' + css(sed.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.55); })) + '"' : "") + "/>";
       if (w.ml > 0.005) out += '<path class="cl-liquid" d="' + cone(funnelSurface(w, mount)) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
       if (sed && sed.ml > 0.002) {                                                                 // der Rückstand im Filter, in seiner Farbe
-        rest = g.apex - Math.max(4, FUNNEL.h * 0.6 * Math.pow(Math.min(1, sed.ml / FUNNEL.cap * 4), 1 / 3));
+        rest = g.apex - Math.max(10, FUNNEL.h * 0.7 * Math.pow(Math.min(1, sed.ml / FUNNEL.cap * 8), 1 / 3));
         out += '<path class="cl-sediment" d="' + cone(rest) + '" fill="' + css(shade(sed.rgb, 0.88)) + '"/>';
       }
       out += '<path class="cl-glass" d="M' + (x - a - 3) + "," + (g.top - 2) + "L" + (x - 3) + "," + (g.apex + 2) + "L" + (x - 3) + "," + g.tip +
