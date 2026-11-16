@@ -40,6 +40,9 @@
     });
   }
 
+  // Eine Datei neben dem Baustein, etwa lang/fr.json (chemlab-ui.js)
+  L.fetchFile = function (path) { return fetchText((L.base3d || BASE) + path); };
+
   // Als blob: geladen, gilt der MIME-Typ des Servers nicht (raw.githubusercontent.com liefert text/plain)
   function blob(code) { return global.URL.createObjectURL(new global.Blob([code], { type: "text/javascript" })); }
 

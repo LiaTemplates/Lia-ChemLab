@@ -363,8 +363,12 @@
 
   // ------------------------------------------------------------------ Zahlen
 
+  var commas = {};      // Sprache -> schreibt sie das Dezimalkomma?
+  var RTL = /^(ar|fa|ur)$/;
   function localize(string, lang) {
-    return (lang === "de" ? string.replace(".", ",") : string).replace("-", "−");
+    if (!(lang in commas)) try { commas[lang] = (1.5).toLocaleString(lang).indexOf(",") >= 0; } catch (error) { commas[lang] = false; }
+    // in einem Text von rechts nach links bleibt die Zahl mit dem Zeichen davor bei ihrer Einheit ("5.1 mL")
+    return (RTL.test(lang) ? "‎" : "") + (commas[lang] ? string.replace(".", ",") : string).replace("-", "−");
   }
 
   function num(value, digits, lang) {
@@ -401,7 +405,22 @@
     return (pale ? text("pale", lang) : "") + text("color." + name, lang);
   }
 
-  function nameOf(entry, lang) { return (entry.name && (entry.name[lang] || entry.name.en || entry.name.de)) || entry.id; }
+  // Namen aus einer Sprachdatei (L.names[lang], nach id) gehen vor; eine Vorratsflasche mit Konzentration (of, c) heißt wie ihr Stoff
+  function nameOf(entry, lang) {
+    var own = L.names[lang] && L.names[lang][entry.of || entry.id];
+    if (own) return entry.of ? own + " " + trim(entry.c, lang) + " mol/L" : own;
+    return (entry.name && (entry.name[lang] || entry.name.en || entry.name.de)) || entry.id;
+  }
+
+  // Sprache der Seite. Google Translate, auch aus dem Menü von LiaScript, setzt <html lang> auf die Zielsprache.
+  // Gilt, wenn es eine Tabelle gibt: de und en hier, die übrigen als lang/<code>.json (LANGS); sonst Englisch.
+  var LANGS = "am ar bg bn ca cs da el es et eu fa fi fr ga hi hr hu hy it ja ka ko lt lv ms nb nl pa pl pt ro ru sk sl sq sv sw tr tw uk ur zh".split(" ");
+  var ALIAS = { ak: "tw", no: "nb" };       // Codes von Google, die lia-localization anders schreibt
+  function langOf(doc) {
+    var tag = String((doc && doc.documentElement && doc.documentElement.lang) || "").toLowerCase().split(/[-_]/)[0];
+    tag = ALIAS[tag] || tag;
+    return L.strings[tag] || LANGS.indexOf(tag) >= 0 ? tag : "en";
+  }
 
   // Name eines Geräts: aus der Texttabelle; bei einem eigenen Gerät seine Angabe name, bei einer eigenen Elektrode sonst der Name ihres Stoffs
   function partName(type, lang) {
@@ -1332,6 +1351,10 @@
   L.clock = clock;
   L.colorWord = colorWord;
   L.nameOf = nameOf;
+  L.names = L.names || {};
+  L.LANGS = LANGS;
+  L.langOf = langOf;
+  L.RTL = RTL;
   L.portionText = portionText;
   L.goalText = goalText;
   L.say = say;

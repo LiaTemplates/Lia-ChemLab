@@ -1089,7 +1089,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["3d", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools", "vendor"]);
+  assert.deepEqual(files, ["3d", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
@@ -6729,7 +6729,7 @@ const neutral = { room: 25, bench: [{ type: "beaker", id: "b", contains: [{ reag
 test("Oberfläche: die Aufgabe steht über der Fläche, ihre Ziele werden abgehakt", () => {
   const el = mount(neutral), box = part(el, ".cl-task");
   assert.equal(box.hidden, false);
-  assert.equal(part(box, ".cl-task-text").textContent, "Aufgabe: Neutralisiere die Salzsäure mit Natronlauge.");
+  assert.equal(part(box, ".cl-task-text").innerHTML, 'Aufgabe: <span translate="yes">Neutralisiere die Salzsäure mit Natronlauge.</span>', "den Text des Autors übersetzt Google weiter mit");
   const goals = () => part(box, ".cl-goals").innerHTML;
   assert.match(goals(), /pH-Wert von 6 bis 8 in Becherglas 1/, "Text aus dem Ziel");
   assert.match(goals(), /Natrium-Ionen sind in der Lösung/, "eigener Text");
@@ -7582,4 +7582,63 @@ test("Lehrtext: der Zustand für Skripte folgt dem Zeiger", () => {
   s = L.snapshot(run);
   near(s.values.phmeter1, 1, 0.01, "am Anfang wieder die Säure");
   assert.deepEqual(s.seen, []);
+});
+
+// ================================================================ Sprachen
+
+const langFile = (code) => JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here), "utf8"));
+
+test("Sprachen: jede Sprache aus lia-localization hat alle Texte und alle Namen", () => {
+  assert.deepEqual(fs.readdirSync(new URL("lang/", here)).sort(), L.LANGS.map((code) => code + ".json").sort());
+  const holes = (s) => (s.match(/\{\w+\}/g) || []).sort().join();
+  const ids = [L.core.species, L.core.reagents, organic.species, organic.reagents || {}].flatMap((t) => Object.keys(t).filter((id) => t[id].name));
+  for (const code of L.LANGS) {
+    const t = langFile(code);
+    assert.deepEqual(Object.keys(t.strings).sort(), Object.keys(L.strings.en).sort(), `${code}: dieselben Texte wie en`);
+    for (const [key, en] of Object.entries(L.strings.en)) assert.equal(holes(t.strings[key]), holes(en), `${code}: Platzhalter in ${key}`);
+    for (const id of ids) assert.ok(typeof t.names[id] === "string" && t.names[id].trim(), `${code}: Name für ${id}`);
+  }
+});
+
+test("Sprachen: die Sprache der Seite, Zahlen und Namen", () => {
+  const page = (lang) => L.langOf({ documentElement: { lang } });
+  assert.deepEqual(["de", "en-US", "pt-BR", "zh-CN", "ak", "no", "fr", "xx", ""].map(page), ["de", "en", "pt", "zh", "tw", "nb", "fr", "en", "en"]);
+  assert.equal(L.num(2.5, 1, "fr"), "2,5");
+  assert.equal(L.num(2.5, 1, "en"), "2.5");
+  assert.equal(L.num(-2.5, 1, "de"), "−2,5");
+  L.names.fr = { HCl: "acide chlorhydrique" };
+  try {
+    assert.equal(L.nameOf(L.reagent("HCl 0.1M"), "fr"), "acide chlorhydrique 0,1 mol/L", "Vorratsflasche mit Konzentration");
+    assert.equal(L.nameOf(L.reagent("H2O"), "fr"), "distilled water", "ohne Eintrag: englisch");
+  } finally { delete L.names.fr; }
+});
+
+test("Sprachen: wechselt die Seite die Sprache, folgt die Fläche; Google übersetzt nur, wofür es keine Tabelle gibt", async () => {
+  const fetchFile = L.fetchFile;
+  L.fetchFile = async (path) => fs.readFileSync(new URL(path, here), "utf8");
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
+  try {
+    const el = mount(neutral);
+    assert.equal(el.getAttribute("translate"), "no", "deutsch: eigene Texte");
+    assert.equal(el.getAttribute("dir"), "ltr");
+    document.documentElement.lang = "fr";
+    L.mount(el, state(el).source);
+    await settle();
+    assert.match(el.innerHTML, new RegExp(langFile("fr").strings.shelf), "französisch, nachgeladen");
+    assert.equal(el.getAttribute("translate"), "no");
+    assert.equal(state(el).names.b, langFile("fr").strings["part.beaker"] + " 1", "auch die Geräte heißen nun französisch, mit derselben Nummer");
+    assert.match(part(part(el, ".cl-task"), ".cl-task-text").innerHTML, /translate="yes">Neutralisiere/, "die Aufgabe übersetzt Google");
+    document.documentElement.lang = "ar";
+    L.mount(el, state(el).source);
+    await settle();
+    assert.equal(el.getAttribute("dir"), "rtl");
+    document.documentElement.lang = "xx";
+    L.mount(el, state(el).source);
+    assert.equal(el.getAttribute("translate"), null, "keine Tabelle: englisch, und Google darf übersetzen");
+    assert.match(el.innerHTML, />Shelf</);
+  } finally {
+    document.documentElement.lang = "de";
+    L.fetchFile = fetchFile;
+    for (const code of ["fr", "ar"]) { delete L.strings[code]; delete L.names[code]; }
+  }
 });

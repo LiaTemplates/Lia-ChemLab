@@ -31,6 +31,8 @@
 .lia-chemlab.lia-chemlab-slot { border: 0; border-radius: 0; padding: 0; background: none; max-width: none; margin: 0.6em 0; }
 .lia-chemlab.lia-chemlab-slot > .cl-eq, .lia-chemlab.lia-chemlab-slot > .cl-log, .lia-chemlab.lia-chemlab-slot > .cl-readings { border-top: 0; margin-top: 0; padding-top: 0; }
 .lia-chemlab-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Rechts nach links (ar, fa, ur): Texte und Leisten spiegeln sich; Arbeitsfläche, Zeitleiste und Diagramme bleiben, wie sie sind */
+.lia-chemlab[dir="rtl"] .cl-stage, .lia-chemlab[dir="rtl"] .cl-time, .lia-chemlab[dir="rtl"] svg { direction: ltr; }
 
 html.lia-variant-dark .lia-chemlab {
   --cl-wall: #232a33;

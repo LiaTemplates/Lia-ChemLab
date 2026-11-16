@@ -958,6 +958,14 @@ Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: 
  "show":{"numbers":false,"charts":false}}
 ```
 
+## Sprachen
+
+ChemLab spricht die Sprache des Kurses (`language:` im Kopf) und kennt alle Sprachen von [lia-localization](https://github.com/LiaScript/lia-localization). Deutsch und Englisch stehen in `chemlab-parts.js`, die übrigen liegen als `lang/<code>.json` daneben. Geladen wird nur die Sprache, die gebraucht wird. Für eine Sprache ohne Tabelle zeigt ChemLab Englisch.
+
+Schaltet jemand Google Translate ein, über das Menü von LiaScript oder im Browser, setzt der Übersetzer `<html lang>` auf die Zielsprache. ChemLab baut sich dann in dieser Sprache neu auf, mit den eigenen Fachbegriffen und dem passenden Dezimalzeichen. Der Versuch läuft dabei weiter. Für Google ist die Fläche gesperrt (`translate="no"`), nur die Texte des Autors (Aufgabe, eigene Ziele) übersetzt Google weiter mit. Nur wenn es keine Tabelle gibt, darf Google auch die englischen Texte übersetzen. Arabisch, Persisch und Urdu laufen von rechts nach links. Arbeitsfläche, Zeitleiste und Diagramme bleiben dabei, wie sie sind.
+
+Eine Sprache ergänzen oder verbessern: `lang/<code>.json` hat zwei Teile. `strings` enthält dieselben Schlüssel wie die englische Tabelle in `chemlab-parts.js`, mit denselben Platzhaltern `{…}`. `names` enthält die Namen der Stoffe und Vorratsflaschen nach ihrer id. Ist ein neuer Code dabei, kommt er in die Liste `LANGS` in `chemlab-parts.js`. `node --test check.mjs` meldet, was in welcher Sprache fehlt. Die Übersetzungen außer Deutsch und Englisch sind maschinell erstellt und noch nicht von Fachleuten gegengelesen.
+
 ## Leere Arbeitsfläche
 
 Ein leerer Block ergibt einen leeren Tisch und ein Regal mit allem, was der Baustein kennt.

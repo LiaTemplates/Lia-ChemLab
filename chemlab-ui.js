@@ -54,7 +54,7 @@
   function mount(el, source, settled, link) {
     var doc = global.document;
     link = el._clLink = link || el._clLink || {};
-    var lang = /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
+    var lang = L.langOf ? L.langOf(doc) : "en";
     var esc = L.escape;
     function T(key, vars) { return L.text(key, lang, vars); }
 
@@ -67,6 +67,19 @@
     }
 
     if (el._cl) el._cl.stop();
+    if (!L.strings[lang]) {         // die Sprachdatei kommt noch
+      el._cl = null;
+      el.innerHTML = '<p class="cl-hint" role="status">…</p>';
+      loadLang(lang).then(function () { if (el.isConnected !== false && !el._cl) mount(el, source, settled); });
+      return;
+    }
+    // Eigene Texte gibt es in dieser Sprache: Google soll sie nicht noch einmal übersetzen. Sonst (Englisch als Ersatz) darf es.
+    var own = lang !== "en" || /^en\b/i.test((doc && doc.documentElement && doc.documentElement.lang) || "");
+    function fence(box) {           // auch für die Platzhalter im Text der Folie
+      if (own) box.setAttribute("translate", "no"); else box.removeAttribute("translate");
+      box.setAttribute("dir", L.RTL.test(lang) ? "rtl" : "ltr");
+    }
+    if (el.setAttribute) fence(el);
 
     var text = typeof source === "string" ? source : JSON.stringify(source);
     var st = L.store[el.id];
@@ -142,7 +155,8 @@
     ui.events = ui.log.querySelector(".cl-events");
     ui.goals = ui.task.querySelector(".cl-goals");
     ui.done = ui.task.querySelector(".cl-done");
-    if (st.config.task) ui.task.querySelector(".cl-task-text").textContent = T("task") + ": " + st.config.task.text;
+    // Texte des Kursautors übersetzt Google weiter mit
+    if (st.config.task) ui.task.querySelector(".cl-task-text").innerHTML = esc(T("task")) + ': <span translate="yes">' + esc(st.config.task.text) + "</span>";
     ui.none = ui.log.querySelector(".cl-none");
     // Platzhalter im Text der Folie (@ChemLab.show, @ChemLab.value): Gleichungen, Protokoll und Tabelle ziehen dorthin um,
     // ein Diagramm wird dort gezeichnet, ein Messwert dort eingesetzt. Was im Text steht, fehlt unter der Fläche.
@@ -150,6 +164,7 @@
     var moved = { equations: ui.eq, log: ui.log, table: ui.readings }, inText = {}, chartSlots = [], valueSlots = [], published = null;
     slots.forEach(function (s) {
       var what = s.getAttribute("data-show");
+      fence(s);
       if (s.hasAttribute("data-value")) valueSlots.push(s);
       else if (moved[what]) { s.innerHTML = ""; s.appendChild(moved[what]); inText[what] = true; }
       else if (what) chartSlots.push({ kind: what, box: s });
@@ -193,11 +208,16 @@
     // ---------------------------------------------------------------- Namen
 
     // "Reagenzglas 1": bleibt einem Gerät, auch wenn andere weggeräumt werden
+    // Wechselt die Sprache, bekommt jedes Gerät seinen Namen neu, mit derselben Nummer
     function names() {
-      var lab = st.run.lab;
+      var lab = st.run.lab, id;
+      st.types = st.types || {};
+      if (st.lang !== lang) for (id in st.names) if (st.types[id]) st.names[id] = L.partName(st.types[id], lang) + " " + ordinal(id);
+      st.lang = lang;
       lab.vessels.concat(lab.tools).forEach(function (p) {
         if (st.names[p.id]) return;
         st.counts[p.type] = (st.counts[p.type] || 0) + 1;
+        st.types[p.id] = p.type;
         st.names[p.id] = L.partName(p.type, lang) + " " + st.counts[p.type];
       });
       return st.names;
@@ -489,7 +509,7 @@
     function reset() {
       st.run = L.createRun(st.config);
       st.sel = null;
-      st.play = 0; st.names = {}; st.counts = {}; st.solved = false;
+      st.play = 0; st.names = {}; st.counts = {}; st.types = {}; st.solved = false;
       pending = 0;
       status("");
       shape = null;
@@ -1378,7 +1398,7 @@
       html = task.goals.map(function (goal, k) {
         var met = check.goals[k];
         return '<li class="cl-goal' + (met ? " cl-met" : "") + '"><span class="cl-check" aria-hidden="true">' + (met ? "✓" : "○") + "</span> " +
-          esc(goal.label || L.goalText(goal, lang, label)) + '<span class="cl-sr"> – ' + esc(T(met ? "goal.met" : "goal.open")) + "</span></li>";
+          (goal.label ? '<span translate="yes">' + esc(goal.label) + "</span>" : esc(L.goalText(goal, lang, label))) + '<span class="cl-sr"> – ' + esc(T(met ? "goal.met" : "goal.open")) + "</span></li>";
       }).join("");
       if (ui.goals.innerHTML !== html) ui.goals.innerHTML = html;
       done = st.solved ? T("task.done") : "";
@@ -1750,10 +1770,24 @@
     } catch (error) { return []; }
   }
 
-  function langOf() {
-    var doc = global.document;
-    return /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
+  function langOf() { return L.langOf(global.document); }
+
+  // Sprachdatei lang/<code>.json laden, je Sprache einmal. Kommt sie nicht, bleibt es bei Englisch (text() fällt darauf zurück).
+  var langs = {};
+  function loadLang(code) {
+    langs[code] = langs[code] || (L.fetchFile ? L.fetchFile("lang/" + code + ".json").then(JSON.parse) : Promise.reject(new Error("chemlab-3d.js")))
+      .catch(function (error) { if (global.console) global.console.warn("ChemLab: lang/" + code + ".json", error); return {}; });
+    return langs[code].then(function (t) { L.strings[code] = t.strings || {}; L.names[code] = t.names || {}; });
   }
+
+  // Wechselt die Seite die Sprache (Google Translate an oder aus), bauen sich alle Flächen in der neuen Sprache auf.
+  // Ihr Zustand bleibt: er liegt in L.store, wie beim Folienwechsel.
+  if (global.document && global.MutationObserver) new global.MutationObserver(function () {
+    Array.prototype.forEach.call(global.document.querySelectorAll(".lia-chemlab"), function (el) {
+      var st = el._cl && L.store[el.id];
+      if (st) mount(el, st.source);
+    });
+  }).observe(global.document.documentElement, { attributes: true, attributeFilter: ["lang"] });
 
   function packError(entry, lang) {
     var e = entry.error, why = e.code === "http" ? e.detail : e.code === "data" ? L.text("err.data", lang) + ": " + L.explain(e.detail, lang) : L.text("pack." + e.code, lang);

@@ -506,7 +506,7 @@
       if (!r || !r.molar) throw fail("reagent", String(id));
       c = parseFloat(match[2].replace(",", "."));
     }
-    copy = Object.assign({}, r, { id: id, solution: {}, name: {}, c: c });
+    copy = Object.assign({}, r, { id: id, of: r.id, solution: {}, name: {}, c: c });
     for (key in r.solution) copy.solution[key] = r.solution[key] * c;
     for (key in r.name) copy.name[key] = r.name[key] + " " + String(c).replace(".", key === "de" ? "," : ".") + " mol/L";
     if (taken(copy.solution, L.db.species) > 1.0001) throw fail("reagent", String(id));            // konzentrierter, als der reine Stoff ist
