@@ -314,7 +314,7 @@ Der Span zeigt, was gerade im Gasraum über der Lösung steht. Wasserstoff ist l
 
 ## Ammonium nachweisen
 
-Feuchtes **Indikatorpapier** zeigt, was als Gas über einer Lösung steht. In beide Gläser Natronlauge geben und das Papier an die Öffnung halten, ohne die Lösung zu berühren. Über dem Ammoniumchlorid färbt es sich blau: Die Lauge setzt Ammoniak frei, und Ammoniak macht den Wasserfilm des Papiers alkalisch. Über der Kochsalzlösung bleibt es grün. Sie ist die **Blindprobe**: Sie zeigt, dass die Natronlauge allein das Papier nicht färbt.
+Feuchtes **Indikatorpapier** zeigt, was als Gas über einer Lösung steht. In beide Gläser Natronlauge geben und das Papier an die Öffnung halten, ohne die Lösung zu berühren. Über dem Ammoniumchlorid färbt es sich blauviolett: Die Lauge setzt Ammoniak frei, und Ammoniak macht den Wasserfilm des Papiers alkalisch. Über der Kochsalzlösung bleibt es grün. Sie ist die **Blindprobe**: Sie zeigt, dass die Natronlauge allein das Papier nicht färbt.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1251,7 +1251,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
 
-**Vorratsflaschen** (`reagents`): eine Lösung (`solution`: Teilchen und ihre Konzentration in mol/L; mit `"molar":true` gilt der Eintrag für 1 mol/L und die Konzentration steht im Namen), eine reine Flüssigkeit (`liquid`) oder ein Feststoff (`solid` mit `area`, der Oberfläche in cm² je Gramm). `"drops":true` gibt den Stoff tropfenweise zu; `group` nennt das Fach im Regal (`acid`, `salt`, `other`, `indicator`, `solid`). Für Feststoffe außerdem: `shape` (0 für ein Band, dessen Oberfläche beim Auflösen gleich bleibt; Vorgabe sind Körner), `tau` (Zeit in s, in der sich ein Stück löst, wenn ein Löslichkeitsgleichgewicht es verlangt und dieses kein eigenes Geschwindigkeitsgesetz hat; Vorgabe 15), `form: "powder"` (als Pulver gezeichnet) und `piece` (Menge je Stück mit Namen der Einheit, wie beim Magnesiumband in cm).
+**Vorratsflaschen** (`reagents`): eine Lösung (`solution`: Teilchen und ihre Konzentration in mol/L; mit `"molar":true` gilt der Eintrag für 1 mol/L und die Konzentration steht im Namen), eine reine Flüssigkeit (`liquid`) oder ein Feststoff (`solid` mit `area`, der Oberfläche in cm² je Gramm). `"drops":true` gibt den Stoff tropfenweise zu; `group` nennt das Fach im Regal (`acid`, `salt`, `other`, `indicator`, `solid`). Für Feststoffe außerdem: `shape` (0 für ein Band, dessen Oberfläche beim Auflösen gleich bleibt; Vorgabe sind Körner), `tau` (Zeit in s, in der sich ein Stück löst, wenn ein Löslichkeitsgleichgewicht es verlangt und dieses kein eigenes Geschwindigkeitsgesetz hat; Vorgabe 15), `form: "powder"` (als Pulver gezeichnet) und `piece` (Menge je Stück mit Namen der Einheit, wie beim Magnesiumband in cm). `start` ist die Menge, die beim Greifen eingestellt ist, in der Einheit des Stoffs (mL, Tropfen, g oder Stück), etwa `"start": 1` für ein einzelnes Stück.
 
 Jede Gleichung wird beim Laden geprüft. Geht die Bilanz der Atome oder der Ladung nicht auf, erscheint statt der Fläche ein Hinweis, der sagt, was fehlt.
 

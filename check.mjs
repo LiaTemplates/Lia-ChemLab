@@ -7805,6 +7805,14 @@ test("README: die Folie zur unbekannten Probe hält, was ihr Text verspricht", (
 
 test("README: die Folien zu Ammonium-Nachweis und Alkalimetallen halten, was ihr Text verspricht", () => {
   const [test] = slide("Ammonium nachweisen").map((b) => L.normalize(b));
+  L.register(alkali());
+  const sodium = mount({ bench: [{ type: "beaker" }], shelf: ["Na piece"] });
+  press(sodium, "hand", "Na piece");
+  assert.match(part(sodium, ".cl-hand").innerHTML, />1 Stückchen \(0,1 g\)</, "ein Stückchen, nicht fünf");
+  assert.match(part(sodium, ".cl-hand").innerHTML, /<strong>Natrium<\/strong>/);
+  const el = mount(slide("Ammonium nachweisen")[0]);
+  press(el, "hand", "paper");
+  assert.match(part(el, ".cl-hand").innerHTML, /über dessen Öffnung es gehalten wird/);
   const l = L.createLab(test), [probe, blank] = test.bench.filter((p) => p.type === "testtube").map((p) => p.id);
   [probe, blank].forEach((id) => L.add(l, id, "NaOH 1M", { ml: 5 }));
   L.step(l, 5);

@@ -33,15 +33,15 @@
   ],
   "reagents": {
     "Li piece": {
-      "name": { "de": "Lithium (Stückchen)", "en": "lithium (small pieces)" }, "solid": "Li(s)", "area": 29.5, "group": "solid",
+      "name": { "de": "Lithium", "en": "lithium" }, "solid": "Li(s)", "start": 1, "area": 29.5, "group": "solid",
       "piece": { "g": 0.03, "name": { "de": "Stückchen", "en": "piece" } }
     },
     "Na piece": {
-      "name": { "de": "Natrium (Stückchen)", "en": "sodium (small pieces)" }, "solid": "Na(s)", "area": 13, "group": "solid",
+      "name": { "de": "Natrium", "en": "sodium" }, "solid": "Na(s)", "start": 1, "area": 13, "group": "solid",
       "piece": { "g": 0.1, "name": { "de": "Stückchen", "en": "piece" } }
     },
     "K piece": {
-      "name": { "de": "Kalium (Stückchen)", "en": "potassium (small pieces)" }, "solid": "K(s)", "area": 18, "group": "solid",
+      "name": { "de": "Kalium", "en": "potassium" }, "solid": "K(s)", "start": 1, "area": 18, "group": "solid",
       "piece": { "g": 0.05, "name": { "de": "Stückchen", "en": "piece" } }
     }
   }

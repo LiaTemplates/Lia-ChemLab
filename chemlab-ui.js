@@ -343,7 +343,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -385,7 +385,7 @@
         change(function (lab) { return L.place(lab, { type: type }); }, function (made) { return { key: "placed", part: made }; });
         return;
       }
-      setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: 2 });
+      setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: Math.max(0, STEPS[unitOf(L.reagent(id))].indexOf(L.reagent(id).start)) + (STEPS[unitOf(L.reagent(id))].indexOf(L.reagent(id).start) < 0 ? 2 : 0) });
     }
 
     // Aus der Karte eines Gefäßes: ein Stoff kommt in die Hand (zugegeben wird mit dem Knopf darunter oder durch Antippen des Gefäßes),

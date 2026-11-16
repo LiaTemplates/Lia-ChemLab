@@ -139,6 +139,7 @@
     "hint.under": "Ahora tocar el recipiente bajo el que debe estar, o la mesa.",
     "hint.join": "Ahora tocar el recipiente al que se conecta.",
     "hint.test": "Ahora tocar el recipiente a cuya boca se acerca.",
+    "hint.paper": "Ahora tocar el recipiente a cuya boca se acerca.",
     "hint.rod": "Ahora tocar el recipiente en el que se sumerge; después va a la llama.",
     "flame": "Llama",
     "flame.0": "apagada",

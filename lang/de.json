@@ -139,6 +139,7 @@
     "hint.under": "Nun das Gefäß antippen, unter dem er stehen soll – oder den Tisch.",
     "hint.join": "Nun das Gefäß antippen, an das er angeschlossen wird.",
     "hint.test": "Nun das Gefäß antippen, an dessen Öffnung er gehalten wird.",
+    "hint.paper": "Nun das Gefäß antippen, über dessen Öffnung es gehalten wird – ohne die Flüssigkeit zu berühren.",
     "hint.rod": "Nun das Gefäß antippen, in das es getaucht wird; danach kommt es in die Flamme.",
     "flame": "Flamme",
     "flame.0": "aus",

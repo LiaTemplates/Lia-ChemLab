@@ -65,7 +65,7 @@
       "chart.m": "Mass of the electrodes", "chart.mUnit": "change", "chart.kappa": "Conductivity", "chart.conduct": "Conductometric titration",
       "hint.under": "Now tap the vessel it should stand under – or the bench.",
       "hint.join": "Now tap the vessel it should be connected to.",
-      "hint.test": "Now tap the vessel whose mouth it is held to.",
+      "hint.test": "Now tap the vessel whose mouth it is held to.", "hint.paper": "Now tap the vessel whose mouth it is held over – without touching the liquid.",
       "hint.rod": "Now tap the vessel it is dipped into; then it goes into the flame.",
       "flame": "Flame", "flame.0": "off", "flame.1": "luminous", "flame.2": "roaring", "sound": "Sound",
       "noFlame": "This needs a burner with a roaring flame.",
