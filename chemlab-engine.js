@@ -562,6 +562,8 @@
   registerPart("tube", { kind: "tool", duct: true, pipe: true, stopper: true });
   // Gummistopfen: verschließt das Gefäß ganz; steigt der Druck darin über POP, fliegt er heraus
   registerPart("stopper", { kind: "tool", stopper: true, plug: true });
+  // Manometer: ein Stopfen mit Druckanzeige; fliegt heraus wie er
+  registerPart("manometer", { kind: "tool", stopper: true, plug: true, sense: "p", unit: "bar", lag: 0.3, fine: 0.002 });
   // Rückflusskühler: steht aufrecht im Gefäß; der Dampf wird darin wieder flüssig und läuft zurück
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
@@ -617,7 +619,7 @@
   //   { has, min, max }       von einem Stoff liegen min bis max mol vor (gelöst, fest oder im Gasraum); Vorgabe: mindestens 1 µmol
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
-  var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g" };
+  var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g", p: "bar" };
   var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
@@ -3071,6 +3073,7 @@
   function pressure(lab, v, emit) {
     var pipe = toolAt(lab, v, function (def) { return def.pipe; }), plug = toolAt(lab, v, function (def) { return def.plug; });
     var V = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot, room, x;
+    v.p = null;
     if (!pipe && !plug) { v.seal = null; return; }
     // während umgegossen wird, ist das Gefäß offen; danach rechnet der Druck neu
     if (lab.flows.some(function (f) { return f.from === v.id || f.to === v.id; })) { v.seal = null; return; }
@@ -3085,6 +3088,7 @@
     }
     total = v.seal + gas + vap * V / (RL * T);
     p = total * RL * T / V;
+    v.p = p;
     if (plug) {
       if (p > POP || v.boil > 0) {                             // siedet es unter dem Stopfen, kann der Dampf nirgends hin
         plug.in = null; v.seal = null;
@@ -3433,6 +3437,7 @@
     if (def.bath) return t.temp;
     if (kind === "T") return Math.max(L.parts[t.type].range[0], Math.min(L.parts[t.type].range[1], v ? v.T : lab.room));
     if (kind === "V") return t.n * molar(lab) * 1000;          // aufgefangenes Gas in mL
+    if (kind === "p") return v && !v.broken && v.p != null ? v.p : P_AIR;
     if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
     vol = v ? volume(v) : 0;
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;

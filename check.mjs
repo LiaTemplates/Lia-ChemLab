@@ -2746,6 +2746,24 @@ test("Kolbenprober: ist er voll, springt der Kolben heraus", () => {
   near(L.reading(l, "kp").value, 100, 0.5, "er zeigt weiter seine 100 mL");
 });
 
+test("Manometer: zeigt den Druck im verschlossenen Glas, fliegt bei 1,5 bar heraus wie ein Stopfen", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }] }, { type: "manometer", id: "m", in: "t" }], { room: 20 });
+  L.step(l, 3);
+  near(L.reading(l, "m").value, 1, 0.02, "verschlossen bei Luftdruck");
+  assert.equal(L.reading(l, "m").unit, "bar");
+  L.add(l, "t", "Mg ribbon", { g: 0.05 });
+  let most = 0;
+  for (let i = 0; i < 400 && !seen.some((e) => e.key === "popped"); i++) { L.step(l, 0.25, (e) => seen.push(e)); most = Math.max(most, L.reading(l, "m").value); }
+  assert.ok(most > 1.3, `der Druck steigt: ${most} bar`);
+  assert.ok(seen.some((e) => e.key === "popped" && e.part === "m"), "und es fliegt heraus");
+  L.step(l, 3);
+  near(L.reading(l, "m").value, 1, 0.02, "frei zeigt es wieder den Luftdruck");
+  assert.ok("p" in L.MEASURES);
+  clean(L.parts.manometer.draw({ type: "manometer", value: 1.2, unit: "bar" }, ctx()), "Manometer für sich");
+  assert.match(L.parts.manometer.draw({ type: "manometer", value: 1.2, unit: "bar" }, ctx(), { x: 0, rim: -196, w: 26 }), /1,20 bar/);
+  assert.match(L.icon("manometer"), /<svg/);
+});
+
 test("Stopfen an der Fläche: aufsetzen, herausfliegen, Protokoll; Zeichnung und Symbol", () => {
   const el = mount({ room: 20, bench: [{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }] }], shelf: ["stopper", "Mg ribbon"] });
   press(el, "hand", "stopper");

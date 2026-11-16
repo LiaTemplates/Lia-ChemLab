@@ -280,6 +280,22 @@
     }
   });
 
+  // Manometer: Stopfen, Steigrohr und rundes Zifferblatt mit Anzeige
+  L.registerLook("manometer", "lab", {
+    build: function () { var group = new THREE.Group(), screen = fx.screen(2.6, 1); group.add(screen); group.userData = { screen: screen }; return group; },
+    update: function (group, d, kit) {
+      var u = group.userData, p = d.place, floor = -kit.up(d.lift), x = p ? cm(p.x) : 0, y0 = p ? cm(-(p.rim + 1.5)) : floor + cm(5.5), dial = y0 + cm(46);
+      u.body = fx.rebuild(group, "gauge", p ? [p.x, p.rim, p.w, d.lift].join("|") : "alone", function (sub) {
+        var w = p ? p.w : 20;
+        sub.add(mesh(new THREE.CylinderGeometry(cm(w / 2), cm(w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8), x, y0));
+        sub.add(mesh(new THREE.CylinderGeometry(cm(1.5), cm(1.5), cm(30), 10), fx.steel(), x, y0 + cm(20)));
+        sub.add(mesh(new THREE.CylinderGeometry(cm(16), cm(16), cm(6), 32).rotateX(Math.PI / 2), fx.matte(fx.style.device, 0.45), x, dial));
+      });
+      u.screen.position.set(x, dial, cm(4));
+      u.screen.userData.write(d.ctx.numbers && d.data.value != null ? L.shown(d.data, d.ctx.lang) : "");
+    }
+  });
+
   L.registerLook("syringe", "lab", {
     build: function (kit) {
       var group = new THREE.Group(), tag = kit.label(0.75);

@@ -188,7 +188,7 @@
       "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
       "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "part.paper": "indicator paper",
       "say.paper": "{vessel}: The moist indicator paper turns {color}.",
-      "part.stopper": "rubber stopper", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
+      "part.stopper": "rubber stopper", "part.manometer": "manometer", "measure.p": "Pressure", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
       "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.", "say.spatter": "{vessel}: It spatters!", "seen.spatter": "It spatters",
       "seen.popped": "The stopper pops out", "seen.suckBack": "Liquid is sucked back", "seen.plungerOut": "The plunger pops out",
       "seen.boil": "The liquid boils", "seen.smell": "Smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
@@ -316,6 +316,7 @@
     if (r.unit === "A") return v < 0.9995 ? num(v * 1000, 1, lang) + " mA" : num(v, 2, lang) + " A";
     if (r.unit === "V") return num(v, 2, lang) + " V";
     if (r.unit === "mS/cm") return v >= 0.1 ? trim(v, lang) + " mS/cm" : trim(v * 1000, lang) + " µS/cm";
+    if (r.unit === "bar") return num(v, 2, lang) + " bar";
     if (def.scale) return num(Math.abs(v) < 0.005 ? 0 : v, 2, lang) + " g";      // Waage: auf 0,01 g, ohne „−0,00“
     if (r.unit === "g") return num(v, 3, lang) + " g";
     return num(v, 1, lang) + " " + r.unit;
@@ -593,7 +594,7 @@
     // wo ein Messgerät steckt: das Thermometer rechts, die Elektrode des pH-Meters links
     // tag und box: wo neben dem Gerät seine Anzeige steht, damit sich zwei Anzeigen nicht verdecken
     probe: function (v, type, slot) {
-      if (type === "syringe" || type === "stopper") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
       if (type === "tube") return { x: 0, rim: TUBE.top, w: 26, top: TUBE.top - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 6 * slot, rim: TUBE.top };
       if (type === "reflux") return { x: 0, rim: TUBE.top, top: TUBE.top - REFLUX };
@@ -635,7 +636,7 @@
     // slot: bei Elektroden 0 links und 1 rechts; bei der Salzbrücke die Seite, auf der das andere Gefäß steht (−1 oder 1)
     probe: function (v, type, slot) {
       var s = beakerSize(v);
-      if (type === "syringe" || type === "stopper") return { x: 0, rim: -s[1], w: s[0] - 2 };
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: -s[1], w: s[0] - 2 };
       if (type === "tube") return { x: 0, rim: -s[1], w: s[0] - 2, top: -s[1] - PIPE_RISE };
       // Die Elektrode endet so weit über dem Boden wie in der Rechnung: bei der Füllhöhe, die dem Abstand L.PLATE.gap entspricht
       if (L.parts[type] && L.parts[type].electrode) {
@@ -705,7 +706,7 @@
     surface: dishSurface,
     foot: function () { return 24; },
     probe: function (v, type, slot) {
-      if (type === "syringe" || type === "stopper") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
       if (type === "tube") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4, top: -DISH.h - 4 - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 30 * slot, rim: -DISH.h - 4 };
       if (type === "reflux") return { x: 0, rim: -DISH.h - 4, top: -DISH.h - 4 - REFLUX };
@@ -789,6 +790,23 @@
     bounds: function (t, place) { return place ? { x0: place.x - place.w / 2 - 2, x1: place.x + place.w / 2 + 2, top: place.rim - 8, bottom: place.rim + 8 } : { x0: -14, x1: 14, top: -14 }; },
     draw: function (w, ctx, place) {
       return place ? plugShape(place.x, place.rim, place.w) : plugShape(0, -7, 22) + badge(0, 14, ctx.no);
+    }
+  });
+
+  // ------------------------------------------------------------------ Manometer
+
+  // Stopfen mit Steigrohr und rundem Zifferblatt darüber; der Zeiger von 0 bis 2 bar über einen Dreiviertelkreis
+  L.registerPart("manometer", {
+    width: function () { return 56; },
+    bounds: function (t, place) { var x = place ? place.x : 0, y = place ? place.rim - 46 : -40; return { x0: x - 20, x1: x + 20, top: y - 20, bottom: place ? place.rim + 8 : 0 }; },
+    draw: function (w, ctx, place) {
+      var x = place ? place.x : 0, rim = place ? place.rim : -10, y = rim - 46, value = Math.max(0, Math.min(2, w.value == null ? 1 : w.value));
+      var a = (-135 + 270 * value / 2) * Math.PI / 180, out = place ? plugShape(x, rim, place.w) : plugShape(x, rim, 20);
+      out += '<line class="cl-rod" x1="' + f(x) + '" y1="' + f(rim - 4) + '" x2="' + f(x) + '" y2="' + f(y + 16) + '"/>' +
+        '<circle class="cl-device" cx="' + f(x) + '" cy="' + f(y) + '" r="16"/>' +
+        '<line class="cl-mark" x1="' + f(x) + '" y1="' + f(y) + '" x2="' + f(x + 12 * Math.sin(a)) + '" y2="' + f(y - 12 * Math.cos(a)) + '" stroke-width="1.6"/>';
+      if (ctx.numbers && w.value != null) out += '<g class="cl-tag"><rect x="' + f(x + 18) + '" y="' + f(y - 9) + '" width="52" height="17" rx="4"/><text x="' + f(x + 44) + '" y="' + f(y + 3) + '" text-anchor="middle">' + num(w.value, 2, ctx.lang) + " bar</text></g>";
+      return out + (place ? "" : badge(0, 14, ctx.no));
     }
   });
 
@@ -1084,7 +1102,7 @@
     foot: function () { return 14; },
     // slot beim Kühler: die Seite, auf der die Vorlage steht (−1 oder 1); dorthin zeigt das Ansatzrohr
     probe: function (v, type, slot) {
-      if (type === "syringe" || type === "stopper") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
       if (type === "tube") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4, top: FLASK.rim - PIPE_RISE };
       if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
       if (type === "bridge") return { x: 0, rim: FLASK.rim };
@@ -1280,6 +1298,7 @@
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
         : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
+        : id === "manometer" ? '<path class="cl-stopper" d="M9,22L19,22L18,28L10,28Z"/><line class="cl-rod" x1="14" y1="22" x2="14" y2="15"/><circle class="cl-device" cx="14" cy="9" r="7"/><line class="cl-mark" x1="14" y1="9" x2="18" y2="6"/>'
         : id === "stopper" ? '<path class="cl-stopper" d="M7,10L21,10L19,22L9,22Z"/>'
         : id === "balance" ? '<rect class="cl-scale" x="2" y="16" width="24" height="10" rx="2"/><rect class="cl-scale-pan" x="5" y="13" width="18" height="2.5"/><g class="cl-meter"><rect x="8" y="18" width="12" height="6" rx="1"/></g>'
         : id === "tube" ? '<path class="cl-stopper" d="M2,13L10,13L9,18L3,18Z"/><path class="cl-glass" d="M6,13L6,5Q6,3 8,3L20,3Q22,3 22,5L22,27"/>'
