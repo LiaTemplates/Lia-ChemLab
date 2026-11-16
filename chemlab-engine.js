@@ -893,9 +893,9 @@
   }
 
   function volume(v) {            // Flüssigkeit in L
-    var ml = 0, id, s;
-    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) ml += v.n[id] * s.Vm; }
-    return ml / 1000;
+    var ml = 0, solute = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) solute += v.n[id] * s.Vm; }
+    return ml > 0 ? (ml + solute) / 1000 : 0;      // ein trockener Rückstand ist keine Flüssigkeit, auch wenn seine Ionen ein Eigenvolumen haben
   }
 
   function heatCapacity(v) {      // J/K, mit dem Glas

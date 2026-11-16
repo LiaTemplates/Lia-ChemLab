@@ -82,7 +82,10 @@
       "I-(aq)": { name: name("iodide ion"), Hf: -56.78, S: 106.45, D: 2.045, src: CODATA + DL },
       "NO3-(aq)": { name: name("nitrate ion"), Hf: -206.85, S: 146.70, D: 1.9, src: CODATA + DW },
       "SO4^2-(aq)": { name: name("sulfate ion"), Hf: -909.34, S: 18.50, D: 1.07, src: CODATA + DW },
-      "HSO4-(aq)": { name: name("hydrogen sulfate ion"), Hf: -886.9, S: 131.7, D: 1.22, src: CODATA + DW },
+      // Vm: partielles Molvolumen (H+ = 0). So nimmt gelöste konzentrierte Schwefelsäure, die als Hydrogensulfat vorliegt, Raum ein,
+      // und das Mischen mit Wasser zieht das Volumen zusammen (reine Säure: 53,6 mL/mol). Nur hier: In verdünnten Lösungen liegt
+      // kaum Hydrogensulfat vor, und Sulfat und seine Ionenpaare bleiben ohne Eigenvolumen wie die übrigen Ionen
+      "HSO4-(aq)": { name: name("hydrogen sulfate ion"), Hf: -886.9, S: 131.7, D: 1.22, Vm: 35, src: CODATA + DW + "; Vm: approximately, after Millero, Chem. Rev. 71 (1971) 147" },
       "SCN-(aq)": { name: name("thiocyanate ion"), Hf: null, D: 1.758, src: NONE + DL },
       "Ag+(aq)": { name: name("silver ion"), Hf: 105.79, S: 73.45, D: 1.648, src: CODATA + DL },
       "Ba^2+(aq)": { name: name("barium ion"), Hf: null, D: 0.848, flame: "#b7f23c", src: NONE + DW + GLOW },

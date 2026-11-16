@@ -2007,7 +2007,7 @@ const stress = (model, seeds) => {
   }
 };
 
-test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungssätze noch Gleichgewichte", () => stress("ideal", [3, 11]));
+test("Belastung: zufällige Mischungen aller Stoffe verletzen weder Erhaltungssätze noch Gleichgewichte", () => stress("ideal", [3, 6, 11]));      // 6: fast reine Schwefelsäure in der Bürette
 
 test("Belastung im realen Modell: dieselben Mischungen mit Aktivitäten", () => stress("real", [3, 11]));
 
@@ -8299,6 +8299,17 @@ test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => 
   L.add(l, water.id, "NH4NO3 salt", { g: 2 });
   L.step(l, 60);
   assert.ok(L.vessel(l, water.id).T < T0 - 2, "Ammoniumnitrat kühlt");
+});
+
+test("Konzentrierte Schwefelsäure mit wenig Wasser bleibt eine Lösung, kein Brei: Die Ionen haben ein Volumen", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 11 }] }, { type: "phmeter", id: "ph", in: "b" }], { room: 20 });
+  L.add(l, "b", "H2SO4 conc", { ml: 9.2 });
+  L.step(l, 60);
+  const v = L.vessel(l, "b");
+  assert.ok(L.reading(l, "ph").value != null && L.reading(l, "ph").value < 0, "das pH-Meter zeigt etwas: " + L.reading(l, "ph").value);
+  // Mischen zieht das Volumen zusammen: mehr als das Wasser allein, weniger als 11 + 9,2 mL
+  const ml = L.volume(v) * 1000;
+  assert.ok(ml > 13 && ml < 20, `Volumen ${ml} mL`);
 });
 
 test("Mischwärme: konzentrierte Säure und Lauge spritzen; Lauge löst nicht mehr Schwefelsäure, als das Wasser aufnimmt; kein Spritzen beim Sieden ohne Grund", () => {
