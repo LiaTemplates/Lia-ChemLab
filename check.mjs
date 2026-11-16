@@ -7657,6 +7657,22 @@ test("README: die Folie zur Massenerhaltung hält, was ihr Text verspricht", () 
   near(L.reading(l, shut.id).value, m0[1] + 0.3, 0.005, "mit Kolbenprober: so schwer wie vorher plus Marmor");
 });
 
+test("README: die Folie zur unbekannten Probe hält, was ihr Text verspricht", () => {
+  const [block] = slide("Unbekannte Proben");
+  const seen = {};
+  for (const r of [0.1, 0.5, 0.9]) {
+    const real = Math.random; Math.random = () => r;
+    let config;
+    try { config = L.normalize(block); } finally { Math.random = real; }
+    const probe = config.bench.find((p) => p.unknown), l = L.createLab(config);
+    L.add(l, probe.id, "AgNO3 0.1M", { drops: 5 });
+    L.step(l, 30);
+    seen[probe.oneOf[probe.pick].name] = ["AgCl(s)", "AgBr(s)", "AgI(s)"].filter((id) => amount(l, id, probe.id) > 1e-6);
+    assert.deepEqual(config.task.goals, [{ identify: probe.unknown }]);
+  }
+  assert.deepEqual(seen, { Natriumchlorid: ["AgCl(s)"], Kaliumbromid: ["AgBr(s)"], Kaliumiodid: ["AgI(s)"] }, "jede Füllung gibt ihren eigenen Niederschlag");
+});
+
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
   L.register(organic);
   const [ester, boiled] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));

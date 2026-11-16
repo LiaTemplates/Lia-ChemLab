@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -752,6 +752,29 @@ Ein Ziel kann auch ein **Messwert** sein. Dieser Aufbau ist dazu **gesperrt**: D
  "shelf":[]}
 ```
 
+## Unbekannte Proben
+
+In **Probe A** ist eine von drei Lösungen: Natriumchlorid, Kaliumbromid oder Kaliumiodid. Welche, wird beim Laden der Seite für jede und jeden neu gezogen. Was im Glas ist, zeigt weder das Feld des Gefäßes noch die Teilchenlupe, die Gleichungen oder das Protokoll; zu sehen sind nur die Beobachtungen. Im Feld der Probe steht „Das ist: …“: Die richtige Antwort erfüllt das Ziel der Aufgabe.
+
+Silbernitrat fällt Chlorid weiß, Bromid blassgelb und Iodid gelb. Daneben stehen die drei bekannten Lösungen zum Vergleich.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"probe","unknown":"A","oneOf":[
+    {"name":"Natriumchlorid","contains":[{"reagent":"NaCl 0.1M","ml":5}]},
+    {"name":"Kaliumbromid","contains":[{"reagent":"KBr 0.1M","ml":5}]},
+    {"name":"Kaliumiodid","contains":[{"reagent":"KI 0.1M","ml":5}]}]},
+  {"type":"testtube","contains":[{"reagent":"NaCl 0.1M","ml":5}]},
+  {"type":"testtube","contains":[{"reagent":"KBr 0.1M","ml":5}]},
+  {"type":"testtube","contains":[{"reagent":"KI 0.1M","ml":5}]}
+ ],
+ "shelf":["AgNO3 0.1M","NaCl 0.1M","KBr 0.1M","KI 0.1M","testtube"],
+ "task":{"text":"Bestimme, was in Probe A ist.","goals":[{"identify":"A"}]},
+ "show":{"charts":false}}
+```
+
+Mit `"show":{"volumes":false}` stehen unter den Gefäßen keine Milliliter, und die Bürette nennt nicht, wie viel sie abgegeben hat: Dann wird an der Skala abgelesen.
+
 ## Sperren und Messwerttabelle
 
 In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugeben, umgießen, ausleeren, den Hahn der Bürette und die Regler bedienen und Proben mit Span und Stäbchen gehen weiter; das Regal bietet nur Stoffe und Proben an.
@@ -1037,6 +1060,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `type` – das Gerät, siehe Tabelle.
   - `id` – ein eigener Name aus Buchstaben, Ziffern, Punkt, Binde- und Unterstrich; ohne Angabe heißen die Geräte `testtube1`, `testtube2`, `beaker1` …
   - `contains` – der Inhalt eines Gefäßes: je Stoff `reagent` und die Menge als `ml`, `drops` (Tropfen zu 0,05 mL) oder `g`. Flüssigkeiten stehen in `ml` oder `drops`, Feststoffe in `g`; eine falsche Einheit oder mehr, als das Gefäß fasst, ergibt einen Hinweis statt der Fläche.
+  - `unknown` – macht das Gefäß zu einer unbekannten Probe mit diesem Namen (bis zu 12 Zeichen, etwa `"A"`): Es heißt dann „Probe A“, und sein Inhalt bleibt verborgen; zu sehen sind nur Beobachtungen.
+  - `oneOf` – statt `contains`: mehrere mögliche Füllungen, je mit `name` und `contains`. Beim Laden der Seite wird eine davon gezogen; sie bleibt beim Zurücksetzen und Zurückspulen. „Aufbau kopieren“ schreibt alle Möglichkeiten, nicht die gezogene.
   - `in` – bei einem Messgerät oder Kolbenprober der Name des Gefäßes, in dem es steckt oder an das er angeschlossen ist.
   - `over` – bei einer Bürette der Name des Gefäßes, über dem sie hängt.
   - `under` – bei einem Brenner oder Wasserbad der Name des Gefäßes, unter dem es steht; ohne Angabe steht es für sich auf dem Tisch. Unter einem Gefäß steht entweder ein Brenner oder ein Wasserbad. `flame` – die Flamme des Brenners: 0 aus (Vorgabe), 1 leuchtend, 2 rauschend. `temp` – die Temperatur des Wasserbads in °C, 0 bis 95; ohne Angabe die des Raums.
@@ -1048,7 +1073,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
 - `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
-  `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell.
+  `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell. `volumes: false` blendet die Milliliter unter den Gefäßen und das Abgegebene der Bürette aus (auch in der Messwerttabelle).
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
 - `table` – `true`: mit Messwerttabelle; nur, solange Zahlen gezeigt werden.
@@ -1090,6 +1115,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 |---|---|---|
 | `measure` mit `min` und/oder `max` | ein Messgerät zeigt einen Wert in diesem Bereich: `T` (°C), `pH`, `kappa` (mS/cm), `A` (Extinktion), `V` (Gasvolumen im Kolbenprober, mL), `I` (Stromstärke, A), `U` (Spannung, V) oder `m` (Waage, g); Strom und Spannung als Betrag | `{"measure":"pH","min":6.5,"max":7.5,"in":"becher"}` |
 | `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
+| `identify` | die unbekannte Probe mit diesem Namen (`unknown`, mit `oneOf`) ist richtig benannt; im Feld der Probe wählt man „Das ist: …“, die letzte Wahl zählt | `{"identify":"A"}` |
 | `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (Metall scheidet sich ab), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
 Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum Beispiel `HCl 0.1M` oder `AgNO3 0.05M`. Ohne Zahl sind es 1 mol/L.
