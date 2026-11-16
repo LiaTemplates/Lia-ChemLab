@@ -219,6 +219,20 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 .lia-chemlab .cl-speed { display: inline-flex; align-items: center; gap: 0.3em; }
 .lia-chemlab .cl-status { min-height: 1.4em; font-style: italic; }
 
+/* ---------- Aufgabe, Messwerttabelle, Text zum Kopieren */
+
+.lia-chemlab .cl-task { border: 1px solid var(--cl-accent); border-radius: 0.45em; padding: 0.3em 0.7em; margin-bottom: 0.6em; }
+.lia-chemlab .cl-task-text { font-weight: bold; }
+.lia-chemlab .cl-goals { list-style: none; margin: 0.2em 0; padding: 0; }
+.lia-chemlab .cl-check { display: inline-block; width: 1.3em; text-align: center; }
+.lia-chemlab .cl-met .cl-check { color: var(--cl-accent); font-weight: bold; }
+.lia-chemlab .cl-done { font-weight: bold; color: var(--cl-accent); margin: 0; }
+.lia-chemlab .cl-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.lia-chemlab .cl-readings { border-top: 1px solid var(--cl-line); margin-top: 0.5em; overflow-x: auto; }
+.lia-chemlab .cl-copy { width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.9em; color: var(--cl-ink); background: var(--cl-bg);
+  border: 1px solid var(--cl-line); border-radius: 0.3em; padding: 0.3em; }
+.lia-chemlab .cl-btn:disabled { opacity: 0.5; cursor: default; }
+
 /* ---------- Inhalt, Gleichungen, Diagramme, Protokoll */
 
 .lia-chemlab .cl-panel,

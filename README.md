@@ -637,6 +637,65 @@ Real, mit Aktivitäten:
 
 Das reale Modell passt, wenn Messwerte aus dem Labor verglichen werden: bei Puffern, bei der Löslichkeit in Salzlösungen, bei Zellspannungen. Es gilt bis zu einer Ionenstärke von etwa 1 mol/L; was darüber hinausgeht, steht unter „So rechnet der Baustein“.
 
+## Aufgaben mit Selbstkontrolle
+
+Zu einem Aufbau kann eine **Aufgabe** gehören. Sie steht über der Fläche, darunter ihre Ziele. Ein Ziel bekommt sein Häkchen, sobald es erfüllt ist; sind alle erfüllt, erscheint „Geschafft!“ und bleibt stehen. Wer zurückspult, sieht an den Häkchen, was zu diesem Zeitpunkt erfüllt war.
+
+Ein Ziel kann eine **Beobachtung** sein: Hier soll ein Niederschlag ausfallen und sich danach wieder lösen.
+
+```json @ChemLab.sim
+{"task":{"text":"Fälle aus der Kochsalzlösung Silberchlorid aus und bringe den Niederschlag mit Ammoniaklösung wieder in Lösung.",
+  "goals":[{"seen":"solid","species":"AgCl(s)"},
+           {"seen":"dissolved","species":"AgCl(s)","label":"Der Niederschlag löst sich wieder"}]},
+ "bench":[{"type":"testtube","contains":[{"reagent":"NaCl 0.1M","ml":2}]}],
+ "shelf":["AgNO3 0.1M","NH3 2M","H2O"]}
+```
+
+Ein Ziel kann auch ein **Messwert** sein. Dieser Aufbau ist dazu **gesperrt**: Der Brenner lässt sich anzünden und abdrehen, wegräumen lässt sich nichts.
+
+```json @ChemLab.sim
+{"lock":true,
+ "task":{"text":"Erwärme das Wasser auf 60 bis 70 °C und halte es dort.",
+  "goals":[{"measure":"T","min":60,"max":70}]},
+ "bench":[
+  {"type":"beaker","id":"becher","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"burner","under":"becher"},
+  {"type":"thermometer","in":"becher"}
+ ],
+ "shelf":[]}
+```
+
+## Sperren und Messwerttabelle
+
+In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugeben, umgießen, ausleeren, den Hahn der Bürette und die Regler bedienen und Proben mit Span und Stäbchen gehen weiter; das Regal bietet nur Stoffe und Proben an.
+
+**Messwerttabelle:** „Messwerte notieren“ schreibt die Anzeigen aller Messgeräte als Zeile in eine Tabelle, dazu die Zeit und was jede Bürette abgegeben hat. So entsteht eine Titrationskurve von Hand: Hahn auf „langsam“, nach jeweils etwa 2 mL zudrehen und notieren. „Tabelle kopieren“ gibt die Werte mit Tabulatoren getrennt weiter, so dass sie sich in eine Tabellenkalkulation einfügen lassen. Die Tabelle bleibt beim Zurücksetzen stehen; „Tabelle leeren“ beginnt eine neue.
+
+```json @ChemLab.sim
+{"lock":true,
+ "table":true,
+ "bench":[
+  {"type":"beaker","id":"becher","contains":[{"reagent":"CH3COOH 0.1M","ml":20}]},
+  {"type":"burette","over":"becher","contains":[{"reagent":"NaOH 0.1M","ml":40}]},
+  {"type":"phmeter","in":"becher"}
+ ],
+ "shelf":["PP"],
+ "show":{"charts":["titration"]}}
+```
+
+## Aufbau als Text kopieren
+
+„Aufbau kopieren“ schreibt den Aufbau als Text in die Zwischenablage, im selben Format wie die Beschreibung unter jeder Fläche; falls der Browser das nicht erlaubt, steht der Text zum Markieren unter der Fläche. In einen Kurs eingefügt, ergibt er denselben Tisch. So lässt sich ein Versuch durch Antippen aufbauen statt von Hand beschreiben.
+
+Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gegeben wurde. Beim Umgießen geht der entsprechende Anteil der Flüssigkeiten mit, Feststoffe bleiben zurück. Was aus einer Bürette getropft ist, steht weiter in der Bürette, und Reaktionen laufen nach dem Einfügen von vorn: Es ist der Aufbau, nicht der Zwischenstand eines Versuchs. Regal, Aufgabe, eigene Daten und alle anderen Angaben bleiben, wie sie in der Beschreibung standen.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","contains":[{"reagent":"H2O","ml":40}]}
+ ],
+ "shelf":["CuSO4 0.1M","NaOH 1M","Zn granules","testtube","thermometer","burner"]}
+```
+
 ## Ohne Zahlen
 
 Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: Farbe, Gasblasen, das steigende Thermometer und die Reaktionsgleichung. Auch Diagramme, Gleichungen und Protokoll lassen sich einzeln abschalten.
@@ -689,6 +748,9 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
 - `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell.
+- `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
+- `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
+- `table` – `true`: mit Messwerttabelle; nur, solange Zahlen gezeigt werden.
 - `room` – die Raumtemperatur in °C, Vorgabe 20.
 - `model` – womit die Gleichgewichte rechnen: `"ideal"` mit Konzentrationen (Vorgabe) oder `"real"` mit Aktivitäten, siehe „Ideale und reale Lösung“.
 - `data` – eigene Stoffe und Reaktionen, siehe nächster Abschnitt.
@@ -713,6 +775,14 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `lamp` | Glühlämpchen 3,8 V / 0,07 A, im Stromkreis | `in` |
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
 | `splint`, `glowsplint`, `rod` | brennender Holzspan, Glimmspan, Magnesiastäbchen: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
+
+**Ziele einer Aufgabe** – jedes mit wahlweise `in` (nur dieses Gefäß, mit seinem Namen) und `label` (eigener Text statt des erzeugten):
+
+| Ziel | erfüllt, wenn | Beispiel |
+|---|---|---|
+| `measure` mit `min` und/oder `max` | ein Messgerät zeigt einen Wert in diesem Bereich: `T` (°C), `pH`, `kappa` (mS/cm), `A` (Extinktion), `V` (Gasvolumen im Kolbenprober, mL), `I` (Stromstärke, A) oder `U` (Spannung, V); Strom und Spannung als Betrag | `{"measure":"pH","min":6.5,"max":7.5,"in":"becher"}` |
+| `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
+| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (Metall scheidet sich ab), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
 Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum Beispiel `HCl 0.1M` oder `AgNO3 0.05M`. Ohne Zahl sind es 1 mol/L.
 

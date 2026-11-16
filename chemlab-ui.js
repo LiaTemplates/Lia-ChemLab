@@ -49,7 +49,7 @@
     var st = L.store[el.id];
     if (st && st.source !== text) st = null;       // geänderte Beschreibung: neuer Aufbau, auch nach einem behobenen Fehler
     if (!st) {
-      st = L.store[el.id] = { source: text, hand: null, sel: null, play: 0, speed: 1, names: {}, counts: {}, error: null, mute: false };
+      st = L.store[el.id] = { source: text, hand: null, sel: null, play: 0, speed: 1, names: {}, counts: {}, error: null, mute: false, cols: [], rows: [] };
       try {
         st.config = L.normalize(source);
         st.run = L.createRun(st.config);
@@ -59,7 +59,7 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
-        amount: "err.amount", size: "err.size", model: "err.model" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       return;
     }
@@ -70,13 +70,16 @@
     if (sound) sound.mute(st.mute);
 
     el.innerHTML =
+      '<div class="cl-task" hidden><p class="cl-task-text"></p><ul class="cl-goals"></ul><p class="cl-done" role="status" aria-live="polite"></p></div>' +
       '<div class="cl-top"><div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div>' +
       '<div class="cl-side">' + (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
+      '<button type="button" class="cl-btn" data-act="copy">' + esc(T("copy")) + "</button> " +
       '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></div>" +
       '<div class="cl-hand" hidden></div>' +
       '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg></div>' +
       '<div class="cl-time"></div>' +
       '<p class="cl-status" role="status" aria-live="polite"></p>' +
+      '<div class="cl-readings" hidden></div>' +
       '<div class="cl-panel"></div>' +
       '<div class="cl-eq"></div>' +
       '<div class="cl-charts"></div>' +
@@ -84,11 +87,14 @@
       '<ol class="cl-events" aria-live="polite"></ol></div>';
 
     var ui = {};
-    ["shelf", "hand", "svg", "time", "status", "panel", "eq", "charts", "log"].forEach(function (name) {
+    ["task", "shelf", "hand", "svg", "time", "status", "readings", "panel", "eq", "charts", "log"].forEach(function (name) {
       ui[name] = el.querySelector(".cl-" + name);
     });
     ui.sound = sound ? el.querySelector(".cl-sound") : null;
     ui.events = ui.log.querySelector(".cl-events");
+    ui.goals = ui.task.querySelector(".cl-goals");
+    ui.done = ui.task.querySelector(".cl-done");
+    if (st.config.task) ui.task.querySelector(".cl-task-text").textContent = T("task") + ": " + st.config.task.text;
     ui.none = ui.log.querySelector(".cl-none");
     ui.eq.hidden = !show.equations;
     ui.charts.hidden = !show.charts.length;
@@ -119,18 +125,21 @@
 
     // ---------------------------------------------------------------- Regal und Hand
 
+    // Gesperrt bleiben die Geräte, wo sie stehen: Im Regal gibt es dann nur Stoffe und die Proben, die man an ein Gefäß hält
+    function allowed(id) { return !st.config.lock || !L.parts[id] || L.parts[id].kind === "test"; }
+
     // Was im Regal steht: die Auswahl des Kurses, sonst alles, nach Fächern geordnet
     function shelfGroups() {
-      if (st.config.shelf) return [{ title: "", ids: st.config.shelf }];
+      if (st.config.shelf) return [{ title: "", ids: st.config.shelf.filter(allowed) }];
       var all = Object.keys(L.db.reagents), rest = all.filter(function (id) { return GROUPS.indexOf(L.db.reagents[id].group) < 0; });
       return GROUPS.map(function (group) {
         // Salzlösungen stehen mit 0,1 mol/L bereit, Säuren und Laugen mit 1 mol/L
         return { title: T("group." + group), ids: all.filter(function (id) { return L.db.reagents[id].group === group; })
           .map(function (id) { return group === "salt" && L.db.reagents[id].molar ? id + " 0.1M" : id; }) };
       }).concat([{ title: "", ids: rest },
-        { title: T("group.gear"), ids: Object.keys(L.parts).filter(function (id) { return !electric(L.parts[id]); }) },
+        { title: T("group.gear"), ids: Object.keys(L.parts).filter(function (id) { return !electric(L.parts[id]) && allowed(id); }) },
         // eine eigene Elektrode steht nur da, wenn ihr Stoff eingetragen ist
-        { title: T("group.electric"), ids: Object.keys(L.parts).filter(function (id) { return electric(L.parts[id]) && (!L.parts[id].electrode || L.db.species[L.parts[id].electrode]); }) }
+        { title: T("group.electric"), ids: Object.keys(L.parts).filter(function (id) { return electric(L.parts[id]) && allowed(id) && (!L.parts[id].electrode || L.db.species[L.parts[id].electrode]); }) }
       ]).filter(function (g) { return g.ids.length; });
     }
 
@@ -149,6 +158,7 @@
         }).join("");
       }).join("");
       ui.picks = ids.map(function (id, n) { return { id: id, node: ui.shelf.querySelector('[data-n="' + n + '"]') }; });
+      ui.shelf.hidden = !ids.length;
       syncShelf();
     }
 
@@ -205,6 +215,7 @@
     function pick(id) {
       var def = L.parts[id], type = id;
       status("");
+      if (!allowed(id)) return;
       if (def && def.kind === "vessel" && !def.dispenser) {     // ein Gefäß kommt gleich auf den Tisch
         setHand(null);
         change(function (lab) { return L.place(lab, { type: type }); }, function (made) { return { key: "placed", part: made }; });
@@ -270,8 +281,9 @@
     }
 
     function select(id) {
-      if (st.sel === id) return;
+      if (st.sel === id && st.copyText == null) return;
       st.sel = id;
+      st.copyText = null;
       renderPanel();
       paint();
       slow();
@@ -332,7 +344,7 @@
     function reset() {
       st.run = L.createRun(st.config);
       st.sel = null;
-      st.play = 0; st.names = {}; st.counts = {};
+      st.play = 0; st.names = {}; st.counts = {}; st.solved = false;
       pending = 0;
       status("");
       shape = null;
@@ -628,8 +640,7 @@
     function renderPanel() {
       var lab = st.run.lab, v = L.vessel(lab, st.sel), t = L.tool(lab, st.sel), label = names(), others, html;
       if (v && v.broken) {
-        html = "<h4>" + esc(label[v.id]) + "</h4><p>" + esc(T("brokenGlass")) + '</p><div class="cl-actions">' +
-          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+        html = "<h4>" + esc(label[v.id]) + "</h4><p>" + esc(T("brokenGlass")) + '</p><div class="cl-actions">' + removal() + "</div>";
       } else if (v) {
         others = lab.vessels.filter(function (o) { return o.id !== v.id && !o.broken; });
         html = "<h4>" + esc(label[v.id]) + "</h4>" +
@@ -643,8 +654,7 @@
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
             '<button type="button" class="cl-btn" data-act="pour">' + esc(T("panel.pourGo")) + "</button> " : "") +
-          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " +
-          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " + removal() + "</div>";
       } else if (t) {
         html = "<h4>" + esc(label[t.id]) + "</h4>" +
           (L.parts[t.type].flames ? '<div class="cl-tap" role="group" aria-label="' + esc(T("flame")) + '"><span>' + esc(T("flame")) + ":</span> " +
@@ -658,13 +668,16 @@
           // Wasserbad und Fotometer: Temperatur oder Wellenlänge an einem Schieber, übernommen beim Loslassen
           (L.parts[t.type].bath ? dial("temp", L.parts[t.type].range, 1, t.temp) : "") +
           (L.parts[t.type].sense === "A" ? dial("wave", L.parts[t.type].waves, 5, t.nm) : "") +
-          '<div class="cl-contents"></div><div class="cl-actions">' +
-          '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button></div>";
+          '<div class="cl-contents"></div><div class="cl-actions">' + removal() + "</div>";
+      } else if (st.copyText != null) {
+        html = '<p class="cl-hint">' + esc(T(st.copyHint)) + '</p><textarea class="cl-copy" readonly rows="8" aria-label="' + esc(T(st.copyHint)) + '">' + esc(st.copyText) + "</textarea>";
       } else html = '<p class="cl-hint">' + esc(T("panel.none")) + "</p>";
       ui.panel.innerHTML = html;
       lensKey = null;
       renderContents();
     }
+
+    function removal() { return st.config.lock ? "" : '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button>"; }
 
     function dial(act, range, step, value) {
       return '<div class="cl-tap"><label>' + esc(T(act)) + ' <input class="cl-dial" type="range" role="slider" data-act="' + act + '" min="' + range[0] + '" max="' + range[1] +
@@ -962,6 +975,100 @@
       ui.charts.innerHTML = html;
     }
 
+    // ---------------------------------------------------------------- Messwerttabelle
+
+    // Was die Messgeräte gerade anzeigen, als Zahl ohne Einheit; die Einheit steht im Kopf der Spalte.
+    // Dazu, was jede Bürette abgegeben hat, und die eingestellte Spannung eines Netzgeräts.
+    var COLUMN = { "°C": ["°C", 1, 1], pH: ["pH", 2, 1], "mS/cm": ["mS/cm", 0, 1], E: ["E", 3, 1], mL: ["mL", 1, 1], A: ["mA", 1, 1000], V: ["V", 2, 1], g: ["g", 3, 1] };
+    function readings() {
+      var lab = st.run.lab, label = names(), out = [];
+      lab.tools.forEach(function (t) {
+        var def = L.parts[t.type], unit = def.circuit === "supply" ? "V" : def.sense || def.circuit === "ammeter" || def.circuit === "voltmeter" || def.electrode ? def.unit : null, c, value;
+        if (!unit || !COLUMN[unit]) return;
+        c = COLUMN[unit];
+        value = def.circuit === "supply" ? t.volts : t.value;
+        out.push({ key: t.id, label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
+          text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });
+      });
+      lab.vessels.forEach(function (v) {
+        if (L.parts[v.type].dispenser) out.push({ key: v.id, label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
+      });
+      return out;
+    }
+
+    // Text in die Zwischenablage; dazu steht er im Feld unter der Fläche, falls der Browser das Kopieren nicht erlaubt
+    function copyOut(text, hint) {
+      var nav = global.navigator, area;
+      st.sel = null;
+      st.copyText = text;
+      st.copyHint = hint;
+      renderPanel();
+      paint();
+      area = ui.panel.querySelector(".cl-copy");
+      if (area && area.select) { area.focus(); area.select(); }
+      status("");
+      if (nav && nav.clipboard && nav.clipboard.writeText) nav.clipboard.writeText(text).then(function () { status(T("copy.done")); }, function () { /* dann von Hand */ });
+    }
+
+    function setupText() {
+      var raw = {};
+      try { raw = JSON.parse(st.source.replace(/^[\s`]+|[\s`]+$/g, "") || "{}"); } catch (error) { /* der Aufbau ließ sich lesen; ohne Zusatzangaben weiter */ }
+      return L.describe(st.run, raw);
+    }
+
+    function tableText() {
+      return [[T("table.no"), "t (s)"].concat(st.cols.map(function (c) { return c.label; }))].concat(st.rows.map(function (row, n) {
+        return [String(n + 1), row.t].concat(st.cols.map(function (c) { return row[c.key] || "–"; }));
+      })).map(function (cells) { return cells.join("\t"); }).join("\n");
+    }
+
+    function noteRow() {
+      var cells = readings(), row = { t: L.num(st.run.time, 1, lang) };
+      if (!cells.length) { status(T("table.noMeter")); return; }
+      cells.forEach(function (c) {
+        if (!st.cols.some(function (col) { return col.key === c.key; })) st.cols.push({ key: c.key, label: c.label });
+        row[c.key] = c.text;
+      });
+      st.rows.push(row);
+      status("");
+      renderReadings();
+    }
+
+    function renderReadings() {
+      var html;
+      ui.readings.hidden = !(st.config.table && show.numbers);
+      if (ui.readings.hidden) return;
+      html = '<div class="cl-actions"><button type="button" class="cl-btn" data-act="note">' + esc(T("table.note")) + "</button> " +
+        '<button type="button" class="cl-btn" data-act="clear"' + (st.rows.length ? "" : " disabled") + ">" + esc(T("table.clear")) + "</button> " +
+        '<button type="button" class="cl-btn" data-act="copyTable"' + (st.rows.length ? "" : " disabled") + ">" + esc(T("table.copy")) + "</button></div>";
+      if (st.rows.length) html += '<table class="cl-table"><caption>' + esc(T("table.title")) + '</caption><thead><tr><th scope="col">' + esc(T("table.no")) +
+        '</th><th scope="col">t (s)</th>' + st.cols.map(function (c) { return '<th scope="col">' + esc(c.label) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+        st.rows.map(function (row, n) {
+          return "<tr><td>" + (n + 1) + "</td><td>" + row.t + "</td>" + st.cols.map(function (c) { return "<td>" + esc(row[c.key] || "–") + "</td>"; }).join("") + "</tr>";
+        }).join("") + "</tbody></table>";
+      ui.readings.innerHTML = html;
+    }
+
+    // ---------------------------------------------------------------- Aufgabe
+
+    // Die Aufgabe über der Fläche: ihr Text, je Ziel ein Häkchen (für den Zustand am Zeiger) und „Geschafft!“, sobald einmal alle erfüllt waren
+    function renderTask() {
+      var task = st.config.task, check, label, html, done;
+      ui.task.hidden = !task;
+      if (!task) return;
+      check = L.checkTask(task, st.run.lab, L.logAt(st.run));
+      if (check.done) st.solved = true;
+      label = names();
+      html = task.goals.map(function (goal, k) {
+        var met = check.goals[k];
+        return '<li class="cl-goal' + (met ? " cl-met" : "") + '"><span class="cl-check" aria-hidden="true">' + (met ? "✓" : "○") + "</span> " +
+          esc(goal.label || L.goalText(goal, lang, label)) + '<span class="cl-sr"> – ' + esc(T(met ? "goal.met" : "goal.open")) + "</span></li>";
+      }).join("");
+      if (ui.goals.innerHTML !== html) ui.goals.innerHTML = html;
+      done = st.solved ? T("task.done") : "";
+      if (ui.done.textContent !== done) ui.done.textContent = done;
+    }
+
     // ---------------------------------------------------------------- Protokoll
 
     function logItems(events, ctx) {
@@ -1015,6 +1122,7 @@
       renderEq();
       renderCharts();
       renderLog();
+      renderTask();
       hear();
     }
 
@@ -1105,6 +1213,10 @@
       else if (act === "start") jump(0);
       else if (act === "end") jump(st.run.end);
       else if (act === "reset") reset();
+      else if (act === "note") noteRow();
+      else if (act === "copy") copyOut(setupText(), "copy.manual");
+      else if (act === "copyTable" && st.rows.length) copyOut(tableText(), "table.manual");
+      else if (act === "clear") { st.rows = []; st.cols = []; renderReadings(); }
       else if (act === "tap" && L.vessel(lab, st.sel)) {
         r = parseFloat(id);
         id = st.sel;
@@ -1114,7 +1226,7 @@
       else if (act === "empty" && L.vessel(lab, st.sel)) {
         id = st.sel;
         change(function (l) { return L.empty(l, id); }, { key: "emptied", vessel: id });
-      } else if (act === "remove" && st.sel) {
+      } else if (act === "remove" && st.sel && !st.config.lock) {
         id = st.sel;
         st.sel = null;
         change(function (l) { return L.remove(l, id); }, { key: "removed", part: id, label: names()[id] });
@@ -1207,6 +1319,7 @@
     renderShelf();
     renderHand();
     renderTime();
+    renderReadings();
     refresh();
     kick();
   }

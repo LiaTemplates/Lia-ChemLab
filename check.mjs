@@ -6582,3 +6582,301 @@ test("Reales Modell: Carbonat-Ionenpaare – Massenwirkungsgesetz, und die Eichl
   near(look(real([{ reagent: "NaHCO3 0.05M", ml: 10 }, { reagent: "Na2CO3 0.05M", ml: 10 }])).pH, 10.012, 0.005, "Carbonatpuffer");
   assert.equal(hard.failed || 0, 0);
 });
+
+// ================================================================ Unterricht: Aufgaben, Sperren, Messwerttabelle, Aufbau als Text
+
+test("Aufgabe: Text und Ziele werden geprüft übernommen", () => {
+  const c = L.normalize({ bench: [{ type: "beaker", id: "b" }], lock: true, table: true, task: { text: "Neutralisiere die Säure.", goals: [
+    { measure: "pH", min: 6.5, max: 7.5, in: "b", label: "pH-Wert zwischen 6,5 und 7,5" },
+    { has: "AgCl(s)" },
+    { has: "Mg(s)", max: 0 },
+    { seen: "pop" },
+    { seen: "color", name: "blue", in: "b" }
+  ] } });
+  assert.equal(c.lock, true);
+  assert.equal(c.table, true);
+  assert.equal(c.task.text, "Neutralisiere die Säure.");
+  assert.deepEqual(c.task.goals, [
+    { measure: "pH", min: 6.5, max: 7.5, in: "b", label: "pH-Wert zwischen 6,5 und 7,5" },
+    { has: "AgCl(s)", min: 1e-6 },
+    { has: "Mg(s)", max: 0 },
+    { seen: "pop" },
+    { seen: "color", name: "blue", in: "b" }
+  ]);
+  const plain = L.normalize({});
+  assert.equal(plain.lock, false);
+  assert.equal(plain.table, false);
+  assert.equal(plain.task, null);
+  assert.deepEqual(L.normalize({ task: "Beobachte." }).task, { text: "Beobachte.", goals: [] }, "ein bloßer Text ist eine Aufgabe ohne Ziele");
+});
+
+test("Aufgabe: Fehler in den Zielen ergeben einen Hinweis mit dem Grund", () => {
+  const bad = (task) => assert.throws(() => L.normalize({ task }), (e) => e.code === "task", JSON.stringify(task));
+  bad({ goals: [{ measure: "Druck", min: 1 }] });
+  bad({ goals: [{ measure: "pH" }] });
+  bad({ goals: [{ measure: "pH", min: "sieben" }] });
+  bad({ goals: [{ has: "Gold(s)" }] });
+  bad({ goals: [{ has: "AgCl(s)", min: -1 }] });
+  bad({ goals: [{ seen: "Wunder" }] });
+  bad({ goals: [{ seen: "color", name: "lila" }] });
+  bad({ goals: [{ seen: "solid", species: "Gold(s)" }] });
+  bad({ goals: [{ measure: "pH", min: 7, in: "<b>" }] });
+  bad({ goals: [{}] });
+  bad({ goals: "alle" });
+  bad(17);
+});
+
+test("Aufgabe: Messwert, Stoff und Beobachtung werden am Zustand geprüft", () => {
+  const config = L.normalize({ room: 25, bench: [
+    { type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "phmeter", id: "ph", in: "b" },
+    { type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 8 }] }
+  ], task: { text: "", goals: [
+    { measure: "pH", min: 6, max: 8 }, { measure: "pH", min: 6, max: 8, in: "t" }, { has: "Mg(s)", in: "t" }, { has: "Mg(s)", in: "t", max: 0 }, { seen: "pop" }, { seen: "pop", in: "b" }
+  ] } });
+  const run = L.createRun(config);
+  const check = () => L.checkTask(config.task, run.lab, L.logAt(run));
+  assert.deepEqual(check(), { goals: [false, false, false, true, false, false], done: false });
+  L.act(run, (l) => L.add(l, "b", "NaOH 0.1M", { ml: 20 }));
+  L.act(run, (l) => L.add(l, "t", "Mg ribbon", { g: 0.0104 }));
+  L.advance(run, 20);
+  assert.deepEqual(check().goals.slice(0, 4), [true, false, true, false], "neutral im Becherglas; Magnesium im Reagenzglas");
+  L.act(run, (l, emit) => L.probe(l, "t", "flame", emit));
+  assert.deepEqual(check().goals.slice(4), [true, false], "Knallgasprobe im Reagenzglas, nicht im Becherglas");
+  L.advance(run, 300);
+  assert.equal(check().goals[3], true, "das Magnesium ist aufgebraucht");
+  L.seek(run, 0);
+  assert.deepEqual(check().goals, [false, false, false, true, false, false], "zurückgespult gilt der Zustand am Zeiger");
+});
+
+const neutral = { room: 25, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "phmeter", id: "ph", in: "b" }],
+  shelf: ["NaOH 0.1M", "H2O"],
+  task: { text: "Neutralisiere die Salzsäure mit Natronlauge.", goals: [{ measure: "pH", min: 6, max: 8, in: "b" }, { has: "Na+(aq)", label: "Natrium-Ionen sind in der Lösung" }] } };
+
+test("Oberfläche: die Aufgabe steht über der Fläche, ihre Ziele werden abgehakt", () => {
+  const el = mount(neutral), box = part(el, ".cl-task");
+  assert.equal(box.hidden, false);
+  assert.equal(part(box, ".cl-task-text").textContent, "Aufgabe: Neutralisiere die Salzsäure mit Natronlauge.");
+  const goals = () => part(box, ".cl-goals").innerHTML;
+  assert.match(goals(), /pH-Wert von 6 bis 8 in Becherglas 1/, "Text aus dem Ziel");
+  assert.match(goals(), /Natrium-Ionen sind in der Lösung/, "eigener Text");
+  assert.equal((goals().match(/○/g) || []).length, 2);
+  assert.match(goals(), /noch offen/, "für Vorleseprogramme");
+  assert.equal(part(box, ".cl-done").textContent, "");
+  press(el, "hand", "NaOH 0.1M");
+  press(el, "more"); press(el, "more");                        // 20 mL
+  tap(el, "b");
+  frames(30);
+  assert.equal((goals().match(/✓/g) || []).length, 2, goals());
+  assert.equal(part(box, ".cl-done").textContent, "Geschafft!");
+  press(el, "start");
+  assert.equal((goals().match(/✓/g) || []).length, 0, "zurückgespult: die Ziele zeigen den Zustand am Zeiger");
+  assert.equal(part(box, ".cl-done").textContent, "Geschafft!", "… geschafft bleibt geschafft");
+  press(el, "reset");
+  assert.equal(part(box, ".cl-done").textContent, "", "Zurücksetzen fängt von vorn an");
+});
+
+test("Oberfläche: ohne Aufgabe kein Feld dafür; eine fehlerhafte Aufgabe ergibt einen Hinweis", () => {
+  assert.equal(part(mount(tube), ".cl-task").hidden, true);
+  const broken = mount({ task: { goals: [{ measure: "Druck", min: 1 }] } });
+  assert.match(broken.innerHTML, /role="alert"/);
+  assert.match(broken.innerHTML, /Die Aufgabe lässt sich nicht lesen: measure Druck/);
+});
+
+test("Aufgabe: Ziele als Text in beiden Sprachen", () => {
+  const say = (goal, lang) => L.goalText(goal, lang || "de", { b: "Becherglas 1" });
+  assert.equal(say({ measure: "T", min: 40 }), "Temperatur mindestens 40 °C");
+  assert.equal(say({ measure: "kappa", max: 0.5, in: "b" }), "Leitfähigkeit höchstens 0,5 mS/cm in Becherglas 1");
+  assert.equal(say({ measure: "V", min: 20, max: 30 }), "Gasvolumen von 20 bis 30 mL");
+  assert.equal(say({ has: "AgCl(s)", min: 1e-6 }), "Silberchlorid liegt vor");
+  assert.equal(say({ has: "Mg(s)", max: 0, in: "b" }), "Magnesium: nicht mehr vorhanden in Becherglas 1");
+  assert.equal(say({ has: "Cu(s)", min: 0.001 }), "Kupfer: mindestens 1,00 mmol");
+  assert.equal(say({ seen: "pop" }), "Knallgasprobe: Es knallt");
+  assert.equal(say({ seen: "solid", species: "AgCl(s)" }), "Niederschlag: Silberchlorid");
+  assert.equal(say({ seen: "color", name: "blue", in: "b" }), "Die Lösung wird blau in Becherglas 1");
+  assert.equal(say({ seen: "relight" }, "en"), "Glowing splint: it flares up");
+  assert.equal(say({ measure: "pH", min: 6, max: 8 }, "en"), "pH from 6 to 8");
+  for (const seen of ["gas", "pop", "relight", "out", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"])
+    for (const lang of ["de", "en"]) assert.doesNotMatch(say({ seen }, lang), /goal\./, seen + " " + lang);
+});
+
+test("Oberfläche: gesperrt bleiben die Geräte stehen; Stoffe zugeben und bedienen geht", () => {
+  const locked = { lock: true, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burner", id: "br", under: "b" }, { type: "thermometer", id: "th", in: "b" }],
+    shelf: ["HCl 1M", "beaker", "thermometer", "splint", "electrode-Cu"] };
+  const el = mount(locked);
+  const shelf = part(el, ".cl-shelf").innerHTML;
+  assert.match(shelf, /data-id="HCl 1M"/);
+  assert.match(shelf, /data-id="splint"/, "Proben bleiben: sie stehen nicht auf dem Tisch");
+  for (const id of ["beaker", "thermometer", "electrode-Cu"]) assert.doesNotMatch(shelf, new RegExp(`data-id="${id}"`), id);
+  press(el, "hand", "beaker");
+  assert.equal(state(el).run.lab.vessels.length, 1, "kein neues Gefäß");
+  tap(el, "b");
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="remove"/, "nichts zum Wegräumen");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="empty"/, "ausleeren geht");
+  press(el, "remove");
+  assert.ok(L.vessel(state(el).run.lab, "b"), "das Becherglas steht noch");
+  tap(el, "br");
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="remove"/);
+  press(el, "flame", "2");
+  assert.equal(L.tool(state(el).run.lab, "br").flame, 2, "der Brenner lässt sich anzünden");
+  press(el, "hand", "HCl 1M");
+  tap(el, "b");
+  assert.ok(amount(state(el).run.lab, "Cl-(aq)") > 0 || state(el).run.lab.flows.length, "Säure fließt zu");
+  // ohne eigene Auswahl zeigt das gesperrte Regal alle Stoffe und die Proben, aber keine Geräte
+  const all = part(mount({ lock: true }), ".cl-shelf").innerHTML;
+  assert.match(all, /data-id="Mg ribbon"/);
+  assert.match(all, /data-id="glowsplint"/);
+  for (const id of ["beaker", "burner", "supply", "electrode-C"]) assert.doesNotMatch(all, new RegExp(`data-id="${id}"`), id);
+});
+
+const titrated = { room: 25, table: true, bench: [
+  { type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "phmeter", id: "ph", in: "b" }, { type: "thermometer", id: "th", in: "b" },
+  { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] }] };
+
+test("Oberfläche: Messwerttabelle – „Messwerte notieren“ hängt eine Zeile mit allen Anzeigen an", () => {
+  const el = mount(titrated), box = part(el, ".cl-readings");
+  assert.equal(box.hidden, false);
+  assert.match(box.innerHTML, /data-act="note"/);
+  assert.match(box.innerHTML, /data-act="clear"[^>]*disabled/, "leere Tabelle: nichts zu leeren");
+  assert.doesNotMatch(box.innerHTML, /<table/);
+  press(el, "note");
+  const head = /<thead>(.*?)<\/thead>/.exec(box.innerHTML)[1];
+  assert.deepEqual([...head.matchAll(/<th scope="col">(.*?)<\/th>/g)].map((m) => m[1]),
+    ["Nr.", "t (s)", "pH-Meter 1 (pH)", "Thermometer 1 (°C)", "Bürette 1: abgegeben (mL)"]);
+  assert.match(box.innerHTML, /<tr><td>1<\/td><td>0,0<\/td><td>1,00<\/td><td>25,0<\/td><td>0,0<\/td><\/tr>/);
+  tap(el, "bu");
+  press(el, "tap", "2");                                       // schnell: 2 mL/s
+  frames(5);
+  press(el, "tap", "0");
+  frames(10);
+  press(el, "note");
+  const second = /<tr><td>2<\/td><td>([\d,]+)<\/td><td>([\d,]+)<\/td><td>[\d,]+<\/td><td>([\d,]+)<\/td><\/tr>/.exec(box.innerHTML);
+  assert.ok(second, box.innerHTML);
+  near(+second[3].replace(",", "."), 10, 0.3, "abgegeben");
+  near(+second[2].replace(",", "."), 1.48, 0.02, "pH nach 10 mL Natronlauge");
+  assert.equal(state(el).rows.length, 2);
+  press(el, "reset");
+  assert.equal(state(el).rows.length, 2, "die Notizen bleiben beim Zurücksetzen");
+  press(el, "clear");
+  assert.equal(state(el).rows.length, 0);
+  assert.doesNotMatch(box.innerHTML, /<table/);
+});
+
+test("Oberfläche: Messwerttabelle nur auf Wunsch und nur mit Zahlen; ohne Messgerät ein Hinweis", () => {
+  assert.equal(part(mount(tube), ".cl-readings").hidden, true);
+  assert.equal(part(mount(Object.assign({}, titrated, { show: { numbers: false } })), ".cl-readings").hidden, true);
+  const el = mount({ table: true, bench: [{ type: "beaker", id: "b" }] });
+  press(el, "note");
+  assert.equal(state(el).rows.length, 0);
+  assert.match(part(el, ".cl-status").textContent, /Kein Messgerät/);
+});
+
+test("Aufbau als Text: Geräte, wie sie stehen, und was in die Gefäße gegeben wurde", () => {
+  const raw = { room: 25, shelf: ["H2O", "BTB"], task: "Beobachte.", bench: [
+    { type: "beaker", id: "b", ml: 250, contains: [{ reagent: "HCl 0.1M", ml: 20 }] },
+    { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] },
+    { type: "burner", id: "br", under: "b", flame: 1 }, { type: "phmeter", in: "b" }] };
+  const run = L.createRun(L.normalize(raw));
+  L.act(run, (l) => L.add(l, "b", "H2O", { ml: 9.85 }), { key: "added", vessel: "b", reagent: "H2O", ml: 9.85 });
+  L.act(run, (l) => L.add(l, "b", "BTB", { drops: 3 }), { key: "added", vessel: "b", reagent: "BTB", drops: 3 });
+  L.act(run, (l) => L.place(l, { type: "testtube" }));
+  L.act(run, (l) => L.place(l, { type: "thermometer", in: "testtube1" }));
+  L.act(run, (l) => L.setFlame(l, "br", 2));
+  L.act(run, (l) => L.setTap(l, "bu", 2));
+  L.advance(run, 3);
+  L.act(run, (l) => L.setTap(l, "bu", 0));
+  L.advance(run, 5);
+  // halb so viel, wie hineingegeben wurde (was aus der Bürette tropfte, zählt nicht dazu)
+  L.act(run, (l) => L.pour(l, "b", "testtube1", 15), { key: "poured", from: "b", vessel: "testtube1", ml: 15 });
+  const text = L.describe(run, raw), d = JSON.parse(text);
+  assert.match(text, /^\{"bench":\[\n  \{/, "ein Gerät je Zeile");
+  assert.deepEqual(d.bench, [
+    { type: "beaker", id: "b", ml: 250, contains: [{ reagent: "HCl 0.1M", ml: 10 }, { reagent: "H2O", ml: 4.925 }, { reagent: "BTB", drops: 1.5 }] },
+    { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] },
+    { type: "testtube", id: "testtube1", contains: [{ reagent: "HCl 0.1M", ml: 10 }, { reagent: "H2O", ml: 4.925 }, { reagent: "BTB", drops: 1.5 }] },
+    { type: "burner", id: "br", under: "b", flame: 2 },
+    { type: "phmeter", id: "phmeter1", in: "b" },
+    { type: "thermometer", id: "thermometer1", in: "testtube1" }
+  ]);
+  assert.deepEqual([d.room, d.shelf, d.task], [25, ["H2O", "BTB"], "Beobachte."], "der Rest der Beschreibung bleibt, wie er war");
+  const again = L.createLab(L.normalize(text));
+  assert.deepEqual(again.vessels.map((v) => v.id), ["b", "bu", "testtube1"]);
+  near(L.volume(L.vessel(again, "testtube1")) * 1000, 15, 0.1, "der Text lässt sich wieder einlesen");
+});
+
+test("Aufbau als Text: Ausleeren und Wegräumen; ein zersprungenes Glas fehlt", () => {
+  const raw = { bench: [{ type: "testtube", id: "a", contains: [{ reagent: "HCl 1M", ml: 5 }] }, { type: "testtube", id: "c", contains: [{ reagent: "NaOH 1M", ml: 5 }] }, { type: "beaker", id: "d" }] };
+  const run = L.createRun(L.normalize(raw));
+  L.act(run, (l) => L.empty(l, "a"), { key: "emptied", vessel: "a" });
+  L.act(run, (l) => L.remove(l, "c"), { key: "removed", part: "c" });
+  L.vessel(run.lab, "d").broken = true;
+  assert.deepEqual(JSON.parse(L.describe(run, raw)).bench, [{ type: "testtube", id: "a", contains: [] }]);
+});
+
+test("Oberfläche: „Aufbau kopieren“ legt den Text in die Zwischenablage und zeigt ihn zum Markieren", () => {
+  let copied = null;
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: (t) => { copied = t; return Promise.resolve(); } } }, configurable: true });
+  try {
+    const el = mount(tube);
+    assert.match(part(el, ".cl-top").innerHTML || el.innerHTML, /data-act="copy"/);
+    press(el, "copy");
+    assert.equal(copied, L.describe(state(el).run, tube));
+    assert.match(part(el, ".cl-panel").innerHTML, /<textarea class="cl-copy" readonly/);
+    assert.match(part(el, ".cl-panel").innerHTML, /&quot;bench&quot;/);
+    tap(el, "rg");
+    assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /cl-copy/, "wer etwas antippt, sieht wieder dessen Feld");
+  } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
+});
+
+test("Oberfläche: Messwerttabelle als Text mit Tabulatoren kopieren", () => {
+  let copied = null;
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: (t) => { copied = t; return Promise.resolve(); } } }, configurable: true });
+  try {
+    const el = mount(titrated);
+    press(el, "note");
+    assert.match(part(el, ".cl-readings").innerHTML, /data-act="copyTable"/);
+    press(el, "copyTable");
+    assert.equal(copied, "Nr.\tt (s)\tpH-Meter 1 (pH)\tThermometer 1 (°C)\tBürette 1: abgegeben (mL)\n1\t0,0\t1,00\t25,0\t0,0");
+    assert.match(part(el, ".cl-panel").innerHTML, /Die Messwerte, durch Tabulatoren getrennt/);
+  } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
+});
+
+const slide = (title) => {
+  const readme = fs.readFileSync(new URL("README.md", here), "utf8"), at = readme.indexOf("\n## " + title + "\n");
+  assert.ok(at > 0, "Folie " + title);
+  const end = readme.indexOf("\n## ", at + 5);
+  return [...readme.slice(at, end).matchAll(/```+ *json +@ChemLab\.sim\n([\s\S]*?)\n```+/g)].map((m) => m[1]);
+};
+
+test("README: die Aufgaben der Folien lassen sich lösen, so wie ihr Text es sagt", () => {
+  const [silver, heat] = slide("Aufgaben mit Selbstkontrolle").map((b) => L.normalize(b));
+  const done = (config, run) => L.checkTask(config.task, run.lab, L.logAt(run));
+  // Silberchlorid: 5 mL Silbernitrat (die Menge, die das Regal zuerst anbietet), dann 5 mL Ammoniaklösung
+  let run = L.createRun(silver), t = silver.bench[0].id;
+  for (const reagent of ["AgNO3 0.1M", "NH3 2M"]) {
+    assert.ok(silver.shelf.includes(reagent), reagent);
+    L.act(run, (l) => L.add(l, t, reagent, { ml: 5 }), { key: "added", vessel: t, reagent, ml: 5 });
+    L.advance(run, 30);
+  }
+  assert.equal(done(silver, run).done, true, JSON.stringify(done(silver, run)));
+  // Wasser erhitzen: Brenner an, bei 60 °C aus – es bleibt unter 70 °C
+  assert.equal(heat.lock, true);
+  run = L.createRun(heat);
+  const burner = heat.bench.find((p) => p.type === "burner").id, th = heat.bench.find((p) => p.type === "thermometer").id;
+  L.act(run, (l) => L.setFlame(l, burner, 2));
+  while (L.reading(run.lab, th).value < 60) L.advance(run, 0.5);
+  L.act(run, (l) => L.setFlame(l, burner, 0));
+  for (let i = 0; i < 60; i++) { L.advance(run, 1); assert.equal(done(heat, run).done, true, `nach ${i} s: ${L.reading(run.lab, th).value} °C`); }
+  // Messwerttabelle: gesperrt, mit Tabelle, Bürette über dem Becherglas mit pH-Meter
+  const [table] = slide("Sperren und Messwerttabelle").map((b) => L.normalize(b));
+  assert.deepEqual([table.lock, table.table], [true, true]);
+  assert.ok(table.bench.some((p) => p.type === "burette" && p.over) && table.bench.some((p) => p.type === "phmeter"));
+  assert.equal(slide("Aufbau als Text kopieren").length, 1);
+});
+
+test("Oberfläche: ein leeres Regal erscheint gar nicht", () => {
+  assert.equal(part(mount({ shelf: [] }), ".cl-shelf").hidden, true);
+  assert.equal(part(mount({ lock: true, shelf: ["beaker"] }), ".cl-shelf").hidden, true, "gesperrt bleibt von diesem Regal nichts");
+  assert.equal(part(mount(tube), ".cl-shelf").hidden, false);
+});

@@ -562,6 +562,83 @@
   // Stromstärke, Spannung, Stromstärke über der Spannung, Masse der Elektroden, Leitfähigkeit
   var CHARTS = ["T", "n", "pH", "titration", "V", "I", "U", "IU", "m", "kappa", "A", "spectrum"];
 
+  // Aufgaben. Ein Ziel ist
+  //   { measure, min, max }   ein Messgerät zeigt einen Wert von min bis max (Strom und Spannung als Betrag)
+  //   { has, min, max }       von einem Stoff liegen min bis max mol vor (gelöst, fest oder im Gasraum); Vorgabe: mindestens 1 µmol
+  //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
+  // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
+  var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V" };
+  var OBSERVED = ["gas", "pop", "relight", "out", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
+
+  function readTask(raw) {
+    if (typeof raw === "string") raw = { text: raw };
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw fail("task", String(raw));
+    if (raw.goals != null && !Array.isArray(raw.goals)) throw fail("task", "goals");
+    return { text: raw.text == null ? "" : String(raw.text), goals: (raw.goals || []).map(function (g) {
+      var goal;
+      if (!g || typeof g !== "object" || Array.isArray(g)) throw fail("task", JSON.stringify(g));
+      function bounds(target) {
+        ["min", "max"].forEach(function (key) {
+          if (g[key] == null) return;
+          if (typeof g[key] !== "number" || !isFinite(g[key]) || (target.has && g[key] < 0)) throw fail("task", key + " " + JSON.stringify(g[key]));
+          target[key] = g[key];
+        });
+      }
+      if (g.measure != null) {
+        if (!(g.measure in MEASURES)) throw fail("task", "measure " + String(g.measure));
+        goal = { measure: g.measure };
+        bounds(goal);
+        if (goal.min == null && goal.max == null) throw fail("task", "min/max");
+      } else if (g.has != null) {
+        if (!L.db.species[g.has]) throw fail("task", "has " + String(g.has));
+        goal = { has: String(g.has) };
+        bounds(goal);
+        if (goal.min == null && goal.max == null) goal.min = 1e-6;
+      } else if (g.seen != null) {
+        if (OBSERVED.indexOf(g.seen) < 0) throw fail("task", "seen " + String(g.seen));
+        goal = { seen: g.seen };
+        if (g.name != null) {
+          if (g.seen !== "color" || COLORS.indexOf(g.name) < 0) throw fail("task", "name " + String(g.name));
+          goal.name = g.name;
+        }
+        if (g.species != null) {
+          if (!L.db.species[g.species]) throw fail("task", "species " + String(g.species));
+          goal.species = String(g.species);
+        }
+      } else throw fail("task", JSON.stringify(g));
+      if (g.in != null) {
+        if (typeof g.in !== "string" || !/^[\w.-]+$/.test(g.in)) throw fail("task", "in " + String(g.in));
+        goal.in = g.in;
+      }
+      if (g.label != null && g.label !== "") goal.label = String(g.label);
+      return goal;
+    }) };
+  }
+
+  // Welche Ziele einer Aufgabe im Zustand lab erfüllt sind; events: das Protokoll bis zum Zeiger
+  function checkTask(task, lab, events) {
+    var goals = task.goals.map(function (g) {
+      var total = 0;
+      if (g.measure) return lab.tools.some(function (t) {
+        var def = L.parts[t.type], kind = def.circuit === "ammeter" ? "I" : def.circuit === "voltmeter" ? "U" : def.sense, value = t.value;
+        if (kind !== g.measure || value == null || (g.in != null && t.in !== g.in)) return false;
+        if (kind === "I" || kind === "U") value = Math.abs(value);
+        return (g.min == null || value >= g.min) && (g.max == null || value <= g.max);
+      });
+      if (g.has) {
+        lab.vessels.forEach(function (v) { if (g.in == null || v.id === g.in) total += (v.n[g.has] || 0) + (v.air[g.has] || 0); });
+        return (g.min == null || total >= g.min) && (g.max == null || total <= g.max + 1e-10);
+      }
+      return events.some(function (e) {
+        var kind = e.key === "bubbles" ? "gas" : e.key === "splint" ? e.result : e.key === "flameTest" ? "flame" : e.key === "lampOn" ? "lamp" : e.key;
+        if (kind !== g.seen || (g.in != null && e.vessel !== g.in) || (g.name && e.name !== g.name)) return false;
+        return !g.species || e.species === g.species || (Array.isArray(e.species) && e.species.indexOf(g.species) >= 0);
+      });
+    });
+    return { goals: goals, done: goals.every(Boolean) };
+  }
+
   function voltsOf(def, value) { return Math.round(Math.max(0, Math.min(def.max, +value || 0)) * 100) / 100; }
 
   function amountOf(r, raw) {
@@ -673,6 +750,9 @@
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
       room: typeof d.room === "number" && d.room >= 0 && d.room < 100 ? d.room : 20,
+      lock: !!d.lock,                                              // gesperrt: Geräte bleiben, wo sie stehen
+      table: !!d.table,                                            // mit Messwerttabelle
+      task: d.task == null ? null : readTask(d.task),
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
       model: d.model == null ? "ideal" : d.model
     };
@@ -3315,6 +3395,79 @@
     return Object.keys(high).filter(function (id) { return id !== WATER && id !== STEAM && high[id] - low[id] > 1e-9; });
   }
 
+  // ------------------------------------------------------------------ Aufbau als Text
+
+  // Der Aufbau als Text, so wie er jetzt dasteht: die Geräte an ihrem Platz und in jedem Gefäß, was hineingegeben wurde.
+  // Beim Umgießen geht von allem Flüssigen der Anteil mit, den die gegossene Menge an dem hat, was hineingegeben wurde;
+  // Feststoffe bleiben zurück. Was aus einer Bürette tropfte, steht weiter in der Bürette; Reaktionen laufen nach dem
+  // Einlesen von vorn. raw: die Beschreibung, aus der der Versuch entstand; alles außer bench bleibt, wie es dort steht.
+  function describe(run, raw) {
+    var lab = run.lab, put = {}, bench = [], rest = "";
+    function liquid(c) { return c.ml != null ? c.ml : c.drops != null ? c.drops * DROP : 0; }
+    function keep(id, entry) {
+      var list = put[id] = put[id] || [], unit = entry.g != null ? "g" : entry.drops != null ? "drops" : "ml";
+      var same = list.filter(function (c) { return c.reagent === entry.reagent && c[unit] != null; })[0];
+      if (same) same[unit] += entry[unit];
+      else { same = { reagent: entry.reagent }; same[unit] = entry[unit]; list.push(same); }
+    }
+    run.config.bench.forEach(function (item) {
+      if (!item.contains) return;
+      put[item.id] = [];
+      item.contains.forEach(function (c) {
+        var r = reagent(c.reagent);
+        keep(item.id, c.g != null ? { reagent: c.reagent, g: c.g } : r.drops ? { reagent: c.reagent, drops: c.ml / DROP } : { reagent: c.reagent, ml: c.ml });
+      });
+    });
+    logAt(run).forEach(function (e) {
+      var from, total, share;
+      if (e.key === "added") keep(e.vessel, e);
+      else if (e.key === "emptied") put[e.vessel] = [];
+      else if (e.key === "removed") delete put[e.part];
+      else if (e.key === "poured") {
+        from = put[e.from] || [];
+        total = from.reduce(function (sum, c) { return sum + liquid(c); }, 0);
+        share = total > 0 ? Math.min(1, e.ml / total) : 0;
+        from.forEach(function (c) {
+          var unit = c.ml != null ? "ml" : c.drops != null ? "drops" : null, moved;
+          if (!unit || !(share > 0)) return;
+          moved = { reagent: c.reagent };
+          moved[unit] = c[unit] * share;
+          c[unit] -= moved[unit];
+          keep(e.vessel, moved);
+        });
+        put[e.from] = from.filter(function (c) { return !(c.ml != null && c.ml < 1e-9) && !(c.drops != null && c.drops < 1e-9); });
+      }
+    });
+    function round(x) { return +x.toPrecision(4); }
+    lab.vessels.forEach(function (v) {
+      var def = L.parts[v.type], item = { type: v.type, id: v.id };
+      if (v.broken) return;
+      if (def.sizes) item.ml = v.size;
+      if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
+      item.contains = (put[v.id] || []).map(function (c) {
+        var out = { reagent: c.reagent };
+        ["ml", "drops", "g"].forEach(function (unit) { if (c[unit] != null) out[unit] = round(c[unit]); });
+        return out;
+      });
+      bench.push(item);
+    });
+    lab.tools.forEach(function (t) {
+      var def = L.parts[t.type], item = { type: t.type, id: t.id }, host = t.in && vessel(lab, t.in), g;
+      if (host && !host.broken) item[def.under ? "under" : "in"] = t.in;
+      if (def.flames && t.flame) item.flame = t.flame;
+      if (def.bath) item.temp = t.temp;
+      if (def.sense === "A") item.nm = t.nm;
+      if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
+      if (def.bridge && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;
+      if (def.electrode) { g = round(t.n0 * species(def.electrode).M); if (Math.abs(g - def.g) > 1e-9) item.g = g; }
+      bench.push(item);
+    });
+    Object.keys(raw && typeof raw === "object" ? raw : {}).forEach(function (key) {
+      if (key !== "bench") rest += ',\n "' + key + '":' + JSON.stringify(raw[key]);
+    });
+    return '{"bench":[\n  ' + bench.map(function (item) { return JSON.stringify(item); }).join(",\n  ") + "\n ]" + rest + "}";
+  }
+
   // ------------------------------------------------------------------ nach außen
 
   L.fail = fail;
@@ -3325,6 +3478,9 @@
   L.enthalpy = enthalpy;
   L.heatOf = heatFor;
   L.register = register;
+  L.checkTask = checkTask;
+  L.describe = describe;
+  L.MEASURES = MEASURES;
   L.registerPart = registerPart;
   L.lint = lint;
   L.species = species;

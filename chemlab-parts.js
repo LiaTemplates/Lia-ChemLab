@@ -150,6 +150,20 @@
       "err.size": "Diese Größe gibt es für das Gefäß nicht",
       "err.model": "Dieses Rechenmodell gibt es nicht (ideal oder real)",
       "err.data": "Fehler in den eigenen Stoffdaten",
+      "err.task": "Die Aufgabe lässt sich nicht lesen",
+      "copy": "Aufbau kopieren", "copy.manual": "Der Aufbau als Text – markieren und kopieren:", "copy.done": "Der Text ist in der Zwischenablage.",
+      "table.copy": "Tabelle kopieren", "table.manual": "Die Messwerte, durch Tabulatoren getrennt – markieren und kopieren:",
+      "table.note": "Messwerte notieren", "table.clear": "Tabelle leeren", "table.title": "Messwerte", "table.no": "Nr.",
+      "table.given": "abgegeben", "table.noMeter": "Kein Messgerät auf dem Tisch: Es gibt nichts zu notieren.",
+      "task": "Aufgabe", "task.done": "Geschafft!", "goal.met": "erfüllt", "goal.open": "noch offen",
+      "goal.min": "mindestens", "goal.max": "höchstens", "goal.from": "von", "goal.to": "bis", "goal.in": "in {name}",
+      "goal.has": "{name} liegt vor", "goal.gone": "{name}: nicht mehr vorhanden",
+      "measure.T": "Temperatur", "measure.pH": "pH-Wert", "measure.kappa": "Leitfähigkeit", "measure.A": "Extinktion", "measure.V": "Gasvolumen",
+      "measure.I": "Stromstärke", "measure.U": "Spannung",
+      "seen.gas": "Gasentwicklung", "seen.pop": "Knallgasprobe: Es knallt", "seen.relight": "Glimmspan: Er flammt auf", "seen.out": "Brennender Span: Er erlischt",
+      "seen.solid": "Niederschlag", "seen.dissolved": "Feststoff löst sich", "seen.color": "Farbumschlag", "seen.colorOf": "Die Lösung wird {color}",
+      "seen.boil": "Die Flüssigkeit siedet", "seen.smell": "Stechender Geruch", "seen.ignite": "Es brennt", "seen.flame": "Flammenfärbung",
+      "seen.plated": "Metall scheidet sich ab", "seen.lamp": "Das Lämpchen leuchtet", "seen.broken": "Das Glas zerspringt",
       "err.other": "Der Aufbau lässt sich nicht anzeigen"
     },
     en: {
@@ -291,6 +305,20 @@
       "err.size": "The vessel does not come in this size",
       "err.model": "There is no such calculation model (ideal or real)",
       "err.data": "Error in the custom substance data",
+      "err.task": "The task cannot be read",
+      "copy": "Copy setup", "copy.manual": "The setup as text – select and copy:", "copy.done": "The text is on the clipboard.",
+      "table.copy": "Copy the table", "table.manual": "The readings, separated by tabs – select and copy:",
+      "table.note": "Note the readings", "table.clear": "Clear the table", "table.title": "Readings", "table.no": "No.",
+      "table.given": "delivered", "table.noMeter": "No meter on the bench: there is nothing to note.",
+      "task": "Task", "task.done": "Well done!", "goal.met": "met", "goal.open": "still open",
+      "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
+      "goal.has": "{name} is present", "goal.gone": "{name}: no longer present",
+      "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume",
+      "measure.I": "Current", "measure.U": "Voltage",
+      "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
+      "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
+      "seen.boil": "The liquid boils", "seen.smell": "Pungent smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
+      "seen.plated": "A metal is deposited", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
       "err.other": "The setup cannot be shown"
     }
   };
@@ -349,6 +377,27 @@
     if (key in L.strings.en) return text(key, lang);
     if (def.name) return def.name[lang] || def.name.en || def.name.de;
     return sp ? text("electrodeOf", lang, { name: nameOf(sp, lang) }) : type;
+  }
+
+  // Ziel einer Aufgabe als Text: "pH-Wert von 6 bis 8 in Becherglas 1"; names: Namen der Geräte nach ihrer id
+  function goalText(goal, lang, names) {
+    var out, unit, name;
+    function value(x) { return trim(x, lang) + (unit ? " " + unit : ""); }
+    if (goal.measure) {
+      unit = L.MEASURES[goal.measure];
+      out = text("measure." + goal.measure, lang) + " " + (goal.min != null && goal.max != null
+        ? text("goal.from", lang) + " " + trim(goal.min, lang) + " " + text("goal.to", lang) + " " + value(goal.max)
+        : goal.min != null ? text("goal.min", lang) + " " + value(goal.min) : text("goal.max", lang) + " " + value(goal.max));
+    } else if (goal.has) {
+      name = nameOf(L.species(goal.has), lang);
+      if (goal.max != null && goal.max <= 1e-9 && goal.min == null) out = text("goal.gone", lang, { name: name });
+      else if (goal.max == null && goal.min === 1e-6) out = text("goal.has", lang, { name: name });
+      else out = name + ": " + (goal.min != null && goal.max != null
+        ? text("goal.from", lang) + " " + amount(goal.min, lang) + " " + text("goal.to", lang) + " " + amount(goal.max, lang)
+        : goal.min != null ? text("goal.min", lang) + " " + amount(goal.min, lang) : text("goal.max", lang) + " " + amount(goal.max, lang));
+    } else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });
+    else out = text("seen." + goal.seen, lang) + (goal.species ? ": " + nameOf(L.species(goal.species), lang) : "");
+    return out + (goal.in != null ? " " + text("goal.in", lang, { name: (names && names[goal.in]) || goal.in }) : "");
   }
 
   // Menge einer Zugabe als Text: "5 mL", "3 Tropfen", "5 cm", "0,5 g"
@@ -1147,6 +1196,7 @@
   L.colorWord = colorWord;
   L.nameOf = nameOf;
   L.portionText = portionText;
+  L.goalText = goalText;
   L.say = say;
   L.explain = explain;
   L.escape = esc;
