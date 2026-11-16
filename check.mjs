@@ -2698,6 +2698,26 @@ test("Kolbenprober: ist er voll, springt der Kolben heraus", () => {
   near(L.reading(l, "kp").value, 100, 0.5, "er zeigt weiter seine 100 mL");
 });
 
+test("Stopfen an der Fläche: aufsetzen, herausfliegen, Protokoll; Zeichnung und Symbol", () => {
+  const el = mount({ room: 20, bench: [{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }] }], shelf: ["stopper", "Mg ribbon"] });
+  press(el, "hand", "stopper");
+  assert.match(part(el, ".cl-hand").innerHTML, /das verschlossen werden soll/);
+  tap(el, "t");
+  assert.match(logOf(el), /Reagenzglas 1 mit Gummistopfen 1 verschlossen/);
+  assert.match(item(el, "stopper1").innerHTML, /cl-stopper/);
+  press(el, "hand", "Mg ribbon");
+  for (let i = 0; i < 4; i++) press(el, "more");
+  tap(el, "t");
+  frames(60);
+  assert.match(logOf(el), /Reagenzglas 1: Der Stopfen fliegt heraus!/);
+  clean(L.parts.stopper.draw({ type: "stopper" }, ctx()), "Stopfen für sich");
+  assert.match(L.icon("stopper"), /cl-stopper/);
+  const c = { lang: "de", numbers: true, names: { t: "Reagenzglas 1", z: "Reagenzglas 2", kp: "Kolbenprober 1" } };
+  assert.equal(L.say({ key: "suckBack", vessel: "t", from: "z" }, c), "Reagenzglas 1: Flüssigkeit steigt durch das Rohr zurück.");
+  assert.equal(L.say({ key: "plungerOut", part: "kp", vessel: "t" }, c), "Kolbenprober 1: Der Kolben springt heraus.");
+  assert.equal(L.goalText({ seen: "popped" }, "de"), "Der Stopfen fliegt heraus");
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);
@@ -7989,6 +8009,25 @@ test("README: die Folien zu Ammonium-Nachweis und Alkalimetallen halten, was ihr
   L.step(early, 1);
   glass.forEach((id, k) => { const s = look(early, id).solids[0]; states[["Li", "Na", "K"][k]] = [s.float, s.molten, !!s.flame]; });
   assert.deepEqual(states, { Li: [true, false, false], Na: [true, true, false], K: [true, true, true] }, "schwimmen; Natrium und Kalium schmelzen; Kalium brennt");
+});
+
+test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text verspricht", () => {
+  const [closed, back] = slide("Überdruck und Zurücksteigen").map((b) => L.normalize(b));
+  let seen = [], l = L.createLab(closed);
+  const tube = closed.bench.find((p) => p.type === "testtube" && closed.bench.some((t) => t.type === "stopper" && t.in === p.id));
+  L.add(l, tube.id, "Mg ribbon", { g: 0.05 });
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "popped"), "das Magnesium drückt den Stopfen heraus");
+  seen = []; l = L.createLab(closed);
+  L.step(l, 600, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "popped" && closed.bench.some((t) => t.type === "burner" && t.in === e.vessel)), "das erhitzte Glas auch");
+  seen = []; l = L.createLab(back);
+  const burner = back.bench.find((p) => p.type === "burner");
+  until(l, () => L.vessel(l, burner.in).boil > 0, 600);
+  L.step(l, 20);
+  L.setFlame(l, burner.id, 0);
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

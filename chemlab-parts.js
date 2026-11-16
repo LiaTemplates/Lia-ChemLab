@@ -188,6 +188,9 @@
       "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
       "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "part.paper": "indicator paper",
       "say.paper": "{vessel}: The moist indicator paper turns {color}.",
+      "part.stopper": "rubber stopper", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
+      "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.",
+      "seen.popped": "The stopper pops out", "seen.suckBack": "Liquid is sucked back", "seen.plungerOut": "The plunger pops out",
       "seen.boil": "The liquid boils", "seen.smell": "Smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
       "seen.plated": "A metal is deposited", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
       "err.other": "The setup cannot be shown"
@@ -553,6 +556,10 @@
       (ctx.marks || []).forEach(function (mark) {              // Proben an der Öffnung: der Span, und der Blitz einer Verpuffung
         if (mark.key === "splint" && mark.age < 2) out += L.fx.splint(shape.tall ? 4 : shape.x1 * 0.5, shape.rim - 4, mark, ctx.t, ctx.still);
         if ((mark.key === "pop" || (mark.key === "splint" && mark.result === "pop")) && mark.level > 0) out += L.fx.flash(0, shape.rim - 6, mark.age, mark.level);
+        if (mark.key === "popped" && mark.age < 0.8) {        // der Stopfen fliegt heraus: hinauf und zur Seite, sich drehend
+          out += '<g transform="translate(' + f(mark.age * 50) + "," + f(-mark.age * 160 + mark.age * mark.age * 120) + ") rotate(" + f(mark.age * 400) + " 0 " + f(shape.rim) + ')">' +
+            plugShape(0, shape.rim, shape.tall ? 26 : 30) + "</g>" + L.fx.flash(0, shape.rim - 6, mark.age, 1);
+        }
       });
     }
     return out;
@@ -579,7 +586,7 @@
     // wo ein Messgerät steckt: das Thermometer rechts, die Elektrode des pH-Meters links
     // tag und box: wo neben dem Gerät seine Anzeige steht, damit sich zwei Anzeigen nicht verdecken
     probe: function (v, type, slot) {
-      if (type === "syringe") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
+      if (type === "syringe" || type === "stopper") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
       if (type === "tube") return { x: 0, rim: TUBE.top, w: 26, top: TUBE.top - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 6 * slot, rim: TUBE.top };
       if (type === "reflux") return { x: 0, rim: TUBE.top, top: TUBE.top - REFLUX };
@@ -621,7 +628,7 @@
     // slot: bei Elektroden 0 links und 1 rechts; bei der Salzbrücke die Seite, auf der das andere Gefäß steht (−1 oder 1)
     probe: function (v, type, slot) {
       var s = beakerSize(v);
-      if (type === "syringe") return { x: 0, rim: -s[1], w: s[0] - 2 };
+      if (type === "syringe" || type === "stopper") return { x: 0, rim: -s[1], w: s[0] - 2 };
       if (type === "tube") return { x: 0, rim: -s[1], w: s[0] - 2, top: -s[1] - PIPE_RISE };
       // Die Elektrode endet so weit über dem Boden wie in der Rechnung: bei der Füllhöhe, die dem Abstand L.PLATE.gap entspricht
       if (L.parts[type] && L.parts[type].electrode) {
@@ -691,7 +698,7 @@
     surface: dishSurface,
     foot: function () { return 24; },
     probe: function (v, type, slot) {
-      if (type === "syringe") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
+      if (type === "syringe" || type === "stopper") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
       if (type === "tube") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4, top: -DISH.h - 4 - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 30 * slot, rim: -DISH.h - 4 };
       if (type === "reflux") return { x: 0, rim: -DISH.h - 4, top: -DISH.h - 4 - REFLUX };
@@ -761,6 +768,20 @@
         '<rect class="cl-scale-pan" x="' + (-a + 6) + '" y="' + (-SCALE.lift) + '" width="' + (2 * a - 12) + '" height="4" rx="1"/>' +
         '<g class="cl-meter"><rect x="-26" y="-16" width="52" height="13" rx="2"/><text x="0" y="-6" text-anchor="middle">' +
         (ctx.numbers ? shown(w, ctx.lang) : "") + "</text></g>" + badge(place ? a + 14 : 0, 14, ctx.no);
+    }
+  });
+
+  // ------------------------------------------------------------------ Gummistopfen
+
+  // place: { x, rim, w } aus probe() des Gefäßes, wie beim Kolbenprober; für sich liegt er auf dem Tisch
+  function plugShape(x, y, w) {
+    return '<path class="cl-stopper" d="M' + f(x - w / 2) + "," + f(y - 4) + "L" + f(x + w / 2) + "," + f(y - 4) + "L" + f(x + w / 2 - 2) + "," + f(y + 7) + "L" + f(x - w / 2 + 2) + "," + f(y + 7) + 'Z"/>';
+  }
+  L.registerPart("stopper", {
+    width: function () { return 40; },
+    bounds: function (t, place) { return place ? { x0: place.x - place.w / 2 - 2, x1: place.x + place.w / 2 + 2, top: place.rim - 8, bottom: place.rim + 8 } : { x0: -14, x1: 14, top: -14 }; },
+    draw: function (w, ctx, place) {
+      return place ? plugShape(place.x, place.rim, place.w) : plugShape(0, -7, 22) + badge(0, 14, ctx.no);
     }
   });
 
@@ -1056,7 +1077,7 @@
     foot: function () { return 14; },
     // slot beim Kühler: die Seite, auf der die Vorlage steht (−1 oder 1); dorthin zeigt das Ansatzrohr
     probe: function (v, type, slot) {
-      if (type === "syringe") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
+      if (type === "syringe" || type === "stopper") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
       if (type === "tube") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4, top: FLASK.rim - PIPE_RISE };
       if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
       if (type === "bridge") return { x: 0, rim: FLASK.rim };
@@ -1252,6 +1273,7 @@
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
         : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
+        : id === "stopper" ? '<path class="cl-stopper" d="M7,10L21,10L19,22L9,22Z"/>'
         : id === "balance" ? '<rect class="cl-scale" x="2" y="16" width="24" height="10" rx="2"/><rect class="cl-scale-pan" x="5" y="13" width="18" height="2.5"/><g class="cl-meter"><rect x="8" y="18" width="12" height="6" rx="1"/></g>'
         : id === "tube" ? '<path class="cl-stopper" d="M2,13L10,13L9,18L3,18Z"/><path class="cl-glass" d="M6,13L6,5Q6,3 8,3L20,3Q22,3 22,5L22,27"/>'
         : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'

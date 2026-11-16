@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -364,6 +364,35 @@ Kohlenstoffdioxid ist schwerer als Luft und lässt sich in einem leeren Glas auf
  ],
  "shelf":["marble","Zn granules","H2O","splint","glowsplint","tube","testtube"],
  "show":{"charts":false}}
+```
+
+## Überdruck und Zurücksteigen
+
+Ein **Gummistopfen** verschließt ein Glas ganz. Im linken Glas Magnesium in die Salzsäure geben: Der Wasserstoff hat keinen Platz, der Druck steigt, und der Stopfen fliegt heraus. Im mittleren Glas wird Wasser erhitzt: Die Luft dehnt sich aus, Wasserdampf kommt hinzu, und lange bevor das Wasser siedet, fliegt auch dieser Stopfen. Deshalb wird ein Gefäß nie verschlossen erhitzt.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"saeure","contains":[{"reagent":"HCl 1M","ml":10}]},
+  {"type":"stopper","in":"saeure"},
+  {"type":"testtube","id":"erhitzt","contains":[{"reagent":"H2O","ml":5}]},
+  {"type":"stopper","in":"erhitzt"},
+  {"type":"burner","under":"erhitzt","flame":2}
+ ],
+ "shelf":["Mg ribbon","stopper","testtube"],
+ "show":{"charts":["T"]}}
+```
+
+Hier siedet Wasser, und der Dampf geht durch das Rohr ins Kalkwasser. Den Brenner ausschalten, solange das Rohr noch im Kalkwasser steckt: Das Glas kühlt ab, der Dampf darin wird wieder zu Wasser, und das Kalkwasser steigt durch das Rohr zurück. Ist das Glas dabei heißer als etwa 200 °C, etwa weil darin etwas trocken erhitzt wurde, zerspringt es. Deshalb nimmt man zuerst das Rohr aus der Flüssigkeit und löscht dann den Brenner.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"siedeglas","contains":[{"reagent":"H2O","ml":4}]},
+  {"type":"burner","under":"siedeglas","flame":2},
+  {"type":"tube","in":"siedeglas","to":"kalkwasser"},
+  {"type":"testtube","id":"kalkwasser","contains":[{"reagent":"limewater","ml":10}]}
+ ],
+ "shelf":["tube","testtube","burner"],
+ "show":{"charts":["T"]}}
 ```
 
 ## Massenerhaltung
@@ -1126,6 +1155,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `balance` | Waage unter einem Gefäß: zeigt Glas und Inhalt auf 0,01 g; „Tara“ setzt die Anzeige auf null. Unter einem Gefäß steht entweder eine Waage, ein Brenner oder ein Wasserbad | `under` |
 | `bath` | Wasserbad mit Thermostat, 0 °C (Eiswasser) bis 95 °C; das Gefäß darin nimmt seine Temperatur an | `under`, `temp` |
 | `syringe` | Kolbenprober, 100 mL; verschließt das Gefäß und misst das Gasvolumen | `in` |
+| `stopper` | Gummistopfen: verschließt das Gefäß `in` ganz. Steigt der Druck darin über 1,5 bar, fliegt er heraus und liegt dann frei auf dem Tisch | `in` |
 | `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
 | `conductometer` | Leitfähigkeitsmessgerät, zeigt mS/cm oder µS/cm | `in` |
@@ -1367,8 +1397,9 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Alkalimetalle** (Paket): Sie reagieren mit Wasser nach einem Geschwindigkeitsgesetz mit ihrer Oberfläche, wie Magnesium in Säure. Die Konstanten sind geschätzt, nach der Zeit, in der ein Stückchen im Schulversuch verbraucht ist; die Wärme folgt aus den Bildungsenthalpien.
 - **Heiße Stellen:** Jedes Stück aus dem Regal hat seine eigene Temperatur. Die Reaktionen an seiner Oberfläche heizen es; es gibt die Wärme an das Wasser ab (0,35 W/(cm² K)) oder, trocken, an die Luft (0,002 W/(cm² K)) und durch Strahlung (Emissionsgrad 0,8). Beide Übergangszahlen sind geschätzt; die im Wasser ist so gewählt, dass Lithium (132 °C) fest bleibt, Natrium (gut 350 °C) schmilzt und Kalium (gut 600 °C) den Wasserstoff zündet. Ein Stück mit Schmelzpunkt (`Tm`) darunter ist geschmolzen; eines, das leichter ist als Wasser (`rho`), schwimmt. Ab 525 °C glüht es in der Farbe, die das Plancksche Strahlungsgesetz für seine Temperatur ergibt. Ab 560 °C, der Zündtemperatur von Wasserstoff in Luft, verbrennt der Wasserstoff, den ein schwimmendes Stück freisetzt, mit Sauerstoff aus der Luft, in der Flammenfarbe des Metall-Ions. Geschmolzenes Metall, das mehr als 30 W/cm² freisetzt, spritzt. Die Wärme selbst bleibt beim Gefäß, wie bisher. Die Wärme an der Oberfläche folgt aus dem Geschwindigkeitsgesetz je cm²; sie hängt deshalb nicht davon ab, wie groß das Stück noch ist, und ein Stück wird zum Schluss nicht heißer. Heißer als 1500 °C wird ein Stück im Wasser nicht. Was selbst brennt (Holzkohle, Schwefel, Magnesium), zeigt sein eigenes Feuer; seine Verbrennungswärme heizt das Stück nicht zusätzlich.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
-- **Kolbenprober:** Er verschließt das Gefäß und zählt alles Gas, das entsteht, als Volumen bei Raumtemperatur und Luftdruck, bis 100 mL. Wird das Gefäß ausgeleert, zählt er von vorn.
+- **Kolbenprober:** Er verschließt das Gefäß und zählt alles Gas, das entsteht, als Volumen bei Raumtemperatur und Luftdruck, bis 100 mL; dann springt der Kolben heraus (siehe Druck). Wird das Gefäß ausgeleert, zählt er von vorn.
 - **Waage:** Sie zeigt die Masse des Glases und von allem, was darin ist: gelöst, fest und im Gasraum darüber. Das Glas wiegt so viel, wie seine Wärmekapazität bei 0,84 J/(g K) ergibt: ein Reagenzglas 20,2 g, ein Becherglas mit 100 mL 35,7 g. Was aus dem offenen Gefäß entweicht, fehlt; ein Kolbenprober hält es im System, bis er voll ist. Die Anzeige folgt mit einer halben Sekunde Verzögerung. „Tara“ zieht ab, was in diesem Augenblick darauf steht.
+- **Druck:** In einem verschlossenen Gefäß stehen im Gasraum die Luft, die beim Verschließen darin war, die entstandenen Gase und der Wasserdampf mit seinem Dampfdruck (Clausius-Clapeyron); der Druck folgt aus dem Gasgesetz für die Temperatur des Inhalts. Ein Gummistopfen hält bis 1,5 bar, dann fliegt er heraus, und das Gas entweicht. Mit einem Gasableitungsrohr gleicht sich der Druck aus: Darüber geht mit dem Gas auch Luft hinaus; darunter steigt Flüssigkeit aus dem zweiten Gefäß zurück, so viel, wie zum Ausgleich fehlt, oder, ist es leer, Luft. Trifft zurückgestiegene Flüssigkeit auf ein Glas, das heißer ist als 200 °C, zerspringt es. Ein Kolbenprober hält den Luftdruck; ist er voll und es entsteht weiter Gas, springt der Kolben heraus, er löst sich vom Gefäß und behält seine Anzeige. Die 1,5 bar und die 200 °C sind geschätzt.
 - **Gasableitungsrohr:** Es verschließt das Gefäß wie der Kolbenprober. So viel Gas, wie dort entsteht, schiebt es aus dem Gasraum in das zweite Gefäß, im Verhältnis seiner Zusammensetzung: zuerst vor allem Luft, die nicht gerechnet wird, dann zunehmend das Gas selbst. Steht im zweiten Gefäß Flüssigkeit, perlt das Gas hindurch. Ein Gas mit Lösungsgleichgewicht (Kohlenstoffdioxid, Ammoniak, Chlorwasserstoff, Schwefeldioxid) geht in Lösung und reagiert dort; was über die Sättigung bei Luftdruck hinausgeht, perlt wieder aus. Andere Gase steigen durch und stehen im Gasraum darüber. Ein leeres Gefäß fängt das Gas auf. Dampf aus einem siedenden Gefäß schlägt sich im zweiten nieder wie in der Vorlage eines Kühlers. Fehlt das zweite Gefäß, geht das Gas ins Freie.
 - **Verbrennung:** Ein Feststoff entzündet sich bei seiner Zündtemperatur und brennt dann von selbst weiter, mit Sauerstoff aus der Luft. Seine Oberfläche bestimmt, wie schnell. Der größte Teil der Wärme geht mit Licht und heißen Gasen fort; das Gefäß erwärmt die Flamme wie ein Brenner, es wird also nie heißer als sie. Unter Wasser und im verschlossenen Gefäß brennt nichts.
 - **Flammenfärbung:** Jedes Teilchen mit einer Flammenfarbe trägt nach Konzentration und Leuchtkraft bei; die Farben mischen sich. Zu sehen ist sie nur in der rauschenden Flamme und vergeht nach vier Sekunden.
@@ -1405,6 +1436,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Kalkwasser klärt sich deshalb schneller wieder als im Versuch. Beim Abkühlen steigt keine Flüssigkeit zurück, und Überdruck entsteht nicht.
 - Die Waage rechnet ohne Auftrieb in der Luft, und Elektroden, Messfühler und Kolbenprober zählen nicht mit: Sie hängen am Stativ. Ein Gefäß auf der Waage lässt sich nicht zugleich heizen.
 - Heiße Stellen gibt es nur an Stücken aus dem Regal, nicht an einem Niederschlag. Das Flitzen eines geschmolzenen Stücks ist gezeichnet, nicht gerechnet, und in der 3D-Ansicht spritzt es nicht; brennen dort mehrere Stücke in einem Glas, zeigt sie nur eine Flamme. Der brennende Wasserstoff steht nicht in den Gleichungen, und seine Wärme geht mit der Flamme fort. Indikatorpapier wird nur über die Öffnung gehalten, nicht eingetaucht, und Chlor bleicht es nicht, weil sich Chlor hier nicht löst.
+- Ein Glas platzt nie allein durch Überdruck, denn der Stopfen gibt vorher nach; ein Unterdruck ohne Rohr bleibt ohne Wirkung. Der Druck ist nicht als Messwert zu sehen.
 - Kalkwasser hat hier 0,011 mol/L statt der rund 0,02 mol/L einer im Labor gesättigten Lösung, denn das ideale Modell rechnet Calciumhydroxid schon bei 0,0117 mol/L als gesättigt.
 - Wasser verdunstet nur beim Sieden; unterhalb von 100 °C verliert ein Gefäß nichts. Gelöste Gase entweichen nur, wenn sie ausperlen oder mit dem Dampf fortgehen.
 - Die Löslichkeit von Kupfersulfat ist auf den gemessenen Wert von 1,4 mol/L eingestellt, weil die ideale Rechnung mit der Konstante der Datenbank zu wenig ergäbe. Solche Werte sind in den Daten als „adjusted“ (angepasst) gekennzeichnet.

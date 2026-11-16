@@ -266,6 +266,20 @@
 
   var BARREL = 90;                  // wie in chemlab-parts.js: Länge des Zylinders für 100 mL
 
+  // Gummistopfen: in der Öffnung (place wie beim Kolbenprober) oder, herausgeflogen, auf dem Tisch
+  L.registerLook("stopper", "lab", {
+    build: function () { var group = new THREE.Group(); group.userData = {}; return group; },
+    update: function (group, d, kit) {
+      var p = d.place, floor = -kit.up(d.lift);
+      group.userData.body = fx.rebuild(group, "plug", p ? [p.x, p.rim, p.w, d.lift].join("|") : "alone", function (sub) {
+        var w = p ? p.w : 22, plug = mesh(new THREE.CylinderGeometry(cm(w / 2), cm(w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8), p ? cm(p.x) : 0, p ? cm(-(p.rim + 1.5)) : floor + cm(w / 2));
+        plug.castShadow = true;
+        if (!p) plug.rotation.z = Math.PI / 2;                 // liegt auf der Seite
+        sub.add(plug);
+      });
+    }
+  });
+
   L.registerLook("syringe", "lab", {
     build: function (kit) {
       var group = new THREE.Group(), tag = kit.label(0.75);

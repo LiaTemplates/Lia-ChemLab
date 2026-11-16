@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, flip: 1, tare: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -345,7 +345,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -453,7 +453,7 @@
           return;
         }
         change(function (l) { return L.place(l, over ? { type: h.id, over: id } : { type: h.id, in: id }); },
-          function (made) { return { key: over ? "hung" : def.under ? "under" : def.sense === "V" || def.circuit ? "joined" : "probe", part: made, vessel: id }; });
+          function (made) { return { key: over ? "hung" : def.under ? "under" : def.plug ? "plugged" : def.sense === "V" || def.circuit ? "joined" : "probe", part: made, vessel: id }; });
         return;
       }
       p = portion();
@@ -739,7 +739,7 @@
       var sign = lab.vessels.map(function (v) { return v.id + ">" + v.over + (v.broken ? "!" : ""); }).concat(lab.tools.map(function (t) { return t.id + ">" + t.in + ">" + (t.to || ""); })).join("|");
       // was eben geschah und kurz zu sehen bleibt: der Span an der Öffnung, der Blitz einer Verpuffung
       st.run.log.slice(Math.max(0, st.run.frames[st.run.cursor].n - 8), st.run.frames[st.run.cursor].n).forEach(function (event) {
-        if ((event.key !== "splint" && event.key !== "pop") || !(now - event.t < SHOWN) || now < event.t) return;
+        if ((event.key !== "splint" && event.key !== "pop" && event.key !== "popped") || !(now - event.t < SHOWN) || now < event.t) return;
         (marks[event.vessel] = marks[event.vessel] || []).push(Object.assign({ age: now - event.t }, event));
       });
       if (sign !== shape) {
@@ -788,7 +788,7 @@
             place.surface = w.ml > 0.005 ? L.parts[host.type].surface(w) : null;
           }
           // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
-          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.duct || def.reflux ? def.bounds(r, place)
+          b = def.under || def.sense === "V" || def.plug || def.circuit || def.bridge || def.duct || def.reflux ? def.bounds(r, place)
             : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
           if (!three) g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
@@ -799,7 +799,7 @@
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length && !veiled(r.in)) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
           aria = label[item.id] + (def.bridge || def.duct ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
-            : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : "");
+            : host ? " " + T(def.under ? "aria.under" : def.plug || def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : "");
           g.setAttribute("aria-label", aria);
           if (three) three.item({ id: item.id, type: item.type, vessel: false, data: r, place: place, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
         }
@@ -1484,6 +1484,7 @@
         else if (event.key === "splint") sound.shot(event.result === "out" ? "hiss" : event.result === "relight" || event.result === "flare" ? "whoosh" : "", 0);
         else if (event.key === "ignite") sound.shot("whoosh", 0);
         else if (event.key === "broken") sound.shot("crash", 0);
+        else if (event.key === "popped" || event.key === "plungerOut") sound.shot("pop", 1);
       });
       heard = n;
     }
