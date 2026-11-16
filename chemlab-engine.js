@@ -599,7 +599,7 @@
   var OBSERVED = ["gas", "pop", "relight", "out", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
-  function readTask(raw) {
+  function readTask(raw, bench) {
     if (typeof raw === "string") raw = { text: raw };
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw fail("task", String(raw));
     if (raw.goals != null && !Array.isArray(raw.goals)) throw fail("task", "goals");
@@ -634,6 +634,9 @@
           if (!L.db.species[g.species]) throw fail("task", "species " + String(g.species));
           goal.species = String(g.species);
         }
+      } else if (g.identify != null) {                          // eine unbekannte Probe mit oneOf richtig benennen
+        if (!(bench || []).some(function (item) { return item.unknown === g.identify && item.oneOf; })) throw fail("task", "identify " + String(g.identify));
+        goal = { identify: g.identify };
       } else throw fail("task", JSON.stringify(g));
       if (g.in != null) {
         if (typeof g.in !== "string" || !/^[\w.-]+$/.test(g.in)) throw fail("task", "in " + String(g.in));
@@ -648,6 +651,10 @@
   function checkTask(task, lab, events) {
     var goals = task.goals.map(function (g) {
       var total = 0;
+      if (g.identify) {                                          // die letzte Antwort zu dieser Probe zählt
+        var said = events.filter(function (e) { return e.key === "guess" && e.sample === g.identify; }).pop(), s = lab.samples[g.identify];
+        return !!(said && s && said.name === s.names[s.pick]);
+      }
       if (g.measure) return lab.tools.some(function (t) {
         var def = L.parts[t.type], kind = def.circuit === "ammeter" ? "I" : def.circuit === "voltmeter" ? "U" : def.sense, value = t.value;
         if (kind !== g.measure || value == null || (g.in != null && t.in !== g.in)) return false;
@@ -701,7 +708,7 @@
     if (d.view != null && d.view !== "2d" && d.view !== "3d") throw fail("view", String(d.view));
     var scene = sceneOf(d.scene);
 
-    var count = {}, ids = {}, bench = [];
+    var count = {}, ids = {}, bench = [], samples = {};
     (Array.isArray(d.bench) ? d.bench : []).forEach(function (raw) {
       var type = raw && raw.type, def = L.parts[type], item;
       if (!def || def.kind === "test") throw fail("part", String(type));
@@ -715,15 +722,32 @@
           if (raw.ml != null && !def.sizes[raw.ml]) throw fail("size", String(raw.ml));
           item.size = raw.ml != null ? +raw.ml : def.size;
         }
-        var filled = 0, cap = def.sizes ? def.sizes[item.size].cap : def.cap;
-        item.contains = (Array.isArray(raw.contains) ? raw.contains : []).map(function (c) {
-          var r = reagent(c && c.reagent), a = amountOf(r, c);
-          // die Einheit muss zum Stoff passen: Feststoff in g, Flüssigkeit in mL oder Tropfen
-          if (!((r.solid ? a.g : a.ml) > 0) || (r.solid ? c.ml != null || c.drops != null : c.g != null)) throw fail("amount", String(c.reagent));
-          filled += a.ml || 0;
-          return Object.assign({ reagent: String(c.reagent) }, a);
-        });
-        if (filled > cap + 1e-9) throw fail("amount", item.id + ": " + filled + " mL > " + cap + " mL");
+        var cap = def.sizes ? def.sizes[item.size].cap : def.cap;
+        var fill = function (list) {
+          var filled = 0, out = (Array.isArray(list) ? list : []).map(function (c) {
+            var r = reagent(c && c.reagent), a = amountOf(r, c);
+            // die Einheit muss zum Stoff passen: Feststoff in g, Flüssigkeit in mL oder Tropfen
+            if (!((r.solid ? a.g : a.ml) > 0) || (r.solid ? c.ml != null || c.drops != null : c.g != null)) throw fail("amount", String(c.reagent));
+            filled += a.ml || 0;
+            return Object.assign({ reagent: String(c.reagent) }, a);
+          });
+          if (filled > cap + 1e-9) throw fail("amount", item.id + ": " + filled + " mL > " + cap + " mL");
+          return out;
+        };
+        // unknown: eine Probe mit verborgenem Inhalt; oneOf: mögliche Füllungen, von denen beim Einlesen eine gezogen wird
+        if (raw.unknown != null) {
+          if (typeof raw.unknown !== "string" || !/^[\w .-]{1,12}$/.test(raw.unknown) || samples[raw.unknown]) throw fail("place", String(raw.unknown));
+          item.unknown = samples[raw.unknown] = raw.unknown;
+        }
+        if (raw.oneOf != null) {
+          if (raw.contains != null || !Array.isArray(raw.oneOf) || raw.oneOf.length < 2) throw fail("amount", item.id);
+          item.oneOf = raw.oneOf.map(function (o) {
+            if (!o || typeof o.name !== "string" || !o.name || !Array.isArray(o.contains)) throw fail("amount", item.id);
+            return { name: o.name, contains: fill(o.contains) };
+          });
+          item.pick = Math.floor(Math.random() * item.oneOf.length);
+          item.contains = item.oneOf[item.pick].contains;
+        } else item.contains = fill(raw.contains);
         if (def.dispenser) item.over = raw.over == null ? null : String(raw.over);
       } else {
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
@@ -792,7 +816,7 @@
       room: typeof d.room === "number" && d.room >= 0 && d.room < 100 ? d.room : 20,
       lock: !!d.lock,                                              // gesperrt: Geräte bleiben, wo sie stehen
       table: !!d.table,                                            // mit Messwerttabelle
-      task: d.task == null ? null : readTask(d.task),
+      task: d.task == null ? null : readTask(d.task, bench),
       packs: d.packs || [],
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
       model: d.model == null ? "ideal" : d.model,
@@ -940,7 +964,10 @@
   }
 
   function createLab(config) {
-    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {} };
+    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
+    config.bench.forEach(function (item) {                       // unbekannte Proben: welches Gefäß, welche Füllung gezogen wurde, und die möglichen Namen
+      if (item.unknown) lab.samples[item.unknown] = { vessel: item.id, pick: item.oneOf ? item.pick : null, names: item.oneOf ? item.oneOf.map(function (o) { return o.name; }) : [] };
+    });
     config.bench.forEach(function (item) {
       var v;
       lab.used[item.id] = true;
@@ -1100,6 +1127,14 @@
     t.tare = 0;
     t.tare = sense(lab, t);
     t.value = 0;
+    return true;
+  }
+
+  // Antwort auf eine unbekannte Probe: einer der Namen aus oneOf
+  function guess(lab, label, name, emit) {
+    var s = lab.samples[label];
+    if (!s || s.names.indexOf(name) < 0) return false;
+    if (emit) emit({ key: "guess", sample: label, vessel: s.vessel, name: name });
     return true;
   }
 
@@ -3700,9 +3735,15 @@
     });
     function round(x) { return +x.toPrecision(4); }
     lab.vessels.forEach(function (v) {
-      var def = L.parts[v.type], item = { type: v.type, id: v.id };
+      var def = L.parts[v.type], item = { type: v.type, id: v.id }, cfg = run.config.bench.filter(function (o) { return o.id === v.id; })[0];
       if (v.broken) return;
       if (def.sizes) item.ml = v.size;
+      if (cfg && cfg.unknown) {                                 // eine unbekannte Probe bleibt unbekannt: wie sie beschrieben war, ohne was danach hineinkam
+        item.unknown = cfg.unknown;
+        if (cfg.oneOf) item.oneOf = cfg.oneOf; else item.contains = cfg.contains;
+        bench.push(item);
+        return;
+      }
       if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
       // Wer nachfüllt, was ausgetropft oder verdampft ist, hat mehr hineingegeben, als das Gefäß fasst: dann zählt der Anteil, der hineinpasst
       var list = put[v.id] || [], wet = list.reduce(function (sum, c) { return sum + liquid(c); }, 0), cap = spec(v).cap, fit = wet > cap ? cap / wet : 1;
@@ -3801,6 +3842,7 @@
   L.act = act;
   L.series = series;
   L.glassMass = glassMass;
+  L.guess = guess;
   L.tare = tare;
   L.curve = curve;
   L.changed = changed;

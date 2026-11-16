@@ -177,7 +177,7 @@
       "table.given": "delivered", "table.noMeter": "No meter on the bench: there is nothing to note.",
       "task": "Task", "task.done": "Well done!", "goal.met": "met", "goal.open": "still open",
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
-      "goal.has": "{name} is present", "goal.gone": "{name}: no longer present",
+      "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}", "goal.gone": "{name}: no longer present",
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
@@ -279,7 +279,8 @@
       else out = name + ": " + (goal.min != null && goal.max != null
         ? text("goal.from", lang) + " " + amount(goal.min, lang) + " " + text("goal.to", lang) + " " + amount(goal.max, lang)
         : goal.min != null ? text("goal.min", lang) + " " + amount(goal.min, lang) : text("goal.max", lang) + " " + amount(goal.max, lang));
-    } else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });
+    } else if (goal.identify) out = text("goal.identify", lang, { name: text("sample", lang, { name: goal.identify }) });
+    else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });
     else out = text("seen." + goal.seen, lang) + (goal.species ? ": " + nameOf(L.species(goal.species), lang) : "");
     return out + (goal.in != null ? " " + text("goal.in", lang, { name: (names && names[goal.in]) || goal.in }) : "");
   }

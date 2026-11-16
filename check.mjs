@@ -6895,6 +6895,45 @@ test("Oberfläche: ohne Aufgabe kein Feld dafür; eine fehlerhafte Aufgabe ergib
   assert.match(broken.innerHTML, /Die Aufgabe lässt sich nicht lesen: measure Druck/);
 });
 
+// Probe A: Natriumchlorid oder Kaliumiodid, gezogen mit Math.random = r
+const sampleA = { type: "testtube", id: "p", unknown: "A", oneOf: [
+  { name: "Natriumchlorid", contains: [{ reagent: "NaCl 0.1M", ml: 5 }] },
+  { name: "Kaliumiodid", contains: [{ reagent: "KI 0.1M", ml: 5 }] }] };
+const drawn = (r, more) => { const real = Math.random; Math.random = () => r; try { return L.normalize(Object.assign({ bench: [sampleA] }, more)); } finally { Math.random = real; } };
+
+test("Unbekannte Probe: eine Füllung wird gezogen und bleibt; Fehler in der Beschreibung", () => {
+  const a = drawn(0.2), b = drawn(0.7);
+  assert.deepEqual([a.bench[0].pick, a.bench[0].contains[0].reagent], [0, "NaCl 0.1M"]);
+  assert.deepEqual([b.bench[0].pick, b.bench[0].contains[0].reagent], [1, "KI 0.1M"]);
+  assert.equal(a.bench[0].unknown, "A");
+  const l = L.createLab(b);
+  assert.ok(amount(l, "I-(aq)", "p") > 0, "im Glas ist, was gezogen wurde");
+  assert.deepEqual(l.samples, { A: { vessel: "p", pick: 1, names: ["Natriumchlorid", "Kaliumiodid"] } });
+  const bad = (item, code) => assert.throws(() => L.normalize({ bench: [item] }), (e) => e.code === code, JSON.stringify(item));
+  bad(Object.assign({}, sampleA, { contains: [{ reagent: "H2O", ml: 1 }] }), "amount");
+  bad(Object.assign({}, sampleA, { oneOf: [sampleA.oneOf[0]] }), "amount");
+  bad(Object.assign({}, sampleA, { oneOf: [{ contains: [] }, sampleA.oneOf[1]] }), "amount");
+  bad(Object.assign({}, sampleA, { unknown: "zu <lang> und falsch" }), "place");
+  assert.throws(() => L.normalize({ bench: [sampleA, Object.assign({}, sampleA, { id: "q" })] }), (e) => e.code === "place", "zweimal Probe A");
+  assert.throws(() => L.normalize({ bench: [sampleA], task: { goals: [{ identify: "B" }] } }), (e) => e.code === "task");
+});
+
+test("Unbekannte Probe: die richtige Antwort erfüllt das Ziel; Aufbau kopieren verrät nichts", () => {
+  const config = drawn(0.7, { task: { text: "Was ist in Probe A?", goals: [{ identify: "A" }] } }), run = L.createRun(config);
+  const done = () => L.checkTask(config.task, run.lab, L.logAt(run)).done;
+  assert.equal(done(), false);
+  L.act(run, (l, emit) => L.guess(l, "A", "Natriumchlorid", emit));
+  assert.equal(done(), false, "falsch");
+  L.act(run, (l, emit) => L.guess(l, "A", "Kaliumiodid", emit));
+  assert.equal(done(), true, "richtig");
+  assert.equal(L.guess(run.lab, "A", "Zucker"), false, "nur Namen aus oneOf");
+  assert.equal(L.goalText({ identify: "A" }, "de"), "Probe A bestimmen");
+  const text = L.describe(run, {});
+  assert.doesNotMatch(text, /"pick"|"id":"p","contains"/, "verrät nicht, was gezogen wurde");
+  assert.match(text, /"unknown":"A","oneOf":\[/);
+  assert.equal(L.normalize(text).bench[0].oneOf.length, 2, "eingelesen wieder eine unbekannte Probe");
+});
+
 test("Aufgabe: Ziele als Text in beiden Sprachen", () => {
   const say = (goal, lang) => L.goalText(goal, lang || "de", { b: "Becherglas 1" });
   assert.equal(say({ measure: "T", min: 40 }), "Temperatur mindestens 40 °C");

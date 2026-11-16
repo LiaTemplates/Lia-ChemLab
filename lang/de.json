@@ -379,6 +379,8 @@
     "goal.to": "bis",
     "goal.in": "in {name}",
     "goal.has": "{name} liegt vor",
+    "goal.identify": "{name} bestimmen",
+    "sample": "Probe {name}",
     "goal.gone": "{name}: nicht mehr vorhanden",
     "measure.T": "Temperatur",
     "measure.pH": "pH-Wert",
