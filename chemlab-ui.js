@@ -1362,7 +1362,7 @@
       lab.tools.forEach(function (t) {
         var def = L.parts[t.type], unit = def.circuit === "supply" ? "V" : def.sense || def.circuit === "ammeter" || def.circuit === "voltmeter" || def.electrode ? def.unit : null, c, value;
         if (!unit || !COLUMN[unit]) return;
-        c = COLUMN[unit];
+        c = def.scale ? ["g", 2, 1] : COLUMN[unit];             // die Waage zeigt zwei Stellen; drei hat nur die Masse einer Elektrode
         value = def.circuit === "supply" ? t.volts : t.value;
         out.push({ key: t.id, unit: unit === "E" || unit === "pH" ? "" : c[0], label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });

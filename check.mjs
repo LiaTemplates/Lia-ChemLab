@@ -8329,6 +8329,42 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
 });
 
+test("Streuung: das Rauschen liegt sichtbar auf der Anzeige; am Anschlag zeigt das Gerät das Ende; das Protokoll nennt die Anzeige", () => {
+  // bei gleichbleibendem wahrem Wert wackelt die letzte angezeigte Stelle
+  let moving = 0;
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "thermometer", id: "th", in: "b" }, { type: "phmeter", id: "ph", in: "b" }], { room: 20, scatter: seed });
+    L.step(l, 10);
+    const T = new Set(), pH = new Set();
+    for (let i = 0; i < 30; i++) { L.step(l, 1); T.add(L.reading(l, "th").value.toFixed(1)); pH.add(L.reading(l, "ph").value.toFixed(2)); }
+    if (T.size > 1 && pH.size > 1) moving++;
+  }
+  assert.ok(moving >= 7, `bei ${moving} von 10 Auslosungen wackeln beide Anzeigen`);
+  // am Ende der Skala: „> 110 °C“, bei jeder Auslosung
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "testtube", id: "t" }, { type: "burner", id: "br", under: "t", flame: 2 }, { type: "thermometer", id: "th", in: "t" }], { room: 20, scatter: seed });
+    L.step(l, 120);
+    assert.equal(L.reading(l, "th").over, true, "Auslosung " + seed);
+    assert.equal(L.reading(l, "th").value, 110);
+  }
+  // der volle Kolbenprober zeigt nicht mehr als 100 mL; ein Strommesser ohne Strom zeigt 0
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 2M", ml: 10 }, { reagent: "Mg ribbon", g: 0.2 }] }, { type: "syringe", id: "kp", in: "t" },
+      { type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "ammeter", id: "a", in: "b" }], { room: 20, scatter: seed });
+    L.step(l, 200);
+    assert.ok(L.reading(l, "kp").value <= 100, `Kolbenprober: ${L.reading(l, "kp").value}`);
+    assert.equal(L.reading(l, "a").value, 0, "kein Strom: 0");
+  }
+  // das Protokoll nennt die höchste Temperatur, wie das Thermometer sie zeigt
+  const seen = [], k = lab([{ type: "calorimeter", id: "k", contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20, scatter: 11 });
+  L.step(k, 5);
+  L.add(k, "k", "NaOH 1M", { ml: 50 });
+  let shownMax = 0, trueMax = 0;
+  for (let i = 0; i < 80; i++) { L.step(k, 1, (e) => seen.push(e)); shownMax = Math.max(shownMax, L.reading(k, "th").value); trueMax = Math.max(trueMax, L.vessel(k, "k").T); }
+  const max = seen.find((e) => e.key === "tempMax");
+  assert.ok(max && Math.abs(max.T - shownMax) < 0.08, `Protokoll ${max && max.T}, höchste Anzeige ${shownMax}, wahr ${trueMax}`);
+});
+
 test("README: die Folie zur Streuung der Messwerte hält, was ihr Text verspricht", () => {
   const raw = JSON.parse(slide("Streuung der Messwerte")[0]), config = L.normalize(raw);
   assert.equal(raw.scatter, true, "für jeden Lernenden neu ausgelost");
