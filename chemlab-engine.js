@@ -27,6 +27,8 @@
   var GLOW = 525;                 // °C: ab hier glüht ein Körper sichtbar (Draper-Punkt)
   var H2_IGNITE = 560;            // °C: Zündtemperatur von Wasserstoff in Luft (GESTIS-Stoffdatenbank)
   var SPATTER = 30;               // W/cm²: so viel Reaktionswärme an geschmolzenem Metall, dass es spritzt (geschätzt)
+  var POP = 1.5;                  // bar: so viel hält ein Gummistopfen (geschätzt)
+  var CRACK = 200;                // °C: trifft kalte Flüssigkeit auf ein heißeres Glas, zerspringt es (geschätzt)
   var HOT_MAX = 1500;             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
   var FIZZ = 1.5;             // s: so schnell perlt aus, was über dem Luftdruck gelöst ist
   var CRUST = 25;             // mol/L: dichter wird eine Lösung nicht, dann ist sie eingedampft
@@ -547,6 +549,8 @@
   registerPart("condenser", { kind: "tool", duct: true, condenser: true });
   // Gasableitungsrohr mit Stopfen: verschließt das Gefäß und leitet, was dort an Gas entsteht, in ein zweites
   registerPart("tube", { kind: "tool", duct: true, pipe: true, stopper: true });
+  // Gummistopfen: verschließt das Gefäß ganz; steigt der Druck darin über POP, fliegt er heraus
+  registerPart("stopper", { kind: "tool", stopper: true, plug: true });
   // Rückflusskühler: steht aufrecht im Gefäß; der Dampf wird darin wieder flüssig und läuft zurück
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
@@ -603,7 +607,7 @@
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
   var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g" };
-  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
   function readTask(raw, bench) {
@@ -784,7 +788,7 @@
       var own = L.parts[item.type], slot = (own.electrode ? "electrode" : own.under ? "under" : item.type) + ">" + item.in;     // Brenner und Wasserbad teilen sich den Platz darunter
       if (item.in != null) {                           // von jedem Gerät gehört nur eines an ein Gefäß, von den Elektroden zwei
         // Kolbenprober und Rohr sitzen beide im Stopfen, Kühler und Rohr führen beide hinaus: je Gefäß einer
-        [slot].concat(own.stopper ? ["stopper>" + item.in] : [], own.duct ? ["duct>" + item.in] : []).forEach(function (key) {
+        [slot].concat(own.stopper ? ["seal>" + item.in] : [], own.duct ? ["duct>" + item.in] : []).forEach(function (key) {
           hung[key] = (hung[key] || 0) + 1;
           if (hung[key] > (own.electrode ? 2 : 1)) throw fail("place", item.in);
         });
@@ -2969,6 +2973,38 @@
     v.dirty = true;
   }
 
+  // Druck im verschlossenen Gefäß. Im Gasraum (V Liter) stehen die Luft, die beim Verschließen darin war (seal, in mol), die
+  // entstandenen Gase und der Wasserdampf mit seinem Dampfdruck. Ein Stopfen fliegt über POP heraus. Mit einem Rohr gleicht sich
+  // der Druck aus: Darüber geht mit dem Gas auch Luft hinaus; darunter – das Glas kühlt ab, der Dampf schlägt sich nieder – steigt
+  // Flüssigkeit aus dem zweiten Gefäß zurück, und trifft sie auf ein Glas, das heißer ist als CRACK, zerspringt es.
+  function pressure(lab, v, emit) {
+    var pipe = toolAt(lab, v, function (def) { return def.pipe; }), plug = toolAt(lab, v, function (def) { return def.plug; });
+    var V = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot;
+    if (!pipe && !plug) { v.seal = null; return; }
+    for (id in v.air) gas += v.air[id];
+    vap = volume(v) > 0 && v.n[WATER] > 0 ? Math.min(1, Math.exp(-VAPOR / R * (1 / T - 1 / (BOIL + KELVIN)))) * P_AIR : 0;
+    full = P_AIR * V / (RL * T);                               // so viel Gas fasst der Gasraum bei Luftdruck
+    if (v.seal == null) v.seal = Math.max(0, full * (1 - vap / P_AIR) - gas);
+    total = v.seal + gas + vap * V / (RL * T);
+    p = total * RL * T / V;
+    if (plug) {
+      if (p > POP) {
+        plug.in = null; v.seal = null;
+        if (emit) emit({ key: "popped", vessel: v.id, part: plug.id });
+      }
+      return;
+    }
+    if (p >= P_AIR) { v.seal = Math.max(0, v.seal - (total - full) * v.seal / total); v.flag.suck = false; return; }
+    into = pipe.to ? vessel(lab, pipe.to) : null;
+    ml = (full - total) * RL * T / P_AIR * 1000;
+    if (into && !into.broken && volume(into) > 0 && ml > 1e-3) {
+      hot = v.T > CRACK;
+      ml = transfer(into, v, Math.min(ml, volume(into) * 1000));
+      if (ml > 0 && !v.flag.suck) { v.flag.suck = true; if (emit) emit({ key: "suckBack", vessel: v.id, from: into.id }); }
+      if (hot && ml > 0.02) shatter(lab, v, emit);
+    } else v.seal += full - total;                             // aus einem leeren Gefäß strömt Luft zurück
+  }
+
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
   // g: Aktivitätskoeffizient nach Van Laar, wo ein Stoff Konstanten mit Wasser hat (mix). Salze und andere gelöste Stoffe zählen
   // nicht mit: Eine Salzlösung siedet hier wie Wasser bei 100 °C. null, wenn nichts Flüchtiges da ist.
@@ -3083,6 +3119,11 @@
       else {
         gas += v.n[id]; gases.push(id);
         v.air[id] = (v.air[id] || 0) + v.n[id];
+        if (meter && meter.full) {                             // er ist voll, und es kommt noch Gas: der Kolben springt heraus
+          meter.in = null;
+          if (emit) emit({ key: "plungerOut", part: meter.id, vessel: v.id });
+          meter = null;
+        }
         if (meter && !meter.full) {                            // der Kolbenprober zählt mit, bis er voll ist
           room = L.parts[meter.type].cap / 1000 / molar(lab);
           meter.n += v.n[id];
@@ -3094,6 +3135,8 @@
     v.gas = (vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0) + (v.pipe || 0);      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
     v.pipe = 0;
     vent(lab, v, emit, gas);
+    if (v.broken) return;
+    pressure(lab, v, emit);
     if (v.broken) return;
 
     // Wärmeabgabe an den Raum; im Wasserbad an das Bad, und das viel schneller

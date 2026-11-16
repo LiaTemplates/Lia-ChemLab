@@ -2651,6 +2651,53 @@ test("Indikatorpapier: blau über Ammoniak, rot über Kohlenstoffdioxid, grün �
   assert.match(L.fx.splint(0, 0, ammonia.seen[0], 0, true), /cl-paper[\s\S]*fill:rgb/, "der Streifen trägt seine Farbe");
 });
 
+test("Stopfen: Gas im verschlossenen Glas drückt ihn heraus; wenig Gas nicht", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }, { reagent: "Mg ribbon", g: 0.05 }] }, { type: "stopper", id: "st", in: "t" }], { room: 20 });
+  until(l, () => seen.some((e) => e.key === "popped"), 120, seen);
+  assert.ok(seen.some((e) => e.key === "popped" && e.vessel === "t" && e.part === "st"), "der Stopfen fliegt heraus");
+  assert.equal(L.tool(l, "st").in, null, "und liegt dann frei");
+  assert.equal(L.probe(l, "t", "flame") === null, false, "das Glas ist wieder offen");
+  const calm = [], c = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }, { reagent: "Mg ribbon", g: 0.002 }] }, { type: "stopper", id: "st", in: "t" }], { room: 20 });
+  L.step(c, 120, (e) => calm.push(e));
+  assert.ok(!calm.some((e) => e.key === "popped"), "ein wenig Gas hält er");
+  assert.equal(L.tool(c, "st").in, "t");
+});
+
+test("Stopfen: ein verschlossenes Glas mit Wasser erhitzen – er fliegt heraus, bevor das Wasser siedet", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "stopper", id: "st", in: "t" }, { type: "burner", under: "t", flame: 2 }], { room: 20 });
+  until(l, () => seen.some((e) => e.key === "popped"), 600, seen);
+  const T = L.vessel(l, "t").T;
+  assert.ok(seen.some((e) => e.key === "popped"), "er fliegt heraus");
+  assert.ok(T > 40 && T < 100, `bei ${T} °C`);
+});
+
+test("Gasableitungsrohr: Brenner aus, solange das Rohr im Kalkwasser steckt – es steigt zurück; ins heiße trockene Glas: es zerspringt", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "a", contains: [{ reagent: "H2O", ml: 4 }] }, { type: "burner", id: "br", under: "a", flame: 2 }, { type: "tube", in: "a", to: "z" },
+    { type: "testtube", id: "z", contains: [{ reagent: "limewater", ml: 10 }] }], { room: 20 });
+  until(l, () => L.vessel(l, "a").boil > 0, 600);
+  L.step(l, 20);
+  const before = L.volume(L.vessel(l, "z"));
+  L.setFlame(l, "br", 0);
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(L.volume(L.vessel(l, "z")) < before - 0.002, "Kalkwasser ist ins erste Glas gestiegen");
+  assert.ok(amount(l, "Ca^2+(aq)", "a") > 0, "das Kalkwasser ist nun dort");
+  assert.ok(seen.some((e) => e.key === "suckBack" && e.vessel === "a"), "das Protokoll meldet es");
+  const dry = [], d = lab([{ type: "testtube", id: "a" }, { type: "burner", id: "br", under: "a", flame: 2 }, { type: "tube", in: "a", to: "z" },
+    { type: "testtube", id: "z", contains: [{ reagent: "H2O", ml: 10 }] }], { room: 20 });
+  until(d, () => L.vessel(d, "a").T > 320, 900);
+  L.setFlame(d, "br", 0);
+  L.step(d, 120, (e) => dry.push(e));
+  assert.ok(dry.some((e) => e.key === "broken" && e.vessel === "a"), "kaltes Wasser im heißen Glas: es zerspringt");
+});
+
+test("Kolbenprober: ist er voll, springt der Kolben heraus", () => {
+  const seen = [], l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 2M", ml: 50 }, { reagent: "Mg ribbon", g: 0.2 }] }, { type: "syringe", id: "kp", in: "b" }], { room: 20 });
+  L.step(l, 300, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "plungerOut" && e.part === "kp"), "der Kolben springt heraus");
+  assert.equal(L.tool(l, "kp").in, null);
+  near(L.reading(l, "kp").value, 100, 0.5, "er zeigt weiter seine 100 mL");
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);
