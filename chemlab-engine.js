@@ -556,7 +556,7 @@
   });
   // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
   // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
-  registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, loss: 0.012, heat: 0, insulated: true });
+  registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
@@ -1208,7 +1208,7 @@
   }
 
   // Glas aus seiner Wärmekapazität: 0,84 J/(g K)
-  function glassMass(v) { return spec(v).Cv / 0.84; }
+  function glassMass(v) { return spec(v).mass != null ? spec(v).mass : spec(v).Cv / 0.84; }      // mass: kein Glas, eigene Masse in g
 
   // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit und das Gas im Kolbenprober
   function weigh(lab, v) {
@@ -2768,8 +2768,10 @@
     if (bathed) { f.heat = 0; f.base = v.T; }                  // im Wasserbad kommt die Wärme vom Bad: kein Temperaturmaximum zu melden
     else if (f.heat) {
       if (v.T > f.max) f.max = v.T;
-      else if (v.T < f.max - 0.3) { f.heat = 0; f.base = v.T; if (emit) emit({ key: "tempMax", vessel: v.id, T: f.max }); }
-    } else if (v.T > f.base + 1.5) { f.heat = 1; f.max = v.T; }
+      if (v.T > f.peak + 0.01) { f.peak = v.T; f.since = lab.t; }
+      // gemeldet wird, wenn es merklich abkühlt oder 20 s lang nicht mehr wärmer wird (im Kalorimeter kühlt es kaum ab)
+      if (v.T < f.max - 0.3 || lab.t - f.since > 20) { f.heat = 0; f.base = v.T; if (emit) emit({ key: "tempMax", vessel: v.id, T: f.max }); }
+    } else if (v.T > f.base + 1.5) { f.heat = 1; f.max = f.peak = v.T; f.since = lab.t; }
     else if (v.T < f.base) f.base = v.T;
   }
 

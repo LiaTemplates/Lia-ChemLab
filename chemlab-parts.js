@@ -683,9 +683,14 @@
   // ------------------------------------------------------------------ Kalorimeter
 
   // Styroporbecher mit Deckel, im Schnitt: dicke Wände, man sieht hinein. Maße wie das Becherglas mit 250 mL.
-  var beakerPart = L.parts.beaker;
+  var beakerPart = L.parts.beaker, LID = 0.62;      // LID: Öffnung im Deckel als Anteil der inneren Weite (wie in 3D)
   L.registerPart("calorimeter", {
-    width: function (v) { return beakerSize(v)[0] + 64; }, bounds: function (v) { var s = beakerSize(v); return { x0: -s[0] / 2 - 13, x1: s[0] / 2 + 13, top: -s[1] - 10 }; }, surface: beakerPart.surface, foot: beakerPart.foot, probe: beakerPart.probe, mount: beakerPart.mount,
+    width: function (v) { return beakerSize(v)[0] + 64; }, bounds: function (v) { var s = beakerSize(v); return { x0: -s[0] / 2 - 13, x1: s[0] / 2 + 13, top: -s[1] - 10 }; }, surface: beakerPart.surface, foot: beakerPart.foot, mount: beakerPart.mount,
+    // Stopfen, Kolbenprober, Manometer und Rohr sitzen in der Öffnung des Deckels
+    probe: function (v, type, slot) {
+      var p = beakerPart.probe(v, type, slot);
+      return p && /^(syringe|stopper|manometer|tube)$/.test(type) ? Object.assign({}, p, { w: Math.round(beakerSize(v)[0] * LID) - 2 }) : p;
+    },
     draw: function (w, ctx) {
       var s = beakerSize(w), a = s[0] / 2, h = s[1], y = beakerSurface(w), t = 7;
       var fill = function (level) {
@@ -695,7 +700,9 @@
       return contents(w, ctx, { path: fill(y), fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -2, rim: -h, tall: false }) +
         // Becherform: die Wand ist oben dick und läuft nach unten schmal zu; innen bleibt der Raum der Flüssigkeit gerade
         '<path class="cl-foam" d="M' + (-a - t - 3) + "," + (-h) + "L" + (-a) + "," + (-h) + "L" + (-a) + ",-2L" + a + ",-2L" + a + "," + (-h) + "L" + (a + t + 3) + "," + (-h) + "L" + (a + 3) + ",0L" + (-a - 3) + ',0Z"/>' +
-        '<rect class="cl-foam" x="' + (-a - t - 3) + '" y="' + (-h - 7) + '" width="' + (2 * a + 2 * t + 6) + '" height="5" rx="2"/>' +
+        // Deckel mit einer Öffnung in der Mitte, durch die Thermometer und Zugaben gehen
+        '<rect class="cl-foam" x="' + (-a - t - 3) + '" y="' + (-h - 5) + '" width="' + f(a + t + 3 - LID * a) + '" height="5" rx="1.5"/>' +
+        '<rect class="cl-foam" x="' + f(LID * a) + '" y="' + (-h - 5) + '" width="' + f(a + t + 3 - LID * a) + '" height="5" rx="1.5"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
   });

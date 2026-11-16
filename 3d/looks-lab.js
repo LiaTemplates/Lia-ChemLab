@@ -126,14 +126,20 @@
 
   // ------------------------------------------------------------------ Kalorimeter
 
-  // Styroporbecher mit Deckelring: durchscheinend, damit man den Inhalt noch ahnt
+  // Styroporbecher mit Deckelring: durchscheinend, damit man den Inhalt noch ahnt. Innen eine dünne Wand (sie trägt den Boden,
+  // der nicht unter die Tischplatte reichen darf), außen ein Kegel wie in 2D: oben dick, unten schmal
+  function foam() { var m = fx.matte(0xf4f3ee, 0.95); m.transparent = true; m.opacity = 0.55; m.side = THREE.DoubleSide; return m; }
   L.registerLook("calorimeter", "lab", vessel({
-    thick: 0.42, lip: 0.06,
+    thick: 0.1, lip: 0.06,
     shape: function (d) { var shape = beakerShape(d); shape.id = "calorimeter" + shape.size[0]; return shape; },
-    material: function () { var m = fx.matte(0xf4f3ee, 0.95); m.transparent = true; m.opacity = 0.72; return m; },
+    material: foam,
     level: function (w) { return w.ml > 0.005 ? cm(-L.parts.calorimeter.surface(w)) : cm(2); },
     extra: function (group, kit, d, shape) {
-      var r = shape.inner(shape.rim), lid = new THREE.Mesh(new THREE.RingGeometry(r * 0.62, r + 0.5, 40).rotateX(-Math.PI / 2), fx.matte(0xe9e7df, 0.95));
+      var r = shape.inner(shape.rim), lid = new THREE.Mesh(new THREE.RingGeometry(r * 0.62, r + 0.7, 40).rotateX(-Math.PI / 2), fx.matte(0xe9e7df, 0.95));
+      var cone = new THREE.Mesh(new THREE.CylinderGeometry(r + 0.7, r + 0.3, shape.rim, 40, 1, true), foam());
+      cone.position.y = shape.rim / 2;
+      cone.renderOrder = 2;
+      group.add(cone);
       lid.material.side = THREE.DoubleSide;
       lid.position.y = shape.rim + 0.07;
       lid.castShadow = true;

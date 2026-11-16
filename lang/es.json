@@ -101,7 +101,7 @@
     "hint.bridge2": "Ahora tocar el segundo recipiente.",
     "twoOnly": "Este recipiente ya tiene dos electrodos.",
     "tooNarrow": "Los electrodos solo caben en un vaso de precipitados.",
-    "insulated": "El calorímetro está aislado: no va sobre un mechero ni en un baño de agua.",
+    "insulated": "El calorímetro está aislado: no va sobre un mechero Bunsen ni en un baño María.",
     "sameVessel": "El puente salino necesita dos recipientes distintos.",
     "noCircuit": "Un circuito necesita electrodos: solo funciona con un vaso de precipitados.",
     "electrodeOf": "electrodo de {name}",

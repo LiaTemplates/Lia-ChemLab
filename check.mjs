@@ -1985,19 +1985,21 @@ const stress = (model, seeds) => {
     // in Ruhe: nichts ist übersättigt, und kein Niederschlag liegt in einer Lösung, die ihn lösen müsste
     L.setTap(l, "bu", 0);
     L.step(l, 1500);
-    const metals = l.vessels.map((v) => Object.fromEntries(v.lumps.map((p) => [p.id, v.n[p.id] || 0])));
+    const pieces = l.vessels.map((v) => Object.fromEntries(v.lumps.filter((p) => !p.made).map((p) => [p.id, v.n[p.id] || 0])));
     L.step(l, 10);
     l.vessels.forEach((v, i) => {
       const vol = L.volume(v), T = v.T + 273.15;
       if (!(vol > 1e-9)) return;
-      // ein Metall, das sich noch merklich löst, liefert Ionen nach; der Niederschlag folgt ihm mit etwa einer Sekunde Verzug
-      const feeding = Object.entries(metals[i]).some(([id, n]) => n - (v.n[id] || 0) > 1e-10);
+      // ein Stück aus dem Regal, das sich noch merklich löst (Magnesium in Lauge), liefert Ionen nach; ein Niederschlag mit
+      // demselben Element folgt ihm mit etwa einer Sekunde Verzug und bleibt so lange übersättigt, wie das Stück sich löst
+      const elements = (id) => (id.replace(/\(\w+\)$/, "").match(/[A-Z][a-z]?/g) || []).filter((el) => el !== "O" && el !== "H");
+      const feeding = Object.entries(pieces[i]).filter(([id, n]) => n - (v.n[id] || 0) > 1e-10).flatMap(([id]) => elements(id));
       for (const e of L.db.equilibria.filter((x) => x.solid)) {
         const ions = Object.entries(e.d), here = ions.every(([id]) => v.n[id] > 0);
         // mit Aktivitäten; im idealen Modell ist jeder Koeffizient 1
         const logQ = here ? ions.reduce((sum, [id, nu]) => sum + nu * Math.log10(v.n[id] / vol * L.gamma(l, v.id, id)), 0) : -Infinity;
         const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
-        if (!feeding) assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
+        if (!elements(e.solid).some((el) => feeding.includes(el))) assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
         // (ein Stück mit eigenem Geschwindigkeitsgesetz darf liegen bleiben, wenn es sich unmerklich langsam löst: Marmor in Wasser)
         if (v.n[e.solid] > 0 && !e.rate) assert.ok(logQ - logK > -0.01, `${e.solid} in ${v.id} bleibt liegen, obwohl die Lösung es lösen müsste (Folge ${seed})`);
       }
@@ -4335,17 +4337,20 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
 
 test("Kalorimeter: hält die Wärme; Neutralisationswärme etwa −57 kJ/mol; nicht auf Brenner oder Wasserbad", () => {
   const run = (type) => {
-    const l = lab([{ type, id: "k", size: 250, contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20 });
+    const l = lab([{ type, id: "k", ml: 250, contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20 }), seen = [];
     L.step(l, 5);
     L.add(l, "k", "NaOH 1M", { ml: 50 });
-    L.step(l, 30);
+    L.step(l, 30, (e) => seen.push(e));
     const top = L.vessel(l, "k").T;
-    L.step(l, 300);
-    return { top, drop: top - L.vessel(l, "k").T, read: L.reading(l, "th").value };
+    L.step(l, 300, (e) => seen.push(e));
+    return { top, drop: top - L.vessel(l, "k").T, read: L.reading(l, "th").value, max: seen.find((e) => e.key === "tempMax") };
   };
   const cal = run("calorimeter"), glass = run("beaker");
   const dH = -(100 * 4.18 + L.parts.calorimeter.Cv) * (cal.top - 20) / 0.05 / 1000;
-  near(dH, -57, 3, "Neutralisationswärme in kJ/mol aus ΔT");
+  near(dH, -55.7, 0.5, "Neutralisationswärme in kJ/mol aus ΔT");
+  assert.ok(cal.max && Math.abs(cal.max.T - cal.top) < 0.05, "auch im Kalorimeter wird die höchste Temperatur gemeldet, wenn sie sich nicht mehr ändert");
+  const scale = lab([{ type: "calorimeter", id: "k" }, { type: "balance", id: "w", in: "k" }]);
+  near(L.reading(scale, "w").value, 7, 0.01, "zwei Styroporbecher mit Deckel wiegen etwa 7 g");
   assert.ok(cal.drop < 0.3, `in 5 min kühlt es kaum ab: ${cal.drop} K`);
   assert.ok(glass.drop > 4 * cal.drop, `das Becherglas verliert viel mehr: ${glass.drop} gegen ${cal.drop} K`);
   near(cal.read, cal.top - cal.drop, 0.1, "das Thermometer im Kalorimeter");
@@ -8289,8 +8294,8 @@ test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => 
   L.add(l, acid.id, "NaOH 1M", { ml: 50 });
   L.step(l, 30);
   const dT = L.vessel(l, acid.id).T - T0;
-  near(dT, 6.7, 0.3, "Erwärmung in K");
-  near(-(100 * 4.18 + 10) * dT / 0.05 / 1000, -57, 2, "Neutralisationswärme in kJ/mol");
+  near(dT, 6.5, 0.1, "Erwärmung in K");
+  near(-(100 * 4.18 + 10) * dT / 0.05 / 1000, -56, 0.5, "Neutralisationswärme in kJ/mol");
   L.add(l, water.id, "NH4NO3 salt", { g: 2 });
   L.step(l, 60);
   assert.ok(L.vessel(l, water.id).T < T0 - 2, "Ammoniumnitrat kühlt");

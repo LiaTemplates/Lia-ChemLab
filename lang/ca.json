@@ -101,7 +101,7 @@
     "hint.bridge2": "Ara toca el segon recipient.",
     "twoOnly": "Aquest recipient ja té dos elèctrodes.",
     "tooNarrow": "Els elèctrodes només caben en un vas de precipitats.",
-    "insulated": "El calorímetre és aïllat: no va sobre un cremador ni en un bany d'aigua.",
+    "insulated": "El calorímetre és aïllat: no va sobre un bec Bunsen ni en un bany maria.",
     "sameVessel": "El pont salí necessita dos recipients diferents.",
     "noCircuit": "Un circuit necessita elèctrodes: només funciona amb un vas de precipitats.",
     "electrodeOf": "elèctrode de {name}",

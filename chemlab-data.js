@@ -384,9 +384,9 @@
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
       // aus den Bildungsenthalpien und Entropien dieser Tabelle; die Lösungswärme folgt ebenso daraus (+25,45, −44,75, −81,36 kJ/mol)
-      { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from " + NBS },
-      { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from " + NBS },
-      { eq: "CaCl2(s) <=> Ca^2+(aq) + 2 Cl-(aq)", logK: 11.767, src: "calculated from " + NBS },
+      { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
+      { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
+      { eq: "CaCl2(s) <=> Ca^2+(aq) + 2 Cl-(aq)", logK: 11.767, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
       { eq: "CuSO4*5H2O(s) <=> Cu^2+(aq) + SO4^2-(aq) + 5 H2O(l)", logK: -2.24, dH: 6.025,
         src: "adjusted to the solubility of 1.4 mol/L at 25 °C, together with the ion pair CuSO4(aq). " + MINTEQ + "Chalcanthite, CuSO4:5H2O = Cu+2 + SO4-2 + 5 H2O, log_k -2.64, delta_h 6.025 kJ" },
       { eq: "CuSO4(s) <=> Cu^2+(aq) + SO4^2-(aq)", logK: 2.9395, dH: -73.04, src: MINTEQ + "CuSO4 = Cu+2 + SO4-2, log_k 2.9395, delta_h -73.04 kJ" },
