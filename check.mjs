@@ -1511,7 +1511,7 @@ test("Aufzeichnung: auch Niederschlag und Bürette kommen beim Zurückspulen wie
 
 test("Daten: das Grundpaket bleibt vollständig, und was geschätzt ist, steht dabei", () => {
   assert.deepEqual(L.lint(L.core), []);
-  const guessed = Object.entries(L.core.species).filter(([, d]) => d.bands).filter(([, d]) => !/geschätzt/.test(d.src));
+  const guessed = Object.entries(L.core.species).filter(([, d]) => d.bands).filter(([, d]) => !/estimated/.test(d.src));
   assert.deepEqual(guessed.map(([id]) => id), [], "Absorptionsbanden sind als geschätzt gekennzeichnet");
   assert.ok(Object.keys(L.core.reagents).length >= 20);
 });
