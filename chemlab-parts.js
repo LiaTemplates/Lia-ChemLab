@@ -18,7 +18,7 @@
       "card.give": "Add {amount}", "card.pick": "Choose a substance, then add it.", "card.again": "Or tap the vessel once more.",
       "card.place": "Put on the bench:", "card.none": "No substance matches the search.", "hand.drop": "Back to the shelf", "hand": "In hand",
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
@@ -1300,6 +1300,46 @@
     }
   });
 
+  // ------------------------------------------------------------------ Trichter mit Filterpapier
+
+  var FUNNEL = { a: 28, h: 40, stem: 34, cap: 60 };     // halbe Weite oben, Höhe des Kegels, Länge des Rohrs, Fassungsvermögen in mL
+
+  // mount: über welchem Gefäß er hängt; das Rohr reicht in dessen Öffnung
+  function funnelAt(mount) {
+    var m = mount || { x: 0, rim: -70, surface: -2 }, tip = m.rim + 12, apex = tip - FUNNEL.stem;
+    return { x: m.x, rim: m.rim, tip: tip, apex: apex, top: apex - FUNNEL.h, surface: m.surface, rod: Math.max(m.x + FUNNEL.a + 12, (m.edge || 0) + 14) };
+  }
+
+  // Höhe der Flüssigkeit im Kegel: das Volumen wächst mit der dritten Potenz der Höhe
+  function funnelSurface(w, mount) {
+    var g = funnelAt(mount);
+    return g.apex - FUNNEL.h * Math.pow(Math.min(1, w.ml / FUNNEL.cap), 1 / 3);
+  }
+
+  L.registerPart("funnel", {
+    width: function () { return 90; },
+    surface: funnelSurface,
+    reach: function (mount) { return -funnelAt(mount).top + 16; },
+    bounds: function (v, mount) { var g = funnelAt(mount); return { x0: g.x - FUNNEL.a - 4, x1: g.x + FUNNEL.a + 4, top: g.top - 8, bottom: g.tip }; },
+    draw: function (w, ctx, mount) {
+      var g = funnelAt(mount), x = g.x, a = FUNNEL.a, y, half, out, sed = w.sediment, rest;
+      var cone = function (top) { var r = a * (g.apex - top) / FUNNEL.h; return "M" + f(x - r) + "," + f(top) + "L" + f(x + r) + "," + f(top) + "L" + x + "," + g.apex + "Z"; };
+      out = '<rect class="cl-stand" x="' + (g.rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
+        '<line class="cl-rod" x1="' + g.rod + '" x2="' + g.rod + '" y1="-5" y2="' + (g.top - 16) + '"/>' +
+        '<line class="cl-rod" x1="' + g.rod + '" x2="' + (x + a - 4) + '" y1="' + (g.top + 8) + '" y2="' + (g.top + 8) + '"/>' +
+        '<path class="cl-filter" d="' + cone(g.top + 3) + '"/>';                                  // Filterpapier
+      if (w.ml > 0.005) out += '<path class="cl-liquid" d="' + cone(funnelSurface(w, mount)) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
+      if (sed && sed.ml > 0.002) {                                                                 // der Rückstand im Filter, in seiner Farbe
+        rest = g.apex - Math.max(4, FUNNEL.h * 0.6 * Math.pow(Math.min(1, sed.ml / FUNNEL.cap * 4), 1 / 3));
+        out += '<path class="cl-sediment" d="' + cone(rest) + '" fill="' + css(shade(sed.rgb, 0.88)) + '"/>';
+      }
+      out += '<path class="cl-glass" d="M' + (x - a - 3) + "," + (g.top - 2) + "L" + (x - 3) + "," + (g.apex + 2) + "L" + (x - 3) + "," + g.tip +
+        "M" + (x + 3) + "," + g.tip + "L" + (x + 3) + "," + (g.apex + 2) + "L" + (x + a + 3) + "," + (g.top - 2) + '"/>';
+      if (w.ml > 0.001 && mount && L.fx) out += L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);      // das Filtrat tropft
+      return out + (mount ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
   // Farben der Teilchenlupe. Ein Teilchen trägt die Farbe, die es der Lösung gibt (ein Feststoff seine eigene); farblose bekommen
   // einen blassen Ton, Kationen einen warmen, Anionen einen kühlen, ungeladene einen grauen. ids: alle Teilchen, die gerade zu sehen
   // sind – so bekommen zwei farblose nie denselben Ton, solange die Palette reicht. Zurück: { id: Farbe }
@@ -1376,6 +1416,7 @@
     if (def) {
       body = id === "testtube" ? '<path class="cl-glass" d="M9,3L9,22A5,5 0 0 0 19,22L19,3"/>'
         : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
+        : id === "funnel" ? '<path class="cl-filter" d="M7,7L21,7L14,16Z"/><path class="cl-glass" d="M3,5L12,17L12,27M16,27L16,17L25,5"/>'
         : id === "beaker" ? '<path class="cl-glass" d="M5,6L5,24Q5,27 8,27L20,27Q23,27 23,24L23,6"/>'
         : id === "dish" ? '<path class="cl-porcelain-edge" d="M3,11Q5,25 11,25L17,25Q23,25 25,11"/>'
         : id === "burner" ? '<rect class="cl-burner" x="7" y="25" width="14" height="3" rx="1"/><rect class="cl-burner" x="12.5" y="13" width="3" height="12"/><path class="cl-flame cl-roaring" d="M10.5,13Q10.5,6 14,2Q17.5,6 17.5,13Z"/>'
@@ -1444,5 +1485,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

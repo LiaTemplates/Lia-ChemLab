@@ -925,7 +925,7 @@
             '<div class="cl-giverow"></div></div>' : "") +
           (gear.length ? '<div class="cl-sec" data-sec="gear"><div class="cl-uses">' + gear.map(useButton).join("") + "</div></div>" : "") +
           '<div class="cl-sec" data-sec="info">' +
-          (L.parts[v.type].dispenser ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
+          (L.parts[v.type].dispenser && !L.parts[v.type].filter ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
             L.TAPS.map(function (rate) {
               return '<button type="button" class="cl-btn" data-act="tap" data-id="' + rate + '" aria-pressed="false">' + esc(T("tap." + L.tapKey(rate))) + "</button>";
             }).join(" ") + (show.numbers && show.volumes ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
