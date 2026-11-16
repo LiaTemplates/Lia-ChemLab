@@ -769,6 +769,9 @@
           if (!L.db.species[g.species]) throw fail("task", "species " + String(g.species));
           goal.species = String(g.species);
         }
+      } else if (g.disposed != null) {                          // richtig entsorgt: alles oder (mit in) ein bestimmtes Glas
+        if (g.disposed !== true) throw fail("task", "disposed " + String(g.disposed));
+        goal = { disposed: true };
       } else if (g.identify != null) {                          // eine unbekannte Probe mit oneOf richtig benennen
         if (!(bench || []).some(function (item) { return item.unknown === g.identify && item.oneOf; })) throw fail("task", "identify " + String(g.identify));
         goal = { identify: g.identify };
@@ -786,6 +789,10 @@
   function checkTask(task, lab, events) {
     var goals = task.goals.map(function (g) {
       var total = 0;
+      if (g.disposed) {                                          // mindestens einmal entsorgt, und jedes Mal richtig
+        var mine = (events || []).filter(function (e) { return e.key === "disposed" && (g.in == null || e.vessel === g.in); });
+        return mine.length > 0 && mine.every(function (e) { return e.right; });
+      }
       if (g.identify) {                                          // die letzte Antwort zu dieser Probe zählt
         var s = lab.samples[g.identify];
         return !!(s && s.said != null && s.said === s.names[s.pick]);
@@ -1299,6 +1306,46 @@
       prime(lab, made);
     }
     return id;
+  }
+
+  // ------------------------------------------------------------------ Entsorgen
+
+  // Die Behälter des Schullabors, in der Reihenfolge, in der sie geprüft werden
+  var BINS = ["sink", "acid", "heavy", "organic", "solid"];
+  var HEAVY = { Cu: 1, Zn: 1, Ag: 1, Ba: 1, Cr: 1, Co: 1, Mn: 1, Ni: 1, Pb: 1, Cd: 1, Hg: 1, Sn: 1 };      // dürfen nicht ins Abwasser
+
+  function elementsOf(id) { return (id.replace(/\([a-z]+\)$/, "").match(/[A-Z][a-z]?/g) || []); }
+
+  // Wohin der Inhalt eines Gefäßes gehört, nach den üblichen Regeln der Schulen (DGUV Regel 113-018):
+  // Schwermetallsalze (gelöst oder gefällt) vor organischen Lösungsmitteln vor Feststoffen vor Säuren und Laugen vor dem Ausguss.
+  // Zurück: { bin, why } oder { bin: null }, wenn nichts darin ist
+  function waste(lab, vesselId) {
+    var v = vessel(lab, vesselId), vol, id, s, el, heavy = false, organic = 0, solid = 0, pH, any = false;
+    if (!v) return null;
+    vol = volume(v);
+    for (id in v.n) {
+      s = L.db.species[id];
+      if (!(v.n[id] > 1e-7) || id === WATER) continue;
+      any = true;
+      el = elementsOf(id);
+      if (el.some(function (e) { return HEAVY[e]; }) && !(s.phase === "s" && el.length === 1)) heavy = true;      // ein Metallstück ist Feststoff, kein Salz
+      if (s.phase === "aq" && s.Tb != null && s.Vm && el.indexOf("C") >= 0) organic += v.n[id] * s.Vm / 1000;  // flüchtiger organischer Stoff
+    }
+    v.lumps.forEach(function (l) { if (!l.made) solid += l.n * L.db.species[l.id].M; });
+    if (!any && !(vol > 0)) return { bin: null };
+    if (heavy) return { bin: "heavy" };
+    if (vol > 0 && organic / vol >= 0.2) return { bin: "organic" };
+    if (solid > 0.01 || (!(vol > 0.0005) && v.lumps.length)) return { bin: "solid" };
+    pH = vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
+    return { bin: pH < 6 || pH > 9 ? "acid" : "sink" };
+  }
+
+  // Den Inhalt eines Gefäßes in einen Behälter geben: Das Gefäß ist danach leer. Zurück, ob der Behälter passte
+  function dispose(lab, vesselId, bin) {
+    var w = waste(lab, vesselId);
+    if (!w || BINS.indexOf(bin) < 0) return null;
+    empty(lab, vesselId);
+    return { vessel: vesselId, bin: bin, want: w.bin, right: w.bin == null || w.bin === bin };
   }
 
   function remove(lab, id) {
@@ -4167,7 +4214,7 @@
     logAt(run).forEach(function (e) {
       var from, total, share;
       if (e.key === "added") keep(e.vessel, e);
-      else if (e.key === "emptied") put[e.vessel] = [];
+      else if (e.key === "emptied" || e.key === "disposed") put[e.vessel] = [];
       else if (e.key === "removed") delete put[e.part];
       else if (e.key === "poured") {
         from = put[e.from] || [];
@@ -4289,6 +4336,9 @@
   L.view = view;
   L.reading = reading;
   L.hazards = hazards;
+  L.waste = waste;
+  L.dispose = dispose;
+  L.BINS = BINS;
   L.massPercent = massPercent;
   L.reactions = reactions;
   L.createRun = createRun;

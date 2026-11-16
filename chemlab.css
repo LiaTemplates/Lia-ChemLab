@@ -90,6 +90,9 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-ghs { width: 22px; height: 22px; display: block; }
 .lia-chemlab .cl-hand .cl-ghs { width: 30px; height: 30px; }
 .lia-chemlab .cl-signal { font-weight: 700; margin: 0 .4em 0 .3em; }
+.lia-chemlab .cl-dispose { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0; }
+.lia-chemlab .cl-bin { display: inline-flex; align-items: center; gap: 4px; }
+.lia-chemlab .cl-bin .cl-icon { width: 22px; height: 22px; }
 .lia-chemlab .cl-pick span,
 .lia-chemlab .cl-use span { max-width: 9em; white-space: normal; line-height: 1.15; }
 .lia-chemlab .cl-tap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0.3em 0; }

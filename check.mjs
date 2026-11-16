@@ -848,7 +848,7 @@ test("Auswahl: Inhalt ansehen, umgießen, ausleeren, wegräumen", () => {
   frames(4);
   near(look(state(el).run.lab, "b").ml, 2.5, 0.01, "umgegossen");
   assert.match(logOf(el), /2,5 mL aus Reagenzglas 1 in Becherglas 1 gegossen/);
-  press(el, "empty");
+  press(el, "dispose", "sink");
   assert.equal(look(state(el).run.lab, "rg").ml, 0);
   press(el, "remove");
   assert.deepEqual(state(el).run.lab.vessels.map((v) => v.id), ["b"]);
@@ -3371,7 +3371,7 @@ test("Zersprungenes Glas an der Fläche: Scherben, Hinweis beim Zugeben, nur noc
   assert.equal(part(el, ".cl-status").textContent, "Dieses Gefäß ist zersprungen.");
   press(el, "hand", "H2O");
   tap(el, "b");
-  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="empty"|data-act="pour"/);
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="dispose"|data-act="pour"/);
   assert.match(part(el, ".cl-panel").innerHTML, /data-act="remove"/);
 });
 
@@ -3629,15 +3629,15 @@ test("Aufzeichnung: Gasraum, Flammenfärbung, Kolbenprober und Scherben beim Zur
 test("Oberfläche nach dem Knall: das Feld zeigt die Scherben, und beim Zurückspulen wieder das ganze Glas", () => {
   const el = mount({ bench: [{ type: "beaker", id: "b", ml: 600, contains: [{ reagent: "HCl 1M", ml: 100 }] }], shelf: ["splint"] });
   tap(el, "b");
-  assert.match(part(el, ".cl-panel").innerHTML, /data-act="empty"/);
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="dispose"/);
   state(el).run.lab.vessels[0].air["H2(g)"] = 0.006;
   press(el, "hand", "splint");
   tap(el, "b");
   assert.equal(L.view(state(el).run.lab, state(el).run.lab.vessels[0]).broken, true);
-  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="empty"/, "nach dem Knall gibt es nichts mehr auszuleeren");
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="dispose"/, "nach dem Knall gibt es nichts mehr zu entsorgen");
   frames(2);
   enter(el, "input", "seek", "0");
-  assert.match(part(el, ".cl-panel").innerHTML, /data-act="empty"/, "zurückgespult ist das Glas wieder ganz");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="dispose"/, "zurückgespult ist das Glas wieder ganz");
   assert.match(item(el, "b").innerHTML, /cl-liquid/);
 });
 
@@ -4335,6 +4335,41 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
+test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und meldet, ob der gewählte passt", () => {
+  const want = (contains, ml) => { const l = lab([{ type: "beaker", id: "b", contains }], { room: 20 }); L.step(l, 30); return L.waste(l, "b").bin; };
+  assert.equal(want([{ reagent: "NaCl 0.1M", ml: 20 }]), "sink", "Kochsalzlösung: Ausguss");
+  assert.equal(want([{ reagent: "HCl 1M", ml: 20 }]), "acid", "Säure");
+  assert.equal(want([{ reagent: "NaOH 0.1M", ml: 20 }]), "acid", "Lauge");
+  assert.equal(want([{ reagent: "HCl 1M", ml: 10 }, { reagent: "NaOH 1M", ml: 10 }]), "sink", "neutralisiert: Ausguss");
+  assert.equal(want([{ reagent: "CuSO4 0.1M", ml: 20 }]), "heavy", "Kupfersalz");
+  assert.equal(want([{ reagent: "AgNO3 0.1M", ml: 5 }, { reagent: "NaCl 0.1M", ml: 5 }]), "heavy", "auch als Niederschlag");
+  assert.equal(want([{ reagent: "H2O", ml: 20 }, { reagent: "marble", g: 1 }]), "solid", "Feststoffreste");
+  assert.equal(want([{ reagent: "Zn granules", g: 1 }]), "solid", "trocken: Feststoffe");
+  assert.equal(want([]), null, "leer: nichts zu entsorgen");
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  assert.equal(want([{ reagent: "ethanol", ml: 20 }]), "organic", "Ethanol");
+  assert.equal(want([{ reagent: "wine", ml: 20 }]), "sink", "Wein");
+  // entsorgen: das Glas wird leer; zurück kommt, was richtig gewesen wäre
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 20 }] }], { room: 20 });
+  assert.deepEqual(L.dispose(l, "b", "sink"), { vessel: "b", bin: "sink", want: "heavy", right: false });
+  assert.equal(L.volume(L.vessel(l, "b")), 0, "das Glas ist leer");
+  L.add(l, "b", "CuSO4 0.1M", { ml: 5 });
+  assert.equal(L.dispose(l, "b", "heavy").right, true);
+  assert.equal(L.dispose(l, "b", "nowhere"), null, "unbekannter Behälter");
+  const c = { lang: "de", numbers: true, names: { b: "Becherglas 1" } };
+  assert.equal(L.say({ key: "disposed", vessel: "b", bin: "heavy", want: "heavy", right: true }, c), "Becherglas 1: entsorgt – Schwermetallsalze. Richtig.");
+  assert.equal(L.say({ key: "disposed", vessel: "b", bin: "sink", want: "heavy", right: false }, c),
+    "Becherglas 1: entsorgt – Ausguss. Besser: Schwermetallsalze. Schwermetall-Ionen dürfen nicht ins Abwasser.");
+  // Ziel: richtig entsorgt, alles oder ein bestimmtes Glas
+  const task = L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: true }] } }).task;
+  const good = [{ key: "disposed", vessel: "b", bin: "heavy", want: "heavy", right: true }], bad = good.concat([{ key: "disposed", vessel: "b", bin: "sink", want: "acid", right: false }]);
+  assert.equal(L.checkTask(task, l, []).done, false, "noch nichts entsorgt");
+  assert.equal(L.checkTask(task, l, good).done, true);
+  assert.equal(L.checkTask(task, l, bad).done, false, "ein Fehlgriff");
+  assert.match(L.goalText({ disposed: true }, "de"), /richtig entsorgen/);
+  assert.throws(() => L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: "ja" }] } }), (e) => e.code === "task");
+});
+
 test("GHS: die Kennzeichnung einer Lösung folgt aus dem reinen Stoff nach den Gemisch-Regeln der CLP-Verordnung", () => {
   const salt = { "Na+(aq)": 1, "Cl-(aq)": 1 };      // Kochsalz als Träger: 1 mol/L sind 5,5 % (58,44 g in 997 g Wasser)
   L.register({ reagents: {
@@ -4497,6 +4532,17 @@ test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten a
   assert.equal(h("glacial acetic acid"), "GHS02 GHS05 danger");
   assert.equal(h("sulfuric acid conc"), "GHS05 danger");
   assert.equal(h("wine"), "", "Wein trägt kein Etikett");
+});
+
+test("Entsorgen in der Fläche: fünf Behälter in der Karte des Gefäßes; das Protokoll sagt, ob es richtig war", () => {
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 20 }] }] });
+  tap(el, "b");
+  const panel = part(el, ".cl-panel").innerHTML;
+  for (const bin of ["sink", "acid", "heavy", "organic", "solid"]) assert.match(panel, new RegExp(`data-act="dispose" data-id="${bin}"`), bin);
+  assert.match(panel, /Schwermetallsalze/);
+  press(el, "dispose", "sink");
+  assert.equal(L.volume(L.vessel(state(el).run.lab, "b")), 0, "geleert");
+  assert.match(logOf(el), /entsorgt – Ausguss\. Besser: Schwermetallsalze/);
 });
 
 test("GHS in der Fläche: Piktogramme im Regal, an der Flasche in der Hand mit Signalwort; Wasser ohne", () => {
@@ -7676,7 +7722,7 @@ test("Oberfläche: gesperrt bleiben die Geräte stehen; Stoffe zugeben und bedie
   assert.equal(state(el).run.lab.vessels.length, 1, "kein neues Gefäß");
   tap(el, "b");
   assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /data-act="remove"/, "nichts zum Wegräumen");
-  assert.match(part(el, ".cl-panel").innerHTML, /data-act="empty"/, "ausleeren geht");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="dispose"/, "entsorgen geht");
   press(el, "remove");
   assert.ok(L.vessel(state(el).run.lab, "b"), "das Becherglas steht noch");
   tap(el, "br");
@@ -8481,6 +8527,18 @@ test("README: die Folie zu den Gefahrstoffen hält, was ihr Text verspricht", ()
   assert.equal(h("NaOH 0.1M"), "GHS05 warning");
   assert.equal(h("CuSO4 1M"), "GHS07 GHS09 warning");
   assert.match(h("K2Cr2O7 0.1M"), /GHS08.*danger/);
+});
+
+test("README: die Folie zum Entsorgen hält, was ihr Text verspricht", () => {
+  const config = L.normalize(JSON.parse(slide("Richtig entsorgen")[0]));
+  const l = L.createLab(config);
+  L.step(l, 30);
+  assert.deepEqual(["kupfer", "saeure", "salz", "marmor"].map((id) => L.waste(l, id).bin), ["heavy", "acid", "sink", "solid"]);
+  L.add(l, "saeure", "NaOH 1M", { ml: 20 });
+  L.step(l, 30);
+  assert.equal(L.waste(l, "saeure").bin, "sink", "neutralisiert darf sie in den Ausguss");
+  const events = ["kupfer", "saeure", "salz", "marmor"].map((id) => Object.assign({ key: "disposed" }, L.dispose(l, id, L.waste(l, id).bin)));
+  assert.equal(L.checkTask(config.task, l, events).done, true, "alles richtig entsorgt");
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {
