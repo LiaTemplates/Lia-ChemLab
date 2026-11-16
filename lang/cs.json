@@ -397,6 +397,8 @@
     "copy": "Kopírovat sestavu",
     "copy.manual": "Sestava jako text – označ a zkopíruj:",
     "copy.done": "Text je ve schránce.",
+    "log.copy": "Kopírovat protokol",
+    "log.manual": "Protokol jako text – označ a zkopíruj:",
     "table.copy": "Kopírovat tabulku",
     "table.manual": "Naměřené hodnoty oddělené tabulátory – označ a zkopíruj:",
     "table.note": "Zapsat hodnoty",

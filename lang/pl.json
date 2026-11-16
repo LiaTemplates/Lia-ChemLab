@@ -397,6 +397,8 @@
     "copy": "Kopiuj układ",
     "copy.manual": "Układ jako tekst – zaznacz i skopiuj:",
     "copy.done": "Tekst jest w schowku.",
+    "log.copy": "Kopiuj dziennik",
+    "log.manual": "Dziennik jako tekst – zaznacz i skopiuj:",
     "table.copy": "Kopiuj tabelę",
     "table.manual": "Wyniki pomiarów rozdzielone tabulatorami – zaznacz i skopiuj:",
     "table.note": "Zapisz pomiary",

@@ -397,6 +397,8 @@
     "copy": "Kopeeri katseseade",
     "copy.manual": "Katseseade tekstina – vali ja kopeeri:",
     "copy.done": "Tekst on lõikelaual.",
+    "log.copy": "Kopeeri logi",
+    "log.manual": "Logi tekstina – vali ja kopeeri:",
     "table.copy": "Kopeeri tabel",
     "table.manual": "Mõõtetulemused tabeldusmärkidega eraldatult – vali ja kopeeri:",
     "table.note": "Märgi mõõtetulemused üles",

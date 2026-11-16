@@ -397,6 +397,8 @@
     "copy": "Kopiraj postavitev",
     "copy.manual": "Postavitev kot besedilo – označi in kopiraj:",
     "copy.done": "Besedilo je v odložišču.",
+    "log.copy": "Kopiraj zapisnik",
+    "log.manual": "Zapisnik kot besedilo – označi in kopiraj:",
     "table.copy": "Kopiraj tabelo",
     "table.manual": "Izmerjene vrednosti, ločene s tabulatorji – označi in kopiraj:",
     "table.note": "Zapiši meritve",

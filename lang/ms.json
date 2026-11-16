@@ -397,6 +397,8 @@
     "copy": "Salin susunan",
     "copy.manual": "Susunan sebagai teks – pilih dan salin:",
     "copy.done": "Teks telah disalin ke papan klip.",
+    "log.copy": "Salin catatan",
+    "log.manual": "Catatan sebagai teks – pilih dan salin:",
     "table.copy": "Salin jadual",
     "table.manual": "Bacaan, dipisahkan dengan tab – pilih dan salin:",
     "table.note": "Catat bacaan",

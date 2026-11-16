@@ -397,6 +397,8 @@
     "copy": "Kopier oppsett",
     "copy.manual": "Oppsettet som tekst – merk og kopier:",
     "copy.done": "Teksten ligger på utklippstavlen.",
+    "log.copy": "Kopier loggen",
+    "log.manual": "Loggen som tekst – merk og kopier:",
     "table.copy": "Kopier tabellen",
     "table.manual": "Måleverdiene, skilt med tabulatorer – merk og kopier:",
     "table.note": "Noter måleverdier",

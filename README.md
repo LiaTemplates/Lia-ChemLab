@@ -924,6 +924,8 @@ In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugebe
 
 **Messwerttabelle:** „Messwerte notieren“ schreibt die Anzeigen aller Messgeräte als Zeile in eine Tabelle, dazu die Zeit und was jede Bürette abgegeben hat. So entsteht eine Titrationskurve von Hand: Hahn auf „langsam“, nach jeweils etwa 2 mL zudrehen und notieren. „Tabelle kopieren“ gibt die Werte mit Tabulatoren getrennt weiter, so dass sie sich in eine Tabellenkalkulation einfügen lassen. Die Tabelle bleibt beim Zurücksetzen stehen; „Tabelle leeren“ beginnt eine neue.
 
+**Protokoll kopieren:** Der Knopf unter den Beobachtungen schreibt das ganze Protokoll bis zur Zeit des Zeigers in die Zwischenablage, eine Zeile je Eintrag mit Uhrzeit, so wie es unter der Fläche steht (dort sind es höchstens die letzten 60), etwa für ein Versuchsprotokoll. Unbekannte Proben bleiben darin verborgen. Erlaubt der Browser das Kopieren nicht, steht der Text zum Markieren unter der Fläche.
+
 ```json @ChemLab.sim
 {"lock":true,
  "table":true,

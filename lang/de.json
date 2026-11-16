@@ -397,6 +397,8 @@
     "copy": "Aufbau kopieren",
     "copy.manual": "Der Aufbau als Text – markieren und kopieren:",
     "copy.done": "Der Text ist in der Zwischenablage.",
+    "log.copy": "Protokoll kopieren",
+    "log.manual": "Das Protokoll als Text – markieren und kopieren:",
     "table.copy": "Tabelle kopieren",
     "table.manual": "Die Messwerte, durch Tabulatoren getrennt – markieren und kopieren:",
     "table.note": "Messwerte notieren",

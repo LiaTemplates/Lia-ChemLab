@@ -397,6 +397,8 @@
     "copy": "Kopiera uppställning",
     "copy.manual": "Uppställningen som text – markera och kopiera:",
     "copy.done": "Texten finns i urklipp.",
+    "log.copy": "Kopiera loggen",
+    "log.manual": "Loggen som text – markera och kopiera:",
     "table.copy": "Kopiera tabellen",
     "table.manual": "Mätvärdena, åtskilda av tabbar – markera och kopiera:",
     "table.note": "Anteckna mätvärden",

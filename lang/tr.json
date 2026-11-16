@@ -397,6 +397,8 @@
     "copy": "Düzeneği kopyala",
     "copy.manual": "Metin olarak düzenek – seçip kopyalayın:",
     "copy.done": "Metin panoya kopyalandı.",
+    "log.copy": "Kaydı kopyala",
+    "log.manual": "Metin olarak kayıt – seç ve kopyala:",
     "table.copy": "Tabloyu kopyala",
     "table.manual": "Sekmeyle ayrılmış ölçüm değerleri – seçip kopyalayın:",
     "table.note": "Ölçümü kaydet",

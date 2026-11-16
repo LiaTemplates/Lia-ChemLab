@@ -397,6 +397,8 @@
     "copy": "Kopiér opstilling",
     "copy.manual": "Opstillingen som tekst – markér og kopiér:",
     "copy.done": "Teksten er i udklipsholderen.",
+    "log.copy": "Kopiér loggen",
+    "log.manual": "Loggen som tekst – markér og kopiér:",
     "table.copy": "Kopiér tabellen",
     "table.manual": "Måleværdierne adskilt af tabulatorer – markér og kopiér:",
     "table.note": "Notér måleværdier",

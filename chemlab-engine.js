@@ -4047,7 +4047,12 @@
   // run.cursor: das Abbild, das gerade gilt. Steht es nicht am Ende, zeigt die Fläche Vergangenes.
   function createRun(config) {
     var run = { config: config, lab: createLab(config), frames: [], log: [], time: 0, end: 0, every: 2, limit: KEEP, cursor: 0 };
-    run.emit = function (event) { event.t = run.lab.t; run.log.push(event); };
+    run.emit = function (event) {
+      var v = event.vessel != null && vessel(run.lab, event.vessel);
+      event.t = run.lab.t;
+      if (v && v.veiled) event.hidden = true;                    // eine unbekannte Probe bleibt verborgen, auch nachdem sie weggeräumt ist
+      run.log.push(event);
+    };
     record(run);
     return run;
   }

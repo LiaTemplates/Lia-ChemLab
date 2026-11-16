@@ -397,6 +397,8 @@
     "copy": "Kopiatu muntaia",
     "copy.manual": "Muntaia testu gisa – hautatu eta kopiatu:",
     "copy.done": "Testua arbelean dago.",
+    "log.copy": "Kopiatu erregistroa",
+    "log.manual": "Erregistroa testu gisa – hautatu eta kopiatu:",
     "table.copy": "Kopiatu taula",
     "table.manual": "Neurketak, tabulazioz bereizita – hautatu eta kopiatu:",
     "table.note": "Jaso neurketak",

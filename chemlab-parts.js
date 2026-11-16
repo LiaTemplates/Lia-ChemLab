@@ -185,6 +185,7 @@
       "count.reactions": "{n} reaction", "count.reactions.n": "{n} reactions", "count.couples": "{n} redox couple", "count.couples.n": "{n} redox couples",
       "count.reagents": "{n} stock bottle", "count.reagents.n": "{n} stock bottles",
       "copy": "Copy setup", "copy.manual": "The setup as text – select and copy:", "copy.done": "The text is on the clipboard.",
+      "log.copy": "Copy the log", "log.manual": "The log as text – select and copy:",
       "table.copy": "Copy the table", "table.manual": "The readings, separated by tabs – select and copy:",
       "table.note": "Note the readings", "table.clear": "Clear the table", "table.title": "Readings", "table.no": "No.",
       "table.given": "delivered", "table.noMeter": "No meter on the bench: there is nothing to note.",
@@ -345,7 +346,8 @@
     var lang = ctx.lang, name = function (id) { return (ctx.names && ctx.names[id]) || id; };
     var vars = { vessel: name(event.vessel), from: name(event.from), part: event.label || name(event.part), to: name(event.to) };
     // eine unbekannte Probe: Beobachtungen ja, Stoffnamen nein
-    if (ctx.hidden && ctx.hidden[event.vessel]) switch (event.key) {
+    var veiled = event.hidden || !!(ctx.hidden && ctx.hidden[event.vessel]);
+    if (veiled) switch (event.key) {
       case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
       case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
       case "solid": if (event.colloid) return text("hidden.haze", lang, vars);
@@ -355,7 +357,7 @@
         vars.bin = text("bin." + event.bin, lang);
         if (event.spare) return text("say.disposedSpare", lang, vars);
         if (event.right) return text("say.disposed", lang, vars);
-        if (ctx.hidden && ctx.hidden[event.vessel]) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
+        if (veiled) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
         vars.want = text("bin." + event.want, lang);
         vars.why = text("why." + event.want, lang);
         return text("say.disposedWrong", lang, vars);

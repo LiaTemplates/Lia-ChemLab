@@ -397,6 +397,8 @@
     "copy": "Copier le montage",
     "copy.manual": "Le montage sous forme de texte – sélectionner et copier :",
     "copy.done": "Le texte est dans le presse-papiers.",
+    "log.copy": "Copier le journal",
+    "log.manual": "Le journal sous forme de texte – sélectionner et copier :",
     "table.copy": "Copier le tableau",
     "table.manual": "Les mesures, séparées par des tabulations – sélectionner et copier :",
     "table.note": "Noter les mesures",
