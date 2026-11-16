@@ -652,8 +652,8 @@
     var goals = task.goals.map(function (g) {
       var total = 0;
       if (g.identify) {                                          // die letzte Antwort zu dieser Probe zählt
-        var said = events.filter(function (e) { return e.key === "guess" && e.sample === g.identify; }).pop(), s = lab.samples[g.identify];
-        return !!(said && s && said.name === s.names[s.pick]);
+        var s = lab.samples[g.identify];
+        return !!(s && s.said != null && s.said === s.names[s.pick]);
       }
       if (g.measure) return lab.tools.some(function (t) {
         var def = L.parts[t.type], kind = def.circuit === "ammeter" ? "I" : def.circuit === "voltmeter" ? "U" : def.sense, value = t.value;
@@ -736,13 +736,13 @@
         };
         // unknown: eine Probe mit verborgenem Inhalt; oneOf: mögliche Füllungen, von denen beim Einlesen eine gezogen wird
         if (raw.unknown != null) {
-          if (typeof raw.unknown !== "string" || !/^[\w .-]{1,12}$/.test(raw.unknown) || samples[raw.unknown]) throw fail("place", String(raw.unknown));
+          if (typeof raw.unknown !== "string" || !/^[\w .-]{1,12}$/.test(raw.unknown) || samples[raw.unknown]) throw fail("sample", String(raw.unknown));
           item.unknown = samples[raw.unknown] = raw.unknown;
         }
         if (raw.oneOf != null) {
-          if (raw.contains != null || !Array.isArray(raw.oneOf) || raw.oneOf.length < 2) throw fail("amount", item.id);
+          if (raw.contains != null || !Array.isArray(raw.oneOf) || raw.oneOf.length < 2) throw fail("sample", item.id);
           item.oneOf = raw.oneOf.map(function (o) {
-            if (!o || typeof o.name !== "string" || !o.name || !Array.isArray(o.contains)) throw fail("amount", item.id);
+            if (!o || typeof o.name !== "string" || !o.name || !Array.isArray(o.contains)) throw fail("sample", item.id);
             return { name: o.name, contains: fill(o.contains) };
           });
           item.pick = Math.floor(Math.random() * item.oneOf.length);
@@ -750,6 +750,7 @@
         } else item.contains = fill(raw.contains);
         if (def.dispenser) item.over = raw.over == null ? null : String(raw.over);
       } else {
+        if (raw.unknown != null || raw.oneOf != null) throw fail("sample", item.id);      // nur ein Gefäß kann eine Probe sein
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
         if (def.flames) item.flame = flameLevel(raw.flame);
         if (def.bath && raw.temp != null) {
@@ -979,6 +980,7 @@
         return;
       }
       v = makeVessel(lab, item);
+      v.veiled = !!item.unknown;                               // verborgen: eine Probe, und alles, was etwas aus ihr bekommt
       lab.vessels.push(v);
       item.contains.forEach(function (c) { putReagent(lab, v, reagent(c.reagent), c); });
       settle(lab, v);
@@ -1131,11 +1133,12 @@
     return true;
   }
 
-  // Antwort auf eine unbekannte Probe: einer der Namen aus oneOf
-  function guess(lab, label, name, emit) {
+  // Antwort auf eine unbekannte Probe: einer der Namen aus oneOf. Sie gehört nicht zum Versuch: Zurückspulen nimmt sie nicht zurück,
+  // und sie schneidet die Aufzeichnung nicht ab
+  function guess(lab, label, name) {
     var s = lab.samples[label];
     if (!s || s.names.indexOf(name) < 0) return false;
-    if (emit) emit({ key: "guess", sample: label, vessel: s.vessel, name: name });
+    s.said = name;
     return true;
   }
 
@@ -2556,6 +2559,7 @@
 
   // Flüssigkeit von einem Gefäß ins andere: mit allem Gelösten und dem Niederschlag, der noch schwebt
   function transfer(from, to, ml) {
+    if (from.veiled) to.veiled = true;
     var vol = volume(from) * 1000, share, moved = {}, id, phase;
     if (!(vol > 1e-9) || !(ml > 0)) return 0;
     ml = vol - ml < 1e-6 ? vol : ml;                           // kein Film bleibt zurück
@@ -2869,7 +2873,7 @@
       M = L.db.species[id].M;
       if (!closed) part += (v.air[id] - part) * (1 - Math.exp(-DT / (M < 20 ? 8 : M < 36 ? 40 : 90)));      // ein Stopfen verschließt das Gefäß
       if (v.air[id] - part < 1e-12) part = v.air[id];
-      if (into && part > 0) { bubbleInto(lab, into, id, part); flow += part; }
+      if (into && part > 0) { bubbleInto(lab, into, id, part); flow += part; if (v.veiled) into.veiled = true; }
       else v.out[id] = (v.out[id] || 0) + part;
       if (meter && !meter.full && part > 0) meter.held = (meter.held || 0) + part * M;      // im Kolbenprober; ist er voll, entweicht es
       if ((v.air[id] -= part) <= 0) delete v.air[id];
@@ -2967,7 +2971,7 @@
       else if (c.id === WATER) v.out[STEAM] = (v.out[STEAM] || 0) + x;
       else v.out[vapourOf(c.id)] = (v.out[vapourOf(c.id)] || 0) + x;
     });
-    if (into) mixIn(into, cold, lab.room);
+    if (into) { mixIn(into, cold, lab.room); if (v.veiled) into.veiled = true; }
     v.T = top + (over - boil * heat) / heatCapacity(v);         // reicht die Flüssigkeit nicht für alle Wärme, bleibt das Gefäß heißer
     v.dirty = true;
     v.boil += boil / DT;
@@ -3645,8 +3649,8 @@
     });
     lab.vessels.forEach(function (v) {
       var n = {}, id;
-      for (id in v.n) if (v.n[id] > 1e-12) n[id] = sig(v.n[id]);
-      out.vessels[v.id] = { ml: sig(volume(v) * 1000), T: sig(v.T), n: n, equations: reactions(lab, v.id).map(function (r) {
+      if (!v.veiled) for (id in v.n) if (v.n[id] > 1e-12) n[id] = sig(v.n[id]);      // eine Probe verrät auch Folienskripten nichts
+      out.vessels[v.id] = { ml: sig(volume(v) * 1000), T: sig(v.T), n: n, equations: v.veiled ? [] : reactions(lab, v.id).map(function (r) {
         return side(r.left) + (r.complete ? " → " : " ⇌ ") + side(r.right);
       }) };
     });
@@ -3700,6 +3704,7 @@
   function describe(run, raw) {
     var lab = run.lab, put = {}, bench = [], rest = "";
     function liquid(c) { return c.ml != null ? c.ml : c.drops != null ? c.drops * DROP : 0; }
+    function plain(c) { return c.g != null ? { reagent: c.reagent, g: c.g } : reagent(c.reagent).drops ? { reagent: c.reagent, drops: round(c.ml / DROP) } : { reagent: c.reagent, ml: c.ml }; }
     function keep(id, entry) {
       var list = put[id] = put[id] || [], unit = entry.g != null ? "g" : entry.drops != null ? "drops" : "ml";
       var same = list.filter(function (c) { return c.reagent === entry.reagent && c[unit] != null; })[0];
@@ -3707,7 +3712,7 @@
       else { same = { reagent: entry.reagent }; same[unit] = entry[unit]; list.push(same); }
     }
     run.config.bench.forEach(function (item) {
-      if (!item.contains) return;
+      if (!item.contains || item.unknown) return;              // aus einer Probe gießt die Kopie nichts weiter
       put[item.id] = [];
       item.contains.forEach(function (c) {
         var r = reagent(c.reagent);
@@ -3739,13 +3744,14 @@
       var def = L.parts[v.type], item = { type: v.type, id: v.id }, cfg = run.config.bench.filter(function (o) { return o.id === v.id; })[0];
       if (v.broken) return;
       if (def.sizes) item.ml = v.size;
+      if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
       if (cfg && cfg.unknown) {                                 // eine unbekannte Probe bleibt unbekannt: wie sie beschrieben war, ohne was danach hineinkam
         item.unknown = cfg.unknown;
-        if (cfg.oneOf) item.oneOf = cfg.oneOf; else item.contains = cfg.contains;
+        if (cfg.oneOf) item.oneOf = cfg.oneOf.map(function (o) { return { name: o.name, contains: o.contains.map(plain) }; });
+        else item.contains = cfg.contains.map(plain);
         bench.push(item);
         return;
       }
-      if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
       // Wer nachfüllt, was ausgetropft oder verdampft ist, hat mehr hineingegeben, als das Gefäß fasst: dann zählt der Anteil, der hineinpasst
       var list = put[v.id] || [], wet = list.reduce(function (sum, c) { return sum + liquid(c); }, 0), cap = spec(v).cap, fit = wet > cap ? cap / wet : 1;
       item.contains = list.map(function (c) {
@@ -3767,7 +3773,12 @@
       bench.push(item);
     });
     Object.keys(raw && typeof raw === "object" ? raw : {}).forEach(function (key) {
-      if (key !== "bench") rest += ',\n "' + key + '":' + JSON.stringify(raw[key]);
+      var value = raw[key];
+      // ein Ziel zu einer Probe, die nicht mehr dasteht, fällt weg: sonst ließe sich die Kopie nicht einlesen
+      if (key === "task" && value && Array.isArray(value.goals)) value = Object.assign({}, value, { goals: value.goals.filter(function (g) {
+        return !(g && g.identify != null) || bench.some(function (item) { return item.unknown === g.identify; });
+      }) });
+      if (key !== "bench") rest += ',\n "' + key + '":' + JSON.stringify(value);
     });
     return '{"bench":[\n  ' + bench.map(function (item) { return JSON.stringify(item); }).join(",\n  ") + "\n ]" + rest + "}";
   }

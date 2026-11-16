@@ -6910,11 +6910,11 @@ test("Unbekannte Probe: eine Füllung wird gezogen und bleibt; Fehler in der Bes
   assert.ok(amount(l, "I-(aq)", "p") > 0, "im Glas ist, was gezogen wurde");
   assert.deepEqual(l.samples, { A: { vessel: "p", pick: 1, names: ["Natriumchlorid", "Kaliumiodid"] } });
   const bad = (item, code) => assert.throws(() => L.normalize({ bench: [item] }), (e) => e.code === code, JSON.stringify(item));
-  bad(Object.assign({}, sampleA, { contains: [{ reagent: "H2O", ml: 1 }] }), "amount");
-  bad(Object.assign({}, sampleA, { oneOf: [sampleA.oneOf[0]] }), "amount");
-  bad(Object.assign({}, sampleA, { oneOf: [{ contains: [] }, sampleA.oneOf[1]] }), "amount");
-  bad(Object.assign({}, sampleA, { unknown: "zu <lang> und falsch" }), "place");
-  assert.throws(() => L.normalize({ bench: [sampleA, Object.assign({}, sampleA, { id: "q" })] }), (e) => e.code === "place", "zweimal Probe A");
+  bad(Object.assign({}, sampleA, { contains: [{ reagent: "H2O", ml: 1 }] }), "sample");
+  bad(Object.assign({}, sampleA, { oneOf: [sampleA.oneOf[0]] }), "sample");
+  bad(Object.assign({}, sampleA, { oneOf: [{ contains: [] }, sampleA.oneOf[1]] }), "sample");
+  bad(Object.assign({}, sampleA, { unknown: "zu <lang> und falsch" }), "sample");
+  assert.throws(() => L.normalize({ bench: [sampleA, Object.assign({}, sampleA, { id: "q" })] }), (e) => e.code === "sample", "zweimal Probe A");
   assert.throws(() => L.normalize({ bench: [sampleA], task: { goals: [{ identify: "B" }] } }), (e) => e.code === "task");
 });
 
@@ -6922,9 +6922,9 @@ test("Unbekannte Probe: die richtige Antwort erfüllt das Ziel; Aufbau kopieren 
   const config = drawn(0.7, { task: { text: "Was ist in Probe A?", goals: [{ identify: "A" }] } }), run = L.createRun(config);
   const done = () => L.checkTask(config.task, run.lab, L.logAt(run)).done;
   assert.equal(done(), false);
-  L.act(run, (l, emit) => L.guess(l, "A", "Natriumchlorid", emit));
+  L.guess(run.lab, "A", "Natriumchlorid");
   assert.equal(done(), false, "falsch");
-  L.act(run, (l, emit) => L.guess(l, "A", "Kaliumiodid", emit));
+  L.guess(run.lab, "A", "Kaliumiodid");
   assert.equal(done(), true, "richtig");
   assert.equal(L.guess(run.lab, "A", "Zucker"), false, "nur Namen aus oneOf");
   assert.equal(L.goalText({ identify: "A" }, "de"), "Probe A bestimmen");
@@ -6955,10 +6955,77 @@ test("Unbekannte Probe an der Fläche: Name, verborgener Inhalt, Antwort, nichts
   assert.doesNotMatch(part(el, ".cl-eq").innerHTML, /AgI|Ag<sup>\+/, "keine Gleichung der Probe");
   assert.doesNotMatch(part(el, ".cl-charts").innerHTML, /I<sup>/, "kein Diagramm ihrer Stoffmengen");
   assert.match(logOf(el), /Probe A: Ein gelber Niederschlag fällt aus/);
+  enter(el, "input", "guess", "Kaliumiodid");
   enter(el, "change", "guess", "Kaliumiodid");
-  assert.match(logOf(el), /Probe A: als „Kaliumiodid“ bestimmt/);
+  assert.equal(state(el).run.lab.samples.A.said, "Kaliumiodid");
   assert.match(part(part(el, ".cl-task"), ".cl-goals").innerHTML, /Probe A bestimmen/);
   assert.equal(L.checkTask(state(el).config.task, state(el).run.lab, L.logAt(state(el).run)).done, true);
+});
+
+test("Unbekannte Probe: was daraus umgegossen wird, bleibt verborgen; Lupe, Belag, Skripte und Kopie verraten nichts", () => {
+  const real = Math.random; Math.random = () => 0.7;
+  let el;
+  try {
+    el = mount({ room: 20, bench: [{ type: "beaker", id: "p", unknown: "A", oneOf: sampleA.oneOf.map((o) => ({ name: o.name, contains: [{ reagent: o.contains[0].reagent, ml: 40 }] })) },
+      { type: "electrode-C", id: "e1", in: "p" }, { type: "electrode-C", id: "e2", in: "p" }, { type: "supply", id: "n", in: "p", volts: 6 },
+      { type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "testtube", id: "t" }], shelf: ["AgNO3 0.1M"] });
+  } finally { Math.random = real; }
+  tap(el, "b");
+  press(el, "lens");
+  tap(el, "p");
+  frames(0.1);
+  assert.doesNotMatch(part(el, ".cl-panel").querySelector(".cl-lens").innerHTML, /Iodid|Kalium/, "die Lupe bleibt zu");
+  frames(10);
+  assert.doesNotMatch(item(el, "e2").attributes["aria-label"] + item(el, "e1").attributes["aria-label"], /Iod|Belag:/, "kein Stoff am Belag");
+  const run = state(el).run;
+  part(el, ".cl-panel").querySelector(".cl-pour-to").value = "t";
+  part(el, ".cl-panel").querySelector(".cl-pour-ml").value = "5";
+  press(el, "pour");
+  frames(10);
+  assert.ok(L.vessel(run.lab, "t").veiled, "das umgegossene Glas ist nun auch verborgen");
+  tap(el, "t");
+  frames(0.1);
+  assert.match(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /Der Inhalt ist unbekannt/);
+  assert.doesNotMatch(part(el, ".cl-eq").innerHTML, /I<sup>/);
+  assert.deepEqual(L.snapshot(run).vessels.t.n, {}, "Folienskripte sehen keine Stoffe");
+  assert.deepEqual(L.snapshot(run).vessels.p.equations, []);
+  assert.doesNotMatch(L.describe(run, {}), /"id":"t","contains":\[\{"reagent":"KI/, "die Kopie trägt nichts aus der Probe weiter");
+});
+
+test("Unbekannte Probe: Antworten schneidet die Aufzeichnung nicht ab; Buchstabe am Glas; die Auswahl merkt sich die Antwort", () => {
+  const real = Math.random; Math.random = () => 0.7;
+  let el;
+  try { el = mount({ room: 20, bench: [sampleA], shelf: ["AgNO3 0.1M"], task: { goals: [{ identify: "A" }] } }); } finally { Math.random = real; }
+  assert.match(item(el, "p").innerHTML, />A<\/text>/, "Buchstabe als Nummer");
+  press(el, "hand", "AgNO3 0.1M");
+  tap(el, "p");
+  press(el, "drop");
+  frames(20);
+  const run = state(el).run, end = run.end;
+  L.seek(run, 0.5);
+  tap(el, "p");
+  enter(el, "change", "guess", "Kaliumiodid");
+  assert.equal(run.end, end, "die Aufzeichnung bleibt");
+  tap(el, "p");
+  tap(el, "p");
+  assert.match(part(el, ".cl-panel").innerHTML, /<option value="Kaliumiodid" selected>/);
+});
+
+test("Unbekannte Probe: Kopie ohne die Probe lässt sich wieder einlesen; Bürette und Tropfen bleiben", () => {
+  const real = Math.random; Math.random = () => 0.2;
+  const goals = { task: { goals: [{ identify: "A" }, { identify: "C" }] } };
+  let config;
+  try {
+    config = L.normalize(Object.assign({ bench: [{ type: "beaker", id: "b" }, { type: "burette", id: "bu", over: "b", unknown: "C", oneOf: [
+      { name: "x", contains: [{ reagent: "HCl 0.1M", ml: 20 }, { reagent: "BTB", drops: 3 }] }, { name: "y", contains: [{ reagent: "NaOH 0.1M", ml: 20 }] }] }, sampleA] }, goals));
+  } finally { Math.random = real; }
+  const run = L.createRun(config);
+  const text = L.describe(run, goals);
+  assert.match(text, /"over":"b"/);
+  assert.match(text, /"drops":3/);
+  L.act(run, (l) => L.remove(l, "p"));
+  assert.doesNotThrow(() => L.normalize(L.describe(run, goals)), "ohne Probe A fällt ihr Ziel weg");
+  assert.throws(() => L.normalize({ bench: [{ type: "thermometer", unknown: "D" }] }), (e) => e.code === "sample");
 });
 
 test("Unbekannte Probe: das Protokoll nennt beim Geruch keinen Stoff", () => {

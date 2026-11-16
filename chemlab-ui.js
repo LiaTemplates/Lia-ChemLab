@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, flip: 1, tare: 1, guess: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, flip: 1, tare: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -104,7 +104,7 @@
       }
     }
     if (st.error) {
-      var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
+      var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", sample: "err.sample", data: "err.data",
         amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       stranded = stranded.filter(function (w) { return w.el !== el && w.el.isConnected !== false; }).concat([{ el: el, source: source, text: text }]);
@@ -214,9 +214,11 @@
       var item = st.config.bench.filter(function (o) { return o.id === id; })[0];
       return item && item.unknown ? item.unknown : null;
     }
+    // Verborgen ist eine Probe und jedes Gefäß, das etwas aus ihr bekommen hat
+    function veiled(id) { var v = L.vessel(st.run.lab, id); return !!(v && v.veiled); }
     function hidden() {
       var out = {};
-      st.config.bench.forEach(function (o) { if (o.unknown) out[o.id] = true; });
+      st.run.lab.vessels.forEach(function (v) { if (v.veiled) out[v.id] = true; });
       return out;
     }
 
@@ -235,7 +237,7 @@
       return st.names;
     }
 
-    function ordinal(id) { return +(/(\d+)$/.exec(st.names[id] || "") || [0, 0])[1]; }
+    function ordinal(id) { return sampleOf(id) || +(/(\d+)$/.exec(st.names[id] || "") || [0, 0])[1]; }      // eine Probe trägt ihren Buchstaben
 
     function status(text) { ui.status.textContent = text || ""; }
 
@@ -793,7 +795,7 @@
           content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
             : def.bridge || def.duct || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
-          if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
+          if (def.electrode && r.coat.length && !veiled(r.in)) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
           aria = label[item.id] + (def.bridge || def.duct ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
             : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : "");
           g.setAttribute("aria-label", aria);
@@ -924,8 +926,8 @@
             }).join(" ") + (show.numbers && show.volumes ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
           '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
           (sampleOf(v.id) && lab.samples[sampleOf(v.id)].names.length ? '<label class="cl-guess">' + esc(T("identify")) + ' <select data-act="guess"><option value="">' + esc(T("identify.pick")) + "</option>" +
-            lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
-          (show.particles && !sampleOf(v.id) ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
+            lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '"' + (lab.samples[sampleOf(v.id)].said === n ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
+          (show.particles && !v.veiled ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
@@ -1041,14 +1043,14 @@
 
     // Teilchenlupe im Feld des gewählten Gefäßes: das Bild (in jedem Bild neu) und darunter die Legende (nur wenn sich etwas ändert)
     function lensView() {
-      var v = L.vessel(st.run.lab, st.sel), box = v && !v.broken && st.lens && show.particles ? ui.panel.querySelector(".cl-lens-view") : null;
+      var v = L.vessel(st.run.lab, st.sel), box = v && !v.broken && !v.veiled && st.lens && show.particles ? ui.panel.querySelector(".cl-lens-view") : null;
       if (box) box.innerHTML = L.fx.lens(L.particles(st.run.lab, v.id), pending, 3, still, function (id) { return lensColors[id] || "#9aa7b4"; });
     }
 
     function renderLens() {
       var lab = st.run.lab, v = L.vessel(lab, st.sel), box = ui.panel.querySelector(".cl-lens"), data, rows, key;
       if (!box) return;
-      if (!v || v.broken || !st.lens || !show.particles) { if (lensKey !== "") { box.innerHTML = ""; lensKey = ""; } return; }
+      if (!v || v.broken || v.veiled || !st.lens || !show.particles) { if (lensKey !== "") { box.innerHTML = ""; lensKey = ""; } return; }
       data = L.particles(lab, v.id);
       rows = data.dots.map(function (d) { return { id: d.id, n: d.n, dot: true }; }).concat(data.solids.map(function (s) { return { id: s.id, n: s.n, hang: s.hang > 0.5 }; }));
       key = v.id + "|" + data.per + "|" + data.wet + data.paste + data.residue + "|" + rows.map(function (r) { return r.id + ":" + r.n + (r.hang ? "~" : ""); }).join(",");
@@ -1072,7 +1074,7 @@
       if (!box) return;
       if (w.ml > 0.005) {
         if (show.numbers && show.volumes) parts.push(L.num(w.ml, 1, lang) + " mL");
-        if (show.numbers && w.pH != null && !sampleOf(st.sel)) parts.push("pH " + L.num(w.pH, 2, lang));
+        if (show.numbers && w.pH != null && !veiled(st.sel)) parts.push("pH " + L.num(w.pH, 2, lang));
         parts.push(L.colorWord(w.color.name, w.color.pale, lang) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : ""));
       } else parts.push(T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty"));
       text = parts.join(" · ");
@@ -1121,7 +1123,7 @@
           w = L.reading(lab, t.id);
           box.innerHTML = "<p>" + esc(T("made")) + " " + L.formulaHtml(w.material, true) + " – " + esc(L.nameOf(L.species(w.material), lang)) + "</p>" +
             (show.numbers ? "<p>" + esc(T("mass")) + " " + L.num(w.g, 3, lang) + " g (" + esc(T("massChange")) + " " + (w.g - w.g0 >= 0 ? "+" : "") + L.num(w.g - w.g0, 3, lang) + " g)</p>" : "") +
-            (w.coat.length ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
+            (w.coat.length && !veiled(t.in) ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
               return esc(L.nameOf(L.species(c.id), lang)) + (show.numbers ? " " + L.amount(c.n, lang) : "");
             }).join(", ") + "</p>" : "");
         } else if (L.parts[t.type].bridge || L.parts[t.type].duct || L.parts[t.type].reflux) box.innerHTML = "";
@@ -1139,7 +1141,7 @@
         });
         if (show.numbers && show.volumes) ui.panel.querySelector(".cl-given").textContent = L.num(w.given, 1, lang) + " mL";
       }
-      if (sampleOf(v.id)) { box.innerHTML = "<p>" + esc(T("unknown.contents")) + "</p>"; return; }
+      if (v.veiled) { box.innerHTML = "<p>" + esc(T("unknown.contents")) + "</p>"; return; }
       rows = w.species.filter(function (s) { return s.n > 1e-12; });
       if (!rows.length) { box.innerHTML = "<p>" + esc(T("panel.empty")) + "</p>"; return; }
       if (!show.numbers) {
@@ -1148,9 +1150,10 @@
         }).join("") + "</ul>";
         return;
       }
-      box.innerHTML = "<p>" + (show.volumes ? esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" : "") + (w.pH == null ? "" : (show.volumes ? " · " : "") + "pH " + L.num(w.pH, 2, lang)) +
-        // im realen Modell: die Ionenstärke, von der die Aktivitätskoeffizienten abhängen
-        (w.strength == null ? "" : " · " + esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.0995 ? 3 : 2, lang) + " mol/L") + "</p>" +
+      // im realen Modell auch die Ionenstärke, von der die Aktivitätskoeffizienten abhängen
+      w.head = [show.volumes ? esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" : "", w.pH == null ? "" : "pH " + L.num(w.pH, 2, lang),
+        w.strength == null ? "" : esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.0995 ? 3 : 2, lang) + " mol/L"].filter(Boolean).join(" · ");
+      box.innerHTML = (w.head ? "<p>" + w.head + "</p>" : "") +
         '<table class="cl-table"><caption>' + esc(T("panel.contents")) + '</caption><thead><tr><th scope="col" colspan="2">' + esc(T("col.particle")) +
         '</th><th scope="col">' + esc(T("col.amount")) + '</th><th scope="col">' + esc(T("col.conc")) + "</th></tr></thead><tbody>" +
         rows.map(function (s) {
@@ -1175,7 +1178,7 @@
       var lab = st.run.lab, label = names(), groups = [], only = focus(), html;
       if (!show.equations && !inText.equations) return;
       lab.vessels.forEach(function (v) {
-        var list = only && only !== v.id || sampleOf(v.id) ? [] : L.reactions(lab, v.id);
+        var list = only && only !== v.id || v.veiled ? [] : L.reactions(lab, v.id);
         if (list.length) groups.push({ id: v.id, list: list });
       });
       html = "<h4>" + esc(T("eq.title")) + "</h4>";
@@ -1244,8 +1247,8 @@
       }
       if (kinds.indexOf("n") >= 0) {
         vessel = focus();
-        if (vessel && sampleOf(vessel)) vessel = null;
-        for (i = 0; i < lab.vessels.length && !vessel; i++) if (!sampleOf(lab.vessels[i].id) && L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
+        if (vessel && veiled(vessel)) vessel = null;
+        for (i = 0; i < lab.vessels.length && !vessel; i++) if (!lab.vessels[i].veiled && L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
         ids = vessel ? L.changed(run, vessel).sort() : [];
         // höchstens sechs Kurven: die Teilchen, deren Menge sich am meisten geändert hat
         lines = ids.map(function (id) {
@@ -1710,9 +1713,9 @@
       if (act === "seek") jump(parseFloat(t.value) || 0);
       else if (act === "find") { st.find = t.value; filterCard(); }
       else if (act === "speed") { st.speed = parseFloat(t.value) || 1; pending = 0; }
-      else if (act === "guess" && sampleOf(st.sel) && t.value) {
-        var sample = sampleOf(st.sel), pick = t.value;
-        change(function (l, emit) { return L.guess(l, sample, pick, emit); });
+      else if (act === "guess" && ev.type === "change" && sampleOf(st.sel) && t.value) {      // eine Antwort, kein Eingriff: die Uhr und die Aufzeichnung bleiben
+        L.guess(st.run.lab, sampleOf(st.sel), t.value);
+        refresh();
       }
       else if ((act === "volts" || act === "temp" || act === "wave") && L.tool(st.run.lab, st.sel)) {
         // beim Ziehen folgt nur die Anzeige; erst beim Loslassen wird eingestellt (ein Eingriff, eine Zeile im Protokoll)

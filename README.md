@@ -754,7 +754,7 @@ Ein Ziel kann auch ein **Messwert** sein. Dieser Aufbau ist dazu **gesperrt**: D
 
 ## Unbekannte Proben
 
-In **Probe A** ist eine von drei Lösungen: Natriumchlorid, Kaliumbromid oder Kaliumiodid. Welche, wird beim Laden der Seite für jede und jeden neu gezogen. Was im Glas ist, zeigt weder das Feld des Gefäßes noch die Teilchenlupe, die Gleichungen oder das Protokoll; zu sehen sind nur die Beobachtungen. Im Feld der Probe steht „Das ist: …“: Die richtige Antwort erfüllt das Ziel der Aufgabe.
+In **Probe A** ist eine von drei Lösungen: Natriumchlorid, Kaliumbromid oder Kaliumiodid. Welche, wird beim Laden der Seite für jede und jeden neu gezogen. Was im Glas ist, zeigt weder das Feld des Gefäßes noch die Teilchenlupe, die Gleichungen oder das Protokoll; zu sehen sind nur die Beobachtungen. Im Feld der Probe steht „Das ist: …“: Die richtige Antwort erfüllt das Ziel der Aufgabe. Die Antwort gehört nicht zum Versuch: Sie hält die Uhr nicht an, und Zurückspulen nimmt sie nicht zurück.
 
 Silbernitrat fällt Chlorid weiß, Bromid blassgelb und Iodid gelb. Daneben stehen die drei bekannten Lösungen zum Vergleich.
 
@@ -1060,7 +1060,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `type` – das Gerät, siehe Tabelle.
   - `id` – ein eigener Name aus Buchstaben, Ziffern, Punkt, Binde- und Unterstrich; ohne Angabe heißen die Geräte `testtube1`, `testtube2`, `beaker1` …
   - `contains` – der Inhalt eines Gefäßes: je Stoff `reagent` und die Menge als `ml`, `drops` (Tropfen zu 0,05 mL) oder `g`. Flüssigkeiten stehen in `ml` oder `drops`, Feststoffe in `g`; eine falsche Einheit oder mehr, als das Gefäß fasst, ergibt einen Hinweis statt der Fläche.
-  - `unknown` – macht das Gefäß zu einer unbekannten Probe mit diesem Namen (bis zu 12 Zeichen, etwa `"A"`): Es heißt dann „Probe A“, und sein Inhalt bleibt verborgen; zu sehen sind nur Beobachtungen.
+  - `unknown` – macht das Gefäß zu einer unbekannten Probe mit diesem Namen (bis zu 12 Zeichen, etwa `"A"`): Es heißt dann „Probe A“, trägt den Buchstaben als Nummer, und sein Inhalt bleibt verborgen; zu sehen sind nur Beobachtungen. Auch ein Gefäß, in das etwas aus der Probe gegossen, getropft oder geleitet wird, bleibt von da an verborgen. Eine Probe bekommt am besten eine eigene `id`: Sie zählt bei den Namen wie `testtube1` mit, bei den angezeigten Nummern aber nicht.
   - `oneOf` – statt `contains`: mehrere mögliche Füllungen, je mit `name` und `contains`. Beim Laden der Seite wird eine davon gezogen; sie bleibt beim Zurücksetzen und Zurückspulen. „Aufbau kopieren“ schreibt alle Möglichkeiten, nicht die gezogene.
   - `in` – bei einem Messgerät oder Kolbenprober der Name des Gefäßes, in dem es steckt oder an das er angeschlossen ist.
   - `over` – bei einer Bürette der Name des Gefäßes, über dem sie hängt.

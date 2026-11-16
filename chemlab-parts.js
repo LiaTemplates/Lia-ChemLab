@@ -157,6 +157,7 @@
       "err.part": "There is no such piece of equipment",
       "err.reagent": "There is no such substance in stock",
       "err.place": "This name is used twice or does not belong to a vessel",
+      "err.sample": "The unknown sample is not described correctly (unknown, oneOf with name and contains, only on a vessel)",
       "err.amount": "The amount is missing, does not fit the substance (solid in g, liquid in ml or drops) or is too large for the vessel",
       "err.size": "The vessel does not come in this size",
       "err.model": "There is no such calculation model (ideal or real)",
@@ -178,7 +179,7 @@
       "task": "Task", "task.done": "Well done!", "goal.met": "met", "goal.open": "still open",
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
       "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}",
-      "unknown.contents": "The contents are unknown.", "identify": "This is:", "identify.pick": "– choose –", "say.guess": "{vessel}: identified as “{name}”",
+      "unknown.contents": "The contents are unknown.", "identify": "This is:", "identify.pick": "– choose –",
       "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
       "hidden.ignite": "{vessel}: Something catches fire.", "hidden.gone": "{vessel}: A substance is used up.", "hidden.plated": "{vessel}: A deposit forms.", "goal.gone": "{name}: no longer present",
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
@@ -373,7 +374,6 @@
         vars.state = text("flame." + event.level, lang);
         break;
       case "dry": return text(event.left ? "say.dry" : "say.dryNone", lang, vars);
-      case "guess": vars.name = event.name; break;
       case "smell":
         vars.name = nameOf(L.species(event.species), lang);
         if (L.species(event.species).smell === "fruity") return text("say.smellFruity", lang, vars);
