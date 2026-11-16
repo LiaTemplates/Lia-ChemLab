@@ -6934,6 +6934,56 @@ test("Unbekannte Probe: die richtige Antwort erfüllt das Ziel; Aufbau kopieren 
   assert.equal(L.normalize(text).bench[0].oneOf.length, 2, "eingelesen wieder eine unbekannte Probe");
 });
 
+test("Unbekannte Probe an der Fläche: Name, verborgener Inhalt, Antwort, nichts verraten", () => {
+  const real = Math.random; Math.random = () => 0.7;
+  let el;
+  try {
+    el = mount({ room: 20, bench: [Object.assign({}, sampleA, { type: "beaker" }), { type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }],
+      shelf: ["AgNO3 0.1M", "NH4Cl 1M", "NaOH 1M"], task: { text: "Was ist in Probe A?", goals: [{ identify: "A" }] }, show: { charts: ["n"] } });
+  } finally { Math.random = real; }
+  assert.match(item(el, "p").attributes["aria-label"], /^Probe A/);
+  tap(el, "p");
+  frames(0.1);
+  const panel = part(el, ".cl-panel").innerHTML;
+  assert.match(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /Der Inhalt ist unbekannt/);
+  assert.doesNotMatch(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML + part(el, ".cl-panel").querySelector(".cl-sum").textContent, /Iodid|I<sup>|pH/, "kein Stoff und kein pH-Wert im Feld");
+  assert.doesNotMatch(panel, /data-act="lens"/, "keine Teilchenlupe");
+  assert.match(panel, /data-act="guess"[\s\S]*Natriumchlorid[\s\S]*Kaliumiodid/);
+  press(el, "hand", "AgNO3 0.1M");
+  tap(el, "p");
+  frames(10);
+  assert.doesNotMatch(part(el, ".cl-eq").innerHTML, /AgI|Ag<sup>\+/, "keine Gleichung der Probe");
+  assert.doesNotMatch(part(el, ".cl-charts").innerHTML, /I<sup>/, "kein Diagramm ihrer Stoffmengen");
+  assert.match(logOf(el), /Probe A: Ein gelber Niederschlag fällt aus/);
+  enter(el, "change", "guess", "Kaliumiodid");
+  assert.match(logOf(el), /Probe A: als „Kaliumiodid“ bestimmt/);
+  assert.match(part(part(el, ".cl-task"), ".cl-goals").innerHTML, /Probe A bestimmen/);
+  assert.equal(L.checkTask(state(el).config.task, state(el).run.lab, L.logAt(state(el).run)).done, true);
+});
+
+test("Unbekannte Probe: das Protokoll nennt beim Geruch keinen Stoff", () => {
+  const el = mount({ room: 20, bench: [{ type: "beaker", id: "p", unknown: "B", contains: [{ reagent: "NH4Cl 1M", ml: 20 }] }], shelf: ["NaOH 1M"] });
+  press(el, "hand", "NaOH 1M");
+  for (let i = 0; i < 4; i++) tap(el, "p");
+  frames(30);
+  assert.match(logOf(el), /Probe B: Es riecht stechend\./);
+  assert.doesNotMatch(logOf(el), /Ammoniak/);
+});
+
+test("Anzeigen sperren: ohne Volumen unter den Gefäßen und an der Bürette", () => {
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] }],
+    show: { volumes: false }, table: true });
+  assert.doesNotMatch(item(el, "b").innerHTML, /20,0 mL/);
+  assert.doesNotMatch(item(el, "b").attributes["aria-label"], /mL/);
+  tap(el, "bu");
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /cl-given|abgegeben/);
+  tap(el, "b");
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /Volumen/);
+  assert.equal(L.normalize({ bench: [] }).show.volumes, true);
+  press(el, "note");
+  assert.doesNotMatch(part(el, ".cl-readings").innerHTML, /abgegeben/, "auch die Tabelle nennt das Abgegebene nicht");
+});
+
 test("Aufgabe: Ziele als Text in beiden Sprachen", () => {
   const say = (goal, lang) => L.goalText(goal, lang || "de", { b: "Becherglas 1" });
   assert.equal(say({ measure: "T", min: 40 }), "Temperatur mindestens 40 °C");

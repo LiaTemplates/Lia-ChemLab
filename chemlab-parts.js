@@ -177,7 +177,10 @@
       "table.given": "delivered", "table.noMeter": "No meter on the bench: there is nothing to note.",
       "task": "Task", "task.done": "Well done!", "goal.met": "met", "goal.open": "still open",
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
-      "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}", "goal.gone": "{name}: no longer present",
+      "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}",
+      "unknown.contents": "The contents are unknown.", "identify": "This is:", "identify.pick": "– choose –", "say.guess": "{vessel}: identified as “{name}”",
+      "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
+      "hidden.ignite": "{vessel}: Something catches fire.", "hidden.gone": "{vessel}: A substance is used up.", "hidden.plated": "{vessel}: A deposit forms.", "goal.gone": "{name}: no longer present",
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
@@ -319,6 +322,12 @@
   function say(event, ctx) {
     var lang = ctx.lang, name = function (id) { return (ctx.names && ctx.names[id]) || id; };
     var vars = { vessel: name(event.vessel), from: name(event.from), part: event.label || name(event.part), to: name(event.to) };
+    // eine unbekannte Probe: Beobachtungen ja, Stoffnamen nein
+    if (ctx.hidden && ctx.hidden[event.vessel]) switch (event.key) {
+      case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
+      case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
+      case "solid": if (event.colloid) return text("hidden.haze", lang, vars);
+    }
     switch (event.key) {
       case "plated":
         vars.name = nameOf(L.species(event.species), lang);
@@ -364,6 +373,7 @@
         vars.state = text("flame." + event.level, lang);
         break;
       case "dry": return text(event.left ? "say.dry" : "say.dryNone", lang, vars);
+      case "guess": vars.name = event.name; break;
       case "smell":
         vars.name = nameOf(L.species(event.species), lang);
         if (L.species(event.species).smell === "fruity") return text("say.smellFruity", lang, vars);
@@ -459,7 +469,7 @@
 
   function volumeLabel(w, ctx, y) {
     y += ctx.lift || 0;                                         // steht das Gefäß über einem Brenner, bleibt die Angabe am Tisch
-    return ctx.numbers && w.ml > 0.005
+    return ctx.numbers && ctx.volumes !== false && w.ml > 0.005
       ? '<text class="cl-label" x="0" y="' + y + '" text-anchor="middle">' + num(w.ml, w.ml < 99.95 ? 1 : 0, ctx.lang) + " mL</text>" : "";
   }
 

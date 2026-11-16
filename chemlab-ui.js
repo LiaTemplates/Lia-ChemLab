@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, flip: 1, tare: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, flip: 1, tare: 1, guess: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -209,13 +209,25 @@
 
     // "Reagenzglas 1": bleibt einem Gerät, auch wenn andere weggeräumt werden
     // Wechselt die Sprache, bekommt jedes Gerät seinen Namen neu, mit derselben Nummer
+    // Die unbekannte Probe in einem Gefäß aus der Beschreibung („A“), sonst null
+    function sampleOf(id) {
+      var item = st.config.bench.filter(function (o) { return o.id === id; })[0];
+      return item && item.unknown ? item.unknown : null;
+    }
+    function hidden() {
+      var out = {};
+      st.config.bench.forEach(function (o) { if (o.unknown) out[o.id] = true; });
+      return out;
+    }
+
     function names() {
       var lab = st.run.lab, id;
       st.types = st.types || {};
-      if (st.lang !== lang) for (id in st.names) if (st.types[id]) st.names[id] = L.partName(st.types[id], lang) + " " + ordinal(id);
+      if (st.lang !== lang) for (id in st.names) if (st.types[id]) st.names[id] = sampleOf(id) ? T("sample", { name: sampleOf(id) }) : L.partName(st.types[id], lang) + " " + ordinal(id);
       st.lang = lang;
       lab.vessels.concat(lab.tools).forEach(function (p) {
         if (st.names[p.id]) return;
+        if (sampleOf(p.id)) { st.types[p.id] = p.type; st.names[p.id] = T("sample", { name: sampleOf(p.id) }); return; }
         st.counts[p.type] = (st.counts[p.type] || 0) + 1;
         st.types[p.id] = p.type;
         st.names[p.id] = L.partName(p.type, lang) + " " + st.counts[p.type];
@@ -734,7 +746,7 @@
       }
       items.forEach(function (item, index) {
         var g = nodes[item.id], def = L.parts[item.type];
-        var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
+        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
           sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
         var v, w, r, host, place, b, content, hang, aria;
@@ -744,13 +756,13 @@
           host = L.vessel(lab, v.over);
           hang = host ? L.parts[host.type].mount(L.view(lab, host)) : null;      // nur für Büretten: wo sie hängt
           content = w.broken ? T("aria.broken") : w.ml > 0.005
-            ? (show.numbers ? T("aria.liquid", { ml: L.trim(Math.round(w.ml * 10) / 10, lang), color: L.colorWord(w.color.name, w.color.pale, lang) })
+            ? (show.numbers && show.volumes ? T("aria.liquid", { ml: L.trim(Math.round(w.ml * 10) / 10, lang), color: L.colorWord(w.color.name, w.color.pale, lang) })
               : L.colorWord(w.color.name, w.color.pale, lang)) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : "") + (w.steam > 0 ? ", " + T("aria.boiling") : "")
             : T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty");
           if (w.fire.length || w.torch) content += ", " + T("aria.burning");
           if (def.dispenser) {
             content += ", " + T("aria.tap", { state: T("tap." + L.tapKey(w.tap)) }) +
-              (show.numbers && w.given > 0 ? ", " + T("aria.given", { ml: L.num(w.given, 1, lang) }) : "");
+              (show.numbers && show.volumes && w.given > 0 ? ", " + T("aria.given", { ml: L.num(w.given, 1, lang) }) : "");
           }
           b = def.bounds(v, hang);
           aria = T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content });
@@ -839,7 +851,7 @@
       if (key === pinKey) return;
       pinKey = key;
       if (!(end > 0)) { ui.pins.innerHTML = ""; return; }
-      ctx = { lang: lang, numbers: show.numbers, names: names() };
+      ctx = { lang: lang, numbers: show.numbers, names: names(), hidden: hidden() };
       list = run.log.map(function (event, i) { return { event: event, i: i }; }).filter(function (x) { return x.event.t != null; }).slice(-80);
       ui.pins.innerHTML = list.map(function (x) {
         var act = !!ACTS[x.event.key], text = L.clock(x.event.t) + " – " + L.say(x.event, ctx);
@@ -909,9 +921,11 @@
           (L.parts[v.type].dispenser ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
             L.TAPS.map(function (rate) {
               return '<button type="button" class="cl-btn" data-act="tap" data-id="' + rate + '" aria-pressed="false">' + esc(T("tap." + L.tapKey(rate))) + "</button>";
-            }).join(" ") + (show.numbers ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
+            }).join(" ") + (show.numbers && show.volumes ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
           '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
-          (show.particles ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
+          (sampleOf(v.id) && lab.samples[sampleOf(v.id)].names.length ? '<label class="cl-guess">' + esc(T("identify")) + ' <select data-act="guess"><option value="">' + esc(T("identify.pick")) + "</option>" +
+            lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '">' + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
+          (show.particles && !sampleOf(v.id) ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
@@ -1057,8 +1071,8 @@
       var box = ui.panel.querySelector(".cl-sum"), parts = [], text;
       if (!box) return;
       if (w.ml > 0.005) {
-        if (show.numbers) parts.push(L.num(w.ml, 1, lang) + " mL");
-        if (show.numbers && w.pH != null) parts.push("pH " + L.num(w.pH, 2, lang));
+        if (show.numbers && show.volumes) parts.push(L.num(w.ml, 1, lang) + " mL");
+        if (show.numbers && w.pH != null && !sampleOf(st.sel)) parts.push("pH " + L.num(w.pH, 2, lang));
         parts.push(L.colorWord(w.color.name, w.color.pale, lang) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : ""));
       } else parts.push(T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty"));
       text = parts.join(" · ");
@@ -1123,8 +1137,9 @@
         L.TAPS.forEach(function (rate) {
           ui.panel.querySelector('[data-act="tap"][data-id="' + rate + '"]').setAttribute("aria-pressed", L.tapKey(rate) === L.tapKey(w.tap) ? "true" : "false");
         });
-        if (show.numbers) ui.panel.querySelector(".cl-given").textContent = L.num(w.given, 1, lang) + " mL";
+        if (show.numbers && show.volumes) ui.panel.querySelector(".cl-given").textContent = L.num(w.given, 1, lang) + " mL";
       }
+      if (sampleOf(v.id)) { box.innerHTML = "<p>" + esc(T("unknown.contents")) + "</p>"; return; }
       rows = w.species.filter(function (s) { return s.n > 1e-12; });
       if (!rows.length) { box.innerHTML = "<p>" + esc(T("panel.empty")) + "</p>"; return; }
       if (!show.numbers) {
@@ -1133,7 +1148,7 @@
         }).join("") + "</ul>";
         return;
       }
-      box.innerHTML = "<p>" + esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" + (w.pH == null ? "" : " · pH " + L.num(w.pH, 2, lang)) +
+      box.innerHTML = "<p>" + (show.volumes ? esc(T("panel.volume")) + " " + L.num(w.ml, 1, lang) + " mL" : "") + (w.pH == null ? "" : (show.volumes ? " · " : "") + "pH " + L.num(w.pH, 2, lang)) +
         // im realen Modell: die Ionenstärke, von der die Aktivitätskoeffizienten abhängen
         (w.strength == null ? "" : " · " + esc(T("panel.strength")) + " " + L.num(w.strength, w.strength < 0.0995 ? 3 : 2, lang) + " mol/L") + "</p>" +
         '<table class="cl-table"><caption>' + esc(T("panel.contents")) + '</caption><thead><tr><th scope="col" colspan="2">' + esc(T("col.particle")) +
@@ -1160,7 +1175,7 @@
       var lab = st.run.lab, label = names(), groups = [], only = focus(), html;
       if (!show.equations && !inText.equations) return;
       lab.vessels.forEach(function (v) {
-        var list = only && only !== v.id ? [] : L.reactions(lab, v.id);
+        var list = only && only !== v.id || sampleOf(v.id) ? [] : L.reactions(lab, v.id);
         if (list.length) groups.push({ id: v.id, list: list });
       });
       html = "<h4>" + esc(T("eq.title")) + "</h4>";
@@ -1229,7 +1244,8 @@
       }
       if (kinds.indexOf("n") >= 0) {
         vessel = focus();
-        for (i = 0; i < lab.vessels.length && !vessel; i++) if (L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
+        if (vessel && sampleOf(vessel)) vessel = null;
+        for (i = 0; i < lab.vessels.length && !vessel; i++) if (!sampleOf(lab.vessels[i].id) && L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
         ids = vessel ? L.changed(run, vessel).sort() : [];
         // höchstens sechs Kurven: die Teilchen, deren Menge sich am meisten geändert hat
         lines = ids.map(function (id) {
@@ -1346,7 +1362,7 @@
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });
       });
       lab.vessels.forEach(function (v) {
-        if (L.parts[v.type].dispenser) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
+        if (L.parts[v.type].dispenser && show.volumes) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
       });
       return out;
     }
@@ -1435,7 +1451,7 @@
     // Die Liste bleibt stehen und wächst nur um neue Zeilen: so sagt ein Vorleseprogramm genau das Neue an.
     // Neu aufgebaut wird sie erst, wenn Zeilen wegfallen (zurückgespult, zurückgesetzt).
     function renderLog() {
-      var ctx = { lang: lang, numbers: show.numbers, names: names() }, seen, grown, i;
+      var ctx = { lang: lang, numbers: show.numbers, names: names(), hidden: hidden() }, seen, grown, i;
       if (!show.log && !inText.log) return;
       seen = L.logAt(st.run).slice(-60);
       grown = seen.length >= shown.length;
@@ -1694,6 +1710,10 @@
       if (act === "seek") jump(parseFloat(t.value) || 0);
       else if (act === "find") { st.find = t.value; filterCard(); }
       else if (act === "speed") { st.speed = parseFloat(t.value) || 1; pending = 0; }
+      else if (act === "guess" && sampleOf(st.sel) && t.value) {
+        var sample = sampleOf(st.sel), pick = t.value;
+        change(function (l, emit) { return L.guess(l, sample, pick, emit); });
+      }
       else if ((act === "volts" || act === "temp" || act === "wave") && L.tool(st.run.lab, st.sel)) {
         // beim Ziehen folgt nur die Anzeige; erst beim Loslassen wird eingestellt (ein Eingriff, eine Zeile im Protokoll)
         dragging = ev.type !== "change" ? parseFloat(String(t.value).replace(",", ".")) || 0 : null;

@@ -349,7 +349,7 @@
   // Ein Schild am Fuß: Nummer und Füllung, wie unter dem Gefäß in 2D
   fx.badge = function (kit, d, w) {
     var text = String(d.ctx.no || "");
-    if (d.ctx.numbers && w.ml > 0.005) text += (text ? " · " : "") + L.num(w.ml, 1, d.ctx.lang) + " mL";
+    if (d.ctx.numbers && d.ctx.volumes !== false && w.ml > 0.005) text += (text ? " · " : "") + L.num(w.ml, 1, d.ctx.lang) + " mL";
     return text;
   };
 

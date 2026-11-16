@@ -808,6 +808,7 @@
         numbers: show.numbers !== false,
         particles: show.particles !== false,                       // ob das Feld eines Gefäßes die Teilchenlupe anbietet
         equations: show.equations !== false,
+        volumes: show.volumes !== false,                           // mL unter den Gefäßen und das Abgegebene der Bürette
         log: show.log !== false,
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
         charts: show.charts === false ? [] : Array.isArray(show.charts)
