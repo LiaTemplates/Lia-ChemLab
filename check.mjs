@@ -7028,6 +7028,21 @@ test("Unbekannte Probe: Kopie ohne die Probe lässt sich wieder einlesen; Büret
   assert.throws(() => L.normalize({ bench: [{ type: "thermometer", unknown: "D" }] }), (e) => e.code === "sample");
 });
 
+test("Unbekannte Probe: was durch Rohr oder Kühler aus ihr kommt, macht das Ziel verborgen", () => {
+  const l = lab([{ type: "testtube", id: "p", unknown: "A", contains: [{ reagent: "HCl 2M", ml: 10 }, { reagent: "marble", g: 1 }] }, { type: "tube", in: "p", to: "z" },
+    { type: "testtube", id: "z", contains: [{ reagent: "limewater", ml: 10 }] },
+    { type: "flask", id: "k", unknown: "B", contains: [{ reagent: "H2O", ml: 30 }] }, { type: "burner", under: "k", flame: 2 }, { type: "condenser", in: "k", to: "v" }, { type: "beaker", id: "v" }], { room: 20 });
+  L.step(l, 400);
+  assert.ok(L.vessel(l, "z").veiled, "Gas durch das Rohr");
+  assert.ok(L.vessel(l, "v").veiled, "Destillat aus dem Kühler");
+});
+
+test("Unbekannte Probe ohne id: heißt sampleA und nimmt den anderen Gefäßen keine Nummer", () => {
+  const el = mount({ bench: [{ type: "testtube", unknown: "A", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "testtube" }, { type: "testtube", unknown: "B 2" }] });
+  assert.deepEqual(state(el).run.lab.vessels.map((v) => v.id), ["sampleA", "testtube1", "sampleB-2"]);
+  assert.match(item(el, "testtube1").attributes["aria-label"], /^Reagenzglas 1/);
+});
+
 test("Unbekannte Probe: das Protokoll nennt beim Geruch keinen Stoff", () => {
   const el = mount({ room: 20, bench: [{ type: "beaker", id: "p", unknown: "B", contains: [{ reagent: "NH4Cl 1M", ml: 20 }] }], shelf: ["NaOH 1M"] });
   press(el, "hand", "NaOH 1M");

@@ -713,8 +713,10 @@
       var type = raw && raw.type, def = L.parts[type], item;
       if (!def || def.kind === "test") throw fail("part", String(type));
       if (def.electrode && !L.db.species[def.electrode]) throw fail("species", def.electrode);      // eine eigene Elektrode, deren Stoff nicht eingetragen ist
-      count[type] = (count[type] || 0) + 1;
-      item = { type: type, id: typeof raw.id === "string" && raw.id ? raw.id : type + count[type] };
+      if (typeof raw.id === "string" && raw.id) item = { type: type, id: raw.id };
+      // eine Probe ohne eigene id heißt nach ihrem Namen und nimmt den anderen Gefäßen keine Nummer
+      else if (def.kind === "vessel" && typeof raw.unknown === "string" && raw.unknown) item = { type: type, id: "sample" + raw.unknown.replace(/ /g, "-") };
+      else { count[type] = (count[type] || 0) + 1; item = { type: type, id: type + count[type] }; }
       if (ids[item.id] || !/^[\w.-]+$/.test(item.id)) throw fail("place", item.id);
       ids[item.id] = item;
       if (def.kind === "vessel") {
