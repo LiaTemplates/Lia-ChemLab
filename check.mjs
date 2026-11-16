@@ -2367,16 +2367,26 @@ test("Waage: zeigt Glas und Inhalt; das Glas wiegt so viel, wie seine Wärmekapa
 });
 
 test("Waage: offen entweicht Kohlenstoffdioxid, mit Kolbenprober bleibt die Masse", () => {
-  const setup = (closed) => lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }, { reagent: "marble", g: 0.5 }] },
+  const setup = (closed) => lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }, { reagent: "marble", g: 0.3 }] },
     { type: "balance", id: "w", under: "b" }].concat(closed ? [{ type: "syringe", in: "b" }] : []), { room: 20 });
   const open = setup(false), shut = setup(true);
   L.step(open, 1); L.step(shut, 1);
   const m0 = [L.reading(open, "w").value, L.reading(shut, "w").value];
   L.step(open, 300); L.step(shut, 300);
   const gone = (L.vessel(open, "b").out["CO2(g)"] || 0) * 44.01;
-  assert.ok(gone > 0.1, `entwichen: ${gone} g`);
+  assert.ok(gone > 0.08, `entwichen: ${gone} g`);
   near(m0[0] - L.reading(open, "w").value, gone, 0.02, "offen: leichter um das entwichene Gas");
   near(L.reading(shut, "w").value, m0[1], 0.005, "geschlossen: gleich schwer");
+});
+
+test("Waage: ist der Kolbenprober voll, entweicht der Rest und fehlt auf der Waage", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 30 }, { reagent: "marble", g: 1 }] },
+    { type: "balance", id: "w", under: "b" }, { type: "syringe", id: "kp", in: "b" }], { room: 20 });
+  L.step(l, 1);
+  const m0 = L.reading(l, "w").value;
+  L.step(l, 400);
+  assert.ok(L.reading(l, "kp").full, "der Kolbenprober ist voll");
+  assert.ok(m0 - L.reading(l, "w").value > 0.05, `was nicht hineinpasst, fehlt: ${m0 - L.reading(l, "w").value} g`);
 });
 
 test("Waage: Tara setzt auf null, auch nach dem Zurückspulen; Zugeben und Ausleeren", () => {
@@ -7506,6 +7516,19 @@ test("README: die Folie zur Kalkwasserprobe hält, was ihr Text verspricht", () 
   L.add(l, pipe.in, "marble", { g: 0.5 });
   L.step(l, 30);
   assert.equal(L.probe(l, pipe.to, "flame").result, "out");
+});
+
+test("README: die Folie zur Massenerhaltung hält, was ihr Text verspricht", () => {
+  const [both] = slide("Massenerhaltung").map((b) => L.normalize(b));
+  const l = L.createLab(both), scales = both.bench.filter((p) => p.type === "balance");
+  const closed = (s) => both.bench.some((p) => p.type === "syringe" && p.in === s.in);
+  const open = scales.find((s) => !closed(s)), shut = scales.find(closed);
+  L.step(l, 3);
+  const m0 = [L.reading(l, open.id).value, L.reading(l, shut.id).value];
+  scales.forEach((s) => L.add(l, s.in, "marble", { g: 0.3 }));
+  L.step(l, 300);
+  assert.ok(m0[0] + 0.3 - L.reading(l, open.id).value > 0.08, "offen: leichter um das entwichene Kohlenstoffdioxid");
+  near(L.reading(l, shut.id).value, m0[1] + 0.3, 0.005, "mit Kolbenprober: so schwer wie vorher plus Marmor");
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

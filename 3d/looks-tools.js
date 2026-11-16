@@ -144,6 +144,27 @@
     }
   });
 
+  // ------------------------------------------------------------------ Waage
+
+  // place: { lift, half } aus stand(): Gehäuse, darauf die Schale, auf der das Gefäß steht; vorn die Anzeige
+  L.registerLook("balance", "lab", {
+    build: function () {
+      var group = new THREE.Group(), screen = fx.screen(3.2, 1.1);
+      group.add(screen);
+      group.userData = { screen: screen };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, p = d.place || { lift: 24, half: 40 }, a = cm(p.half), pan = kit.up(p.lift), deep = Math.max(6, 1.6 * a), body = pan - 0.35;
+      u.body = fx.rebuild(group, "scale", [a, pan].join("|"), function (sub) {
+        sub.add(mesh(new THREE.BoxGeometry(2 * a, body, deep), fx.matte(fx.style.device, 0.45), 0, body / 2));
+        sub.add(mesh(new THREE.BoxGeometry(2 * a - 0.8, 0.3, deep - 0.8), fx.steel(), 0, pan - 0.15));
+      });
+      u.screen.position.set(0, body / 2, deep / 2 + 0.02);
+      u.screen.userData.write(d.ctx.numbers ? L.shown(d.data, d.ctx.lang) : "");
+    }
+  });
+
   // ------------------------------------------------------------------ Thermometer
 
   var thermoGlass = function () {   // lichtbrechend und beidseitig: so bleibt es auch unter Wasser sichtbar (siehe Demo)
