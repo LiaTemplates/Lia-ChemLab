@@ -765,8 +765,10 @@
     }
 
     function syncTime() {
-      var run = st.run;
-      ui.play.innerHTML = glyph(st.play > 0 ? "pause" : "play");
+      var run = st.run, icon = st.play > 0 ? "pause" : "play";
+      // Das Symbol nur tauschen, wenn es sich ändert: Ein Knopf, dessen Inhalt zwischen Drücken und Loslassen ersetzt wird,
+      // bekommt vom Browser keinen Klick – „Anhalten“ ginge dann nur mit einem sehr kurzen Druck.
+      if (ui.playIcon !== icon) { ui.playIcon = icon; ui.play.innerHTML = glyph(icon); }
       ui.play.setAttribute("aria-pressed", st.play > 0 ? "true" : "false");
       ui.play.setAttribute("aria-label", T(st.play > 0 ? "time.pause" : "time.play"));
       ui.play.setAttribute("title", T(st.play > 0 ? "time.pause" : "time.play"));

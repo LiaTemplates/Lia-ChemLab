@@ -109,6 +109,9 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab input:focus-visible { outline: 3px solid var(--cl-accent); outline-offset: 2px; }
 .lia-chemlab .cl-round { min-width: 2.4em; padding: 0.25em; display: inline-flex; align-items: center; justify-content: center; }
 .lia-chemlab .cl-round svg { fill: currentColor; }
+/* Symbole in Knöpfen nehmen keine Klicks an: der Klick gehört immer dem Knopf selbst */
+.lia-chemlab button svg,
+.lia-chemlab summary svg { pointer-events: none; }
 .lia-chemlab select,
 .lia-chemlab input[type="search"],
 .lia-chemlab input[type="text"] {
