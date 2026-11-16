@@ -566,6 +566,7 @@
   registerPart("splint", { kind: "test", probe: "flame" });        // brennender Holzspan
   registerPart("glowsplint", { kind: "test", probe: "glow" });     // Glimmspan
   registerPart("rod", { kind: "test", probe: "rod" });             // Magnesiastäbchen für die Flammenfärbung
+  registerPart("paper", { kind: "test", probe: "paper" });         // feuchtes Universalindikatorpapier für den Gasraum
   // Elektroden: electrode: Material, g: Masse in g. Angezeigt und aufgezeichnet wird ihre Masse.
   ["C", "Pt", "Cu", "Zn", "Fe", "Ag"].forEach(function (el) {
     registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7 });
@@ -596,7 +597,7 @@
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
   var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g" };
-  var OBSERVED = ["gas", "pop", "relight", "out", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
   function readTask(raw, bench) {
@@ -627,7 +628,7 @@
         if (OBSERVED.indexOf(g.seen) < 0) throw fail("task", "seen " + String(g.seen));
         goal = { seen: g.seen };
         if (g.name != null) {
-          if (g.seen !== "color" || COLORS.indexOf(g.name) < 0) throw fail("task", "name " + String(g.name));
+          if ((g.seen !== "color" && g.seen !== "paper") || COLORS.indexOf(g.name) < 0) throw fail("task", "name " + String(g.name));
           goal.name = g.name;
         }
         if (g.species != null) {
@@ -3044,7 +3045,8 @@
   // "relight" (flammt auf), "out" (erlischt), "calm" (brennt weiter), "glow" (glimmt weiter)
   function probe(lab, vesselId, kind, emit) {
     var v = vessel(lab, vesselId), cap, sum = 0, id, oxygen, hit, out;
-    if (!v || v.broken || stoppered(lab, v) || (kind !== "flame" && kind !== "glow")) return null;      // an ein verschlossenes Gefäß kommt kein Span
+    if (!v || v.broken || stoppered(lab, v) || (kind !== "flame" && kind !== "glow" && kind !== "paper")) return null;      // an ein verschlossenes Gefäß kommt kein Span
+    if (kind === "paper") return paper(lab, v, emit);
     hit = explode(lab, v, false);
     if (hit) out = { result: hit.level ? "pop" : "burn", level: hit.level };
     else {
@@ -3063,6 +3065,34 @@
         if (emit) emit({ key: "ignite", vessel: v.id, species: fuel(r) });
       });
     }
+    return out;
+  }
+
+  // Feuchtes Universalindikatorpapier an der Öffnung: sein Wasserfilm steht mit jedem Gas im Gleichgewicht, mit dem Teildruck im
+  // Gasraum oder, wenn er höher ist, dem über der Lösung. Gerechnet wird wie in einem Becherglas mit 10 mL Wasser und drei Tropfen
+  // Universalindikator; von dort kommen pH-Wert und Farbe.
+  function paper(lab, v, emit) {
+    var cap = headroom(lab, v), vol = volume(v), press = {}, film, w, id, e, out;
+    for (id in v.air) press[id] = P_AIR * (cap > 0 ? Math.min(1, v.air[id] / cap) : 1);
+    above(v, vol).forEach(function (g) { press[g.e.gas] = Math.max(press[g.e.gas] || 0, g.p); });
+    film = createLab({ room: lab.room, model: "ideal", bench: [{ type: "beaker", id: "film", size: 100, contains: [{ reagent: "H2O", ml: 10 }, { reagent: "UI", ml: 3 * DROP }] }] });
+    w = vessel(film, "film");
+    w.T = v.T;
+    for (id in press) {
+      e = L.db.equilibria.filter(function (q) { return q.gas === id; })[0];
+      if (!e || !(press[id] > 1e-9)) continue;
+      // Π (ν c)^ν = p · K: jedes gelöste Teilchen mit seinem Anteil ν an derselben Menge c
+      var h = heatOf(e), logK = shift(e.logK * e.f, h == null ? null : h * e.f, w.T + KELVIN), sum = 0, base = Math.log10(press[id]) + logK, key, c;
+      for (key in e.d) { sum += e.d[key]; base -= e.d[key] * Math.log10(e.d[key]); }
+      c = Math.pow(10, base / sum);
+      for (key in e.d) w.n[key] = (w.n[key] || 0) + e.d[key] * c * 0.01;
+    }
+    w.dirty = true;
+    equilibrate(film, w);
+    out = colorOf(w);
+    out = { result: "paper", name: out.name, pale: out.pale, rgb: out.rgb, pH: -Math.log10(w.n[PROTON] / volume(w)) };
+    v.flag.shown = lab.t + 2;                                  // so lange hält man es hin; bis dahin läuft die Uhr
+    if (emit) emit({ key: "splint", vessel: v.id, kind: "paper", result: "paper", name: out.name, pale: out.pale, rgb: out.rgb });
     return out;
   }
 

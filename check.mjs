@@ -2490,6 +2490,30 @@ test("Zeichnung: Waage für sich und unter einem Glas; Symbol", () => {
   assert.match(L.icon("balance"), /<svg/);
 });
 
+test("Indikatorpapier: blau über Ammoniak, rot über Kohlenstoffdioxid, grün über Wasser; nicht am verschlossenen Glas", () => {
+  const paper = (contains, more, wait) => {
+    const l = lab([{ type: "testtube", id: "t", contains }].concat(more || []), { room: 20 }), seen = [];
+    L.step(l, wait || 5);
+    return { out: L.probe(l, "t", "paper", (e) => seen.push(e)), seen };
+  };
+  const ammonia = paper([{ reagent: "NH4Cl 1M", ml: 5 }, { reagent: "NaOH 1M", ml: 5 }]);
+  assert.ok(["blue", "violet"].includes(ammonia.out.name), `über Ammoniak: ${ammonia.out.name}, pH ${ammonia.out.pH}`);
+  assert.ok(ammonia.out.pH > 10);
+  assert.deepEqual([ammonia.seen[0].key, ammonia.seen[0].kind, ammonia.seen[0].result], ["splint", "paper", "paper"]);
+  const acid = paper([{ reagent: "HCl 1M", ml: 8 }, { reagent: "marble", g: 0.5 }], [], 20);
+  assert.ok(["red", "orange"].includes(acid.out.name), `über Kohlenstoffdioxid: ${acid.out.name}, pH ${acid.out.pH}`);
+  const water = paper([{ reagent: "H2O", ml: 5 }]);
+  assert.equal(water.out.name, "green", `über Wasser: pH ${water.out.pH}`);
+  assert.equal(paper([{ reagent: "H2O", ml: 5 }], [{ type: "syringe", in: "t" }]).out, null);
+  const c = { lang: "de", numbers: true, names: { t: "Reagenzglas 1" } };
+  assert.equal(L.say(ammonia.seen[0], c), `Reagenzglas 1: Das feuchte Indikatorpapier färbt sich ${ammonia.out.name === "blue" ? "blau" : "violett"}.`);
+  const task = L.normalize({ bench: [{ type: "testtube", id: "t" }], task: { goals: [{ seen: "paper", name: ammonia.out.name }] } }).task;
+  assert.equal(L.checkTask(task, lab([{ type: "testtube", id: "t" }]), ammonia.seen).done, true);
+  assert.match(L.goalText({ seen: "paper", name: "blue" }, "de"), /Indikatorpapier.*blau/);
+  assert.match(L.icon("paper"), /cl-paper/);
+  assert.match(L.fx.splint(0, 0, ammonia.seen[0], 0, true), /cl-paper[\s\S]*fill:rgb/, "der Streifen trägt seine Farbe");
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);

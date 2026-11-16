@@ -202,6 +202,11 @@
 
   // Holzspan, der an eine Öffnung (x, y) gehalten wird. mark: { kind, result, age }
   fx.splint = function (x, y, mark, t, still) {
+    if (mark.kind === "paper") {                                // feuchtes Indikatorpapier: ein Streifen, die Spitze in der Farbe, die es annimmt
+      return '<path class="cl-paper" d="M' + f(x + 1) + "," + f(y + 6) + "L" + f(x + 5) + "," + f(y + 2) + "L" + f(x + 40) + "," + f(y - 30) + "L" + f(x + 36) + "," + f(y - 26) + 'Z"/>' +
+        '<path d="M' + f(x + 1) + "," + f(y + 6) + "L" + f(x + 5) + "," + f(y + 2) + "L" + f(x + 16) + "," + f(y - 8) + "L" + f(x + 12) + "," + f(y - 4) + 'Z" style="fill:' +
+        (mark.rgb ? "rgb(" + mark.rgb.join(",") + ")" : "#c8d36a") + '"/>';
+    }
     var burning = mark.kind === "flame" ? mark.result !== "out" && mark.result !== "pop" : mark.result === "relight";
     var a = still ? 0 : Math.sin(t * 15), big = mark.result === "flare" || mark.result === "relight";
     var out = '<line class="cl-splint" x1="' + f(x + 3) + '" y1="' + f(y + 4) + '" x2="' + f(x + 44) + '" y2="' + f(y - 30) + '"/>';

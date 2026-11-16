@@ -260,8 +260,10 @@
     var glare = additive(0xffffff), core = additive(0xffffff), flash = additive(0xfff2b0), torch = fx.cone(0.3, 0xa9c2ff), tip = fx.cone(0.16, 0xffb040);
     var stick = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3.2, 8).translate(0, 1.6, 0), fx.matte(0xc9a06a, 0.8));
     var ember = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff6a1a, toneMapped: false }));
-    stick.rotation.z = -0.85;
-    group.add(glow, glare, core, flash, torch, tip, stick, ember);
+    // feuchtes Indikatorpapier: ein Streifen, schräg wie der Span gehalten, in der Farbe, die er annimmt
+    var strip = new THREE.Mesh(new THREE.BoxGeometry(0.35, 2.4, 0.02).translate(0, 1.2, 0), new THREE.MeshStandardMaterial({ color: 0xf2e7a0, roughness: 0.9 }));
+    stick.rotation.z = strip.rotation.z = -0.85;
+    group.add(glow, glare, core, flash, torch, tip, stick, ember, strip);
 
     function puffs(from, n, color, t, seed, rise) {
       smoke.forEach(function (s, k) {
@@ -282,7 +284,7 @@
         var t = ctx.still ? 0 : ctx.t, seed = ctx.seed || 1, used = 0, floor = shape.floor + 0.05, width = 2 * shape.inner(shape.floor + 0.2), rim = shape.rim;
         cones.forEach(function (c) { c.visible = false; });
         smoke.forEach(function (s) { s.visible = false; });
-        glow.visible = glare.visible = core.visible = flash.visible = torch.visible = tip.visible = stick.visible = ember.visible = false;
+        glow.visible = glare.visible = core.visible = flash.visible = torch.visible = tip.visible = stick.visible = ember.visible = strip.visible = false;
         (w.fire || []).forEach(function (one, index) {
           var k, h, a;
           if (!(one.rate > 0)) return;
@@ -320,7 +322,11 @@
         }
         (ctx.marks || []).forEach(function (mark) {
           var sx = tall ? 0.25 : shape.inner(rim) * 0.5, at = new THREE.Vector3(sx, rim - 0.25, 0), part, burning, big;
-          if (mark.key === "splint" && mark.age < 2) {
+          if (mark.key === "splint" && mark.kind === "paper" && mark.age < 2) {
+            strip.visible = true;
+            strip.position.copy(at);
+            if (mark.rgb) strip.material.color.copy(fx.color(mark.rgb));
+          } else if (mark.key === "splint" && mark.age < 2) {
             burning = mark.kind === "flame" ? mark.result !== "out" && mark.result !== "pop" : mark.result === "relight";
             big = mark.result === "flare" || mark.result === "relight";
             stick.visible = true;
