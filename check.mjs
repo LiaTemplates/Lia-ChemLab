@@ -4367,6 +4367,7 @@ test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und mel
   assert.equal(L.checkTask(task, l, good).done, true);
   assert.equal(L.checkTask(task, l, bad).done, false, "ein Fehlgriff");
   assert.match(L.goalText({ disposed: true }, "de"), /richtig entsorgen/);
+  assert.equal(L.goalText({ disposed: true, in: "b" }, "de", { b: "Becherglas 1" }), "Becherglas 1 richtig entsorgen");
   assert.throws(() => L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ disposed: "ja" }] } }), (e) => e.code === "task");
 });
 

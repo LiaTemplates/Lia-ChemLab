@@ -263,6 +263,7 @@
     "why.organic": "Disolbatzaile organikoak bereiz biltzen dira.",
     "why.solid": "Solidoek harraska buxatzen dute eta bereiz biltzen dira.",
     "goal.disposed": "dena ondo botatzea",
+    "goal.disposedIn": "{name} ondo botatzea",
     "panel.remove": "Gorde",
     "panel.none": "Sakatu ontzi bat harekin zer egin dezakezun ikusteko.",
     "col.particle": "Partikula",

@@ -263,6 +263,7 @@
     "why.organic": "Les solvants organiques sont collectés à part.",
     "why.solid": "Les solides bouchent l'évier et sont collectés à part.",
     "goal.disposed": "tout éliminer correctement",
+    "goal.disposedIn": "éliminer correctement {name}",
     "panel.remove": "Ranger",
     "panel.none": "Toucher un récipient pour voir ce qu'on peut en faire.",
     "col.particle": "Particule",

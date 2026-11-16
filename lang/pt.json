@@ -263,6 +263,7 @@
     "why.organic": "Os solventes orgânicos são recolhidos à parte.",
     "why.solid": "Os sólidos entopem o lava-loiça e são recolhidos à parte.",
     "goal.disposed": "eliminar tudo corretamente",
+    "goal.disposedIn": "eliminar corretamente {name}",
     "panel.remove": "Arrumar",
     "panel.none": "Tocar num recipiente para ver o que se pode fazer com ele.",
     "col.particle": "Partícula",

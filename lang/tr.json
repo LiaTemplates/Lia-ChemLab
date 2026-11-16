@@ -263,6 +263,7 @@
     "why.organic": "Organik çözücüler ayrı toplanır.",
     "why.solid": "Katılar lavaboyu tıkar ve ayrı toplanır.",
     "goal.disposed": "her şeyi doğru atmak",
+    "goal.disposedIn": "{name} doğru atmak",
     "panel.remove": "Kaldır",
     "panel.none": "Neler yapabileceğinizi görmek için bir kaba dokunun.",
     "col.particle": "Tanecik",

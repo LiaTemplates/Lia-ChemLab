@@ -263,6 +263,7 @@
     "why.organic": "Orgaanilisi lahusteid kogutakse eraldi.",
     "why.solid": "Tahked ained ummistavad valamu ja neid kogutakse eraldi.",
     "goal.disposed": "kõik õigesti kõrvaldada",
+    "goal.disposedIn": "kõrvalda {name} õigesti",
     "panel.remove": "Korista ära",
     "panel.none": "Puuduta anumat, et näha, mida sellega teha saab.",
     "col.particle": "Osake",

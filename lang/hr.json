@@ -263,6 +263,7 @@
     "why.organic": "Organska otapala skupljaju se odvojeno.",
     "why.solid": "Krutine začepljuju izljev i skupljaju se odvojeno.",
     "goal.disposed": "sve ispravno zbrinuti",
+    "goal.disposedIn": "ispravno zbrinuti {name}",
     "panel.remove": "Spremi",
     "panel.none": "Dodirni posudu da vidiš što s njom možeš učiniti.",
     "col.particle": "Čestica",

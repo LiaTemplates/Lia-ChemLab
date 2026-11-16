@@ -263,6 +263,7 @@
     "why.organic": "Pelarut organik dikumpulkan berasingan.",
     "why.solid": "Pepejal menyumbat sinki dan dikumpulkan berasingan.",
     "goal.disposed": "membuang semuanya dengan betul",
+    "goal.disposedIn": "membuang {name} dengan betul",
     "panel.remove": "Simpan",
     "panel.none": "Ketik sebuah bekas untuk melihat apa yang boleh dilakukan dengannya.",
     "col.particle": "Zarah",

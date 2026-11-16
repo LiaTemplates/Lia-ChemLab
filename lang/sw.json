@@ -263,6 +263,7 @@
     "why.organic": "Viyeyusho vya kikaboni hukusanywa kando.",
     "why.solid": "Yabisi huziba sinki na hukusanywa kando.",
     "goal.disposed": "kutupa kila kitu ipasavyo",
+    "goal.disposedIn": "kutupa {name} ipasavyo",
     "panel.remove": "Ondoa",
     "panel.none": "Gusa chombo ili kuona unachoweza kufanya nacho.",
     "col.particle": "Chembe",

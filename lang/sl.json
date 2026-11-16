@@ -263,6 +263,7 @@
     "why.organic": "Organska topila se zbirajo ločeno.",
     "why.solid": "Trdne snovi zamašijo odtok in se zbirajo ločeno.",
     "goal.disposed": "vse pravilno odstraniti",
+    "goal.disposedIn": "pravilno odstraniti {name}",
     "panel.remove": "Pospravi",
     "panel.none": "Tapni posodo in videl boš, kaj lahko narediš z njo.",
     "col.particle": "Delec",

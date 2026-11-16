@@ -263,6 +263,7 @@
     "why.organic": "Orgaaniset liuottimet kerätään erikseen.",
     "why.solid": "Kiinteät aineet tukkivat viemärin ja kerätään erikseen.",
     "goal.disposed": "hävittää kaikki oikein",
+    "goal.disposedIn": "hävitä {name} oikein",
     "panel.remove": "Siivoa pois",
     "panel.none": "Napauta astiaa nähdäksesi, mitä sillä voi tehdä.",
     "col.particle": "Hiukkanen",

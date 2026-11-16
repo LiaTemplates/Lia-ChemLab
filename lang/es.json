@@ -263,6 +263,7 @@
     "why.organic": "Los disolventes orgánicos se recogen por separado.",
     "why.solid": "Los sólidos atascan el fregadero y se recogen por separado.",
     "goal.disposed": "desechar todo correctamente",
+    "goal.disposedIn": "desechar correctamente {name}",
     "panel.remove": "Retirar",
     "panel.none": "Toca un recipiente para ver qué se puede hacer con él.",
     "col.particle": "Partícula",

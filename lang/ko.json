@@ -263,6 +263,7 @@
     "why.organic": "유기 용매는 따로 모은다.",
     "why.solid": "고체는 개수대를 막으므로 따로 모은다.",
     "goal.disposed": "모두 올바르게 폐기하기",
+    "goal.disposedIn": "{name} 올바르게 폐기하기",
     "panel.remove": "치우기",
     "panel.none": "용기를 누르면 그것으로 할 수 있는 일이 나옵니다.",
     "col.particle": "입자",

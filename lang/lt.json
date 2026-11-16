@@ -263,6 +263,7 @@
     "why.organic": "Organiniai tirpikliai renkami atskirai.",
     "why.solid": "Kietosios medžiagos užkemša kriauklę ir renkamos atskirai.",
     "goal.disposed": "viską teisingai pašalinti",
+    "goal.disposedIn": "teisingai pašalinti {name}",
     "panel.remove": "Padėti į vietą",
     "panel.none": "Bakstelėkite indą ir pamatysite, ką su juo galima daryti.",
     "col.particle": "Dalelė",

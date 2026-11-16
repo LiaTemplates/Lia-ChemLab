@@ -123,7 +123,7 @@
       "why.sink": "Neutral solutions without heavy metals may go down the sink with plenty of water.",
       "why.acid": "Neutralise acidic and alkaline solutions first (pH 6 to 9) or collect them with the acids and bases.",
       "why.heavy": "Heavy metal ions must not get into the waste water.", "why.organic": "Organic solvents are collected separately.",
-      "why.solid": "Solids block the sink and are collected separately.", "goal.disposed": "dispose of everything correctly",
+      "why.solid": "Solids block the sink and are collected separately.", "goal.disposed": "dispose of everything correctly", "goal.disposedIn": "dispose of {name} correctly",
       "panel.none": "Tap a vessel to see what you can do with it.",
       "col.particle": "Particle", "col.amount": "Amount", "col.conc": "Concentration",
       "eq.title": "Reaction equations", "eq.none": "No reaction has taken place yet.",
@@ -298,7 +298,7 @@
         ? text("goal.from", lang) + " " + amount(goal.min, lang) + " " + text("goal.to", lang) + " " + amount(goal.max, lang)
         : goal.min != null ? text("goal.min", lang) + " " + amount(goal.min, lang) : text("goal.max", lang) + " " + amount(goal.max, lang));
     } else if (goal.identify) out = text("goal.identify", lang, { name: text("sample", lang, { name: goal.identify }) });
-    else if (goal.disposed) out = text("goal.disposed", lang);
+    else if (goal.disposed) return goal.in != null ? text("goal.disposedIn", lang, { name: (names && names[goal.in]) || goal.in }) : text("goal.disposed", lang);
     else if (goal.seen === "paper" && goal.name === "colorless") out = text("seen.paperWhite", lang);
     else if (goal.seen === "paper" && goal.name) out = text("seen.paperOf", lang, { color: colorWord(goal.name, false, lang) });
     else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });

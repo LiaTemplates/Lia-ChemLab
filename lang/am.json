@@ -263,6 +263,7 @@
     "why.organic": "ኦርጋኒክ ሟሚዎች ለብቻ ይሰበሰባሉ።",
     "why.solid": "ጠጣሮች መታጠቢያውን ይዘጋሉ፤ ለብቻ ይሰበሰባሉ።",
     "goal.disposed": "ሁሉንም በትክክል ማስወገድ",
+    "goal.disposedIn": "{name}ን በትክክል ማስወገድ",
     "panel.remove": "አስወግድ",
     "panel.none": "ምን ማድረግ እንደሚችሉ ለማየት አንድ ዕቃ ይንኩ።",
     "col.particle": "ቅንጣት",

@@ -263,6 +263,7 @@
     "why.organic": "I solventi organici si raccolgono a parte.",
     "why.solid": "I solidi intasano il lavandino e si raccolgono a parte.",
     "goal.disposed": "smaltire tutto correttamente",
+    "goal.disposedIn": "smaltire correttamente {name}",
     "panel.remove": "Metti via",
     "panel.none": "Tocca un recipiente per vedere cosa puoi farci.",
     "col.particle": "Particella",

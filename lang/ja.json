@@ -263,6 +263,7 @@
     "why.organic": "有機溶媒は分別して回収する。",
     "why.solid": "固形物は流しを詰まらせるので分別して回収する。",
     "goal.disposed": "すべて正しく廃棄する",
+    "goal.disposedIn": "{name}を正しく廃棄する",
     "panel.remove": "片づける",
     "panel.none": "容器をタップすると、できることが表示されます。",
     "col.particle": "粒子",

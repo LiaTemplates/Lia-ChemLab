@@ -263,6 +263,7 @@
     "why.organic": "Solvenții organici se colectează separat.",
     "why.solid": "Solidele înfundă chiuveta și se colectează separat.",
     "goal.disposed": "eliminarea corectă a tuturor",
+    "goal.disposedIn": "eliminarea corectă: {name}",
     "panel.remove": "Strânge",
     "panel.none": "Atinge un vas pentru a vedea ce poți face cu el.",
     "col.particle": "Particulă",

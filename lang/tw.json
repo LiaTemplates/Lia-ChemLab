@@ -263,6 +263,7 @@
     "why.organic": "Wɔboaboa organik nsu a ɛnane nneɛma ano nkonkɔnkɔ.",
     "why.solid": "Nneɛma a ɛyɛ den sian sink no, enti wɔboaboa ano nkonkɔnkɔ.",
     "goal.disposed": "tow biribiara gu yiye",
+    "goal.disposedIn": "tow {name} gu yiye",
     "panel.remove": "Yi fi hɔ",
     "panel.none": "Mia adekorade bi so na hwɛ deɛ wobɛtumi de ayɛ.",
     "col.particle": "Particle",

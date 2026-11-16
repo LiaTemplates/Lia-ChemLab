@@ -263,6 +263,7 @@
     "why.organic": "Rozpuszczalniki organiczne zbiera się osobno.",
     "why.solid": "Ciała stałe zatykają zlew i zbiera się je osobno.",
     "goal.disposed": "wszystko poprawnie zutylizować",
+    "goal.disposedIn": "poprawnie zutylizować {name}",
     "panel.remove": "Odłóż",
     "panel.none": "Stuknij naczynie, aby zobaczyć, co można z nim zrobić.",
     "col.particle": "Drobina",

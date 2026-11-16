@@ -263,6 +263,7 @@
     "why.organic": "A szerves oldószereket külön gyűjtik.",
     "why.solid": "A szilárd anyagok eltömítik a lefolyót, külön gyűjtik őket.",
     "goal.disposed": "mindent helyesen ártalmatlanítani",
+    "goal.disposedIn": "{name} helyes ártalmatlanítása",
     "panel.remove": "Elpakolás",
     "panel.none": "Koppints egy edényre, és látod, mit tehetsz vele.",
     "col.particle": "Részecske",

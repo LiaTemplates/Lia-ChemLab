@@ -263,6 +263,7 @@
     "why.organic": "Tretësit organikë mblidhen veçmas.",
     "why.solid": "Lëndët e ngurta bllokojnë lavamanin dhe mblidhen veçmas.",
     "goal.disposed": "hidh gjithçka saktë",
+    "goal.disposedIn": "hidh saktë {name}",
     "panel.remove": "Hiq",
     "panel.none": "Prek një enë për të parë çfarë mund të bësh me të.",
     "col.particle": "Grimca",

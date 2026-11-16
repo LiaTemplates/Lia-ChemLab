@@ -263,6 +263,7 @@
     "why.organic": "Organiske løsemidler samles inn separat.",
     "why.solid": "Faste stoffer tetter vasken og samles inn separat.",
     "goal.disposed": "kaste alt riktig",
+    "goal.disposedIn": "kaste {name} riktig",
     "panel.remove": "Rydd bort",
     "panel.none": "Trykk på en beholder for å se hva du kan gjøre med den.",
     "col.particle": "Partikkel",

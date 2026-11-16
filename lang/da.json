@@ -263,6 +263,7 @@
     "why.organic": "Organiske opløsningsmidler indsamles separat.",
     "why.solid": "Faste stoffer stopper vasken og indsamles separat.",
     "goal.disposed": "bortskaffe alt rigtigt",
+    "goal.disposedIn": "bortskaffe {name} rigtigt",
     "panel.remove": "Ryd væk",
     "panel.none": "Tryk på en beholder for at se, hvad du kan gøre med den.",
     "col.particle": "Partikel",

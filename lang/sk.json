@@ -263,6 +263,7 @@
     "why.organic": "Organické rozpúšťadlá sa zbierajú osobitne.",
     "why.solid": "Pevné látky upchávajú výlevku a zbierajú sa osobitne.",
     "goal.disposed": "všetko správne zlikvidovať",
+    "goal.disposedIn": "správne zlikvidovať {name}",
     "panel.remove": "Odložiť",
     "panel.none": "Ťukni na nádobu a uvidíš, čo s ňou môžeš robiť.",
     "col.particle": "Častica",

@@ -263,6 +263,7 @@
     "why.organic": "Organische oplosmiddelen worden apart verzameld.",
     "why.solid": "Vaste stoffen verstoppen de gootsteen en worden apart verzameld.",
     "goal.disposed": "alles juist afvoeren",
+    "goal.disposedIn": "{name} juist afvoeren",
     "panel.remove": "Opruimen",
     "panel.none": "Tik op een vat om te zien wat je ermee kunt doen.",
     "col.particle": "Deeltje",

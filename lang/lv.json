@@ -263,6 +263,7 @@
     "why.organic": "Organiskos šķīdinātājus savāc atsevišķi.",
     "why.solid": "Cietas vielas aizsprosto izlietni, tās savāc atsevišķi.",
     "goal.disposed": "visu pareizi utilizēt",
+    "goal.disposedIn": "pareizi utilizēt {name}",
     "panel.remove": "Novākt",
     "panel.none": "Pieskarieties traukam, lai redzētu, ko ar to var darīt.",
     "col.particle": "Daļiņa",

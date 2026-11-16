@@ -263,6 +263,7 @@
     "why.organic": "Els dissolvents orgànics es recullen a part.",
     "why.solid": "Els sòlids embussen la pica i es recullen a part.",
     "goal.disposed": "llençar-ho tot correctament",
+    "goal.disposedIn": "llençar correctament {name}",
     "panel.remove": "Retira",
     "panel.none": "Toca un recipient per veure què s'hi pot fer.",
     "col.particle": "Partícula",

@@ -263,6 +263,7 @@
     "why.organic": "Organische Lösungsmittel werden getrennt gesammelt.",
     "why.solid": "Feststoffe verstopfen den Ausguss und werden getrennt gesammelt.",
     "goal.disposed": "alles richtig entsorgen",
+    "goal.disposedIn": "{name} richtig entsorgen",
     "panel.remove": "Wegräumen",
     "panel.none": "Ein Gefäß antippen: Dort steht, was man damit tun kann.",
     "col.particle": "Teilchen",

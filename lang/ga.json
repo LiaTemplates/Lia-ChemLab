@@ -263,6 +263,7 @@
     "why.organic": "Bailítear tuaslagóirí orgánacha ar leith.",
     "why.solid": "Calcann solaid an doirteal agus bailítear ar leith iad.",
     "goal.disposed": "gach rud a dhiúscairt i gceart",
+    "goal.disposedIn": "{name} a dhiúscairt i gceart",
     "panel.remove": "Cuir ar leataobh",
     "panel.none": "Tapáil árthach le feiceáil cad is féidir leat a dhéanamh leis.",
     "col.particle": "Cáithnín",
