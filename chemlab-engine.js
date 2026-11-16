@@ -3069,18 +3069,19 @@
   }
 
   // Feuchtes Universalindikatorpapier an der Öffnung: sein Wasserfilm steht mit jedem Gas im Gleichgewicht, mit dem Teildruck im
-  // Gasraum oder, wenn er höher ist, dem über der Lösung. Gerechnet wird wie in einem Becherglas mit 10 mL Wasser und drei Tropfen
-  // Universalindikator; von dort kommen pH-Wert und Farbe.
+  // Gasraum oder, wenn er höher ist, dem über der Lösung. Was darunter bleibt (PAPER_MIN), erreicht das Papier nicht in merklicher
+  // Menge. Gerechnet wird wie in einem Becherglas mit 10 mL Wasser und drei Tropfen Universalindikator bei Raumtemperatur; von dort
+  // kommen pH-Wert und Farbe.
+  var PAPER_MIN = 1e-5;           // bar, 10 ppm: Nachweisgrenze des Papiers (geschätzt)
   function paper(lab, v, emit) {
     var cap = headroom(lab, v), vol = volume(v), press = {}, film, w, id, e, out;
-    for (id in v.air) press[id] = P_AIR * (cap > 0 ? Math.min(1, v.air[id] / cap) : 1);
+    if (cap > 0) for (id in v.air) press[id] = P_AIR * Math.min(1, v.air[id] / cap);
     above(v, vol).forEach(function (g) { press[g.e.gas] = Math.max(press[g.e.gas] || 0, g.p); });
     film = createLab({ room: lab.room, model: "ideal", bench: [{ type: "beaker", id: "film", size: 100, contains: [{ reagent: "H2O", ml: 10 }, { reagent: "UI", ml: 3 * DROP }] }] });
     w = vessel(film, "film");
-    w.T = v.T;
     for (id in press) {
       e = L.db.equilibria.filter(function (q) { return q.gas === id; })[0];
-      if (!e || !(press[id] > 1e-9)) continue;
+      if (!e || !(press[id] >= PAPER_MIN)) continue;
       // Π (ν c)^ν = p · K: jedes gelöste Teilchen mit seinem Anteil ν an derselben Menge c
       var h = heatOf(e), logK = shift(e.logK * e.f, h == null ? null : h * e.f, w.T + KELVIN), sum = 0, base = Math.log10(press[id]) + logK, key, c;
       for (key in e.d) { sum += e.d[key]; base -= e.d[key] * Math.log10(e.d[key]); }

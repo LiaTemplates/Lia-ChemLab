@@ -325,7 +325,7 @@
           if (mark.key === "splint" && mark.kind === "paper" && mark.age < 2) {
             strip.visible = true;
             strip.position.copy(at);
-            if (mark.rgb) strip.material.color.copy(fx.color(mark.rgb));
+            if (mark.rgb) strip.material.color.setRGB(mark.rgb[0] / 255, mark.rgb[1] / 255, mark.rgb[2] / 255, THREE.SRGBColorSpace);
           } else if (mark.key === "splint" && mark.age < 2) {
             burning = mark.kind === "flame" ? mark.result !== "out" && mark.result !== "pop" : mark.result === "relight";
             big = mark.result === "flare" || mark.result === "relight";

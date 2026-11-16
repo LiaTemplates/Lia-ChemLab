@@ -323,6 +323,8 @@
       ui.barbtn.setAttribute("aria-pressed", st.bar ? "true" : "false");
     }
 
+    // Die Stufe, die beim Greifen eingestellt ist: start, wenn es eine der Stufen ist, sonst die dritte
+    function startOf(r) { var k = STEPS[unitOf(r)].indexOf(r.start); return k < 0 ? 2 : k; }
     function unitOf(r) { return r.solid ? (r.piece ? "pieces" : "g") : r.drops ? "drops" : "ml"; }
 
     // Was gerade in der Hand liegt: Menge für den Rechenkern, für das Protokoll und als Text
@@ -385,7 +387,7 @@
         change(function (lab) { return L.place(lab, { type: type }); }, function (made) { return { key: "placed", part: made }; });
         return;
       }
-      setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: Math.max(0, STEPS[unitOf(L.reagent(id))].indexOf(L.reagent(id).start)) + (STEPS[unitOf(L.reagent(id))].indexOf(L.reagent(id).start) < 0 ? 2 : 0) });
+      setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: startOf(L.reagent(id)) });
     }
 
     // Aus der Karte eines Gefäßes: ein Stoff kommt in die Hand (zugegeben wird mit dem Knopf darunter oder durch Antippen des Gefäßes),

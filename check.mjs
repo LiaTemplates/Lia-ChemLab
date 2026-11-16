@@ -2525,7 +2525,15 @@ test("Indikatorpapier: blau über Ammoniak, rot über Kohlenstoffdioxid, grün �
   assert.ok(ammonia.out.pH > 10);
   assert.deepEqual([ammonia.seen[0].key, ammonia.seen[0].kind, ammonia.seen[0].result], ["splint", "paper", "paper"]);
   const acid = paper([{ reagent: "HCl 1M", ml: 8 }, { reagent: "marble", g: 0.5 }], [], 20);
-  assert.ok(["red", "orange"].includes(acid.out.name), `über Kohlenstoffdioxid: ${acid.out.name}, pH ${acid.out.pH}`);
+  assert.ok(["red", "orange"].includes(acid.out.name) && acid.out.pH > 3, `über Kohlenstoffdioxid: ${acid.out.name}, pH ${acid.out.pH}`);
+  const soda = paper([{ reagent: "Na2CO3 1M", ml: 4 }, { reagent: "H2SO4 1M", ml: 4 }], [], 20);
+  assert.ok(["red", "orange", "yellow"].includes(soda.out.name), `Kohlenstoffdioxid ohne Chlorwasserstoff: ${soda.out.name}, pH ${soda.out.pH}`);
+  // Nachweisgrenze: was unter 10 ppm über der Lösung steht, erreicht das Papier nicht
+  assert.equal(paper([{ reagent: "NH4Cl 1M", ml: 5 }]).out.name, "green", "Ammoniumchlorid allein: kein Ammoniak");
+  assert.equal(paper([{ reagent: "HCl 0.1M", ml: 5 }]).out.name, "green", "verdünnte Salzsäure: kein Chlorwasserstoff");
+  assert.equal(paper([{ reagent: "HCl 10M", ml: 5 }]).out.name, "red", "konzentrierte Salzsäure raucht");
+  // der Film hat Raumtemperatur: über heißem Wasser bleibt das Papier grün
+  assert.equal(paper([{ reagent: "H2O", ml: 5 }], [{ type: "bath", under: "t", temp: 95 }], 120).out.name, "green", "über heißem Wasser");
   const water = paper([{ reagent: "H2O", ml: 5 }]);
   assert.equal(water.out.name, "green", `über Wasser: pH ${water.out.pH}`);
   assert.equal(paper([{ reagent: "H2O", ml: 5 }], [{ type: "syringe", in: "t" }]).out, null);

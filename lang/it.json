@@ -139,7 +139,7 @@
     "hint.under": "Ora tocca il recipiente sotto cui deve stare – oppure il banco.",
     "hint.join": "Ora tocca il recipiente a cui va collegato.",
     "hint.test": "Ora tocca il recipiente alla cui imboccatura va avvicinato.",
-    "hint.paper": "Ora tocca il recipiente alla cui imboccatura va avvicinato.",
+    "hint.paper": "Ora tocca il recipiente sopra la cui imboccatura si tiene la cartina, senza toccare il liquido.",
     "hint.rod": "Ora tocca il recipiente in cui va immersa; poi va nella fiamma.",
     "flame": "Fiamma",
     "flame.0": "spenta",

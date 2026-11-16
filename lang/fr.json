@@ -139,7 +139,7 @@
     "hint.under": "Toucher maintenant le récipient sous lequel il doit se trouver – ou la paillasse.",
     "hint.join": "Toucher maintenant le récipient auquel il doit être raccordé.",
     "hint.test": "Toucher maintenant le récipient à l'ouverture duquel on la présente.",
-    "hint.paper": "Toucher maintenant le récipient à l'ouverture duquel on la présente.",
+    "hint.paper": "Toucher maintenant le récipient au-dessus de l'ouverture duquel on tient le papier, sans toucher le liquide.",
     "hint.rod": "Toucher maintenant le récipient dans lequel on la trempe ; ensuite, elle va dans la flamme.",
     "flame": "Flamme",
     "flame.0": "éteinte",

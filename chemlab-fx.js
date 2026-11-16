@@ -202,9 +202,10 @@
 
   // Holzspan, der an eine Öffnung (x, y) gehalten wird. mark: { kind, result, age }
   fx.splint = function (x, y, mark, t, still) {
-    if (mark.kind === "paper") {                                // feuchtes Indikatorpapier: ein Streifen, die Spitze in der Farbe, die es annimmt
-      return '<path class="cl-paper" d="M' + f(x + 1) + "," + f(y + 6) + "L" + f(x + 5) + "," + f(y + 2) + "L" + f(x + 40) + "," + f(y - 30) + "L" + f(x + 36) + "," + f(y - 26) + 'Z"/>' +
-        '<path d="M' + f(x + 1) + "," + f(y + 6) + "L" + f(x + 5) + "," + f(y + 2) + "L" + f(x + 16) + "," + f(y - 8) + "L" + f(x + 12) + "," + f(y - 4) + 'Z" style="fill:' +
+    if (mark.kind === "paper") {                                // feuchtes Indikatorpapier: ein Streifen, die untere Hälfte in der Farbe, die es annimmt
+      var corner = function (along, side) { return f(x + 3 + 41 * along + 4.5 * side) + "," + f(y + 4 - 34 * along + 5.4 * side); };
+      return '<path class="cl-paper" d="M' + corner(0, 1) + "L" + corner(0, -1) + "L" + corner(1, -1) + "L" + corner(1, 1) + 'Z"/>' +
+        '<path class="cl-paper" d="M' + corner(0, 1) + "L" + corner(0, -1) + "L" + corner(0.45, -1) + "L" + corner(0.45, 1) + 'Z" style="fill:' +
         (mark.rgb ? "rgb(" + mark.rgb.join(",") + ")" : "#c8d36a") + '"/>';
     }
     var burning = mark.kind === "flame" ? mark.result !== "out" && mark.result !== "pop" : mark.result === "relight";

@@ -139,7 +139,7 @@
     "hint.under": "Ara toca el recipient sota el qual ha d'estar, o el taulell.",
     "hint.join": "Ara toca el recipient al qual s'ha de connectar.",
     "hint.test": "Ara toca el recipient a la boca del qual s'acosta.",
-    "hint.paper": "Ara toca el recipient a la boca del qual s'acosta.",
+    "hint.paper": "Toca ara el recipient sobre l'obertura del qual es manté el paper, sense tocar el líquid.",
     "hint.rod": "Ara toca el recipient on se submergeix; després va a la flama.",
     "flame": "Flama",
     "flame.0": "apagada",
