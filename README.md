@@ -22,25 +22,38 @@ attribute: Bildungsenthalpien und Entropien aus den
            des U.S. Geological Survey (Parkhurst und Appelo); einzeln entnommen, umgeschrieben und zum Teil umgerechnet.
            Die Einträge in chemlab-data.js nennen jeweils die Zeile der Datenbank.
 
-@ChemLab.sim: @ChemLab.sim_(@uid,```@0```)
+@ChemLab.sim: @ChemLab.sim_(@uid,```@0```,ChemLab)
+
+@ChemLab.lab: @ChemLab.sim_(@uid,```@1```,@0)
 
 @ChemLab.sim_
 <div class="lia-chemlab" id="lia-chemlab-@0"></div>
-<script modify="false">
+<script modify="false" output="@2" style="display:none">
+var link = { name: "@2", publish: function (state) { send.lia(state); } };
+send.register("ChemLab:@2", function (cmd) {
+  var el = document.getElementById("lia-chemlab-@0");
+  if (el && el._cl && el._cl.command) el._cl.command(cmd);
+});
 (function wait(tries) {
   var el = document.getElementById("lia-chemlab-@0"), C = window.LiaChemLab;
-  if (el && C && C.mount && C.loaded()) return C.mount(el, `@'1`);
+  if (el && C && C.mount && C.loaded()) return C.mount(el, `@'1`, false, link);
   if (el && tries === 50) {
-    if (C && C.mount) C.mount(el, `@'1`);
+    if (C && C.mount) C.mount(el, `@'1`, false, link);
     else el.innerHTML = '<p class="cl-error" role="alert">' + (/^de/i.test(document.documentElement.lang)
       ? "ChemLab lädt noch oder konnte nicht geladen werden (chemlab-ui.js)."
       : "ChemLab is still loading or could not be loaded (chemlab-ui.js).") + "</p>";
   }
   if (tries < 300) setTimeout(function () { wait(tries + 1); }, tries < 50 ? 100 : 500);
 })(0);
-""
+"LIA: wait"
 </script>
 @end
+
+@ChemLab.show: <div class="lia-chemlab lia-chemlab-slot" data-chemlab="@0" data-show="@1"></div>
+
+@ChemLab.value: <span class="lia-chemlab-slot lia-chemlab-value" data-chemlab="@0" data-value="@1">–</span>
+
+@ChemLab.take: <script input="submit" default="@2" modify="false">send.dispatch("ChemLab:@0", { take: `@'1` }); `@'2`</script>
 
 @ChemLab.data: @ChemLab.data_(@uid,```@0```)
 
@@ -81,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer und Kolbenprober; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer und Kolbenprober; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -724,6 +737,95 @@ Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gege
   {"type":"beaker","contains":[{"reagent":"H2O","ml":40}]}
  ],
  "shelf":["CuSO4 0.1M","NaOH 1M","Zn granules","testtube","thermometer","burner"]}
+```
+
+## Labor im Lehrtext
+
+Im Becherglas liegen 20 mL Salzsäure mit ein paar Tropfen Bromthymolblau. Das pH-Meter zeigt @ChemLab.value(labor,phmeter1), die Lösung ist also <script>
+const lab = @input(`labor`), ph = lab.values.phmeter1
+ph < 6.5 ? "sauer" : ph > 7.5 ? "alkalisch" : "neutral"
+</script>.
+
+```json @ChemLab.lab(labor)
+{"bench":[
+  {"type":"beaker","id":"becher","contains":[{"reagent":"HCl 0.1M","ml":20},{"reagent":"BTB","drops":3}]},
+  {"type":"phmeter","in":"becher"}
+ ],
+ "shelf":["NaOH 0.1M","HCl 0.1M","H2O"],
+ "show":{"charts":["pH"]}}
+```
+
+Nimm die @ChemLab.take(labor,NaOH 0.1M,Natronlauge) in die Hand und tippe das Becherglas an, oder gib sie gleich zu: <script input="submit" default="5 mL Natronlauge zugeben" modify="false">
+send.dispatch("ChemLab:labor", { add: "NaOH 0.1M", to: "becher", ml: 5 });
+"5 mL Natronlauge zugeben"
+</script>
+
+Was dabei im Becherglas abläuft:
+
+@ChemLab.show(labor,equations)
+
+So ändert sich der pH-Wert. Nach 20 mL Natronlauge ist alle Säure verbraucht:
+
+@ChemLab.show(labor,pH)
+
+Im Becherglas sind jetzt <script>
+const lab = @input(`labor`)
+lab.vessels.becher.ml.toLocaleString("de-DE") + " mL"
+</script>.
+
+### So hängen Labor und Text zusammen
+
+Ein Labor mit Namen spricht mit dem Text auf seiner Folie. Statt `@ChemLab.sim` steht dann `@ChemLab.lab(name)` am Block:
+
+````
+```json @ChemLab.lab(labor)
+{ … }
+```
+````
+
+| Im Text | Wirkung |
+|---|---|
+| `@ChemLab.value(labor,phmeter1)` | der Messwert eines Geräts im Satz, mit Einheit, laufend aktuell |
+| `@ChemLab.show(labor,equations)` | die Gleichungen; ebenso `log` (Protokoll) und `table` (Messwerttabelle) |
+| `@ChemLab.show(labor,pH)` | ein Diagramm, jede Art aus `show.charts`: `T`, `n`, `pH`, `titration`, `V`, `I`, `U`, `A`, `spectrum`, `IU`, `m`, `kappa` |
+| `@ChemLab.take(labor,NaOH 0.1M,Natronlauge)` | ein Knopf im Text: legt den Stoff oder das Gerät in die Hand, wie ein Griff ins Regal |
+
+Was im Text steht, fehlt unter dem Labor. Die Geräte heißen wie im Aufbau: mit `id` oder `thermometer1`, `phmeter1` … Stehen mehrere Labore auf einer Folie, braucht jedes einen eigenen Namen.
+
+**Befehle aus eigenen Skripten.** Jedes Skript der Folie kann dem Labor mit `send.dispatch("ChemLab:labor", befehl)` etwas auftragen. Es wirkt wie die Bedienung, steht im Protokoll und lässt sich zurückspulen:
+
+| Befehl | Wirkung |
+|---|---|
+| `{ take: "NaOH 0.1M" }` | in die Hand nehmen |
+| `{ add: "NaOH 0.1M", to: "becher", ml: 5 }` | zugeben, mit `ml`, `drops` oder `g` |
+| `{ set: "bath1", temp: 60 }` | einstellen: `temp` (Wasserbad), `volts` (Netzgerät), `nm` (Fotometer), `flame` (Brenner: 0, 1, 2) |
+
+Ein Regler im Text, der das Wasserbad stellt. Er schickt beim Laden seinen Startwert; steht das Bad schon darauf, geschieht nichts:
+
+``` html
+<script input="range" min="0" max="95" value="20" aria-label="Wasserbad in °C" modify="false">
+send.dispatch("ChemLab:labor", { set: "bath1", temp: @input });
+"@input °C"
+</script>
+```
+
+**Rechnen mit dem Zustand.** Das Labor gibt seinen Zustand unter seinem Namen aus. Ein Skript, das `` @input(`labor`) `` enthält, läuft bei jeder Änderung neu, auch beim Zurückspulen. Der Zustand ist ein Objekt mit vier geltenden Ziffern:
+
+``` json
+{"t": 12.5,
+ "values": {"phmeter1": 7.02, "thermometer1": 21.3},
+ "vessels": {"becher": {"ml": 45, "T": 21.3, "n": {"Na+(aq)": 0.005},
+                        "equations": ["H+(aq) + OH-(aq) → H2O(l)"]}},
+ "seen": ["added", "color"]}
+```
+
+`values` sind die Anzeigen der Geräte (beim Netzgerät die eingestellte Spannung), `n` die Stoffmengen in mol mit den Kennzeichen aus den Zielen einer Aufgabe, `seen` die Schlüssel der Einträge im Protokoll (Eingriffe wie `added` und Beobachtungen wie `gas` oder `color`). Das Objekt zuerst einer Variablen geben – am Anfang einer Zeile liest JavaScript `{` sonst als Block:
+
+``` html
+<script>
+const lab = @input(`labor`)
+lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
+</script>
 ```
 
 ## Erweiterungspakete

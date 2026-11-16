@@ -7559,3 +7559,27 @@ test("3D: Erweiterungen eines Kurses warten, bis der Baustein geladen ist", () =
   box.LiaChemLabReady.push((L) => L.registerScene("werkstatt", { build() {} }));       // später angestellt: läuft sofort
   assert.ok(box.LiaChemLab.scenes3d.werkstatt);
 });
+
+test("Lehrtext: der Zustand für Skripte folgt dem Zeiger", () => {
+  const run = L.createRun(L.normalize({ bench: [
+    { type: "beaker", id: "b", contains: [{ reagent: "HCl 0.1M", ml: 20 }] },
+    { type: "phmeter", in: "b" }] }));
+  let s = L.snapshot(run);
+  near(s.values.phmeter1, 1, 0.01, "pH der Salzsäure");
+  near(s.vessels.b.ml, 20, 0.5, "Volumen in mL");
+  assert.equal(s.vessels.b.T, 20);
+  L.act(run, (l, emit) => L.add(l, "b", "Mg ribbon", { g: 0.01 }, emit), { key: "added", vessel: "b", reagent: "Mg ribbon" });
+  L.advance(run, 60);
+  s = L.snapshot(run);
+  assert.ok(s.values.phmeter1 > 1, "Säure verbraucht");
+  assert.ok(s.vessels.b.n["Mg^2+(aq)"] > 0);
+  assert.ok(s.seen.includes("added") && s.seen.includes("gas"), s.seen.join());
+  assert.ok(JSON.stringify(s).length < 4000, "klein genug, um oft verschickt zu werden");
+  L.act(run, (l) => L.add(l, "b", "Mg ribbon", { g: 0.05 }));
+  L.advance(run, 1);
+  assert.ok(L.snapshot(run).vessels.b.equations.some((e) => /Mg\(s\)/.test(e) && / → /.test(e)), "laufende Gleichung");
+  L.seek(run, 0);
+  s = L.snapshot(run);
+  near(s.values.phmeter1, 1, 0.01, "am Anfang wieder die Säure");
+  assert.deepEqual(s.seen, []);
+});

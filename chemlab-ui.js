@@ -50,8 +50,10 @@
   };
 
   // settled: die Pakete der Fläche wurden eben geladen (oder sind gescheitert); kein neuer Versuch
-  function mount(el, source, settled) {
+  // link: { name, publish } verbindet die Fläche mit dem Text ihrer Folie; ein neuer Aufbau ohne link behält den bisherigen
+  function mount(el, source, settled, link) {
     var doc = global.document;
+    link = el._clLink = link || el._clLink || {};
     var lang = /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
     var esc = L.escape;
     function T(key, vars) { return L.text(key, lang, vars); }
@@ -142,13 +144,25 @@
     ui.done = ui.task.querySelector(".cl-done");
     if (st.config.task) ui.task.querySelector(".cl-task-text").textContent = T("task") + ": " + st.config.task.text;
     ui.none = ui.log.querySelector(".cl-none");
-    ui.eq.hidden = !show.equations;
-    ui.charts.hidden = !show.charts.length;
-    ui.log.hidden = !show.log;
+    // Platzhalter im Text der Folie (@ChemLab.show, @ChemLab.value): Gleichungen, Protokoll und Tabelle ziehen dorthin um,
+    // ein Diagramm wird dort gezeichnet, ein Messwert dort eingesetzt. Was im Text steht, fehlt unter der Fläche.
+    var slots = !link.name || !doc ? [] : Array.prototype.filter.call(doc.querySelectorAll(".lia-chemlab-slot"), function (s) { return s.getAttribute("data-chemlab") === link.name; });
+    var moved = { equations: ui.eq, log: ui.log, table: ui.readings }, inText = {}, chartSlots = [], valueSlots = [], published = null;
+    slots.forEach(function (s) {
+      var what = s.getAttribute("data-show");
+      if (s.hasAttribute("data-value")) valueSlots.push(s);
+      else if (moved[what]) { s.innerHTML = ""; s.appendChild(moved[what]); inText[what] = true; }
+      else if (what) chartSlots.push({ kind: what, box: s });
+      s.addEventListener("click", onClick);                     // Knöpfe im Umgezogenen (Messwert notieren, Sprung zur Beobachtung)
+    });
+    var ownCharts = show.charts.filter(function (k) { return !chartSlots.some(function (c) { return c.kind === k; }); });
+    ui.eq.hidden = !(show.equations || inText.equations);
+    ui.charts.hidden = !ownCharts.length;
+    ui.log.hidden = !(show.log || inText.log);
     if (st.bar == null) st.bar = show.shelf || !st.run.lab.vessels.length;      // die Regalleiste: offen, wenn der Kurs es will oder der Tisch leer ist
 
     // Gleichungen, Diagramme und Protokoll als Reiter; ist nur eines eingeschaltet, steht es ohne Reiter da
-    var outs = [["eq", show.equations], ["charts", show.charts.length > 0], ["log", show.log]].filter(function (k) { return k[1]; }).map(function (k) { return k[0]; });
+    var outs = [["eq", show.equations && !inText.equations], ["charts", ownCharts.length > 0], ["log", show.log && !inText.log]].filter(function (k) { return k[1]; }).map(function (k) { return k[0]; });
     if (outs.indexOf(st.out) < 0) st.out = outs[0] || "";
     ui.out.hidden = !outs.length;
     ui.outtabs.hidden = outs.length < 2;
@@ -1105,7 +1119,7 @@
 
     function renderEq() {
       var lab = st.run.lab, label = names(), groups = [], only = focus(), html;
-      if (!show.equations) return;
+      if (!show.equations && !inText.equations) return;
       lab.vessels.forEach(function (v) {
         var list = only && only !== v.id ? [] : L.reactions(lab, v.id);
         if (list.length) groups.push({ id: v.id, list: list });
@@ -1164,17 +1178,17 @@
       }).join("") + "</ul></figure>";
     }
 
-    function renderCharts() {
+    function renderCharts(kinds, box) {
       var run = st.run, lab = run.lab, label = names(), html = "", lines, vessel = null, ids, top = 0, unit, i, most = 0, at = 0;
       var time = { span: Math.max(run.end, 10), label: T("chart.time"), cursor: run.time };
       function where(t) { return esc(label[t.id] + " " + T("aria.in", { vessel: label[t.in] })); }
       function probes(unitName) { return lab.tools.filter(function (t) { return L.parts[t.type].unit === unitName && L.parts[t.type].sense && L.vessel(lab, t.in); }); }
-      if (!show.charts.length) return;
-      if (show.charts.indexOf("T") >= 0) {
+      if (!kinds.length) return;
+      if (kinds.indexOf("T") >= 0) {
         lines = probes("°C").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.T")) + (show.numbers ? " in °C" : ""), lines, T("chart.noTool"), time);
       }
-      if (show.charts.indexOf("n") >= 0) {
+      if (kinds.indexOf("n") >= 0) {
         vessel = focus();
         for (i = 0; i < lab.vessels.length && !vessel; i++) if (L.changed(run, lab.vessels[i].id).length) vessel = lab.vessels[i].id;
         ids = vessel ? L.changed(run, vessel).sort() : [];
@@ -1190,29 +1204,29 @@
         html += chart(esc(T("chart.n")) + (show.numbers ? " in " + unit[1] : "") + (vessel && lab.vessels.length > 1 ? " – " + esc(label[vessel]) : ""),
           lines, T("chart.noChange"), time, 0);
       }
-      if (show.charts.indexOf("V") >= 0 && probes("mL").length) {         // Gasvolumen: nur mit einem Kolbenprober
+      if (kinds.indexOf("V") >= 0 && probes("mL").length) {         // Gasvolumen: nur mit einem Kolbenprober
         lines = probes("mL").map(function (t) { return { label: esc(label[t.id] + " " + T("aria.at", { vessel: label[t.in] })), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.V")) + (show.numbers ? " in mL" : ""), lines, "", time, 0);
       }
       // pH über der Zeit und über dem zugegebenen Volumen: nur, wenn ein pH-Meter in einem Gefäß steckt
-      if (show.charts.indexOf("pH") >= 0 && probes("pH").length) {
+      if (kinds.indexOf("pH") >= 0 && probes("pH").length) {
         lines = probes("pH").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.pH")), lines, "", time);
       }
-      if (show.charts.indexOf("kappa") >= 0 && probes("mS/cm").length) {
+      if (kinds.indexOf("kappa") >= 0 && probes("mS/cm").length) {
         lines = probes("mS/cm").map(function (t) { return { label: where(t), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.kappa")) + (show.numbers ? " in mS/cm" : ""), lines, "", time, 0);
       }
       // Fotometer: die Extinktion über der Zeit, und das Spektrum der Lösung mit der eingestellten Wellenlänge als Marke
-      if (show.charts.indexOf("A") >= 0 && probes("E").length) {
+      if (kinds.indexOf("A") >= 0 && probes("E").length) {
         lines = probes("E").map(function (t) { return { label: where(t) + (show.numbers ? " (" + t.nm + " nm)" : ""), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.A")), lines, "", time, 0);
       }
-      if (show.charts.indexOf("spectrum") >= 0 && probes("E").length) {
+      if (kinds.indexOf("spectrum") >= 0 && probes("E").length) {
         lines = probes("E").map(function (t) { at = t.nm; return { label: where(t), points: L.spectrum(lab, t.in, L.parts[t.type].d) }; });
         html += chart(esc(T("chart.spectrum")), lines, "", { from: 380, span: 350, label: T("chart.wave"), cursor: at }, 0);
       }
-      if (show.charts.indexOf("titration") >= 0) {
+      if (kinds.indexOf("titration") >= 0) {
         [["pH", "chart.titration"], ["mS/cm", "chart.conduct"], ["E", "chart.photo"]].forEach(function (kind) {      // mit dem pH-Meter, dem Leitfähigkeitsmessgerät oder dem Fotometer
           lines = []; most = 0;
           lab.vessels.forEach(function (v) {
@@ -1232,7 +1246,7 @@
       // Stromkreise: Stromstärke und Spannung über der Zeit, die Kennlinie (Stromstärke über der Spannung des Netzgeräts), die Masse der Elektroden
       function wired(kind) { return lab.tools.filter(function (t) { return L.parts[t.type].circuit === kind && L.vessel(lab, t.in); }); }
       function beside(t) { return esc(label[t.id] + " " + T("aria.at", { vessel: label[t.in] })); }
-      if (show.charts.indexOf("I") >= 0 && wired("ammeter").length) {
+      if (kinds.indexOf("I") >= 0 && wired("ammeter").length) {
         top = 0;
         lines = wired("ammeter").map(function (t) {
           var points = L.series(run, { tool: t.id });
@@ -1243,11 +1257,11 @@
         lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
         html += chart(esc(T("chart.I")) + (show.numbers ? " in " + unit[1] : ""), lines, "", time, 0);
       }
-      if (show.charts.indexOf("U") >= 0 && wired("voltmeter").length) {
+      if (kinds.indexOf("U") >= 0 && wired("voltmeter").length) {
         lines = wired("voltmeter").map(function (t) { return { label: beside(t), points: L.series(run, { tool: t.id }) }; });
         html += chart(esc(T("chart.U")) + (show.numbers ? " in V" : ""), lines, "", time, 0);
       }
-      if (show.charts.indexOf("IU") >= 0) {
+      if (kinds.indexOf("IU") >= 0) {
         lines = []; most = 0; at = 0; top = 0;
         wired("supply").forEach(function (s) {
           wired("ammeter").forEach(function (t) {
@@ -1263,7 +1277,7 @@
         lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
         if (lines.length && most > 0) html += chart(esc(T("chart.IU")) + (show.numbers ? " (" + unit[1] + ")" : ""), lines, "", { span: Math.max(most, 1), label: T("chart.volts"), cursor: at }, 0);
       }
-      if (show.charts.indexOf("m") >= 0) {
+      if (kinds.indexOf("m") >= 0) {
         top = 0;
         lines = lab.tools.filter(function (t) { return L.parts[t.type].electrode && L.vessel(lab, t.in); }).map(function (t) {
           var points = L.series(run, { tool: t.id }), first = points.length ? points[0][1] : 0;
@@ -1274,7 +1288,7 @@
         lines.forEach(function (line) { line.points = line.points.map(function (p) { return [p[0], p[1] * unit[0]]; }); });
         if (top > 1e-6) html += chart(esc(T("chart.m")) + (show.numbers ? ": " + esc(T("chart.mUnit")) + " in " + unit[1] : ""), lines, "", time);
       }
-      ui.charts.innerHTML = html;
+      box.innerHTML = html;
     }
 
     // ---------------------------------------------------------------- Messwerttabelle
@@ -1289,11 +1303,11 @@
         if (!unit || !COLUMN[unit]) return;
         c = COLUMN[unit];
         value = def.circuit === "supply" ? t.volts : t.value;
-        out.push({ key: t.id, label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
+        out.push({ key: t.id, unit: unit === "E" || unit === "pH" ? "" : c[0], label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });
       });
       lab.vessels.forEach(function (v) {
-        if (L.parts[v.type].dispenser) out.push({ key: v.id, label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
+        if (L.parts[v.type].dispenser) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
       });
       return out;
     }
@@ -1338,7 +1352,7 @@
 
     function renderReadings() {
       var html;
-      ui.readings.hidden = !(st.config.table && show.numbers);
+      ui.readings.hidden = !((st.config.table || inText.table) && show.numbers);
       if (ui.readings.hidden) return;
       html = '<div class="cl-actions"><button type="button" class="cl-btn" data-act="note">' + esc(T("table.note")) + "</button> " +
         '<button type="button" class="cl-btn" data-act="clear"' + (st.rows.length ? "" : " disabled") + ">" + esc(T("table.clear")) + "</button> " +
@@ -1383,7 +1397,7 @@
     // Neu aufgebaut wird sie erst, wenn Zeilen wegfallen (zurückgespult, zurückgesetzt).
     function renderLog() {
       var ctx = { lang: lang, numbers: show.numbers, names: names() }, seen, grown, i;
-      if (!show.log) return;
+      if (!show.log && !inText.log) return;
       seen = L.logAt(st.run).slice(-60);
       grown = seen.length >= shown.length;
       for (i = 0; grown && i < shown.length; i++) grown = shown[i] === seen[i];
@@ -1424,10 +1438,54 @@
       renderPins();
       renderContents();
       renderEq();
-      renderCharts();
+      renderCharts(ownCharts, ui.charts);
+      chartSlots.forEach(function (c) { renderCharts([c.kind], c.box); });
       renderLog();
       renderTask();
       hear();
+      renderText();
+    }
+
+    // Messwerte im Satz und der Zustand für die Skripte der Folie (@input), nur wenn er sich geändert hat
+    function renderText() {
+      var now, list = valueSlots.length ? readings() : [];
+      valueSlots.forEach(function (s) {
+        var r = list.filter(function (x) { return x.key === s.getAttribute("data-value"); })[0];
+        s.textContent = !r || !show.numbers ? "–" : r.text + (r.unit ? " " + r.unit : "");
+      });
+      if (!link.publish) return;
+      now = JSON.stringify(L.snapshot(st.run));
+      if (now !== published) { published = now; link.publish(now); }
+    }
+
+    // Befehle aus dem Text (send.dispatch): wirken wie die Bedienung, mit Protokoll und Aufzeichnung
+    function known(id) {
+      try { return !!(L.parts[id] || L.reagent(id)); } catch (error) { status(T("err.reagent") + ": " + id); return false; }
+    }
+    function command(cmd) {
+      var lab = st.run.lab, v, t, amount, ml;
+      if (!cmd || typeof cmd !== "object") return;
+      if (cmd.take) {
+        if (known(cmd.take) && !(st.hand && st.hand.id === cmd.take)) pick(cmd.take);
+      } else if (cmd.add) {
+        v = L.vessel(lab, cmd.to);
+        if (!v || !known(cmd.add)) return;
+        if (v.broken) { status(T("brokenGlass")); return; }
+        amount = cmd.ml != null ? { ml: +cmd.ml } : cmd.drops != null ? { drops: +cmd.drops } : { g: +cmd.g };
+        ml = amount.ml != null ? amount.ml : amount.drops != null ? amount.drops * L.DROP : 0;
+        if (ml > L.free(lab, v) + 1e-9) { status(T("full")); return; }
+        change(function (l) { return L.add(l, cmd.to, cmd.add, amount); }, Object.assign({ key: "added", vessel: cmd.to, reagent: cmd.add }, amount));
+      } else if (cmd.set) {
+        t = L.tool(lab, cmd.set);
+        if (!t) return;
+        // nur was das Gerät kennt und was sich ändert: ein Regler, der beim Laden seinen Startwert schickt, hinterlässt nichts
+        [["volts", "volts"], ["temp", "temp"], ["nm", "wave"]].forEach(function (k) {
+          if (cmd[k[0]] != null && t[k[0]] !== undefined && +cmd[k[0]] !== t[k[0]]) setDial(cmd.set, k[1], +cmd[k[0]]);
+        });
+        if (cmd.flame != null && t.flame !== undefined && +cmd.flame !== t.flame) {
+          change(function (l) { return L.setFlame(l, cmd.set, +cmd.flame); }, { key: "flame", part: cmd.set, level: +cmd.flame });
+        }
+      }
     }
 
     function refresh() {
@@ -1671,8 +1729,9 @@
       el.removeEventListener("change", onInput);
       el.removeEventListener("focusout", onLeave);
       TOUCH.forEach(function (type) { el.removeEventListener(type, onTouch); });
+      slots.forEach(function (s) { s.removeEventListener("click", onClick); });
     }
-    el._cl = { stop: stop, stage: function () { return three; } };       // stage: die 3D-Bühne, für Prüfungen im Browser
+    el._cl = { stop: stop, command: command, stage: function () { return three; } };       // stage: die 3D-Bühne, für Prüfungen im Browser
 
     renderShelf();
     renderHand();

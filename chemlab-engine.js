@@ -3527,6 +3527,27 @@
     return Object.keys(high).filter(function (id) { return id !== WATER && id !== STEAM && high[id] - low[id] > 1e-9; });
   }
 
+  // Der Zustand am Zeiger für Skripte im Lehrtext (@input): Anzeige der Geräte, je Gefäß Volumen, Temperatur, Stoffmengen und
+  // laufende Gleichungen, dazu die Schlüssel im Protokoll. Vier geltende Ziffern, damit nicht jeder Rechenschritt ein neuer Zustand ist.
+  function stateOf(run) {
+    var lab = run.lab, out = { t: sig(run.time), values: {}, vessels: {}, seen: [] };
+    function sig(x) { return +(+x).toPrecision(4); }
+    function side(terms) { return terms.map(function (t) { return (t.n === 1 ? "" : t.n + " ") + t.id; }).join(" + "); }
+    lab.tools.forEach(function (t) {
+      var value = L.parts[t.type].circuit === "supply" ? t.volts : t.value;
+      if (typeof value === "number" && isFinite(value)) out.values[t.id] = sig(value);
+    });
+    lab.vessels.forEach(function (v) {
+      var n = {}, id;
+      for (id in v.n) if (v.n[id] > 1e-12) n[id] = sig(v.n[id]);
+      out.vessels[v.id] = { ml: sig(volume(v) * 1000), T: sig(v.T), n: n, equations: reactions(lab, v.id).map(function (r) {
+        return side(r.left) + (r.complete ? " → " : " ⇌ ") + side(r.right);
+      }) };
+    });
+    logAt(run).forEach(function (event) { if (out.seen.indexOf(event.key) < 0) out.seen.push(event.key); });
+    return out;
+  }
+
   // ------------------------------------------------------------------ Pakete
 
   // Ein Paket ist eine JSON-Datei im Format von "data". Jede Adresse wird einmal geladen; das Versprechen erfüllt sich immer,
@@ -3711,6 +3732,7 @@
   L.series = series;
   L.curve = curve;
   L.changed = changed;
+  L.snapshot = stateOf;
   L.DROP = DROP;
   L.gamma = gamma;
   L.selfConsistent = selfConsistent;
