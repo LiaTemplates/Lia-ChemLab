@@ -2353,6 +2353,61 @@ test("Glimmspanprobe: Wasserstoffperoxid gibt mit Braunstein Sauerstoff, der Spa
   assert.ok(look(l).T > 25, "es wird warm");
 });
 
+// Masse von allem, was in einem Gefäß steckt: gelöst, fest und im Gasraum, in g
+const contents = (l, id) => { const v = L.vessel(l, id); return [v.n, v.air].reduce((sum, store) => sum + Object.entries(store).reduce((m, [k, n]) => m + n * L.species(k).M, 0), 0); };
+
+test("Waage: zeigt Glas und Inhalt; das Glas wiegt so viel, wie seine Wärmekapazität sagt", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "balance", id: "w", under: "b" }], { room: 20 });
+  near(L.glassMass(L.vessel(l, "b")), 30 / 0.84, 0.01, "Becherglas 100 mL");
+  near(L.glassMass(L.vessel(lab([{ type: "testtube", id: "t" }]), "t")), 17 / 0.84, 0.01, "Reagenzglas");
+  L.step(l, 5);
+  near(L.reading(l, "w").value, 30 / 0.84 + contents(l, "b"), 0.005, "Anzeige");
+  near(L.reading(l, "w").value, 35.71 + 49.9, 0.2, "50 mL Wasser wiegen knapp 50 g");
+  assert.equal(L.reading(l, "w").unit, "g");
+});
+
+test("Waage: offen entweicht Kohlenstoffdioxid, mit Kolbenprober bleibt die Masse", () => {
+  const setup = (closed) => lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }, { reagent: "marble", g: 0.5 }] },
+    { type: "balance", id: "w", under: "b" }].concat(closed ? [{ type: "syringe", in: "b" }] : []), { room: 20 });
+  const open = setup(false), shut = setup(true);
+  L.step(open, 1); L.step(shut, 1);
+  const m0 = [L.reading(open, "w").value, L.reading(shut, "w").value];
+  L.step(open, 300); L.step(shut, 300);
+  const gone = (L.vessel(open, "b").out["CO2(g)"] || 0) * 44.01;
+  assert.ok(gone > 0.1, `entwichen: ${gone} g`);
+  near(m0[0] - L.reading(open, "w").value, gone, 0.02, "offen: leichter um das entwichene Gas");
+  near(L.reading(shut, "w").value, m0[1], 0.005, "geschlossen: gleich schwer");
+});
+
+test("Waage: Tara setzt auf null, auch nach dem Zurückspulen; Zugeben und Ausleeren", () => {
+  const run = L.createRun(L.normalize({ room: 20, bench: [{ type: "beaker", id: "b" }, { type: "balance", id: "w", under: "b" }] }));
+  L.step(run.lab, 2);
+  near(L.reading(run.lab, "w").value, 30 / 0.84, 0.01, "leeres Glas");
+  L.act(run, (l) => L.tare(l, "w"));
+  L.step(run.lab, 3);
+  near(L.reading(run.lab, "w").value, 0, 0.005, "nach Tara");
+  L.act(run, (l) => L.add(l, "b", "NaCl 1M", { ml: 20 }));
+  L.step(run.lab, 10);
+  near(L.reading(run.lab, "w").value, contents(run.lab, "b"), 0.01, "nur der Inhalt");
+  L.act(run, (l) => L.empty(l, "b"));
+  L.step(run.lab, 6);
+  near(L.reading(run.lab, "w").value, 0, 0.005, "ausgeleert");
+  L.seek(run, 1);
+  near(L.reading(run.lab, "w").value, 30 / 0.84, 0.01, "zurückgespult vor das Tarieren");
+  assert.equal(L.tare(run.lab, "b"), false, "nur eine Waage hat Tara");
+});
+
+test("Waage: unter einem Gefäß, nicht zusammen mit Brenner oder Wasserbad, nicht unter der Bürette", () => {
+  const ok = L.normalize({ bench: [{ type: "beaker", id: "b" }, { type: "balance", under: "b" }] });
+  assert.deepEqual(ok.bench[1], { type: "balance", id: "balance1", in: "b" });
+  for (const bench of [
+    [{ type: "beaker", id: "b" }, { type: "balance", under: "b" }, { type: "burner", under: "b" }],
+    [{ type: "beaker", id: "b" }, { type: "bath", under: "b" }, { type: "balance", under: "b" }],
+    [{ type: "beaker", id: "b" }, { type: "burette", id: "bu", over: "b" }, { type: "balance", under: "bu" }]
+  ]) assert.throws(() => L.normalize({ bench }), (e) => e.code === "place", JSON.stringify(bench));
+  assert.ok("m" in L.MEASURES, "Aufgabenziel measure: m");
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);

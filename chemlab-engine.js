@@ -557,6 +557,8 @@
   registerPart("syringe", { kind: "tool", lag: 0, unit: "mL", sense: "V", cap: 100, stopper: true });           // Kolbenprober
   // Wasserbad: steht wie der Brenner unter einem Gefäß und hält es auf der eingestellten Temperatur (range, in °C).
   // gain: so viel besser als eine Flamme überträgt das Wasser die Wärme
+  // Waage: steht unter einem Gefäß und zeigt dessen Masse samt Glas; tare zieht ab, was beim Tarieren darauf stand
+  registerPart("balance", { kind: "tool", under: true, scale: true, unit: "g", sense: "m", lag: 0.5, fine: 0.01 });
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
   registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3] });
@@ -593,7 +595,7 @@
   //   { has, min, max }       von einem Stoff liegen min bis max mol vor (gelöst, fest oder im Gasraum); Vorgabe: mindestens 1 µmol
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
-  var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V" };
+  var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g" };
   var OBSERVED = ["gas", "pop", "relight", "out", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
@@ -922,6 +924,7 @@
     if (def.bath) t.temp = item.temp == null ? null : item.temp;       // eingestellte Temperatur; null: die des Raums
     if (def.sense === "A") t.nm = item.nm || def.nm;                   // Wellenlänge in nm
     if (def.sense === "V") { t.n = 0; t.full = false; }               // n: aufgefangenes Gas in mol
+    if (def.scale) t.tare = 0;
     if (def.electrode) {
       // n: Stoffmenge des Elektrodenmaterials, coat: was sich darauf abgeschieden hat, seen: Beläge, die schon gemeldet sind,
       // i: Strom in A (positiv: hier wird oxidiert), rate: Umsatz in mol je s, phi: Potential gegen die Lösung in V,
@@ -1081,6 +1084,27 @@
   }
 
   // Flamme eines Brenners: 0 aus, 1 leuchtend, 2 rauschend
+  // Glas aus seiner Wärmekapazität: 0,84 J/(g K)
+  function glassMass(v) { return spec(v).Cv / 0.84; }
+
+  // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit; verschlossen auch das aufgefangene Gas
+  function weigh(lab, v) {
+    var m = glassMass(v), id;
+    for (id in v.n) m += v.n[id] * L.db.species[id].M;
+    for (id in v.air) m += v.air[id] * L.db.species[id].M;
+    if (stoppered(lab, v) && !toolAt(lab, v, function (def) { return def.pipe; })) for (id in v.out) m += v.out[id] * L.db.species[id].M;
+    return m;
+  }
+
+  function tare(lab, id) {
+    var t = tool(lab, id);
+    if (!t || !L.parts[t.type].scale) return false;
+    t.tare = 0;
+    t.tare = sense(lab, t);
+    t.value = 0;
+    return true;
+  }
+
   function setFlame(lab, id, level) {
     var t = tool(lab, id);
     if (!t || !L.parts[t.type].flames) return false;
@@ -3121,6 +3145,7 @@
     if (def.bath) return t.temp;
     if (kind === "T") return Math.max(L.parts[t.type].range[0], Math.min(L.parts[t.type].range[1], v ? v.T : lab.room));
     if (kind === "V") return t.n * molar(lab) * 1000;          // aufgefangenes Gas in mL
+    if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
     vol = v ? volume(v) : 0;
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
@@ -3775,6 +3800,8 @@
   L.advance = advance;
   L.act = act;
   L.series = series;
+  L.glassMass = glassMass;
+  L.tare = tare;
   L.curve = curve;
   L.changed = changed;
   L.snapshot = stateOf;
