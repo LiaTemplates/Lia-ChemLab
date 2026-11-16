@@ -1,0 +1,101 @@
+/* ChemLab – Looks für das Labor: Liebigkühler und Rückflusskühler. Klassisches Skript, geladen von chemlab-3d.js nach effects.js.
+   Die Lage kommt wie in 2D aus place (Bildpunkte, y nach unten); hier cm, y nach oben. */
+(function (global) {
+  "use strict";
+
+  var L = global.LiaChemLab, THREE = L.THREE, fx = L.fx3d;
+  var PX = 16, V = function (x, y, z) { return new THREE.Vector3(x, y, z); };
+
+  function cm(px) { return px / PX; }
+
+  // Glasrohr von a nach b
+  function pipe(a, b, r, mat) {
+    var m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, a.distanceTo(b), 16, 1, true), mat);
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(V(0, 1, 0), b.clone().sub(a).normalize());
+    m.renderOrder = 2;
+    return m;
+  }
+
+  // Kühlmantel mit Wasser zwischen a und b; die Schläuche: unten hinein, oben heraus
+  function jacket(sub, a, b, R) {
+    var water = pipe(a, b, R - 0.03, new THREE.MeshPhysicalMaterial({ color: 0xcfe6f5, roughness: 0.1, transparent: true, opacity: 0.3, depthWrite: false }));
+    var glass = pipe(a, b, R, fx.glass()), hose = fx.matte(fx.style.hose, 0.6), dir = b.clone().sub(a).normalize();
+    water.renderOrder = 1;
+    // Kappen an den Enden des Mantels
+    [a, b].forEach(function (p) {
+      var cap = new THREE.Mesh(new THREE.RingGeometry(0.15, R, 24), fx.glass());
+      cap.position.copy(p);
+      cap.quaternion.setFromUnitVectors(V(0, 0, 1), dir);
+      sub.add(cap);
+    });
+    sub.add(water, glass);
+    return hose;
+  }
+
+  function stub(sub, from, to, mat) {
+    var m = pipe(from, to, 0.16, mat);
+    m.castShadow = true;
+    m.renderOrder = 0;
+    sub.add(m);
+  }
+
+  // ------------------------------------------------------------------ Liebigkühler
+
+  // place: { x1, y1 } Ende des Ansatzrohrs, { x2, y2 } Öffnung der Vorlage, s2 deren Spiegel, up: so viel tiefer steht die Vorlage (Hub, 2D)
+  L.registerLook("condenser", "lab", {
+    build: function () {
+      var group = new THREE.Group(), drops = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6),
+        new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 1, thickness: 0.2 }), 3);
+      drops.count = 0;
+      group.add(drops);
+      group.userData = { drops: drops };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, p = d.place, up = p ? p.up || 0 : 0, k, q, t = d.ctx.still ? 0.5 : d.ctx.t;
+      // die Vorlage steht in 3D um den gestreckten Hub tiefer
+      var drop = p ? cm(up) - kit.up(up) : 0;
+      var a = p ? V(cm(p.x1), cm(-p.y1), 0) : V(-2, 2.5, 0), y2 = p ? cm(-p.y2) + drop : 1.2, s2 = p ? cm(-p.s2) + drop : 0.25;
+      var c = V(p ? cm(p.x2) : 2, Math.min(a.y - cm(24), y2 + cm(22)), 0), e = V(c.x, y2 - cm(10), 0);
+      u.end = e; u.s2 = s2;
+      u.body = fx.rebuild(group, "duct", [a.x, a.y, c.x, c.y, e.y, !!p].map(String).join("|"), function (sub) {
+        var ja = a.clone().lerp(c, 0.15), jb = a.clone().lerp(c, 0.8), dir = c.clone().sub(a).normalize(), n = V(-dir.y, dir.x, 0), R = cm(7), hose;
+        sub.add(pipe(a, c, 0.13, fx.glass()), pipe(c, e, 0.13, fx.glass()));
+        sub.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), fx.glass()).translateX(c.x).translateY(c.y));          // Knie
+        hose = jacket(sub, ja, jb, R);
+        stub(sub, jb.clone().addScaledVector(n, -R), jb.clone().addScaledVector(n, -R).add(V(0, -0.7, 0)), hose);      // Kühlwasser hinein
+        stub(sub, ja.clone().addScaledVector(n, R), ja.clone().addScaledVector(n, R).add(V(0, 0.7, 0)), hose);         // und heraus
+        if (!p) sub.add(new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 1.6), fx.wood()).translateY(0.2));
+      });
+      // Destillat tropft aus dem Rohr in die Vorlage
+      u.drops.count = d.data.drip && p ? 3 : 0;
+      for (k = 0; k < u.drops.count; k++) {
+        q = (t * 1.3 + k / 3) % 1;
+        u.drops.setMatrixAt(k, new THREE.Matrix4().makeTranslation(e.x, e.y - q * q * Math.max(0, e.y - s2), 0));
+      }
+      u.drops.instanceMatrix.needsUpdate = true;
+    }
+  });
+
+  // ------------------------------------------------------------------ Rückflusskühler
+
+  // place: { x, rim, top, lean } aus probe() des Gefäßes: aufrecht über der Öffnung, lean: schräg gestellt in Grad (auf dem Ansatzrohr des Kolbens)
+  L.registerLook("reflux", "lab", {
+    build: function () { var group = new THREE.Group(); group.userData = {}; return group; },
+    update: function (group, d) {
+      var p = d.place || { x: 0, rim: 0, top: -L.shapes.reflux, lean: 0 };
+      group.userData.body = fx.rebuild(group, "column", [p.x, p.rim, p.top, p.lean || 0, !!d.place].join("|"), function (sub) {
+        var foot = V(cm(p.x), cm(-p.rim), 0), h = cm(p.rim - p.top), tilt = new THREE.Group(), R = cm(8), hose;
+        tilt.position.copy(foot);
+        tilt.rotation.z = -(p.lean || 0) * Math.PI / 180;       // in 2D um den Fuß im Uhrzeigersinn
+        tilt.add(pipe(V(0, -cm(6), 0), V(0, h, 0), cm(3), fx.glass()));
+        hose = jacket(tilt, V(0, cm(14), 0), V(0, h - cm(14), 0), R);
+        stub(tilt, V(R, cm(20), 0), V(R + 0.7, cm(20), 0), hose);            // Kühlwasser unten hinein, oben heraus
+        stub(tilt, V(-R, h - cm(20), 0), V(-R - 0.7, h - cm(20), 0), hose);
+        sub.add(tilt);
+        if (!d.place) sub.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 2.4), fx.wood()).translateY(0.2));
+      });
+    }
+  });
+})(typeof globalThis !== "undefined" ? globalThis : this);

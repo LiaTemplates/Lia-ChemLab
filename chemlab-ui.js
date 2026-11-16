@@ -515,11 +515,12 @@
       if (!host || !a) return null;
       dir = b && b.x < a.x ? -1 : 1;
       pa = L.parts[host.type].probe(host, "condenser", dir);
-      if (!b) return { x1: pa.x, y1: pa.rim, x2: pa.x + 70 * dir, y2: pa.rim + 30, s2: pa.rim + 60 };       // das andere Ende hängt frei
+      if (!b) return { x1: pa.x, y1: pa.rim, x2: pa.x + 70 * dir, y2: pa.rim + 30, s2: pa.rim + 60, up: 0 };       // das andere Ende hängt frei
       pb = L.parts[far.type].probe(far, "bridge", -dir);
       up = (a.lift || 0) - (b.lift || 0);
       w = L.view(lab, far);
-      return { x1: pa.x, y1: pa.rim, x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: (w.ml > 0.005 ? L.parts[far.type].surface(w) : -4) + up };
+      // up: so viel tiefer steht die Vorlage (Hub); die 3D-Ansicht streckt den Hub und braucht ihn deshalb getrennt
+      return { x1: pa.x, y1: pa.rim, x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: (w.ml > 0.005 ? L.parts[far.type].surface(w) : -4) + up, up: up };
     }
 
     // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden.

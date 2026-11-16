@@ -46,7 +46,7 @@
 
   // Die Wand eines Glases: außen von unten nach oben, über den Rand, innen zurück nach unten
   fx.wall = function (shape, thick, lip) {
-    var pts = [], n = 24, i, y, top = shape.rim;
+    var pts = [], n = shape.steps || 24, i, y, top = shape.rim;      // steps: feiner für runde Formen (Kolben)
     for (i = 0; i <= n; i++) { y = shape.floor + (top - shape.floor) * i / n; pts.push([shape.inner(y) + thick, y - (i === 0 ? thick : 0)]); }
     pts.unshift([0, shape.floor - thick]);
     pts.push([shape.inner(top) + thick + (lip || 0), top], [shape.inner(top), top]);
@@ -95,7 +95,7 @@
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
-      var pts = [[0, from]], n = 16, k;
+      var pts = [[0, from]], n = shape.steps || 16, k;
       if (keys[key] === top.toFixed(3) + shape.id) return;
       keys[key] = top.toFixed(3) + shape.id;
       for (k = 0; k <= n; k++) pts.push([shape.inner(from + (top - from) * k / n) - 0.012, from + (top - from) * k / n]);
@@ -216,15 +216,16 @@
         bubbles.instanceMatrix.needsUpdate = true;
         if (wet) wave(boil, r, t, ctx.still, domes);
 
-        // Dampf über dem Rand: weiche Flecken, die aufsteigen und vergehen
-        n = w.steam > 0 ? Math.max(6, Math.min(24, Math.round(10 + 5 * Math.log10(w.steam / 1e-3)))) : 0;
+        // Dampf über dem Rand: weiche Flecken, die aufsteigen und vergehen; nicht, wenn er in einen Kühler geht (ctx.sealed)
+        var mouth = shape.inner(shape.rim);
+        n = w.steam > 0 && !ctx.sealed ? Math.max(6, Math.min(24, Math.round(10 + 5 * Math.log10(w.steam / 1e-3)))) : 0;
         steam.children.forEach(function (s, k) {
           s.visible = k < n;
           if (!s.visible) return;
           var q = pseudo(ctx.seed + 21, k) + t * (0.25 + 0.2 * pseudo(ctx.seed + 22, k)), lift;
           q -= Math.floor(q);
           lift = q * 9;
-          s.position.set((pseudo(ctx.seed + 23, k) - 0.5) * r * 1.4 + Math.sin(t * 0.8 + k) * q * 1.2, shape.rim - 0.5 + lift, (pseudo(ctx.seed + 24, k) - 0.5) * r);
+          s.position.set((pseudo(ctx.seed + 23, k) - 0.5) * mouth * 1.4 + Math.sin(t * 0.8 + k) * q * 1.2, shape.rim - 0.5 + lift, (pseudo(ctx.seed + 24, k) - 0.5) * mouth);
           s.scale.setScalar(0.8 + q * 3.5);
           s.material.opacity = 0.32 * Math.min(1, boil + 0.3) * Math.sin(Math.PI * q);
         });

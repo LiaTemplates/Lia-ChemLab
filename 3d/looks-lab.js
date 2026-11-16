@@ -62,7 +62,7 @@
         level = opts.level(w, d);
         u.inside.update(w, shape, level, d.ctx, !!opts.tall);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
-        u.tag.position.set(0, 0.15 - kit.up(d.lift), shape.inner(shape.rim) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist
+        u.tag.position.set(0, 0.15 - kit.up(d.lift), (shape.front || shape.inner(shape.rim)) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist; front: weiteste Stelle
         if (opts.refresh) opts.refresh(group, d, shape);
       }
     };
@@ -220,4 +220,35 @@
       u.tag.position.set(x, floor + 0.15, 1.6);
     }
   });
+
+  // ------------------------------------------------------------------ Rundkolben
+
+  // Kugel mit Hals, rechts am Hals das Ansatzrohr für den Kühler (wie in 2D immer rechts); ohne Dreifuß auf einem Korkring
+  var F = S.flask, flaskR = cm(F.R - 1), flaskCY = cm(4 + F.R), neckR = cm(F.neck - 0.5);
+  var flaskShape = {
+    id: "flask", floor: flaskCY - flaskR, rim: cm(-F.rim), front: cm(F.R), steps: 64,
+    inner: function (y) {
+      var dy = y - flaskCY, r = Math.sqrt(Math.max(0, flaskR * flaskR - dy * dy));
+      return dy > 0 ? Math.max(neckR, r) : r;
+    }
+  };
+
+  L.registerLook("flask", "lab", vessel({
+    tall: true, thick: 0.06, lip: 0.06,
+    shape: function () { return flaskShape; },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.flask.surface(w)) : flaskShape.floor; },
+    extra: function (group) {
+      var a = new THREE.Vector3(cm(F.neck) - 0.1, cm(-F.arm), 0), b = new THREE.Vector3(cm(F.neck + 12), cm(-(F.arm + 4)), 0);
+      var arm = new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(3), a.distanceTo(b), 16, 1, true), fx.glass());
+      arm.position.copy(a).add(b).multiplyScalar(0.5);
+      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+      arm.renderOrder = 2;
+      var cork = new THREE.Mesh(new THREE.TorusGeometry(cm(13), cm(3), 10, 32).rotateX(Math.PI / 2), fx.matte(0xb58b5c, 0.9));
+      cork.position.y = cm(3);
+      cork.castShadow = cork.receiveShadow = true;
+      group.add(arm, cork);
+      group.userData.cork = cork;
+    },
+    refresh: function (group, d) { group.userData.cork.visible = !d.lift; }
+  }));
 })(typeof globalThis !== "undefined" ? globalThis : this);
