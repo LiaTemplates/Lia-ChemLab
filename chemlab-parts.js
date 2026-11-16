@@ -13,7 +13,9 @@
   L.strings = {
     de: {
       "shelf": "Regal", "stage": "Arbeitsfläche", "reset": "Zurücksetzen",
-      "part.testtube": "Reagenzglas", "part.beaker": "Becherglas", "part.thermometer": "Thermometer",
+      "part.testtube": "Reagenzglas", "part.beaker": "Becherglas", "part.thermometer": "Thermometer", "part.flask": "Rundkolben", "part.condenser": "Liebigkühler",
+      "hint.still1": "Nun das Gefäß antippen, aus dem destilliert wird.", "hint.still2": "Nun die Vorlage antippen, in die das Destillat läuft.",
+      "sameStill": "Der Kühler führt in ein anderes Gefäß.",
       "eq.catalyst": "Katalysator",
       "restMore": "Noch einmal „Abspielen“ lässt sie trotzdem zehn Minuten weiterlaufen.",
       "lens.paste": "Zu wenig Flüssigkeit für so viel Gelöstes: ein Brei, in den die Teilchenlupe nicht hineinsieht.",
@@ -66,7 +68,7 @@
       "say.boil": "{vessel}: Die Flüssigkeit siedet.", "say.boilEnd": "{vessel}: Das Sieden hört auf.",
       "say.dry": "{vessel}: Die Flüssigkeit ist verdampft, ein fester Rückstand bleibt.",
       "say.dryNone": "{vessel}: Die Flüssigkeit ist vollständig verdampft.",
-      "say.smell": "{vessel}: Es riecht stechend nach {name}.",
+      "say.smell": "{vessel}: Es riecht stechend nach {name}.", "say.smellFruity": "{vessel}: Es riecht fruchtig nach {name}.",
       "say.ignite": "{vessel}: {name} entzündet sich.", "say.fireEnd": "{vessel}: Das Feuer ist erloschen.",
       "say.splint": "{splint} an {vessel} gehalten: {result}.",
       "splint.pop1": "es macht „plopp“ (Knallgasprobe positiv)", "splint.pop2": "ein pfeifender Knall (Knallgasprobe positiv)",
@@ -151,6 +153,12 @@
       "err.model": "Dieses Rechenmodell gibt es nicht (ideal oder real)",
       "err.data": "Fehler in den eigenen Stoffdaten",
       "err.task": "Die Aufgabe lässt sich nicht lesen",
+      "err.pack": "Das Paket ließ sich nicht laden", "err.dataJson": "Die eigenen Daten sind kein gültiges JSON",
+      "pack.json": "kein gültiges JSON", "pack.net": "keine Verbindung", "pack.loading": "Paket wird geladen: {url}", "packs.loading": "Pakete werden geladen …",
+      "pack.done": "Paket geladen", "data.done": "Eigene Daten eingetragen",
+      "count.species": "{n} Stoff", "count.species.n": "{n} Stoffe", "count.equilibria": "{n} Gleichgewicht", "count.equilibria.n": "{n} Gleichgewichte",
+      "count.reactions": "{n} Reaktion", "count.reactions.n": "{n} Reaktionen", "count.couples": "{n} Redoxpaar", "count.couples.n": "{n} Redoxpaare",
+      "count.reagents": "{n} Vorrat", "count.reagents.n": "{n} Vorräte",
       "copy": "Aufbau kopieren", "copy.manual": "Der Aufbau als Text – markieren und kopieren:", "copy.done": "Der Text ist in der Zwischenablage.",
       "table.copy": "Tabelle kopieren", "table.manual": "Die Messwerte, durch Tabulatoren getrennt – markieren und kopieren:",
       "table.note": "Messwerte notieren", "table.clear": "Tabelle leeren", "table.title": "Messwerte", "table.no": "Nr.",
@@ -168,7 +176,9 @@
     },
     en: {
       "shelf": "Shelf", "stage": "Bench", "reset": "Reset",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser",
+      "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
+      "sameStill": "The condenser leads into another vessel.",
       "eq.catalyst": "catalyst",
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
@@ -221,7 +231,7 @@
       "say.boil": "{vessel}: The liquid boils.", "say.boilEnd": "{vessel}: The boiling stops.",
       "say.dry": "{vessel}: The liquid has evaporated, a solid residue remains.",
       "say.dryNone": "{vessel}: The liquid has evaporated completely.",
-      "say.smell": "{vessel}: There is a pungent smell of {name}.",
+      "say.smell": "{vessel}: There is a pungent smell of {name}.", "say.smellFruity": "{vessel}: There is a fruity smell of {name}.",
       "say.ignite": "{vessel}: {name} catches fire.", "say.fireEnd": "{vessel}: The fire has gone out.",
       "say.splint": "{splint} held to {vessel}: {result}.",
       "splint.pop1": "a soft pop (hydrogen test positive)", "splint.pop2": "a squeaky pop (hydrogen test positive)",
@@ -306,6 +316,12 @@
       "err.model": "There is no such calculation model (ideal or real)",
       "err.data": "Error in the custom substance data",
       "err.task": "The task cannot be read",
+      "err.pack": "The pack could not be loaded", "err.dataJson": "The custom data are not valid JSON",
+      "pack.json": "not valid JSON", "pack.net": "no connection", "pack.loading": "Loading pack: {url}", "packs.loading": "Loading packs …",
+      "pack.done": "Pack loaded", "data.done": "Custom data added",
+      "count.species": "{n} substance", "count.species.n": "{n} substances", "count.equilibria": "{n} equilibrium", "count.equilibria.n": "{n} equilibria",
+      "count.reactions": "{n} reaction", "count.reactions.n": "{n} reactions", "count.couples": "{n} redox couple", "count.couples.n": "{n} redox couples",
+      "count.reagents": "{n} stock bottle", "count.reagents.n": "{n} stock bottles",
       "copy": "Copy setup", "copy.manual": "The setup as text – select and copy:", "copy.done": "The text is on the clipboard.",
       "table.copy": "Copy the table", "table.manual": "The readings, separated by tabs – select and copy:",
       "table.note": "Note the readings", "table.clear": "Clear the table", "table.title": "Readings", "table.no": "No.",
@@ -478,7 +494,11 @@
         vars.state = text("flame." + event.level, lang);
         break;
       case "dry": return text(event.left ? "say.dry" : "say.dryNone", lang, vars);
-      case "smell": case "ignite": vars.name = nameOf(L.species(event.species), lang); break;
+      case "smell":
+        vars.name = nameOf(L.species(event.species), lang);
+        if (L.species(event.species).smell === "fruity") return text("say.smellFruity", lang, vars);
+        break;
+      case "ignite": vars.name = nameOf(L.species(event.species), lang); break;
       case "splint":
         vars.splint = text(event.kind === "glow" ? "part.glowsplint" : "part.splint", lang);
         vars.result = text("splint." + event.result + (event.result === "pop" ? event.level : ""), lang);
@@ -609,7 +629,7 @@
     }
     if (w.inflow && L.fx) out += L.fx.stream(shape.tall ? -4 : -10, shape.rim - 46, w.ml > 0.005 ? shape.top : shape.bottom, ctx.t, ctx.still);
     if (L.fx) {
-      if (w.steam > 0) out += L.fx.steam(shape.tall ? -6 : shape.x0 * 0.6, shape.tall ? 6 : shape.x1 * 0.6, shape.rim - 2, w.steam, ctx.t, ctx.seed || 1, ctx.still);
+      if (w.steam > 0 && !ctx.sealed) out += L.fx.steam(shape.tall ? -6 : shape.x0 * 0.6, shape.tall ? 6 : shape.x1 * 0.6, shape.rim - 2, w.steam, ctx.t, ctx.seed || 1, ctx.still);
       if (w.fire && w.fire.length) out += L.fx.fire(box.x0, box.x1, shape.bottom, w.fire, ctx.t, ctx.seed || 1, ctx.still);
       // Gas, das an der Öffnung abbrennt: eine kleine, blasse Flamme
       if (w.torch) out += '<g class="cl-torch">' + L.fx.fire(-6, 6, shape.rim + 2, [{ rate: 1, color: "#a9c2ff", glare: 0 }], ctx.t, ctx.seed || 1, ctx.still) + "</g>";
@@ -1067,6 +1087,79 @@
     }
   });
 
+  // ------------------------------------------------------------------ Rundkolben
+
+  // Kugel mit dem Radius R auf einem Korkring, darüber der Hals; rechts am Hals das Ansatzrohr für den Kühler
+  var FLASK = { R: 30, neck: 7, rim: -128, arm: -112 };
+  var FLASK_CY = -4 - FLASK.R;
+
+  function flaskSurface(w) {
+    var R = FLASK.R - 1, share = Math.min(1, w.ml / w.cap), lo = 0, hi = 2 * R, h, i;
+    for (i = 0; i < 30; i++) { h = (lo + hi) / 2; if (h * h * (3 * R - h) / (4 * R * R * R) < share) lo = h; else hi = h; }
+    return FLASK_CY + R - (lo + hi) / 2;
+  }
+
+  function flaskFill(y) {                // Umriss der Flüssigkeit bis zur Höhe y
+    var R = FLASK.R - 1, half;
+    if (y <= FLASK_CY - R + 0.5) return "M0," + f(FLASK_CY - R) + "A" + R + "," + R + " 0 1 0 0.01," + f(FLASK_CY - R) + "Z";
+    half = Math.sqrt(Math.max(0, R * R - (y - FLASK_CY) * (y - FLASK_CY)));
+    return "M" + f(-half) + "," + f(y) + "A" + R + "," + R + " 0 " + (y < FLASK_CY ? 1 : 0) + " 0 " + f(half) + "," + f(y) + "Z";
+  }
+
+  L.registerPart("flask", {
+    width: function () { return 2 * FLASK.R + 46; },
+    bounds: function () { return { x0: -FLASK.R - 6, x1: FLASK.R + 6, top: FLASK.rim - 6 }; },
+    surface: flaskSurface,
+    foot: function () { return 14; },
+    // slot beim Kühler: die Seite, auf der die Vorlage steht (−1 oder 1); dorthin zeigt das Ansatzrohr
+    probe: function (v, type, slot) {
+      if (type === "syringe") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
+      if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
+      if (type === "bridge") return { x: 0, rim: FLASK.rim };
+      if (type === "conductometer" || type === "photometer") return { x: 1, bottom: FLASK_CY + 14, top: FLASK.rim - 76, box: -70 };
+      return type === "phmeter" ? { x: 2, bottom: FLASK_CY + 14, top: FLASK.rim - 46, box: -62 } : { x: -2, bottom: FLASK_CY + 14, top: FLASK.rim - 70, tag: -62 };
+    },
+    mount: function (w) { return { x: 0, rim: FLASK.rim, surface: w.ml > 0.005 ? flaskSurface(w) : FLASK_CY + FLASK.R, edge: FLASK.R + 6 }; },
+    draw: function (w, ctx) {
+      var R = FLASK.R, n = FLASK.neck, y = flaskSurface(w), meet = FLASK_CY - Math.sqrt(R * R - n * n), half;
+      if (w.broken) return shards(R, ctx);
+      half = Math.sqrt(Math.max(0, (R - 1) * (R - 1) - (y - FLASK_CY) * (y - FLASK_CY)));
+      return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
+        contents(w, ctx, { path: flaskFill(y), fill: flaskFill, x0: -half, x1: half, top: y, bottom: FLASK_CY + R - 1, rim: FLASK.rim, tall: true }) +
+        '<path class="cl-glass" d="M' + -n + "," + FLASK.rim + "L" + -n + "," + f(meet) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(meet) + "L" + n + "," + FLASK.rim + '"/>' +
+        '<path class="cl-glass" d="M' + n + "," + (FLASK.arm - 3) + "L" + (n + 12) + "," + (FLASK.arm + 1) + "M" + n + "," + (FLASK.arm + 3) + "L" + (n + 12) + "," + (FLASK.arm + 7) + '"/>' +
+        '<line class="cl-shine" x1="-14" y1="' + (FLASK_CY - 16) + '" x2="-19" y2="' + (FLASK_CY + 4) + '"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
+  // ------------------------------------------------------------------ Liebigkühler
+
+  // place: { x1, y1 } Ende des Ansatzrohrs, { x2, y2 } Öffnung der Vorlage, s2 ihr Flüssigkeitsspiegel. Das Rohr fällt zur Vorlage hin ab.
+  function ductAt(place) {
+    var p = place || { x1: -30, y1: -40, x2: 30, y2: -20, s2: -4 }, low = Math.max(p.y1 + 24, p.y2 - 22);
+    return { x1: p.x1, y1: p.y1, x3: p.x2, y3: low, y4: p.y2 + 10, s2: p.s2 };
+  }
+
+  L.registerPart("condenser", {
+    width: function () { return 90; },
+    room: 120,                                                  // Platz bis zur Vorlage
+    bounds: function (t, place) {
+      var d = ductAt(place);
+      return { x0: Math.min(d.x1, d.x3) - 8, x1: Math.max(d.x1, d.x3) + 8, top: Math.min(d.y1, d.y3) - 12, bottom: Math.max(d.y3, d.y4) + 4 };
+    },
+    draw: function (w, ctx, place) {
+      var d = ductAt(place), dx = d.x3 - d.x1, dy = d.y3 - d.y1, a = { x: d.x1 + dx * 0.15, y: d.y1 + dy * 0.15 }, b = { x: d.x1 + dx * 0.8, y: d.y1 + dy * 0.8 };
+      var len = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / len * 7, ny = dx / len * 7, out;
+      out = '<path class="cl-jacket" d="M' + f(a.x + nx) + "," + f(a.y + ny) + "L" + f(b.x + nx) + "," + f(b.y + ny) + "L" + f(b.x - nx) + "," + f(b.y - ny) + "L" + f(a.x - nx) + "," + f(a.y - ny) + 'Z"/>' +
+        // Kühlwasser: unten hinein, oben heraus
+        '<path class="cl-hose" d="M' + f(b.x + nx) + "," + f(b.y + ny) + "l0,10M" + f(a.x - nx) + "," + f(a.y - ny) + 'l0,-10"/>' +
+        '<path class="cl-glass" d="M' + f(d.x1) + "," + f(d.y1) + "L" + f(d.x3) + "," + f(d.y3) + "L" + f(d.x3) + "," + f(d.y4) + '"/>';
+      if (w.drip && place && L.fx) out += L.fx.drops(d.x3, d.y4, d.s2, ctx.t || 0, ctx.still);
+      return out + (place ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
   // ------------------------------------------------------------------ Bürette
 
   var BURETTE = { length: 230, cap: 50 };     // Länge der Skala in Bildpunkten für 50 mL
@@ -1162,6 +1255,8 @@
         : id === "ammeter" || id === "voltmeter" ? '<rect class="cl-device" x="4" y="7" width="20" height="20" rx="2"/><circle class="cl-knob" cx="14" cy="17" r="7"/><text class="cl-letter" x="14" y="20.5" text-anchor="middle">' + (id === "ammeter" ? "A" : "V") + "</text>"
         : id === "lamp" ? '<circle class="cl-bulb" cx="14" cy="11" r="8" style="fill:#ffe98a"/><rect class="cl-device" x="10" y="18" width="8" height="5"/><rect class="cl-device" x="6" y="23" width="16" height="5" rx="1"/>'
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
+        : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
+        : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'
         : id === "conductometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:6px">mS</text></g>'
         : id === "bath" ? '<rect class="cl-bath-water" x="4" y="15" width="20" height="11"/><path class="cl-glass" d="M3,9L3,25Q3,27 5,27L23,27Q25,27 25,25L25,9"/><path class="cl-glass" d="M11,3L11,19A3,3 0 0 0 17,19L17,3"/>'
         : id === "photometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><circle class="cl-light" cx="7" cy="25" r="2.6" fill="rgb(70, 220, 90)"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:8px">λ</text></g>'

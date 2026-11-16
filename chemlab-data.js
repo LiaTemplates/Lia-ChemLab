@@ -169,8 +169,10 @@
         src: NONE + "; Absorptionsbande geschätzt nach der blauen Farbe (Maximum um 600 nm)" },
 
       // ---------------------------------------------------------------- schwache Säuren und Basen
-      "CH3COOH(aq)": { name: name("Essigsäure", "acetic acid"), Hf: null, src: NONE },
-      "CH3COO-(aq)": { name: name("Acetat-Ion", "acetate ion"), Hf: null, D: 1.089, src: NONE + DL },
+      // Vm: Eigenvolumen in mL/mol (60,05 g/mol bei 1,049 g/cm³): Konzentrierte Essigsäure enthält entsprechend weniger Wasser
+      "CH3COOH(aq)": { name: name("Essigsäure", "acetic acid"), Hf: null, Vm: 57.25, src: NONE + "; Dichte 1,049 g/cm³: PubChem, Hazardous Substances Data Bank (gemeinfrei)" },
+      // dasselbe Eigenvolumen wie die Säure (H+ hat keines): so bleibt das Volumen gleich, wenn sie dissoziiert
+      "CH3COO-(aq)": { name: name("Acetat-Ion", "acetate ion"), Hf: null, D: 1.089, Vm: 57.25, src: NONE + DL },
       "NH3(aq)": { name: name("Ammoniak", "ammonia"), Hf: null, src: NONE },
       "NH4+(aq)": { name: name("Ammonium-Ion", "ammonium ion"), Hf: -133.26, S: 111.17, D: 1.98, src: CODATA + DW },
 

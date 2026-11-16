@@ -1068,6 +1068,9 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
   const readme = fs.readFileSync(new URL("README.md", here), "utf8");
   const blocks = [...readme.matchAll(/```+ *json +@ChemLab\.sim\n([\s\S]*?)\n```+/g)].map((m) => m[1]);
   assert.ok(blocks.length >= 14, `${blocks.length} Beispiele`);
+  // was die Folien mit @[ChemLab.pack] und @ChemLab.data eintragen
+  for (const m of readme.matchAll(/^@\[ChemLab\.pack\]\((.*?)\)$/gm)) L.register(JSON.parse(fs.readFileSync(new URL(m[1], here), "utf8")));
+  for (const m of readme.matchAll(/```+ *json +@ChemLab\.data\n([\s\S]*?)\n```+/g)) L.register(JSON.parse(m[1]));
   const types = new Set(), reagents = new Set();
   for (const block of blocks) {
     const config = L.normalize(block);
@@ -1086,7 +1089,8 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["README.md", "check.mjs", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css"]);
+  assert.deepEqual(files, ["README.md", "check.mjs", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs"]);
+  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
 });
 
 // ================================================================ Befunde der Durchsicht
@@ -1883,7 +1887,9 @@ const stress = (model, seeds) => {
         const give = r.solid ? { g: +(0.01 + rnd() * 0.08).toFixed(3) } : r.drops ? { drops: 1 + Math.floor(rnd() * 5) } : { ml: +(0.5 + rnd() * 9).toFixed(1) };
         if (L.add(l, to, id, give)) {
           const ml = give.ml != null ? give.ml : (give.drops || 0) * 0.05;
-          added = r.solid ? give.g : ml * 0.997 + Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * ml / 1000 * L.species(sp).M, 0);
+          // Wasser nur so viel, wie neben den gelösten Stoffen Platz hat (Eigenvolumen Vm)
+          const water = 1 - Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * (L.species(sp).Vm || 0) / 1000, 0);
+          added = r.solid ? give.g : ml * water * 0.997 + Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * ml / 1000 * L.species(sp).M, 0);
         }
         trail.push(`${id} ${JSON.stringify(give)} → ${to}`);
       } else if (kind < 0.85) { const from = pick(ids), to = pick(ids), ml = +(rnd() * 25).toFixed(1); L.pour(l, from, to, ml); trail.push(`gieße ${ml} mL ${from} → ${to}`); }
@@ -6879,4 +6885,296 @@ test("Oberfläche: ein leeres Regal erscheint gar nicht", () => {
   assert.equal(part(mount({ shelf: [] }), ".cl-shelf").hidden, true);
   assert.equal(part(mount({ lock: true, shelf: ["beaker"] }), ".cl-shelf").hidden, true, "gesperrt bleibt von diesem Regal nichts");
   assert.equal(part(mount(tube), ".cl-shelf").hidden, false);
+});
+
+// ================================================================ Pakete und eigene Daten für den ganzen Kurs
+
+const gallium = { species: {
+    "Ga(s)": { name: { de: "Gallium", en: "gallium" }, Hf: 0, S: 40.83, src: "CODATA Key Values" },
+    "Ga^3+(aq)": { name: { de: "Gallium-Ion", en: "gallium ion" }, Hf: -211.7, S: -331, src: "Test" } },
+  couples: [{ eq: "Ga^3+(aq) + 3 e- <=> Ga(s)", E0: -0.549, src: "Test" }],
+  reagents: { "Ga granules": { name: { de: "Gallium (Körner)", en: "gallium granules" }, solid: "Ga(s)", area: 6 } } };
+const indium = { about: "Testpaket", species: {
+    "In(s)": { name: { de: "Indium", en: "indium" }, Hf: 0, S: 57.82, src: "Test" },
+    "In^3+(aq)": { name: { de: "Indium-Ion", en: "indium ion" }, Hf: -105, S: -151, src: "Test" } },
+  couples: [{ eq: "In^3+(aq) + 3 e- <=> In(s)", E0: -0.338, src: "Test" }],
+  reagents: { "In granules": { name: { de: "Indium (Körner)", en: "indium granules" }, solid: "In(s)", area: 6 } } };
+const settleAll = async () => { for (let i = 0; i < 5; i++) await new Promise((r) => setTimeout(r, 0)); };
+const fakeFetch = (files) => async (url) => (url in files
+  ? { ok: true, status: 200, json: async () => { if (typeof files[url] === "string") throw new SyntaxError("Unexpected token"); return files[url]; } }
+  : { ok: false, status: 404, json: async () => ({}) });
+
+test("@ChemLab.data: eigene Daten gelten ab ihrer Folie für alle Flächen des Kurses", () => {
+  const note = node();
+  L.useData(note, "```\n" + JSON.stringify(gallium) + "\n```");
+  assert.match(note.innerHTML, /Eigene Daten eingetragen: 2 Stoffe, 1 Redoxpaar, 1 Vorrat/);
+  assert.doesNotMatch(note.innerHTML, /role="alert"/);
+  const el = mount({ bench: [{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 5 }, { reagent: "Ga granules", g: 0.1 }] }] });
+  assert.doesNotMatch(el.innerHTML, /role="alert"/, "eine andere Fläche kennt das Gallium");
+  const bad = node();
+  L.useData(bad, '{"species":{"Xy(s)":{"Hf":0}}}');
+  assert.match(bad.innerHTML, /role="alert"/);
+  assert.match(bad.innerHTML, /Fehler in den eigenen Stoffdaten/);
+  L.useData(bad, "{kein json");
+  assert.match(bad.innerHTML, /kein gültiges JSON/);
+});
+
+test("@ChemLab.pack: ein Paket wird geladen; Flächen warten, solange es lädt", async () => {
+  const url = "https://example.org/packs/indium.json", saved = globalThis.fetch;
+  globalThis.fetch = fakeFetch({ [url]: indium, "https://example.org/kaputt.json": "{" });
+  try {
+    const note = node();
+    L.usePack(note, url);
+    assert.match(note.innerHTML, /Paket wird geladen/);
+    assert.equal(L.loaded(), false, "solange ein Paket lädt, warten die Flächen");
+    await settleAll();
+    assert.equal(L.loaded(), true);
+    assert.match(note.innerHTML, /Paket geladen: Testpaket – 2 Stoffe, 1 Redoxpaar, 1 Vorrat/);
+    assert.ok(L.db.reagents["In granules"]);
+    L.usePack(note, url);
+    await settleAll();
+    assert.match(note.innerHTML, /Paket geladen/, "ein zweites Mal ist kein Fehler");
+    for (const [where, why] of [["https://example.org/fehlt.json", /404/], ["https://example.org/kaputt.json", /kein gültiges JSON/]]) {
+      L.usePack(note, where);
+      await settleAll();
+      assert.match(note.innerHTML, /role="alert"/, where);
+      assert.match(note.innerHTML, why, where);
+      assert.ok(note.innerHTML.includes(where), "die Adresse steht dabei");
+      assert.equal(L.loaded(), true, "ein gescheitertes Paket hält niemanden auf");
+    }
+  } finally { globalThis.fetch = saved; }
+});
+
+test("packs: eine Fläche lädt ihre Pakete selbst, bevor sie den Aufbau liest", async () => {
+  const url = "https://example.org/packs/bismuth.json", saved = globalThis.fetch;
+  const bismuth = { species: { "Bi(s)": { name: { de: "Bismut", en: "bismuth" }, Hf: 0, S: 56.74, src: "Test" } },
+    reagents: { "Bi granules": { name: { de: "Bismut (Körner)", en: "bismuth granules" }, solid: "Bi(s)", area: 6 } } };
+  globalThis.fetch = fakeFetch({ [url]: bismuth });
+  try {
+    const source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "Bi granules", g: 1 }] }] };
+    const el = mount(source);
+    assert.match(el.innerHTML, /Pakete werden geladen/);
+    await settleAll();
+    assert.doesNotMatch(el.innerHTML, /role="alert"/);
+    assert.ok(L.vessel(state(el).run.lab, "b").n["Bi(s)"] > 0, "der Aufbau steht, mit dem Stoff aus dem Paket");
+    assert.deepEqual(state(el).config.packs, [url]);
+    const missing = mount({ packs: ["https://example.org/nichts.json"] });
+    await settleAll();
+    assert.match(missing.innerHTML, /role="alert"/);
+    assert.match(missing.innerHTML, /Das Paket ließ sich nicht laden: https:\/\/example\.org\/nichts\.json/);
+    for (const packs of ["https://example.org/a.json", ["packs/organic.json"], [17]])
+      assert.throws(() => L.normalize({ packs }), (e) => e.code === "pack", JSON.stringify(packs));
+  } finally { globalThis.fetch = saved; }
+});
+
+test("README: die Makros @ChemLab.data und @ChemLab.pack sind im Kopf erklärt und rufen den Baustein", () => {
+  const readme = fs.readFileSync(new URL("README.md", here), "utf8"), head = readme.slice(0, readme.indexOf("-->"));
+  assert.match(head, /^@ChemLab\.data: @ChemLab\.data_\(@uid,```@0```\)$/m);
+  assert.match(head, /^@ChemLab\.pack: @ChemLab\.pack_\(@uid,@0\)$/m);
+  const body = (name) => head.slice(head.indexOf("\n" + name + "\n"), head.indexOf("\n@end", head.indexOf("\n" + name + "\n")));
+  assert.match(body("@ChemLab.data_"), /id="lia-chemlab-data-@0"/);
+  assert.match(body("@ChemLab.data_"), /C\.useData\(el, `@'1`\)/);
+  assert.match(body("@ChemLab.pack_"), /id="lia-chemlab-pack-@0"/);
+  assert.match(body("@ChemLab.pack_"), /C\.usePack\(el, `@'1`\)/);
+  for (const name of ["@ChemLab.data_", "@ChemLab.pack_"]) {
+    assert.match(body(name), /<script modify="false">/, name);
+    assert.match(body(name), /^""$/m, name + ": das Skript gibt nichts aus");
+  }
+});
+
+// ================================================================ Organik: Stoffe mit Eigenvolumen, Sieden von Gemischen, Kühler, Veresterung
+
+const organic = JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8"));
+
+test("Paket Organik: lädt ohne Fehler, jeder Eintrag nennt seine Quelle", () => {
+  L.register(organic);
+  assert.deepEqual(L.lint(organic), []);
+  for (const [id, s] of Object.entries(organic.species)) assert.ok(s.src && s.name.de && s.name.en, id);
+  for (const r of organic.reactions) assert.ok(r.src, r.eq);
+});
+
+test("Eigenvolumen (Vm): ein gelöster Stoff nimmt Platz ein, die Vorratsflasche enthält nur so viel Wasser, wie daneben Platz hat", () => {
+  L.register(organic);
+  const spirit = beaker([{ reagent: "ethanol", ml: 10 }]);
+  near(look(spirit).ml, 10, 0.01, "10 mL Ethanol sind 10 mL");
+  near(amount(spirit, "C2H5OH(aq)"), 0.1645, 1e-4);
+  near(amount(spirit, "H2O(l)"), 10 * (1 - 16.45 * 58.37 / 1000) * 0.997 / 18.015, 1e-4, "vier Prozent Wasser");
+  near(look(beaker([{ reagent: "ethanol", ml: 10 }, { reagent: "H2O", ml: 10 }])).ml, 20, 0.01, "die Volumina addieren sich");
+  // Essigsäure hat jetzt ein Eigenvolumen: 1 mol/L enthält entsprechend weniger Wasser, das Volumen bleibt
+  const acid = beaker([{ reagent: "CH3COOH 1M", ml: 10 }]);
+  near(look(acid).ml, 10, 1e-9, "auch wenn ein Teil dissoziiert: das Acetat-Ion hat dasselbe Eigenvolumen");
+  near(amount(acid, "H2O(l)"), 10 * (1 - 57.25 / 1000) * 0.997 / 18.015, 1e-6);
+  near(look(beaker([{ reagent: "CH3COOH 0.1M", ml: 20 }])).pH, 2.88, 0.01, "der pH-Wert bleibt");
+});
+
+test("Eigene Daten: Vm, Tb, Hvap, mix und smell werden geprüft", () => {
+  const bad = (entry) => assert.throws(() => L.register({ species: { "C3H8O(aq)": Object.assign({ name: { de: "x" }, Hf: null, src: "x" }, entry) } }),
+    (e) => e.code === "data", JSON.stringify(entry));
+  bad({ Vm: -1 });
+  bad({ Vm: "viel" });
+  bad({ Tb: "heiß" });
+  bad({ Tb: 97 });                                             // ohne Hvap
+  bad({ Tb: 97, Hvap: 0 });
+  bad({ mix: [1, 1] });                                        // ohne Tb
+  bad({ Tb: 97, Hvap: 40, mix: [1] });
+  bad({ smell: "blumig" });
+  assert.throws(() => L.register({ species: { "C3H8O(l)": { name: { de: "x" }, Hf: null, src: "x", Vm: 75 } } }), (e) => e.code === "data", "Vm nur für Gelöstes");
+  assert.throws(() => L.register({ reagents: { "zu viel": { name: { de: "x" }, solution: { "C2H5OH(aq)": 20 } } } }), (e) => e.code === "data", "mehr als ein Liter je Liter");
+  assert.throws(() => L.register({ reactions: [{ eq: "CH3COOC2H5(aq) + H2O(l) -> CH3COOH(aq) + C2H5OH(aq)", rate: { k: 1, order: { "H2O(g)": 1 } } }] }),
+    (e) => e.code === "data", "die Ordnung gilt Gelöstem und Wasser");
+});
+
+const still = (contains, more) => lab([{ type: "flask", id: "k", contains }, { type: "burner", id: "br", under: "k", flame: 2 }, { type: "thermometer", id: "th", in: "k" },
+  { type: "condenser", id: "c", in: "k", to: "v" }, { type: "beaker", id: "v" }], Object.assign({ room: 20 }, more));
+const distillate = (l) => { const v = L.vessel(l, "v"); return { ml: L.volume(v) * 1000, ethanol: (v.n["C2H5OH(aq)"] || 0) * 58.37 / (L.volume(v) * 1000) }; };
+
+test("Destillation: Wein siedet bei gut 91 °C, das erste Destillat hat über 45 % Alkohol", () => {
+  L.register(organic);
+  const l = still([{ reagent: "wine", ml: 50 }]), seen = [];
+  const start = totals(l).mass;
+  until(l, () => L.vessel(l, "k").boil > 0, 900, seen);
+  near(L.vessel(l, "k").T, 91.5, 1.5, "Siedetemperatur");
+  until(l, () => distillate(l).ml >= 3, 900);
+  assert.ok(distillate(l).ethanol > 0.45, `erstes Destillat: ${(100 * distillate(l).ethanol).toFixed(0)} % Ethanol`);
+  near(totals(l).mass, start, 1e-6, "nichts geht verloren: was verdampft, ist in der Vorlage");
+  until(l, () => distillate(l).ml >= 20, 3000);
+  assert.ok(L.vessel(l, "k").T > 97, `gegen Ende fast nur noch Wasser: ${L.vessel(l, "k").T.toFixed(1)} °C`);
+  assert.ok(seen.some((e) => e.key === "boil"), "das Protokoll meldet das Sieden");
+});
+
+test("Destillation: Ethanol 96 % siedet bei 78 °C, reines Wasser weiter bei 100 °C", () => {
+  L.register(organic);
+  const spirit = still([{ reagent: "ethanol", ml: 30 }]);
+  until(spirit, () => L.vessel(spirit, "k").boil > 0, 900);
+  near(L.vessel(spirit, "k").T, 78.2, 0.6, "Ethanol 96 %");
+  const water = still([{ reagent: "H2O", ml: 30 }]);
+  until(water, () => L.vessel(water, "k").boil > 0, 900);
+  near(L.vessel(water, "k").T, 100, 0.05, "Wasser");
+  until(water, () => distillate(water).ml >= 2, 900);
+  assert.deepEqual(Object.entries(L.vessel(water, "v").n).filter(([, n]) => n > 1e-8).map(([id]) => id), ["H2O(l)"], "das Destillat ist Wasser (mit seinen Ionen in Spuren)");
+  near(L.vessel(water, "v").T, 20, 3, "der Kühler kühlt das Destillat auf Raumtemperatur");
+});
+
+test("Sieden ohne Kühler: der Dampf entweicht, das Ethanol zuerst", () => {
+  L.register(organic);
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "wine", ml: 50 }] }, { type: "burner", id: "br", under: "b", flame: 2 }]);
+  const before = amount(l, "C2H5OH(aq)");
+  until(l, () => L.view(l, L.vessel(l, "b")).ml < 40, 3000);
+  assert.ok(amount(l, "C2H5OH(aq)") < 0.5 * before, `ein Fünftel verdampft, mehr als die Hälfte des Alkohols ist fort (${(amount(l, "C2H5OH(aq)") / before).toFixed(2)})`);
+});
+
+test("Kühler: Beschreibung mit in und to, Fehler und Aufbau als Text", () => {
+  L.register(organic);
+  const c = L.normalize({ bench: [{ type: "flask", id: "k" }, { type: "condenser", in: "k", to: "v" }, { type: "beaker", id: "v" }] });
+  assert.deepEqual(c.bench[1], { type: "condenser", id: "condenser1", in: "k", to: "v" });
+  for (const bench of [
+    [{ type: "flask", id: "k" }, { type: "condenser", in: "k", to: "k" }],
+    [{ type: "flask", id: "k" }, { type: "condenser", in: "k", to: "x" }],
+    [{ type: "flask", id: "k" }, { type: "beaker", id: "v" }, { type: "condenser", in: "k", to: "v" }, { type: "condenser", in: "k", to: "v" }]
+  ]) assert.throws(() => L.normalize({ bench }), (e) => e.code === "place", JSON.stringify(bench));
+  const run = L.createRun(c);
+  assert.match(L.describe(run, {}), /\{"type":"condenser","id":"condenser1","in":"k","to":"v"\}/);
+  const placed = L.createLab(L.normalize({ bench: [{ type: "flask", id: "k" }, { type: "beaker", id: "v" }] }));
+  const id = L.place(placed, { type: "condenser", in: "k", to: "v" });
+  assert.deepEqual([L.tool(placed, id).in, L.tool(placed, id).to], ["k", "v"]);
+});
+
+// wie im Messbericht: je 10 mL Ethanol und Eisessig mit 5 Tropfen Schwefelsäure; im Reagenzglas die Hälfte mit 3 Tropfen
+const esterMix = (acid, more, bath) => {
+  L.register(organic);
+  const small = bath != null, ml = small ? 5 : 10;
+  const contains = [{ reagent: "ethanol", ml }, { reagent: "glacial acetic acid", ml }].concat(acid ? [{ reagent: "sulfuric acid conc", drops: small ? 3 : 5 }] : []);
+  return lab([{ type: small ? "testtube" : "beaker", id: "b", contains }].concat(small ? [{ type: "bath", id: "wb", under: "b", temp: bath }] : []), Object.assign({ room: 25 }, more));
+};
+const conc = (l, id) => amount(l, id) / L.volume(L.vessel(l, "b"));
+
+test("Veresterung: Anfangsgeschwindigkeit wie gemessen, mit Schwefelsäure etwa zwanzigmal schneller", () => {
+  const rate = (l) => { const a = amount(l, "CH3COOC2H5(aq)"); L.step(l, 10); return (amount(l, "CH3COOC2H5(aq)") - a) / 10 / L.volume(L.vessel(l, "b")); };
+  const fast = esterMix(true), slow = esterMix(false);
+  const kFast = rate(fast) / (conc(fast, "CH3COOH(aq)") * conc(fast, "C2H5OH(aq)")), kSlow = rate(slow) / (conc(slow, "CH3COOH(aq)") * conc(slow, "C2H5OH(aq)"));
+  near(kFast, 2.78e-5, 0.1e-5, "k mit 5 Tropfen Schwefelsäure bei 25 °C (Messwert 2,3·10⁻⁵ bei 22 °C)");
+  near(kFast / kSlow, 19, 3, "ohne Schwefelsäure katalysiert nur die Essigsäure selbst");
+});
+
+test("Veresterung: im Wasserbad von 70 °C stellt sich das Gleichgewicht mit K = 4 ein, und es riecht fruchtig", () => {
+  const l = esterMix(true, {}, 70), seen = [];
+  L.step(l, 3600, (e) => seen.push(e));
+  const K = conc(l, "CH3COOC2H5(aq)") * conc(l, "H2O(l)") / (conc(l, "CH3COOH(aq)") * conc(l, "C2H5OH(aq)"));
+  near(K, 4, 0.15, "Gleichgewichtskonstante");
+  const ester = amount(l, "CH3COOC2H5(aq)");
+  near(ester / 0.08225, 0.62, 0.04, "gut sechzig Prozent des Ethanols sind verestert");
+  const smell = seen.find((e) => e.key === "smell" && e.species === "CH3COOC2H5(aq)");
+  assert.ok(smell, "Geruch nach dem Ester");
+  assert.equal(L.say(smell, { lang: "de", names: { b: "Reagenzglas 1" } }), "Reagenzglas 1: Es riecht fruchtig nach Ethylacetat (Essigsäureethylester).");
+  assert.equal(L.say(smell, { lang: "en", names: { b: "test tube 1" } }), "test tube 1: There is a fruity smell of ethyl acetate.");
+  assert.ok(!(L.vessel(l, "b").boil > 0), "bei 70 °C siedet die Mischung nicht");
+  assert.ok(L.reactions(l, "b").some((r) => /CH3COOC2H5/.test(r.eq) && r.catalysts.includes("H+(aq)")), "die Gleichung nennt den Katalysator");
+});
+
+test("Zeichnung: Rundkolben mit Flüssigkeit, Kühler zwischen zwei Gefäßen, mit Tropfen beim Destillieren", () => {
+  L.register(organic);
+  const l = still([{ reagent: "wine", ml: 50 }]), flask = L.view(l, L.vessel(l, "k"));
+  const drawn = L.parts.flask.draw(flask, ctx());
+  clean(drawn, "Rundkolben");
+  assert.match(drawn, /class="cl-liquid"/);
+  assert.match(drawn, /class="cl-glass"/);
+  assert.ok(L.parts.flask.surface(flask) < L.parts.flask.surface(L.view(beakerLab = lab([{ type: "flask", id: "k", contains: [{ reagent: "H2O", ml: 10 }] }]), L.vessel(beakerLab, "k"))), "mehr Flüssigkeit steht höher");
+  const place = { x1: 9, y1: -112, x2: 150, y2: -96, s2: -10 };
+  const off = L.parts.condenser.draw(L.reading(l, "c"), ctx(), place);
+  clean(off, "Kühler");
+  assert.match(off, /class="cl-jacket"/);
+  assert.doesNotMatch(off, /cl-drop/, "noch kein Destillat");
+  until(l, () => L.vessel(l, "v").n["C2H5OH(aq)"] > 0, 900);
+  assert.equal(L.reading(l, "c").drip, true);
+  assert.match(L.parts.condenser.draw(L.reading(l, "c"), ctx(), place), /cl-drop/, "es tropft in die Vorlage");
+  clean(L.parts.condenser.draw({ type: "condenser" }, ctx()), "Kühler für sich");
+  assert.match(L.icon("flask"), /<svg/);
+  assert.match(L.icon("condenser"), /<svg/);
+});
+let beakerLab;
+
+test("Oberfläche: den Kühler setzen – erst den Kolben, dann die Vorlage antippen", () => {
+  L.register(organic);
+  const el = mount({ bench: [{ type: "flask", id: "k", contains: [{ reagent: "wine", ml: 40 }] }, { type: "beaker", id: "v" }], shelf: ["condenser"] });
+  press(el, "hand", "condenser");
+  assert.match(part(el, ".cl-hand").innerHTML, /Nun das Gefäß antippen, aus dem destilliert wird/);
+  tap(el, "k");
+  assert.match(part(el, ".cl-hand").innerHTML, /Nun die Vorlage antippen/);
+  tap(el, "k");
+  assert.match(part(el, ".cl-status").textContent, /in ein anderes Gefäß/);
+  tap(el, "v");
+  const t = state(el).run.lab.tools.find((x) => x.type === "condenser");
+  assert.deepEqual([t.in, t.to], ["k", "v"]);
+  assert.match(logOf(el), /Liebigkühler 1 zwischen Rundkolben 1 und Becherglas 1 gesetzt/);
+  assert.equal(item(el, t.id).attributes["aria-label"], "Liebigkühler 1 zwischen Rundkolben 1 und Becherglas 1");
+  assert.match(item(el, t.id).innerHTML, /cl-jacket/);
+});
+
+test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
+  L.register(organic);
+  const [ester] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));
+  const tube = ester.bench.find((p) => p.type === "testtube").id, bath = ester.bench.find((p) => p.type === "bath").id;
+  const smellAfter = (temp, drops) => {
+    const run = L.createRun(ester);
+    L.act(run, (l) => L.setTemp(l, bath, temp));
+    if (drops) L.act(run, (l) => L.add(l, tube, "sulfuric acid conc", { drops }));
+    for (let t = 5; t <= 1800; t += 5) { L.advance(run, 5); if (L.checkTask(ester.task, run.lab, L.logAt(run)).done) return t; }
+    return Infinity;
+  };
+  assert.ok(ester.shelf.includes("sulfuric acid conc"));
+  assert.ok(smellAfter(70, 3) <= 30, "im Wasserbad von 70 °C nach Sekunden");
+  const cold = smellAfter(20, 3);
+  assert.ok(cold >= 120 && cold <= 900, `ohne Wasserbad nach einigen Minuten (${cold} s)`);
+  assert.equal(smellAfter(20, 0), Infinity, "ohne Säure nicht in einer halben Stunde");
+  // Destillation: Brenner an (rauschend)
+  const run = L.createRun(wine), k = wine.bench.find((p) => p.type === "flask").id, v = wine.bench.find((p) => p.type === "condenser").to;
+  L.act(run, (l) => L.setFlame(l, wine.bench.find((p) => p.type === "burner").id, 2));
+  while (!(L.vessel(run.lab, k).boil > 0)) L.advance(run, 1);
+  near(L.vessel(run.lab, k).T, 91, 2.5, "bei gut 90 °C beginnt der Wein zu sieden");
+  while (L.volume(L.vessel(run.lab, v)) < 0.003) L.advance(run, 1);
+  const share = (L.vessel(run.lab, v).n["C2H5OH(aq)"] * 58.37) / (L.volume(L.vessel(run.lab, v)) * 1000);
+  near(share, 0.5, 0.1, "das erste Destillat ist etwa zur Hälfte Alkohol");
+  while (L.volume(L.vessel(run.lab, v)) < 0.03) L.advance(run, 1);
+  assert.ok(L.vessel(run.lab, k).T > 99, "die Siedetemperatur steigt auf 100 °C");
+  assert.equal(run.lab.failed || 0, 0);
 });

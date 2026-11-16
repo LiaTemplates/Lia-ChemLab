@@ -40,6 +40,34 @@ attribute: Bildungsenthalpien und Entropien aus den
 ""
 </script>
 @end
+
+@ChemLab.data: @ChemLab.data_(@uid,```@0```)
+
+@ChemLab.data_
+<div class="lia-chemlab-note" id="lia-chemlab-data-@0"></div>
+<script modify="false">
+(function wait(tries) {
+  var el = document.getElementById("lia-chemlab-data-@0"), C = window.LiaChemLab;
+  if (el && C && C.useData && C.loaded()) return C.useData(el, `@'1`);
+  if (tries < 300) setTimeout(function () { wait(tries + 1); }, tries < 50 ? 100 : 500);
+})(0);
+""
+</script>
+@end
+
+@ChemLab.pack: @ChemLab.pack_(@uid,@0)
+
+@ChemLab.pack_
+<div class="lia-chemlab-note" id="lia-chemlab-pack-@0"></div>
+<script modify="false">
+(function wait(tries) {
+  var el = document.getElementById("lia-chemlab-pack-@0"), C = window.LiaChemLab;
+  if (el && C && C.usePack && C.loaded()) return C.usePack(el, `@'1`);
+  if (tries < 300) setTimeout(function () { wait(tries + 1); }, tries < 50 ? 100 : 500);
+})(0);
+""
+</script>
+@end
 -->
 
 # ChemLab – Chemie zum Ausprobieren
@@ -696,6 +724,66 @@ Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gege
  "shelf":["CuSO4 0.1M","NaOH 1M","Zn granules","testtube","thermometer","burner"]}
 ```
 
+## Erweiterungspakete
+
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehört das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation. Ein Paket kommt auf drei Wegen in einen Kurs:
+
+- `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
+- `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
+- `@ChemLab.data` an einem JSON-Block trägt eigene Daten ein, wie ein Paket, nur ohne eigene Datei.
+
+Diese Folie lädt das Paket des Bausteins:
+
+@[ChemLab.pack](packs/organic.json)
+
+Und so sieht ein Block mit eigenen Daten aus: Er trägt Methanol ein, ab jetzt für jede Fläche dieses Kurses.
+
+```json @ChemLab.data
+{"species":{
+  "CH3OH(aq)":{"name":{"de":"Methanol","en":"methanol"},"Hf":null,"Vm":40.73,"Tb":64.7,"Hvap":37.34,
+   "src":"PubChem, Hazardous Substances Data Bank: Dichte 0,7866 g/cm³ bei 25 °C, Siedepunkt 64,7 °C, Verdampfungsenthalpie 37,34 kJ/mol bei 25 °C"}},
+ "reagents":{
+  "methanol":{"name":{"de":"Methanol","en":"methanol"},"solution":{"CH3OH(aq)":24.5},"group":"other"}}}
+```
+
+## Veresterung
+
+@[ChemLab.pack](packs/organic.json)
+
+Ethanol und Eisessig reagieren zu Ethylacetat und Wasser, einem Ester mit fruchtigem Geruch. Ohne Katalysator geht das sehr langsam. Ein paar Tropfen konzentrierte Schwefelsäure beschleunigen die Reaktion, Wärme noch mehr: Im Wasserbad von 70 °C riecht es nach Sekunden, ohne Wasserbad nach einigen Minuten, ganz ohne Säure in einer halben Stunde nicht. Die Reaktion ist ein Gleichgewicht: Aus gleichen Teilen Säure und Alkohol entstehen höchstens zwei Drittel Ester.
+
+```json @ChemLab.sim
+{"task":{"text":"Stelle den Ester her, bis es fruchtig riecht.",
+  "goals":[{"seen":"smell","species":"CH3COOC2H5(aq)","label":"Es riecht fruchtig nach Ethylacetat"}]},
+ "bench":[
+  {"type":"testtube","id":"rg","contains":[{"reagent":"ethanol","ml":4},{"reagent":"glacial acetic acid","ml":4}]},
+  {"type":"bath","under":"rg"},
+  {"type":"thermometer","in":"rg"}
+ ],
+ "shelf":["sulfuric acid conc","H2O"],
+ "room":20,
+ "show":{"charts":["T","n"]}}
+```
+
+## Destillation
+
+@[ChemLab.pack](packs/organic.json)
+
+Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas leitet. Den Brenner anzünden: Bei gut 90 °C beginnt der Wein zu sieden, unter dem Siedepunkt des Wassers, und aus dem Kühler tropft das Destillat. Der Dampf ist reicher an Alkohol als die Flüssigkeit, aus der er kommt: Das erste Destillat ist etwa zur Hälfte Alkohol. Im Kolben bleibt immer weniger davon, die Siedetemperatur steigt auf 100 °C, und zuletzt kommt fast nur noch Wasser. Wer die Vorlage zwischendurch tauscht, bekommt Destillate verschiedener Stärke. Den Kühler setzt man aus dem Regal: erst den Kolben antippen, dann die Vorlage.
+
+```json @ChemLab.sim
+{"table":true,
+ "bench":[
+  {"type":"flask","id":"kolben","contains":[{"reagent":"wine","ml":60}]},
+  {"type":"burner","under":"kolben"},
+  {"type":"thermometer","in":"kolben"},
+  {"type":"condenser","in":"kolben","to":"vorlage"},
+  {"type":"beaker","id":"vorlage","ml":50}
+ ],
+ "shelf":["beaker","condenser","wine"],
+ "show":{"charts":["T","n"]}}
+```
+
 ## Ohne Zahlen
 
 Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: Farbe, Gasblasen, das steigende Thermometer und die Reaktionsgleichung. Auch Diagramme, Gleichungen und Protokoll lassen sich einzeln abschalten.
@@ -774,6 +862,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `ammeter`, `voltmeter` | Strommesser (im Stromkreis), Spannungsmesser (zwischen den beiden Elektroden) | `in` |
 | `lamp` | Glühlämpchen 3,8 V / 0,07 A, im Stromkreis | `in` |
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
+| `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
+| `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
 | `splint`, `glowsplint`, `rod` | brennender Holzspan, Glimmspan, Magnesiastäbchen: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
 
 **Ziele einer Aufgabe** – jedes mit wahlweise `in` (nur dieses Gefäß, mit seinem Namen) und `label` (eigener Text statt des erzeugten):
@@ -849,9 +939,12 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `color` | Farbe eines Feststoffs in der Schreibweise `"#b9bdc6"`; auch die Farbe seines Niederschlags |
 | `settle` | Zeit in s, in der sich ein Niederschlag absetzt; Vorgabe 25 |
 | `flame`, `shine` | Farbe, die das Teilchen einer Flamme gibt (`"#ffd21f"`), und wie stark es färbt; Vorgabe 1, Natrium 30 |
-| `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es |
+| `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es. `"fruity"`: riecht fruchtig; bei einem flüchtigen gelösten Stoff zählt sein Dampfdruck über der Lösung |
 | `colloid` | `true`: entsteht der Feststoff in einer Lösung, bleibt er fein verteilt in der Schwebe und setzt sich nicht ab (Schwefel aus Thiosulfat) |
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
+| `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
+| `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
+| `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
 | `symbol` | Kurzzeichen für große Moleküle, zum Beispiel `"HInd"` für einen Indikator; ersetzt die Formel in der Anzeige |
@@ -868,7 +961,7 @@ Steht in der Gleichung ein Gas, ist es die **Löslichkeit eines Gases**: `{"eq":
 
 Eine eigene Elektrode ist ein Gerät mit dem Material als Angabe: `LiaChemLab.registerPart("electrode-Sn", Object.assign({ kind: "tool", electrode: "Sn(s)", g: 10, unit: "g", lag: 0 }, LiaChemLab.electrodeLook))`. Sie heißt nach ihrem Stoff („Zinn-Elektrode“); ein eigener Name steht in `name` mit `de` und `en`. Im Regal erscheint sie nur dort, wo ihr Stoff eingetragen ist.
 
-**Reaktionen** (`reactions`) laufen mit Geschwindigkeit ab. `rate.k` ist die Geschwindigkeitskonstante bei 25 °C, `rate.Ea` die Aktivierungsenergie in kJ/mol, `rate.order` die Ordnung je gelöstem Teilchen. Mit `rate.surface` wächst die Geschwindigkeit mit der Oberfläche eines Feststoffs; `k` hat dann die Einheit mol/(s cm²) je (mol/L) hoch Ordnung.
+**Reaktionen** (`reactions`) laufen mit Geschwindigkeit ab. `rate.k` ist die Geschwindigkeitskonstante bei 25 °C, `rate.Ea` die Aktivierungsenergie in kJ/mol, `rate.order` die Ordnung je gelöstem Teilchen; auch Wasser darf dort stehen, mit seiner Konzentration in mol/L. Ein Gleichgewicht, das sich mit Geschwindigkeit einstellt, sind zwei Reaktionen, hin und zurück, wie die Veresterung im Paket `packs/organic.json`. Mit `rate.surface` wächst die Geschwindigkeit mit der Oberfläche eines Feststoffs; `k` hat dann die Einheit mol/(s cm²) je (mol/L) hoch Ordnung.
 
 Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht, in der Gleichung aber nicht vorkommt. Dieselbe Gleichung darf mit verschiedenen Katalysatoren mehrfach eingetragen sein: Jeder Weg läuft für sich, und bei der Gleichung steht, wer ihn beschleunigt. So lässt sich auch zu einer vorhandenen Reaktion ein weiterer Katalysator nachtragen. Das gilt auch für Redoxreaktionen, die der Baustein aus den Redoxpaaren herleitet (Zink in Säure): Ein Eintrag mit Katalysator läuft zusätzlich zur hergeleiteten Reaktion, ein Eintrag ohne Katalysator ersetzt sie.
 
@@ -911,6 +1004,7 @@ Was es schon gibt, lässt sich über `data` nicht ändern: Ein Eintrag für eine
 - **Farbe:** Lambert-Beer für jede Wellenlänge des sichtbaren Lichts, danach Umrechnung in eine Bildschirmfarbe. Die Schichtdicke ist die Weite des Gefäßes: 1,4 cm im Reagenzglas, 5 cm im Becherglas für 100 mL.
 - **Brenner:** Die Flamme gibt Wärme ab, die mit dem Abstand zur Flammentemperatur sinkt: 600 °C leuchtend, 1150 °C rauschend. In 100 mL Wasser im Becherglas kommen rund 220 W an; es siedet nach etwa drei Minuten. Ein leeres Gefäß wird mehrere hundert Grad heiß.
 - **Sieden und Eindampfen:** Bei 100 °C verdampft Wasser, und die Temperatur bleibt stehen; gerechnet wird nie mit einer Lösung über 100 °C. Dabei wird die Lösung konzentrierter, bis Salze auskristallisieren. Oberhalb von 25 mol/L gelösten Teilchen gilt der Rest als Brei: Er verdampft weiter, aber mit ihm wird nicht mehr gerechnet. Ist das Wasser fort, zerfallen Komplexe, was ein Salz bilden kann, kristallisiert, die Ionen schwacher Säuren und Basen treten wieder zum Molekül zusammen, Flüchtiges (Chlorwasserstoff, Ammoniak, Essigsäure) entweicht, und der Rest bleibt als Rückstand am Glas. Er löst sich in neuem Wasser wieder; ein einzelner Tropfen reicht dafür nicht.
+- **Sieden von Gemischen:** Gelöste Stoffe mit Siedepunkt (`Tb`) sind flüchtig. Die Siedetemperatur einer Mischung ist die Temperatur, bei der die Dampfdrücke von Wasser und den flüchtigen Stoffen zusammen den Luftdruck erreichen: jeder nach dem Raoultschen Gesetz mit seinem Stoffmengenanteil und seinem Dampfdruck nach Clausius-Clapeyron, für Ethanol und Wasser mit Aktivitätskoeffizienten nach Van Laar. Der Dampf hat die Zusammensetzung, die zu diesen Dampfdrücken gehört, und ist deshalb reicher am leichter Flüchtigen. Ein Liebigkühler leitet ihn in die Vorlage, wo er bei Raumtemperatur wieder flüssig wird; ohne Kühler entweicht er. Ein flüchtiger Stoff mit Geruch riecht, sobald sein Dampfdruck über der Lösung 5 mbar erreicht.
 - **Gase über der Lösung:** Kohlenstoffdioxid, Ammoniak und Chlorwasserstoff stehen mit ihrer Lösung im Gleichgewicht. Ist mehr gelöst, als sich bei Luftdruck halten kann, perlt der Überschuss in ein bis zwei Sekunden aus. Deshalb sprudelt Soda mit Salzsäure von 1 mol/L, mit stark verdünnter aber nicht. Beim Sieden nimmt der Dampf gelöste Gase mit. Ein stechender Geruch wird gemeldet, sobald der Druck eines solchen Gases 5 mbar erreicht.
 - **Gasraum:** Entstandenes Gas steht zuerst über der Flüssigkeit. Was dort keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest: Wasserstoff in etwa 8 s, Sauerstoff in 40 s, Kohlenstoffdioxid in 90 s. Im Diagramm der Stoffmengen zählt das entwichene Gas weiter mit.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
@@ -950,6 +1044,8 @@ Was es schon gibt, lässt sich über `data` nicht ändern: Ein Eintrag für eine
 - Wasser verdunstet nur beim Sieden; unterhalb von 100 °C verliert ein Gefäß nichts. Gelöste Gase entweichen nur, wenn sie ausperlen oder mit dem Dampf fortgehen.
 - Die Löslichkeit von Kupfersulfat ist auf den gemessenen Wert von 1,4 mol/L eingestellt, weil die ideale Rechnung mit der Konstante der Datenbank zu wenig ergäbe. Solche Werte sind in den Daten als „angepasst“ gekennzeichnet.
 - Das Geschwindigkeitsgesetz für Marmor gilt für eine bewegte Lösung. Ruhende Körner, an denen Gasblasen haften, reagieren im Labor langsamer. Andere Feststoffe aus dem Regal (Kupfersulfat, Iod) lösen sich weiter mit einer festen Zeitkonstante.
+- Beim Sieden zählen nur Wasser und die gelösten Stoffe mit Siedepunkt: Salze erhöhen den Siedepunkt nicht, und Essigsäure verdampft nicht mit. Aktivitätskoeffizienten gibt es nur für Paare mit Wasser. Ethylacetat mischt sich hier vollständig mit Wasser (im Labor nur zu etwa 8 %) und bildet mit Wasser und Ethanol nicht das Gemisch, das schon bei 70 °C siedet. Das Thermometer im Kolben misst die Flüssigkeit, nicht den Dampf am Ansatz des Kühlers.
+- Die Veresterung rechnet ohne Reaktionswärme: Für Ethanol und Ethylacetat fehlen Bildungsenthalpien aus einer Quelle, die das Grundpaket verwenden darf.
 - Das Gleichgewicht zwischen rosa Cobalt-Ionen und dem blauen Chlorokomplex ist auf die Beobachtung eingestellt (bei Raumtemperatur violett in Salzsäure von etwa 7 mol/L), weil die ideale Rechnung in so konzentrierten Lösungen nicht trägt. Die Zwischenstufen mit ein bis drei Chlorid fehlen.
 - Gleichgewichte in der Gasphase gibt es nicht, also auch keine Versuche zum Einfluss des Drucks (Stickstoffdioxid im Kolbenprober).
 - Der Zerfall von Thiosulfat ist als ein Schritt mit einer angepassten Konstante gerechnet; im Labor vergeht bis zur ersten Trübung eine kurze Anlaufzeit. Wann man „nicht mehr hindurchsieht“, hängt dort von Schichtdicke und Auge ab.

@@ -48,6 +48,15 @@
     var text = typeof source === "string" ? source : JSON.stringify(source);
     var st = L.store[el.id];
     if (st && st.source !== text) st = null;       // geänderte Beschreibung: neuer Aufbau, auch nach einem behobenen Fehler
+    // Pakete der Fläche: erst laden, dann den Aufbau lesen
+    var wanted = st ? [] : packsOf(text), open = wanted.filter(function (url) { var p = L.packState(url); return !p || p.state === "loading"; });
+    if (open.length) {
+      el.innerHTML = '<p class="cl-hint" role="status">' + esc(T("packs.loading")) + "</p>";
+      Promise.all(wanted.map(L.loadPack)).then(function () { if (el.isConnected !== false) mount(el, source); });
+      return;
+    }
+    var broken = wanted.map(L.packState).filter(function (p) { return p.state === "error"; })[0];
+    if (broken) { el.innerHTML = packError(broken, lang); return; }
     if (!st) {
       st = L.store[el.id] = { source: text, hand: null, sel: null, play: 0, speed: 1, names: {}, counts: {}, error: null, mute: false, cols: [], rows: [] };
       try {
@@ -59,7 +68,7 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
-        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       return;
     }
@@ -187,7 +196,8 @@
         name = L.parts[h.id];
         ui.hand.innerHTML = "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
           esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
-            : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1") : "hint.tool")) + "</span>" +
+            : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
+            : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
           (name.under ? ' <button type="button" class="cl-btn" data-act="bench">' + esc(T("hand.bench")) + "</button>" : "");
         return;
@@ -258,16 +268,18 @@
           if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
         } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
         else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
-        else if (def.bridge && !h.from) {                       // die Salzbrücke braucht zwei Gefäße: das erste merken
+        // der Kühler: aus jedem Gefäß führt einer, in jede Vorlage einer
+        else if (def.condenser && lab.tools.some(function (t) { return L.parts[t.type].condenser && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }
+        else if ((def.bridge || def.condenser) && !h.from) {    // Salzbrücke und Kühler brauchen zwei Gefäße: das erste merken
           st.hand = { id: h.id, tool: true, from: id };
           status("");
           renderHand();
           return;
-        } else if (def.bridge && h.from === id) { status(T("sameVessel")); return; }
+        } else if ((def.bridge || def.condenser) && h.from === id) { status(T(def.condenser ? "sameStill" : "sameVessel")); return; }
         else if (over ? lab.vessels.some(function (v) { return v.over === id; })
           : lab.tools.some(function (t) { return t.in === id && (def.under ? L.parts[t.type].under : t.type === h.id); })) { status(T("occupied")); return; }      // unter einem Gefäß steht ein Brenner oder ein Wasserbad
         setHand(null);
-        if (def.bridge) {
+        if (def.bridge || def.condenser) {
           change(function (l) { return L.place(l, { type: h.id, in: h.from, to: id }); }, function (made) { return { key: "bridged", part: made, vessel: h.from, to: id }; });
           return;
         }
@@ -383,7 +395,7 @@
         if (host && (def.electrode || def.bridge)) reach = Math.max(reach, (lifts[host.id] || 0) - L.parts[host.type].bounds(host).top + 96);      // Platz für die Leitungen
         if (host) {
           free.push({ id: t.id, type: t.type, host: t.in, under: !!def.under });
-          if (!def.under && !def.electrode && !def.bridge) {             // Messgeräte ragen über das Gefäß hinaus, erst recht über ein gehobenes
+          if (!def.under && !def.electrode && !def.bridge && !def.condenser) {      // Messgeräte ragen über das Gefäß hinaus, erst recht über ein gehobenes
             place = L.parts[host.type].probe(host, t.type);
             reach = Math.max(reach, (lifts[host.id] || 0) - (place.top != null ? place.top : place.rim - 60) + 44);
           }
@@ -477,6 +489,19 @@
       return { x1: pa.x, y1: pa.rim, s1: end(host, pa), x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: end(far, pb) + up };
     }
 
+    // Der Kühler führt vom Ansatzrohr des Gefäßes, an dem er steckt, zur Öffnung der Vorlage: Stellen in den Koordinaten seines Platzes
+    function duct(lab, t) {
+      var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), dir, pa, pb, up, w;
+      if (!host || !a) return null;
+      dir = b && b.x < a.x ? -1 : 1;
+      pa = L.parts[host.type].probe(host, "condenser", dir);
+      if (!b) return { x1: pa.x, y1: pa.rim, x2: pa.x + 70 * dir, y2: pa.rim + 30, s2: pa.rim + 60 };       // das andere Ende hängt frei
+      pb = L.parts[far.type].probe(far, "bridge", -dir);
+      up = (a.lift || 0) - (b.lift || 0);
+      w = L.view(lab, far);
+      return { x1: pa.x, y1: pa.rim, x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: (w.ml > 0.005 ? L.parts[far.type].surface(w) : -4) + up };
+    }
+
     // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden
     function wiring(lab, ends) {
       var out = "";
@@ -524,7 +549,9 @@
       }
       items.forEach(function (item, index) {
         var g = nodes[item.id], def = L.parts[item.type];
-        var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id] };
+        var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
+          // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
+          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].condenser && L.vessel(lab, t.to); }) };
         var v, w, r, host, place, b, content, hang;
         if (item.vessel) {
           v = L.vessel(lab, item.id);
@@ -545,7 +572,7 @@
         } else {
           r = L.reading(lab, item.id);
           host = L.vessel(lab, r.in);
-          place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
+          place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.condenser ? duct(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
             : L.parts[host.type].probe(host, item.type, def.electrode ? slotOf(lab, L.tool(lab, item.id)) : 0);
           if (def.sense === "V" && place && lab.vessels.some(function (o) { return o.over === host.id; })) {
             // hängt über dem Gefäß eine Bürette, beginnt der Zylinder des Kolbenprobers erst rechts von ihr und ihrem Stativ
@@ -557,17 +584,17 @@
             place.surface = w.ml > 0.005 ? L.parts[host.type].surface(w) : null;
           }
           // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
-          b = def.under || def.sense === "V" || def.circuit || def.bridge ? def.bounds(r, place)
+          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.condenser ? def.bounds(r, place)
             : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
           g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
           content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
-            : def.bridge ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
+            : def.bridge || def.condenser ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
-          g.setAttribute("aria-label", label[item.id] + (def.bridge ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
+          g.setAttribute("aria-label", label[item.id] + (def.bridge || def.condenser ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
             : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : ""));
         }
       });
@@ -756,7 +783,7 @@
             (w.coat.length ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
               return esc(L.nameOf(L.species(c.id), lang)) + (show.numbers ? " " + L.amount(c.n, lang) : "");
             }).join(", ") + "</p>" : "");
-        } else if (L.parts[t.type].bridge) box.innerHTML = "";
+        } else if (L.parts[t.type].bridge || L.parts[t.type].condenser) box.innerHTML = "";
         else if (L.parts[t.type].circuit === "load") {         // das Lämpchen zeigt nichts an: es leuchtet oder nicht
           w = shownValue(L.reading(lab, t.id));
           box.innerHTML = "<p>" + esc(w.charAt(0).toUpperCase() + w.slice(1)) + ".</p>";
@@ -1324,7 +1351,61 @@
     kick();
   }
 
+  // Die Adressen der Pakete einer Beschreibung; was sich nicht lesen lässt, meldet später normalize
+  function packsOf(text) {
+    try {
+      var d = JSON.parse(text.replace(/^[\s`]+|[\s`]+$/g, "") || "{}");
+      return d && Array.isArray(d.packs) ? d.packs.filter(function (url) { return typeof url === "string" && /^https?:\/\//.test(url); }) : [];
+    } catch (error) { return []; }
+  }
+
+  function langOf() {
+    var doc = global.document;
+    return /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
+  }
+
+  function packError(entry, lang) {
+    var e = entry.error, why = e.code === "http" ? e.detail : e.code === "data" ? L.text("err.data", lang) + ": " + L.explain(e.detail, lang) : L.text("pack." + e.code, lang);
+    return '<p class="cl-error" role="alert">' + L.escape(L.text("err.pack", lang) + ": " + entry.url + " (" + why + ")") + "</p>";
+  }
+
+  // "2 Stoffe, 1 Redoxpaar, 1 Vorrat": was ein Paket einträgt
+  function counted(pack, lang) {
+    return ["species", "equilibria", "reactions", "couples", "reagents"].map(function (key) {
+      var part = pack && pack[key], n = !part ? 0 : Array.isArray(part) ? part.length : Object.keys(part).length;
+      return n ? L.text("count." + key + (n === 1 ? "" : ".n"), lang, { n: n }) : "";
+    }).filter(Boolean).join(", ");
+  }
+
+  // @ChemLab.data: eigene Daten aus einem JSON-Block, gültig für alle Flächen, die danach entstehen
+  function useData(el, source) {
+    var lang = langOf(), data;
+    try { data = JSON.parse(String(source).replace(/^[\s`]+|[\s`]+$/g, "") || "{}"); } catch (error) {
+      el.innerHTML = '<p class="cl-error" role="alert">' + L.escape(L.text("err.dataJson", lang) + ": " + error.message) + "</p>";
+      return;
+    }
+    try { L.register(data); } catch (error) {
+      el.innerHTML = '<p class="cl-error" role="alert">' + L.escape(L.text("err.data", lang) + ": " + L.explain(error.detail || error.message, lang)) + "</p>";
+      return;
+    }
+    el.innerHTML = '<p class="cl-hint">' + L.escape(L.text("data.done", lang) + ": " + counted(data, lang)) + "</p>";
+  }
+
+  // @[ChemLab.pack](url): ein Paket laden; Flächen warten, solange es lädt (L.loaded)
+  function usePack(el, url) {
+    var lang = langOf();
+    url = String(url).trim();
+    el.innerHTML = '<p class="cl-hint" role="status">' + L.escape(L.text("pack.loading", lang, { url: url })) + "</p>";
+    return L.loadPack(url).then(function (entry) {
+      el.innerHTML = entry.state === "done"
+        ? '<p class="cl-hint">' + L.escape(L.text("pack.done", lang) + ": " + (typeof entry.pack.about === "string" ? entry.pack.about + " – " : "") + counted(entry.pack, lang)) + "</p>"
+        : packError(entry, lang);
+    });
+  }
+
   L.mount = mount;
+  L.useData = useData;
+  L.usePack = usePack;
   L.missing = missing;
-  L.loaded = function () { return !missing().length; };
+  L.loaded = function () { return !missing().length && !L.loadingPacks(); };
 })(typeof globalThis !== "undefined" ? globalThis : this);

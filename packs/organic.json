@@ -1,0 +1,34 @@
+{
+  "about": "Organik: Ethanol, Eisessig und Ethylacetat – Veresterung und Destillation",
+  "species": {
+    "C2H5OH(aq)": {
+      "name": { "de": "Ethanol", "en": "ethanol" }, "Hf": null,
+      "Vm": 58.37, "Tb": 78.24, "Hvap": 42.32, "mix": [1.6798, 0.9227],
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,7893 g/cm³ bei 20 °C (Vm = 46,07/0,7893), Siedepunkt 78,24 °C, Verdampfungsenthalpie 42,32 kJ/mol bei 25 °C. Van-Laar-Konstanten mit Wasser A12 = 1,6798, A21 = 0,9227: Gmehling u. a., Vapor-Liquid Equilibrium Data Collection, DECHEMA Chemistry Data Series I (zitiert im Wikipedia-Artikel Van Laar equation)"
+    },
+    "CH3COOC2H5(aq)": {
+      "name": { "de": "Ethylacetat (Essigsäureethylester)", "en": "ethyl acetate" }, "Hf": null,
+      "Vm": 97.87, "Tb": 77.1, "Hvap": 35.6, "smell": "fruity",
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,9003 g/cm³ bei 20 °C (Vm = 88,11/0,9003), Siedepunkt 77,1 °C, Verdampfungsenthalpie 35,60 kJ/mol bei 25 °C"
+    }
+  },
+  "reactions": [
+    {
+      "eq": "CH3COOH(aq) + C2H5OH(aq) -> CH3COOC2H5(aq) + H2O(l)",
+      "rate": { "k": 0.0001197, "Ea": 46.6, "order": { "CH3COOH(aq)": 1, "C2H5OH(aq)": 1, "H+(aq)": 1 } },
+      "src": "Oxford Instruments, X-Pulse application note: Esterification monitoring – calculation of activation parameters (je 10 mL Ethanol und Essigsäure, 5 Tropfen Schwefelsäure): k = 2,3·10⁻⁵ L/(mol s) bei 22 °C bis 3,6·10⁻⁴ L/(mol s) bei 72 °C. Daraus Ea = 46,6 kJ/mol und k = 2,78·10⁻⁵ L/(mol s) bei 25 °C, geteilt durch die Konzentration der Wasserstoff-Ionen, die der Baustein in dieser Mischung rechnet (0,232 mol/L)"
+    },
+    {
+      "eq": "CH3COOC2H5(aq) + H2O(l) -> CH3COOH(aq) + C2H5OH(aq)",
+      "rate": { "k": 0.0000299, "Ea": 46.6, "order": { "CH3COOC2H5(aq)": 1, "H2O(l)": 1, "H+(aq)": 1 } },
+      "src": "Rückreaktion: k der Hinreaktion geteilt durch die Gleichgewichtskonstante K = 4 (zwei Drittel Umsatz aus gleichen Teilen Säure und Alkohol: M. Berthelot, L. Péan de Saint-Gilles, Annales de chimie et de physique 65, 1862)"
+    }
+  ],
+  "reagents": {
+    "ethanol": { "name": { "de": "Ethanol 96 %", "en": "ethanol 96 %" }, "solution": { "C2H5OH(aq)": 16.45 }, "group": "other" },
+    "glacial acetic acid": { "name": { "de": "Eisessig (Essigsäure 99,8 %)", "en": "glacial acetic acid (99.8 %)" }, "solution": { "CH3COOH(aq)": 17.43 }, "group": "acid" },
+    "ethyl acetate": { "name": { "de": "Ethylacetat", "en": "ethyl acetate" }, "solution": { "CH3COOC2H5(aq)": 10.2 }, "group": "other" },
+    "sulfuric acid conc": { "name": { "de": "Schwefelsäure, konzentriert", "en": "sulfuric acid, concentrated" }, "solution": { "H+(aq)": 18, "HSO4-(aq)": 18 }, "drops": true, "group": "acid" },
+    "wine": { "name": { "de": "Weißwein (12 % Alkohol)", "en": "white wine (12 % alcohol)" }, "solution": { "C2H5OH(aq)": 2.056 }, "group": "other" }
+  }
+}

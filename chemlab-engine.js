@@ -268,6 +268,15 @@
           if (color != null && !/^#[0-9a-f]{6}$/i.test(color)) throw fail("color", String(color));
         });
         // gamma: Ionengröße in Å und Zusatzglied für den Aktivitätskoeffizienten eines gelösten Teilchens (reales Modell)
+        // Vm: Eigenvolumen eines gelösten Stoffs in mL/mol; Tb, Hvap: Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines
+        // flüchtigen gelösten Stoffs; mix: Van-Laar-Konstanten mit Wasser [A Stoff, A Wasser]; smell: true (stechend) oder "fruity"
+        var data = pack.species[id] || {}, phase = parse(id).phase;
+        if (data.Vm != null && !(phase === "aq" && typeof data.Vm === "number" && data.Vm > 0 && data.Vm < 1000)) throw fail("species", id + " Vm");
+        if ((data.Tb != null || data.Hvap != null) && !(phase === "aq" && typeof data.Tb === "number" && isFinite(data.Tb) && typeof data.Hvap === "number" && data.Hvap > 0))
+          throw fail("species", id + " Tb/Hvap");
+        if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
+          data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
+        if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
         var gamma = pack.species[id] && pack.species[id].gamma;
         if (gamma != null && !(parse(id).phase === "aq" && Array.isArray(gamma) && gamma.length === 2 &&
           gamma.every(function (value) { return typeof value === "number" && isFinite(value); }) &&
@@ -330,7 +339,7 @@
         });
         Object.keys(rate.order || {}).forEach(function (id) {       // die Ordnung gilt gelösten Teilchen und ist eine Zahl
           known(id);
-          if (next.species[id].phase !== "aq" || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
+          if ((next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
         });
         if (rate.surface) known(rate.surface);
         // Katalysatoren: was die Geschwindigkeit bestimmt, in der Gleichung aber nicht vorkommt. Dieselbe Gleichung darf mit
@@ -386,6 +395,7 @@
         var charge = 0, size = 0;
         if (r.solution) ids.forEach(function (sp) { charge += r.solution[sp] * next.species[sp].charge; size += Math.abs(r.solution[sp] * next.species[sp].charge); });
         if (Math.abs(charge) > 1e-9 * Math.max(1, size)) throw fail("charge", id);    // eine Lösung ist elektrisch neutral
+        if (r.solution && taken(r.solution, next.species) > 1.0001) throw fail("reagent", id + " Vm");         // die gelösten Stoffe passen in die Flasche
         put(next.reagents, id, Object.assign({ id: id }, r), r, id);
       });
     });
@@ -480,6 +490,13 @@
   }
 
   // Vorratsflasche. "HCl 0.5M" verdünnt die Lösung "HCl", die für 1 mol/L eingetragen ist.
+  // Welchen Anteil am Volumen die gelösten Stoffe einer Vorratslösung einnehmen (mit ihrem Eigenvolumen Vm); der Rest ist Wasser
+  function taken(solution, table) {
+    var share = 0, key;
+    for (key in solution) share += solution[key] * ((table[key] && table[key].Vm) || 0) / 1000;
+    return share;
+  }
+
   function reagent(id) {
     var r = L.db.reagents[id], match, c = 1, key, copy;
     if (r && !r.molar) return r;
@@ -492,6 +509,7 @@
     copy = Object.assign({}, r, { id: id, solution: {}, name: {}, c: c });
     for (key in r.solution) copy.solution[key] = r.solution[key] * c;
     for (key in r.name) copy.name[key] = r.name[key] + " " + String(c).replace(".", key === "de" ? "," : ".") + " mol/L";
+    if (taken(copy.solution, L.db.species) > 1.0001) throw fail("reagent", String(id));            // konzentrierter, als der reine Stoff ist
     return copy;
   }
 
@@ -517,6 +535,10 @@
       600: { cap: 600, d: 9.0, Cv: 110, loss: 0.40, heat: 0.32 }
     }
   });
+  // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
+  registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
+  // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
+  registerPart("condenser", { kind: "tool", condenser: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
   // lag: Trägheit in s; sense: was es misst
@@ -664,6 +686,9 @@
       else { try { d = JSON.parse(text); } catch (error) { throw fail("json", error.message); } }
     }
     if (!d || typeof d !== "object" || Array.isArray(d)) throw fail("json", "");
+    // packs: Adressen von Paketen, die die Fläche vor dem Aufbau lädt (das macht die Oberfläche); nur vollständige Adressen
+    if (d.packs != null && !(Array.isArray(d.packs) && d.packs.every(function (url) { return typeof url === "string" && /^https?:\/\/\S+$/.test(url); })))
+      throw fail("pack", JSON.stringify(d.packs));
     if (d.data) register(d.data);
     if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
 
@@ -703,7 +728,7 @@
           item.nm = Math.round(raw.nm);
         }
         if (def.circuit === "supply") { item.volts = voltsOf(def, raw.volts); item.flip = !!raw.flip; }
-        if (def.bridge) item.to = raw.to != null ? String(raw.to) : null;
+        if (def.bridge || def.condenser) item.to = raw.to != null ? String(raw.to) : null;
         if (def.electrode && raw.g != null) {
           if (!(raw.g > 0) || !(raw.g <= 1000)) throw fail("amount", item.id);
           item.g = +raw.g;
@@ -725,8 +750,9 @@
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
-        hung["bridge>" + item.to] = (hung["bridge>" + item.to] || 0) + 1;
-        if (hung["bridge>" + item.to] > 1) throw fail("place", item.to);
+        slot = (own.condenser ? "condenser<" : "bridge>") + item.to;          // in eine Vorlage führt nur ein Kühler
+        hung[slot] = (hung[slot] || 0) + 1;
+        if (hung[slot] > 1) throw fail("place", item.to);
       }
       if (item.over != null) {
         if (!fits || hung[item.over]) throw fail("place", item.over);      // über einem Gefäß hängt nur eine Bürette
@@ -753,6 +779,7 @@
       lock: !!d.lock,                                              // gesperrt: Geräte bleiben, wo sie stehen
       table: !!d.table,                                            // mit Messwerttabelle
       task: d.task == null ? null : readTask(d.task),
+      packs: d.packs || [],
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
       model: d.model == null ? "ideal" : d.model
     };
@@ -772,7 +799,7 @@
 
   function volume(v) {            // Flüssigkeit in L
     var ml = 0, id, s;
-    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; }
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) ml += v.n[id] * s.Vm; }
     return ml / 1000;
   }
 
@@ -795,7 +822,7 @@
     else {
       if (r.solution) for (id in r.solution) out[id] = r.solution[id] * a.ml / 1000;
       s = species(r.liquid || WATER);
-      out[s.id] = (out[s.id] || 0) + a.ml * s.rho / s.M;
+      out[s.id] = (out[s.id] || 0) + a.ml * (r.solution ? Math.max(0, 1 - taken(r.solution, L.db.species)) : 1) * s.rho / s.M;
     }
     return out;
   }
@@ -856,7 +883,7 @@
     }
     if (def.circuit === "supply") { t.volts = item.volts || 0; t.flip = !!item.flip; }       // flip: umgepolt
     else if (def.circuit) { t.goal = def.circuit === "voltmeter" ? null : 0; t.lit = false; }     // goal: was das Gerät zeigen soll
-    if (def.bridge) t.to = item.to || null;
+    if (def.bridge || def.condenser) t.to = item.to || null;
     return t;
   }
 
@@ -963,6 +990,7 @@
     if (host && def.electrode && (!L.parts[host.type].electrodes || electrodesIn(lab, host.id).length >= 2)) host = null;      // kein Platz für eine Elektrode
     if (host && def.circuit && !L.parts[host.type].electrodes) host = null;        // ein Stromkreis braucht ein Gefäß für Elektroden
     if (host && def.bridge && bridged(lab, host.id)) host = null;                  // dort hängt schon eine Salzbrücke
+    if (host && def.condenser && toolAt(lab, host, function (d) { return d.condenser; })) host = null;      // dort steckt schon ein Kühler
     if (def.kind === "vessel") {
       if (host && lab.vessels.some(function (v) { return v.over === host.id; })) host = null;    // dort hängt schon eine
       lab.vessels.push(makeVessel(lab, {
@@ -970,9 +998,9 @@
         over: def.dispenser && host ? host.id : null
       }));
     } else {
-      var far = def.bridge && host ? vessel(lab, raw.to) : null;
-      if (far && (far === host || far.broken || L.parts[far.type].dispenser || bridged(lab, far.id))) far = null;
-      if (def.bridge && raw.to != null && !far) host = null;                       // ohne das andere Ende bleibt sie für sich liegen
+      var far = (def.bridge || def.condenser) && host ? vessel(lab, raw.to) : null;
+      if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].condenser && t.to === far.id; })))) far = null;
+      if ((def.bridge || def.condenser) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
       lab.tools.push((made = makeTool({
         id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame),
         volts: def.circuit === "supply" ? voltsOf(def, raw.volts) : 0, flip: raw.flip, to: far ? far.id : null, g: raw.g > 0 ? +raw.g : 0,
@@ -1783,7 +1811,7 @@
     k *= rate.surface ? area(v, rate.surface) : vol;
     for (id in rate.order) {
       s = L.db.species[id];
-      k *= Math.pow(s.phase === "aq" && vol > 0 ? (v.n[id] || 0) / vol : 0, rate.order[id]);
+      k *= Math.pow((s.phase === "aq" || id === WATER) && vol > 0 ? (v.n[id] || 0) / vol : 0, rate.order[id]);
     }
     return k;
   }
@@ -2490,6 +2518,7 @@
     // Geruch: ein stechendes Gas über der Lösung oder im Gasraum, sobald sein Druck reicht
     dissolved.forEach(function (g) { if (L.db.species[g.e.gas].smell) strong[g.e.gas] = g.p; });
     for (id in v.air) if (L.db.species[id].smell) strong[id] = Math.max(strong[id] || 0, cap > 0 ? v.air[id] / cap * P_AIR : P_AIR);
+    (volatiles(v) || []).forEach(function (c) { if (L.db.species[c.id].smell) strong[c.id] = vapor(c, v.T) * P_AIR; });      // flüchtige gelöste Stoffe: ihr Dampfdruck
     for (id in strong) if (!f.smell[id] && strong[id] >= SMELL) { f.smell[id] = true; if (emit) emit({ key: "smell", vessel: v.id, species: id }); }
     for (id in f.smell) if (!(strong[id] >= SMELL / 5)) delete f.smell[id];
 
@@ -2580,6 +2609,7 @@
   function dry(v, emit) {
     var water = v.n[WATER] || 0, sum = 0, id, left = v.lumps.length > 0;
     if (water > 1e-4) return;
+    for (id in v.n) if (L.db.species[id].Tb != null && v.n[id] > 1e-4) return;      // es ist noch flüchtige Flüssigkeit da
     for (id in v.n) if (L.db.species[id].phase === "aq") sum += v.n[id];
     if (water > 0) { v.out[STEAM] = (v.out[STEAM] || 0) + water; delete v.n[WATER]; }
     function take(terms, x) {
@@ -2725,19 +2755,77 @@
     }
   }
 
-  // Sieden: die Temperatur bleibt bei 100 °C stehen, die Wärme darüber verdampft Wasser. strip: der Dampf nimmt gelöste Gase mit.
-  function boilOff(v, emit, strip) {
-    var over, boil;
-    if (!(v.T > BOIL && v.n[WATER] > 0 && L.db.species[STEAM])) return;
-    over = (v.T - BOIL) * heatCapacity(v);
-    boil = Math.min(v.n[WATER], over / VAPOR);
+  // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
+  // g: Aktivitätskoeffizient nach Van Laar, wo ein Stoff Konstanten mit Wasser hat (mix). Salze und andere gelöste Stoffe zählen
+  // nicht mit: Eine Salzlösung siedet hier wie Wasser bei 100 °C. null, wenn nichts Flüchtiges da ist.
+  function volatiles(v) {
+    var list = [], total = 0, id, s, water = null, lnw = 0;
+    for (id in v.n) {
+      s = L.db.species[id];
+      if (id !== WATER && !(s.Tb != null && s.phase === "aq")) continue;
+      list.push({ id: id, n: v.n[id], Tb: id === WATER ? BOIL : s.Tb, H: id === WATER ? VAPOR : s.Hvap * 1000, mix: s.mix, g: 1 });
+      total += v.n[id];
+    }
+    if (!(total > 0)) return null;
+    list.forEach(function (c) { c.x = c.n / total; if (c.id === WATER) water = c; });
+    if (water) list.forEach(function (c) {
+      var a, b, d;
+      if (!c.mix) return;
+      a = c.mix[0]; b = c.mix[1]; d = a * c.x + b * water.x;
+      if (!(d > 0)) return;
+      c.g = Math.exp(a * Math.pow(b * water.x / d, 2));
+      lnw += b * Math.pow(a * c.x / d, 2);
+    });
+    if (water) water.g = Math.exp(lnw);
+    return list;
+  }
+
+  // Dampfdruck eines Teils über der Mischung bei T (°C), als Anteil am Luftdruck: Raoult mit Clausius-Clapeyron
+  function vapor(c, T) { return c.g * c.x * Math.exp(-c.H / R * (1 / (T + KELVIN) - 1 / (c.Tb + KELVIN))); }
+
+  // Siedetemperatur: bei ihr ist die Summe der Dampfdrücke gleich dem Luftdruck
+  function bubble(list) {
+    var lo = Infinity, hi = -Infinity, mid, i;
+    if (list.length === 1) return list[0].Tb;
+    list.forEach(function (c) { lo = Math.min(lo, c.Tb); hi = Math.max(hi, c.Tb); });
+    lo -= 40; hi += 40;
+    for (i = 0; i < 50; i++) {
+      mid = (lo + hi) / 2;
+      if (list.reduce(function (sum, c) { return sum + vapor(c, mid); }, 0) < P_AIR) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  // Sieden: die Temperatur bleibt bei der Siedetemperatur stehen, die Wärme darüber verdampft Flüssigkeit, vom leichter
+  // Flüchtigen mehr. Mit einem Kühler (still) geht der Dampf in dessen Vorlage und wird dort wieder flüssig.
+  // strip: der Dampf nimmt gelöste Gase mit.
+  function boilOff(lab, v, emit, strip) {
+    var list = volatiles(v), top, over, heat = 0, boil = Infinity, cool, into = null, cold = {}, kept;
+    if (!list || !L.db.species[STEAM] || !(v.T > list.reduce(function (lo, c) { return Math.min(lo, c.Tb); }, Infinity) - 40)) return;
+    top = bubble(list);
+    if (!(v.T > top)) return;
+    over = (v.T - top) * heatCapacity(v);
+    list.forEach(function (c) { c.y = vapor(c, top); });
+    kept = list.reduce(function (sum, c) { return sum + c.y; }, 0);
+    list.forEach(function (c) { c.y /= kept; heat += c.y * c.H; if (c.y > 0) boil = Math.min(boil, c.n / c.y); });
+    boil = Math.min(boil, over / heat);                         // in mol Dampf; mehr, als da ist, verdampft nicht
     if (strip) above(v, volume(v)).forEach(function (g) {      // jedes Gas mit seinem Anteil am Druck
       var share = Math.min(0.95, g.p / P_AIR);
       if (share > 1e-6) release(v, g, Math.min(g.most, boil * share / (1 - share)));       // Spuren bleiben in der Lösung
     });
-    v.out[STEAM] = (v.out[STEAM] || 0) + boil;
-    if ((v.n[WATER] -= boil) < 1e-300) delete v.n[WATER];
-    v.T = BOIL + (over - boil * VAPOR) / heatCapacity(v);       // reicht das Wasser nicht für alle Wärme, bleibt das Gefäß heißer
+    cool = toolAt(lab, v, function (def) { return def.condenser; });
+    if (cool) into = vessel(lab, cool.to);
+    if (into && (into.broken || L.parts[into.type].dispenser || free(lab, into) < 1)) into = null;      // die Vorlage läuft nicht über
+    list.forEach(function (c) {
+      var x = c.y * boil;
+      if (!(x > 0)) return;
+      if ((v.n[c.id] -= x) < 1e-300) delete v.n[c.id];
+      if (into) cold[c.id] = x;
+      else if (c.id === WATER) v.out[STEAM] = (v.out[STEAM] || 0) + x;
+      else v.out[c.id] = (v.out[c.id] || 0) + x;
+    });
+    if (into) mixIn(into, cold, lab.room);
+    v.T = top + (over - boil * heat) / heatCapacity(v);         // reicht die Flüssigkeit nicht für alle Wärme, bleibt das Gefäß heißer
     v.dirty = true;
     v.boil += boil / DT;
     dry(v, emit);
@@ -2746,7 +2834,7 @@
   function advanceVessel(lab, v, emit) {
     var id, gases = [], gas = 0, moving = false, vol, dissolved, burner, meter, room, bath;
     if (v.broken) return;
-    boilOff(v, emit, false);                                   // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über 100 °C
+    boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
     if (v.dirty || Math.abs(v.T - v.Teq) > 0.02) {              // auch wenn nur die Temperatur wandert: K hängt von ihr ab
       moving = equilibrate(lab, v, emit);
@@ -2762,7 +2850,7 @@
     if (v.q) v.T += v.q / heatCapacity(v);
     v.q = 0;
 
-    boilOff(v, emit, true);
+    boilOff(lab, v, emit, true);
 
     meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
     for (id in v.n) {                                          // Gase verlassen die Flüssigkeit und stehen im Gasraum darüber
@@ -3180,6 +3268,10 @@
     }
     if (def.circuit === "supply") { out.volts = t.volts; out.flip = t.flip; }
     if (def.bridge) out.to = t.to;
+    if (def.condenser) {                                         // to: die Vorlage; drip: aus dem Kühler tropft Destillat
+      out.to = t.to;
+      out.drip = !!(t.in && vessel(lab, t.in) && vessel(lab, t.in).boil > 0 && vessel(lab, t.to) && !vessel(lab, t.to).broken);
+    }
     if (def.bath) out.temp = t.temp;
     if (def.sense === "A") out.nm = t.nm;
     return out;
@@ -3395,6 +3487,32 @@
     return Object.keys(high).filter(function (id) { return id !== WATER && id !== STEAM && high[id] - low[id] > 1e-9; });
   }
 
+  // ------------------------------------------------------------------ Pakete
+
+  // Ein Paket ist eine JSON-Datei im Format von "data". Jede Adresse wird einmal geladen; das Versprechen erfüllt sich immer,
+  // auch wenn das Laden scheitert: Dann steht in error, warum ({ code: "http" | "net" | "json" | "data", detail }).
+  var packs = {};
+
+  function loadPack(url) {
+    var entry = packs[url];
+    if (entry) return entry.promise;
+    entry = packs[url] = { url: url, state: "loading", pack: null, error: null };
+    function failed(code, detail) { entry.state = "error"; entry.error = { code: code, detail: detail || "" }; return entry; }
+    entry.promise = Promise.resolve().then(function () { return global.fetch(url); }).then(function (response) {
+      if (!response.ok) return failed("http", "HTTP " + response.status);
+      return response.json().then(function (pack) {
+        try { register(pack); } catch (error) { return failed("data", error.detail || error.message); }
+        entry.state = "done";
+        entry.pack = pack;
+        return entry;
+      }, function () { return failed("json"); });
+    }, function (error) { return failed("net", error && error.message); });
+    return entry.promise;
+  }
+
+  function packState(url) { return packs[url] || null; }
+  function loadingPacks() { return Object.keys(packs).some(function (url) { return packs[url].state === "loading"; }); }
+
   // ------------------------------------------------------------------ Aufbau als Text
 
   // Der Aufbau als Text, so wie er jetzt dasteht: die Geräte an ihrem Platz und in jedem Gefäß, was hineingegeben wurde.
@@ -3458,7 +3576,7 @@
       if (def.bath) item.temp = t.temp;
       if (def.sense === "A") item.nm = t.nm;
       if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
-      if (def.bridge && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;
+      if ((def.bridge || def.condenser) && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;
       if (def.electrode) { g = round(t.n0 * species(def.electrode).M); if (Math.abs(g - def.g) > 1e-9) item.g = g; }
       bench.push(item);
     });
@@ -3480,6 +3598,9 @@
   L.register = register;
   L.checkTask = checkTask;
   L.describe = describe;
+  L.loadPack = loadPack;
+  L.packState = packState;
+  L.loadingPacks = loadingPacks;
   L.MEASURES = MEASURES;
   L.registerPart = registerPart;
   L.lint = lint;
