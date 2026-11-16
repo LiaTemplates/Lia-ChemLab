@@ -397,6 +397,8 @@
     "copy": "Felépítés másolása",
     "copy.manual": "A felépítés szövegként – jelöld ki és másold:",
     "copy.done": "A szöveg a vágólapon van.",
+    "log.copy": "Jegyzőkönyv másolása",
+    "log.manual": "A jegyzőkönyv szövegként – jelöld ki és másold:",
     "table.copy": "Táblázat másolása",
     "table.manual": "A mért értékek tabulátorral elválasztva – jelöld ki és másold:",
     "table.note": "Mért értékek rögzítése",

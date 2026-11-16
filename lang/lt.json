@@ -397,6 +397,8 @@
     "copy": "Kopijuoti įrangą",
     "copy.manual": "Įranga tekstu – pažymėkite ir nukopijuokite:",
     "copy.done": "Tekstas nukopijuotas į iškarpinę.",
+    "log.copy": "Kopijuoti žurnalą",
+    "log.manual": "Žurnalas kaip tekstas – pažymėk ir nukopijuok:",
     "table.copy": "Kopijuoti lentelę",
     "table.manual": "Matavimų rezultatai, atskirti tabuliacija – pažymėkite ir nukopijuokite:",
     "table.note": "Užrašyti rodmenis",

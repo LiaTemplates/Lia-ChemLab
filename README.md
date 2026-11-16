@@ -961,6 +961,8 @@ Gib dann Natronlauge in kleinen Portionen zur Säure. Solange sich etwas tut, wa
 
 „Aufbau kopieren“ schreibt den Aufbau als Text in die Zwischenablage, im selben Format wie die Beschreibung unter jeder Fläche; falls der Browser das nicht erlaubt, steht der Text zum Markieren unter der Fläche. In einen Kurs eingefügt, ergibt er denselben Tisch. So lässt sich ein Versuch durch Antippen aufbauen statt von Hand beschreiben.
 
+**Protokoll kopieren:** Der Knopf unter den Beobachtungen schreibt das ganze Protokoll bis zur Zeit des Zeigers in die Zwischenablage, eine Zeile je Eintrag mit Uhrzeit, so wie es unter der Fläche steht (dort sind es höchstens die letzten 60). So lässt es sich ins Heft, in ein Versuchsprotokoll oder eine Tabellenkalkulation übernehmen.
+
 Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gegeben wurde. Beim Umgießen geht der entsprechende Anteil der Flüssigkeiten mit, Feststoffe bleiben zurück. Was aus einer Bürette getropft ist, steht weiter in der Bürette, und Reaktionen laufen nach dem Einfügen von vorn: Es ist der Aufbau, nicht der Zwischenstand eines Versuchs. Regal, Aufgabe, eigene Daten und alle anderen Angaben bleiben, wie sie in der Beschreibung standen.
 
 ```json @ChemLab.sim

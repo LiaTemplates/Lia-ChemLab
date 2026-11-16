@@ -397,6 +397,8 @@
     "copy": "Copiază montajul",
     "copy.manual": "Montajul ca text – selectează și copiază:",
     "copy.done": "Textul este în clipboard.",
+    "log.copy": "Copiază jurnalul",
+    "log.manual": "Jurnalul ca text – selectează și copiază:",
     "table.copy": "Copiază tabelul",
     "table.manual": "Valorile măsurate, separate prin taburi – selectează și copiază:",
     "table.note": "Notează valorile",

@@ -7867,6 +7867,24 @@ test("Oberfläche: „Aufbau kopieren“ legt den Text in die Zwischenablage und
   } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
 });
 
+test("Oberfläche: Protokoll als Text kopieren, alle Einträge bis zur Zeit des Zeigers, eine Zeile je Eintrag", () => {
+  let copied = null;
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: (t) => { copied = t; return Promise.resolve(); } } }, configurable: true });
+  try {
+    const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 20 }] }] });
+    const button = part(el, ".cl-log").querySelector('[data-act="copyLog"]');
+    assert.match(el.innerHTML, /data-act="copyLog" disabled>Protokoll kopieren/, "leer: nichts zu kopieren");
+    tap(el, "b");
+    press(el, "dispose", "sink");
+    frames(2);
+    assert.equal(button.disabled, false, "jetzt gibt es etwas zu kopieren");
+    press(el, "copyLog");
+    assert.equal(copied, "0:00 Becherglas 1: entsorgt – Ausguss. Besser: Schwermetallsalze. Schwermetall-Ionen dürfen nicht ins Abwasser.");
+    assert.match(part(el, ".cl-panel").innerHTML, /<textarea class="cl-copy" readonly[\s\S]*Protokoll als Text/);
+  } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
+});
+
 test("Oberfläche: Messwerttabelle als Text mit Tabulatoren kopieren", () => {
   let copied = null;
   const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");

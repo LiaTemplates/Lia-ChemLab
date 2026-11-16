@@ -185,6 +185,7 @@
       "count.reactions": "{n} reaction", "count.reactions.n": "{n} reactions", "count.couples": "{n} redox couple", "count.couples.n": "{n} redox couples",
       "count.reagents": "{n} stock bottle", "count.reagents.n": "{n} stock bottles",
       "copy": "Copy setup", "copy.manual": "The setup as text – select and copy:", "copy.done": "The text is on the clipboard.",
+      "log.copy": "Copy the log", "log.manual": "The log as text – select and copy:",
       "table.copy": "Copy the table", "table.manual": "The readings, separated by tabs – select and copy:",
       "table.note": "Note the readings", "table.clear": "Clear the table", "table.title": "Readings", "table.no": "No.",
       "table.given": "delivered", "table.noMeter": "No meter on the bench: there is nothing to note.",

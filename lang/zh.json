@@ -397,6 +397,8 @@
     "copy": "复制装置",
     "copy.manual": "文本形式的装置——请选中并复制：",
     "copy.done": "文本已复制到剪贴板。",
+    "log.copy": "复制记录",
+    "log.manual": "记录文本——选中后复制：",
     "table.copy": "复制表格",
     "table.manual": "测量数据，以制表符分隔——请选中并复制：",
     "table.note": "记录测量值",

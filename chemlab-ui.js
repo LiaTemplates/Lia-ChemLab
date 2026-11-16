@@ -142,7 +142,7 @@
       '<div class="cl-eq"></div>' +
       '<div class="cl-charts"></div>' +
       '<div class="cl-log"><h4>' + esc(T("log.title")) + '</h4><p class="cl-hint cl-none">' + esc(T("log.none")) + "</p>" +
-      '<ol class="cl-events" aria-live="polite"></ol></div></div>';
+      '<ol class="cl-events" aria-live="polite"></ol><p><button type="button" class="cl-btn" data-act="copyLog" disabled>' + esc(T("log.copy")) + "</button></p></div></div>";
 
     var ui = {};
     ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log", "bar", "tabs", "out", "outtabs"].forEach(function (name) {
@@ -153,6 +153,7 @@
     ui.sound = sound ? el.querySelector(".cl-sound") : null;
     ui.view = L.stage3d ? el.querySelector('[data-act="view"]') : null;
     ui.events = ui.log.querySelector(".cl-events");
+    ui.copyLog = ui.log.querySelector('[data-act="copyLog"]');
     ui.goals = ui.task.querySelector(".cl-goals");
     ui.done = ui.task.querySelector(".cl-done");
     // Texte des Kursautors übersetzt Google weiter mit
@@ -1389,6 +1390,12 @@
       if (nav && nav.clipboard && nav.clipboard.writeText) nav.clipboard.writeText(text).then(function () { status(T("copy.done")); }, function () { /* dann von Hand */ });
     }
 
+    // das ganze Protokoll bis zur Zeit des Zeigers, eine Zeile je Eintrag, wie es unter der Fläche steht
+    function logText() {
+      var ctx = { lang: lang, numbers: show.numbers, names: names(), hidden: hidden() };
+      return L.logAt(st.run).map(function (event) { return L.clock(event.t) + " " + L.say(event, ctx); }).join("\n");
+    }
+
     function setupText() {
       var raw = {};
       try { raw = JSON.parse(st.source.replace(/^[\s`]+|[\s`]+$/g, "") || "{}"); } catch (error) { /* der Aufbau ließ sich lesen; ohne Zusatzangaben weiter */ }
@@ -1472,6 +1479,7 @@
       }
       shown = seen;
       ui.none.hidden = seen.length > 0;
+      if (ui.copyLog) ui.copyLog.disabled = !seen.length;
       if (ui.count) ui.count.textContent = seen.length ? String(st.run.frames[st.run.cursor].n) : "";
     }
 
@@ -1698,6 +1706,7 @@
       else if (act === "note") noteRow();
       else if (act === "copy") copyOut(setupText(), "copy.manual");
       else if (act === "copyTable" && st.rows.length) copyOut(tableText(), "table.manual");
+      else if (act === "copyLog" && L.logAt(st.run).length) copyOut(logText(), "log.manual");
       else if (act === "clear") { st.rows = []; st.cols = []; renderReadings(); }
       else if (act === "tap" && L.vessel(lab, st.sel)) {
         r = parseFloat(id);

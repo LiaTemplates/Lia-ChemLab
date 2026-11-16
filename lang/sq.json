@@ -397,6 +397,8 @@
     "copy": "Kopjo montimin",
     "copy.manual": "Montimi si tekst – përzgjidhe dhe kopjoje:",
     "copy.done": "Teksti u kopjua në kujtesë.",
+    "log.copy": "Kopjo ditarin",
+    "log.manual": "Ditari si tekst – përzgjidh dhe kopjo:",
     "table.copy": "Kopjo tabelën",
     "table.manual": "Matjet, të ndara me tabulatorë – përzgjidhi dhe kopjoji:",
     "table.note": "Shëno matjet",

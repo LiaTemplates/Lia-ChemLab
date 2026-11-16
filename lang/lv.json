@@ -397,6 +397,8 @@
     "copy": "Kopēt iekārtu",
     "copy.manual": "Iekārta kā teksts – atlasiet un kopējiet:",
     "copy.done": "Teksts ir starpliktuvē.",
+    "log.copy": "Kopēt žurnālu",
+    "log.manual": "Žurnāls kā teksts – atlasi un kopē:",
     "table.copy": "Kopēt tabulu",
     "table.manual": "Mērījumi, atdalīti ar tabulatoriem – atlasiet un kopējiet:",
     "table.note": "Pierakstīt rādījumus",

@@ -397,6 +397,8 @@
     "copy": "Kopiraj postav",
     "copy.manual": "Postav kao tekst – označi i kopiraj:",
     "copy.done": "Tekst je u međuspremniku.",
+    "log.copy": "Kopiraj zapisnik",
+    "log.manual": "Zapisnik kao tekst – označi i kopiraj:",
     "table.copy": "Kopiraj tablicu",
     "table.manual": "Izmjerene vrijednosti odvojene tabulatorima – označi i kopiraj:",
     "table.note": "Zapiši mjerenja",

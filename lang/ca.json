@@ -397,6 +397,8 @@
     "copy": "Copia el muntatge",
     "copy.manual": "El muntatge com a text – selecciona'l i copia'l:",
     "copy.done": "El text és al porta-retalls.",
+    "log.copy": "Copia el registre",
+    "log.manual": "El registre com a text – selecciona i copia:",
     "table.copy": "Copia la taula",
     "table.manual": "Les mesures, separades per tabulacions – selecciona-les i copia-les:",
     "table.note": "Anota les mesures",
