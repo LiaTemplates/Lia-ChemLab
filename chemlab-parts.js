@@ -117,7 +117,16 @@
       "cut": "From here on it starts anew. What was recorded after this point is discarded.",
       "panel.contents": "Contents", "panel.empty": "empty", "panel.volume": "Liquid", "panel.strength": "ionic strength", "panel.shows": "shows",
       "panel.given": "delivered:",
-      "panel.pour": "Pour into", "panel.pourGo": "Pour", "panel.emptyOut": "Empty", "panel.remove": "Put away",
+      "panel.pour": "Pour into", "panel.pourGo": "Pour", "panel.dispose": "Dispose of:", "panel.remove": "Put away",
+      "bin.sink": "sink", "bin.acid": "acids and bases", "bin.heavy": "heavy metal salts", "bin.organic": "organic solvents", "bin.solid": "solids", "bin.reduce": "reduce with sodium thiosulfate first", "bin.teacher": "back to the teacher",
+      "say.disposed": "{vessel}: disposed of – {bin}. Correct.", "say.disposedWrong": "{vessel}: disposed of – {bin}. Better: {want}. {why}",
+      "say.disposedSpare": "{vessel}: disposed of – {bin}. Fine, but the sink would have done.", "say.disposedHidden": "{vessel}: disposed of – {bin}. That was not the right container.",
+      "why.reduce": "Oxidising agents such as bleach or iodine would release chlorine with acids or harm the waste water.",
+      "why.teacher": "Remains of alkali metals go back under paraffin oil; the teacher destroys them.",
+      "why.sink": "Neutral solutions without heavy metals may go down the sink with plenty of water.",
+      "why.acid": "Neutralise acidic and alkaline solutions first (pH 6 to 9) or collect them with the acids and bases.",
+      "why.heavy": "Heavy metal ions must not get into the waste water.", "why.organic": "Organic solvents are collected separately.",
+      "why.solid": "Solids block the sink and are collected separately.", "goal.disposed": "dispose of everything correctly", "goal.disposedIn": "dispose of {name} correctly",
       "panel.none": "Tap a vessel to see what you can do with it.",
       "col.particle": "Particle", "col.amount": "Amount", "col.conc": "Concentration",
       "eq.title": "Reaction equations", "eq.none": "No reaction has taken place yet.",
@@ -292,6 +301,7 @@
         ? text("goal.from", lang) + " " + amount(goal.min, lang) + " " + text("goal.to", lang) + " " + amount(goal.max, lang)
         : goal.min != null ? text("goal.min", lang) + " " + amount(goal.min, lang) : text("goal.max", lang) + " " + amount(goal.max, lang));
     } else if (goal.identify) out = text("goal.identify", lang, { name: text("sample", lang, { name: goal.identify }) });
+    else if (goal.disposed) return goal.in != null ? text("goal.disposedIn", lang, { name: (names && names[goal.in]) || goal.in }) : text("goal.disposed", lang);
     else if (goal.seen === "paper" && goal.name === "colorless") out = text("seen.paperWhite", lang);
     else if (goal.seen === "paper" && goal.name) out = text("seen.paperOf", lang, { color: colorWord(goal.name, false, lang) });
     else if (goal.seen === "color" && goal.name) out = text("seen.colorOf", lang, { color: colorWord(goal.name, false, lang) });
@@ -341,6 +351,14 @@
       case "solid": if (event.colloid) return text("hidden.haze", lang, vars);
     }
     switch (event.key) {
+      case "disposed":                                           // in welchen Behälter, und ob er passte
+        vars.bin = text("bin." + event.bin, lang);
+        if (event.spare) return text("say.disposedSpare", lang, vars);
+        if (event.right) return text("say.disposed", lang, vars);
+        if (ctx.hidden && ctx.hidden[event.vessel]) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
+        vars.want = text("bin." + event.want, lang);
+        vars.why = text("why." + event.want, lang);
+        return text("say.disposedWrong", lang, vars);
       case "plated":
         vars.name = nameOf(L.species(event.species), lang);
         vars.Name = vars.name.charAt(0).toUpperCase() + vars.name.slice(1);      // am Satzanfang (englisch: "Copper deposits …")
@@ -1341,6 +1359,16 @@
       (signal && h.signal ? '<span class="cl-signal" aria-hidden="true">' + esc(text("ghs." + h.signal, lang)) + "</span>" : "") + "</span>";
   }
 
+  // Symbol eines Entsorgungsbehälters: der Ausguss, sonst ein Kanister mit dem passenden GHS-Piktogramm
+  var BIN_GHS = { acid: "GHS05", heavy: "GHS09", organic: "GHS02" };
+  function binIcon(bin) {
+    var g = BIN_GHS[bin] && GHS[BIN_GHS[bin]];
+    if (bin === "sink") return '<svg class="cl-icon" viewBox="0 0 28 28" aria-hidden="true"><path class="cl-glass" d="M3,15L25,15L22,24L6,24Z"/><path class="cl-rod" d="M18,15L18,6L11,6L11,9" fill="none"/></svg>';
+    return '<svg class="cl-icon" viewBox="0 0 28 28" aria-hidden="true"><path class="cl-glass" d="M6,8L22,8L23,26L5,26Z"/><path class="cl-rod" d="M10,8L10,4L18,4L18,8" fill="none"/>' +
+      (g ? '<svg x="8" y="12" width="12" height="12" viewBox="' + g[0] + '">' + g[1] + "</svg>"
+        : '<circle cx="11" cy="22" r="1.6" class="cl-glass"/><circle cx="15" cy="23" r="1.4" class="cl-glass"/><circle cx="17.5" cy="20.5" r="1.3" class="cl-glass"/>') + "</svg>";
+  }
+
   function icon(id) {
     var def = L.parts[id], r, rgb, body;
     if (def) {
@@ -1410,6 +1438,7 @@
   L.escape = esc;
   L.icon = icon;
   L.ghsIcon = ghsIcon;
+  L.binIcon = binIcon;
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm

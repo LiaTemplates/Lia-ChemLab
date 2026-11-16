@@ -110,7 +110,7 @@ Der Befehl steht an einem Textblock, der den Aufbau beschreibt. Er zeigt ihn als
 
 **So geht es:**
 
-- Das **Reagenzglas antippen**: Darunter öffnet sich seine Karte. Unter **Zugeben** stehen die Stoffe aus dem Regal, unter **Geräte** Thermometer, Brenner, Proben und alles, was an diesem Gefäß wirkt, unter **Inhalt** die Teilchen, die Teilchenlupe, Umgießen, Ausleeren und Wegräumen.
+- Das **Reagenzglas antippen**: Darunter öffnet sich seine Karte. Unter **Zugeben** stehen die Stoffe aus dem Regal, unter **Geräte** Thermometer, Brenner, Proben und alles, was an diesem Gefäß wirkt, unter **Inhalt** die Teilchen, die Teilchenlupe, Umgießen, Entsorgen und Wegräumen.
 - Das Magnesiumband wählen, die Menge einstellen und **zugeben**: Das Band fällt hinein, Gasblasen steigen auf, das Thermometer klettert.
 - Der Stoff bleibt in der Hand, oben links über der Fläche. Noch einmal zugeben oder ein Gefäß antippen gibt noch einmal dieselbe Menge zu, gestrichelt umrandet sind die Gefäße, die ihn nehmen. Das Kreuz legt ihn zurück.
 - Wer lieber vom Regal aus arbeitet, klappt es oben mit **Regal** auf: Die Fächer stehen als Reiter darüber, ein Fach als Zeile, die sich seitlich schieben lässt. Ein Stoff aus dem Regal kommt ebenso in die Hand.
@@ -426,6 +426,24 @@ Vergleiche die Flaschen im Regal: Welche würdest du ohne Schutzbrille nicht anf
  ],
  "shelf":["HCl 0.01M","HCl 2M","HCl 12M","NaOH 0.1M","NaOH 1M","CuSO4 1M","K2Cr2O7 0.1M","PP","Mg ribbon","NH4NO3 salt"],
  "show":{"charts":false,"shelf":true}}
+```
+
+## Richtig entsorgen
+
+Was nach einem Versuch im Glas ist, gehört nicht einfach in den Ausguss. In der Karte jedes Gefäßes stehen fünf Behälter: **Ausguss**, **Säuren und Laugen**, **Schwermetallsalze**, **organische Lösungsmittel** und **Feststoffe**. Das Protokoll sagt, ob der gewählte passt, und wenn nicht, welcher besser wäre und warum.
+
+Entsorge die vier Gläser: Kupfersulfat-Lösung, Salzsäure, Kochsalzlösung und Wasser mit Marmorstückchen. Neutralisiere die Salzsäure vorher mit Natronlauge, bis der Indikator grün ist (genau 20 mL; schon ein Tropfen zu viel macht sie wieder alkalisch), dann darf sie in den Ausguss. Wer eine harmlose Lösung in einen Sammelbehälter gibt, macht nichts falsch; das Protokoll sagt nur, dass der Ausguss genügt hätte.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"kupfer","contains":[{"reagent":"CuSO4 0.1M","ml":30}]},
+  {"type":"beaker","id":"saeure","contains":[{"reagent":"HCl 1M","ml":20},{"reagent":"UI","drops":3}]},
+  {"type":"beaker","id":"salz","contains":[{"reagent":"NaCl 0.1M","ml":30}]},
+  {"type":"beaker","id":"marmor","contains":[{"reagent":"H2O","ml":20},{"reagent":"marble","g":1}]}
+ ],
+ "shelf":["NaOH 1M"],
+ "task":{"text":"Entsorge alle vier Gläser richtig.","goals":[{"disposed":true,"in":"kupfer"},{"disposed":true,"in":"saeure"},{"disposed":true,"in":"salz"},{"disposed":true,"in":"marmor"}]},
+ "show":{"charts":false}}
 ```
 
 ## Kalorimetrie
@@ -902,7 +920,7 @@ Mit `"show":{"volumes":false}` stehen unter den Gefäßen keine Milliliter, und 
 
 ## Sperren und Messwerttabelle
 
-In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugeben, umgießen, ausleeren, den Hahn der Bürette und die Regler bedienen und Proben mit Span und Stäbchen gehen weiter; das Regal bietet nur Stoffe und Proben an.
+In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugeben, umgießen, entsorgen, den Hahn der Bürette und die Regler bedienen und Proben mit Span und Stäbchen gehen weiter; das Regal bietet nur Stoffe und Proben an.
 
 **Messwerttabelle:** „Messwerte notieren“ schreibt die Anzeigen aller Messgeräte als Zeile in eine Tabelle, dazu die Zeit und was jede Bürette abgegeben hat. So entsteht eine Titrationskurve von Hand: Hahn auf „langsam“, nach jeweils etwa 2 mL zudrehen und notieren. „Tabelle kopieren“ gibt die Werte mit Tabulatoren getrennt weiter, so dass sie sich in eine Tabellenkalkulation einfügen lassen. Die Tabelle bleibt beim Zurücksetzen stehen; „Tabelle leeren“ beginnt eine neue.
 
@@ -1281,6 +1299,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 |---|---|---|
 | `measure` mit `min` und/oder `max` | ein Messgerät zeigt einen Wert in diesem Bereich: `T` (°C), `pH`, `kappa` (mS/cm), `A` (Extinktion), `V` (Gasvolumen im Kolbenprober, mL), `I` (Stromstärke, A), `U` (Spannung, V), `m` (Waage, g) oder `p` (Manometer, bar); Strom und Spannung als Betrag | `{"measure":"pH","min":6.5,"max":7.5,"in":"becher"}` |
 | `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
+| `disposed` | richtig entsorgt: mindestens einmal und jedes Mal in den passenden Behälter; mit `in` nur dieses Gefäß | `{"disposed":true,"in":"b"}` |
 | `identify` | die unbekannte Probe mit diesem Namen (`unknown`, mit `oneOf`) ist richtig benannt; im Feld der Probe wählt man „Das ist: …“, die letzte Wahl zählt | `{"identify":"A"}` |
 | `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (Metall scheidet sich ab), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
@@ -1500,6 +1519,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Lösungswärme:** Ammoniumnitrat, Natriumhydroxid und Calciumchlorid lösen sich nach ihrem Löslichkeitsgleichgewicht, so schnell, wie ihre Oberfläche es erlaubt (etwa eine halbe Minute für 2 g in 50 mL). Die Wärme folgt aus den Bildungsenthalpien: +25,5, −44,8 und −81,4 kJ/mol; die Konstanten der Gleichgewichte sind aus denselben Tabellenwerten gerechnet.
 - **Streuung** (mit `scatter`): Jedes Messgerät weicht fest um einen ausgelosten Betrag ab und rauscht dazu; das Rauschen wechselt jede Sekunde, und die Trägheit des Geräts glättet es. Die größten Abweichungen (fest / Rauschen, geschätzt nach Schulgeräten): Thermometer 0,3 / 0,05 °C, pH-Meter 0,05 / 0,01, Leitfähigkeit 2 % / 0,5 %, Fotometer 0,005 + 1 % / 0,002, Manometer 0,01 / 0,002 bar, Strom- und Spannungsmesser 1 % / 0,5 mA bzw. 2 mV (ohne Strom zeigt der Strommesser 0), Kolbenprober 2 % ohne Rauschen und höchstens 100 mL, Waage 0,02 % / 0,005 g (Tara stellt sie genau auf null). Das Rauschen liegt auf der Anzeige, nach der Trägheit des Fühlers. Am Ende seiner Skala zeigt ein Gerät das Ende. Die Chemie rechnet weiter mit den wahren Werten; Aufgaben, Diagramme, Tabelle und die höchste Temperatur im Protokoll sehen die Anzeige. Die Auslosung bleibt beim Zurückspulen und Zurücksetzen dieselbe. Im Ruhezustand steht die Uhr und mit ihr das Rauschen.
 - **Gefahrstoffkennzeichnung:** Aus der Einstufung des reinen Stoffs folgt die der Lösung nach den Gemisch-Regeln der CLP-Verordnung (Anhang I): spezifische Konzentrationsgrenzen, wo es sie gibt, sonst die allgemeinen; die akute Toxizität beim Verschlucken und beim Einatmen über den Schätzwert des Gemischs (Schätzwert durch Massenanteil); die Umweltgefahren über die M-Faktoren (chronisch 2 allein: Piktogramm ohne Signalwort). Danach die Vorrangregeln für Piktogramme und Signalwort. Der Massenanteil folgt aus der Zusammensetzung der Flasche. Grundlage sind die harmonisierten Einstufungen (CLP Anhang VI, bis zur 22. Anpassung), sonst die üblichen der Lieferanten.
+- **Entsorgen:** Der passende Behälter folgt aus dem Inhalt, in dieser Rangfolge: Reste von Alkalimetallen gehören in keinen Behälter, sondern zurück zur Lehrkraft; Ionen oder Verbindungen von Schwermetallen (Kupfer, Zink, Silber, Barium, Chrom, Cobalt, Mangan, Nickel, Blei, Cadmium, Quecksilber, Zinn, Arsen, Antimon, Thallium, Selen, Vanadium, Molybdän, Bismut, Uran), gelöst oder als Niederschlag, zu den Schwermetallsalzen; Bleichlauge, Chlor und Iod (ab 10 µmol) erst mit Natriumthiosulfat reduzieren; organische Lösungsmittel ab 15 % des Volumens zu den organischen Lösungsmitteln; eine Flüssigkeit mit pH unter 6 oder über 9 zu den Säuren und Laugen (oder vorher neutralisieren), auch wenn noch Feststoffreste darin liegen; Stücke aus dem Regal (ab 10 mg) und ein trockener Rückstand zu den Feststoffen; alles andere darf in den Ausguss. Lässt sich kein pH-Wert rechnen (konzentrierte Säure, Brei), entscheidet der Überschuss an Säure oder Lauge. Eine harmlose Lösung in einem Sammelbehälter gilt als richtig, mit dem Hinweis, dass der Ausguss genügt hätte. Bei unbekannten Proben sagt das Protokoll nur, ob der Behälter passte. Angelehnt an die Regeln der Schulen (DGUV Regel 113-018).
 - **Thermometer:** Es folgt der Temperatur mit einer Verzögerung von etwa drei Sekunden und reicht bis 110 °C; darüber zeigt es das Ende seiner Skala. Die Temperaturkurve im Diagramm ist das, was das Thermometer zeigt; ohne Thermometer gibt es keine Kurve.
 - **Zugießen** dauert je nach Menge eine halbe bis vier Sekunden, ein Tropfen eine Viertelsekunde. Deshalb schlägt der Indikator mitten im Zugießen um.
 - **Farbe:** Lambert-Beer für jede Wellenlänge des sichtbaren Lichts, danach Umrechnung in eine Bildschirmfarbe. Die Schichtdicke ist die Weite des Gefäßes: 1,4 cm im Reagenzglas, 5 cm im Becherglas für 100 mL.
@@ -1571,6 +1591,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Stärke ist als Zahl von Plätzen für Iod gerechnet, je 18 Glucose-Einheiten einer; die Konstante des Komplexes und seine Wärmetönung sind geschätzt.
 - Im idealen Modell ist Ammoniumnitrat schon bei 3,6 mol/L gesättigt; im Labor lösen sich in 100 g Wasser fast 200 g. Kaliumnitrat gibt es aus demselben Grund nicht als Feststoff: Die ideale Rechnung sättigte es schon bei 0,75 mol/L statt gut 3 mol/L. Ammoniumnitrat zersetzt sich beim Erhitzen nicht, auch trocken nicht. Natriumhydroxid löst sich nur in Wasser: In konzentrierter Schwefelsäure oder in Ethanol bleiben die Plätzchen liegen, und es wird nicht warm. Gerührt wird nicht eigens, jedes Gefäß gilt als durchmischt; Calciumchlorid ist das wasserfreie Salz, nicht das Hexahydrat, das sich unter Abkühlung löst.
 - Gekennzeichnet werden nur die Flaschen aus dem Regal, nicht die Gemische, die in einem Glas entstehen. H- und P-Sätze fehlen. „Korrosiv gegenüber Metallen“ hat keine Gemisch-Regel; die Grenzen (Salzsäure, Schwefelsäure, Natronlauge ab etwa 0,05 bis 0,1 mol/L) folgen den Etiketten der Lieferanten. Indikatorlösungen tragen das Etikett der üblichen Schulprodukte in Ethanol, obwohl das Labor sie als wässrige Lösung rechnet. Entwürfe späterer Anpassungen (Kaliumbromid und Lithiumchlorid als fortpflanzungsgefährdend) und abweichende Angaben einzelner Lieferanten (Silbernitrat, Kaliumiodid) sind nicht oder nur in einer Fassung berücksichtigt; maßgeblich ist das Sicherheitsdatenblatt der echten Flasche. Die akute Toxizität bei Hautkontakt fehlt. Die Regel für starke Säuren und Basen (pH unter 2 oder über 11,5 ab 1 % ätzend) ist nicht gerechnet: Ammoniak mit 1 mol/L gilt hier als reizend. Unsicher, weil Lieferanten sie verschieden einstufen: Zinkiodid (umweltgefährlich?), Eisen(III)-chlorid (korrosiv gegenüber Metallen, sensibilisierend?), Kupfer(II)-chlorid (giftig?), Kaliumiodid (Organschäden, nur bei einem Teil der Lieferanten) und der Schätzwert für Kaliumdichromat (oral 90,5 mg/kg; in der Literatur auch um 25).
+- Beim Entsorgen gibt es je Inhalt genau einen richtigen Behälter; das pH-Fenster für den Ausguss (6 bis 9) ist streng. Sulfit (mit Säuren entsteht Schwefeldioxid) wird nicht eigens behandelt, und beim Reduzieren von Bleichlauge entsteht Säure, die man danach neutralisiert. Viele Schulen sammeln anders (eigene Kanister für Chromate, Silber oder halogenhaltige Lösungsmittel, Neutralisieren statt Sammeln von Säuren und Laugen); Spuren unter 0,1 µmol zählen nicht, und ein Metallstück ist Feststoff, kein Schwermetallsalz.
 - Das Wasserbad hat seine Temperatur sofort; aufheizen und abkühlen muss nur das Gefäß darin. Über 95 °C und unter 0 °C geht es nicht.
 - Die Teilchenlupe zeigt Mengenverhältnisse, keine Größen, Formen oder Abstände der Teilchen, und ihre Wege sind erfunden. Stöße und Reaktionen einzelner Teilchen sieht man nicht.
 - Der Gasraum ist ein einziger durchmischter Raum mit festen Zeiten für das Verfliegen. Gase lassen sich noch nicht in ein anderes Gefäß leiten. Im verschlossenen Gefäß brennt gar nichts, auch nicht mit dem Sauerstoff, der noch darin wäre.

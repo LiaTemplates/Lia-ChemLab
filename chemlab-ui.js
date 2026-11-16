@@ -24,7 +24,7 @@
   var MORE_ICON = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="4" cy="10" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="16" cy="10" r="1.7"/></svg>';
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
-  var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
+  var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, disposed: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
     flame: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
@@ -935,7 +935,9 @@
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
             '<button type="button" class="cl-btn" data-act="pour">' + esc(T("panel.pourGo")) + "</button> " : "") +
-          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " + removal() + "</div></div>";
+          '<div class="cl-dispose" role="group" aria-label="' + esc(T("panel.dispose").replace(/\s*[:：፦]\s*$/, "")) + '"><span>' + esc(T("panel.dispose")) + "</span> " + L.BINS.map(function (bin) {
+            return '<button type="button" class="cl-btn cl-bin" data-act="dispose" data-id="' + bin + '">' + L.binIcon(bin) + "<span>" + esc(T("bin." + bin)) + "</span></button>";
+          }).join(" ") + "</div> " + removal() + "</div></div>";
       } else if (t) {
         html = head(t.id) +
           (L.parts[t.type].flames ? '<div class="cl-tap" role="group" aria-label="' + esc(T("flame")) + '"><span>' + esc(T("flame")) + ":</span> " +
@@ -1703,9 +1705,10 @@
         change(function (l) { return L.setTap(l, id, r); }, { key: "tap", vessel: id, rate: r });
       }
       else if (act === "pour") pourOut();
-      else if (act === "empty" && L.vessel(lab, st.sel)) {
-        id = st.sel;
-        change(function (l) { return L.empty(l, id); }, { key: "emptied", vessel: id });
+      else if (act === "dispose" && L.vessel(lab, st.sel) && L.BINS.indexOf(id) >= 0) {
+        r = st.sel;
+        if (!(L.waste(lab, r) || {}).bin) { status(T("panel.empty")); return; }      // ein leeres Glas: nichts zu entsorgen
+        change(function (l) { return L.dispose(l, r, id); }, function (out) { return Object.assign({ key: "disposed" }, out); });
       } else if (act === "remove" && st.sel && !st.config.lock) {
         id = st.sel;
         st.sel = null;
