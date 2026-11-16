@@ -2514,6 +2514,66 @@ test("Alkalimetalle: Kalium vor Natrium vor Lithium; Lauge, Wasserstoff und Wär
   }
 });
 
+// Heiße Stellen: ein Stück Alkalimetall auf Wasser, nach t Sekunden
+const onWater = (id, t, seen) => {
+  L.register(alkali());
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }] }], { room: 20 });
+  L.add(l, "b", id, { g: L.reagent(id).piece.g });
+  L.step(l, t, (e) => seen && seen.push(e));
+  return l;
+};
+
+test("Heiße Stellen: Natrium schmilzt und schwimmt, Lithium nicht geschmolzen, Kalium entzündet den Wasserstoff violett", () => {
+  const na = look(onWater("Na piece", 2)).solids[0];
+  assert.ok(na.T > 97.8 && na.T < 560, `Natrium: ${na.T} °C`);
+  assert.equal(na.molten, true, "Natrium schmilzt zur Kugel");
+  assert.equal(na.float, true, "und schwimmt");
+  assert.equal(na.flame, null, "und brennt nicht");
+  const li = look(onWater("Li piece", 5)).solids[0];
+  assert.ok(li.T < 180.5, `Lithium: ${li.T} °C`);
+  assert.deepEqual([li.molten, li.float], [false, true]);
+  const seen = [], kl = onWater("K piece", 1, seen), k = look(kl).solids[0];
+  assert.ok(k.T >= 560, `Kalium: ${k.T} °C`);
+  assert.ok(k.flame && k.flame.color === L.species("K+(aq)").flame, "Flamme in der Farbe des Kaliums");
+  assert.ok(seen.some((e) => e.key === "ignite" && e.species === "H2(g)" && e.vessel === "b"), "das Protokoll meldet es");
+  assert.ok(k.glow && k.glow.level > 0, "das Kalium glüht");
+});
+
+test("Zeichnung: Natrium als Kugel an der Oberfläche, Kalium mit violetter Flamme, glühendes Kupfer", () => {
+  const draw = (l, id, t) => L.parts[L.vessel(l, id).type].draw(L.view(l, L.vessel(l, id)), ctx({ t: t || 0 }));
+  const na = onWater("Na piece", 2), w = L.view(na, L.vessel(na, "b"));
+  const svg = draw(na, "b"), surface = L.parts.beaker.surface(w);
+  clean(svg, "Natrium");
+  const balls = [...svg.matchAll(/<circle class="cl-solid[^"]*" cx="([\d.-]+)" cy="([\d.-]+)" r="([\d.]+)"/g)];
+  assert.equal(balls.length, 1, "eine Kugel");
+  near(+balls[0][2], surface, 6, "an der Oberfläche");
+  assert.notEqual(/cx="([\d.-]+)"/.exec(draw(na, "b", 1.3))[1], /cx="([\d.-]+)"/.exec(draw(na, "b", 0))[1], "sie flitzt umher");
+  assert.match(svg, /cl-spatter/, "es spritzt");
+  const k = draw(onWater("K piece", 1), "b");
+  assert.match(k, /cl-fire/, "Flamme");
+  assert.match(k, /#b08cff|176,\s*140,\s*255/i, "in der Farbe des Kaliums");
+  const cu = lab([{ type: "dish", id: "s", contains: [{ reagent: "Cu sheet", g: 1 }] }, { type: "burner", under: "s", flame: 2 }], { room: 20 });
+  assert.doesNotMatch(draw(cu, "s"), /cl-glow/);
+  L.step(cu, 240);
+  assert.match(draw(cu, "s"), /cl-glow/, "glüht");
+});
+
+test("Heiße Stellen: brennender Wasserstoff verbraucht Sauerstoff, die Masse bleibt; Kupfer glüht in der Flamme, kalt nicht", () => {
+  const seen = [], l = onWater("K piece", 0, seen), start = totals(l).mass;
+  L.step(l, 10);
+  near(totals(l).mass, start, 1e-9, "Masse");
+  assert.ok((L.vessel(l, "b").taken["O2(g)"] || 0) > 0, "Sauerstoff aus der Luft");
+  const cu = lab([{ type: "dish", id: "s", contains: [{ reagent: "Cu sheet", g: 1 }] }, { type: "burner", under: "s", flame: 2 }], { room: 20 });
+  assert.equal(look(cu, "s").solids[0].glow, null, "kalt: kein Glühen");
+  L.step(cu, 240);
+  const hot = look(cu, "s").solids[0];
+  assert.ok(hot.T > 525 && hot.glow && hot.glow.level > 0, `Kupfer in der rauschenden Flamme: ${hot.T} °C`);
+  const red = L.glowColor(650).rgb, yellow = L.glowColor(1300).rgb;
+  assert.ok(red[0] > red[1] && red[1] > red[2], "dunkelrot");
+  assert.ok(yellow[1] / yellow[0] > red[1] / red[0], "heißer: gelber");
+  assert.equal(L.glowColor(400).level, 0, "unter 525 °C kein sichtbares Glühen");
+});
+
 test("Indikatorpapier: blau über Ammoniak, rot über Kohlenstoffdioxid, grün über Wasser; nicht am verschlossenen Glas", () => {
   const paper = (contains, more, wait) => {
     const l = lab([{ type: "testtube", id: "t", contains }].concat(more || []), { room: 20 }), seen = [];

@@ -22,6 +22,11 @@
   var LN10 = Math.LN10;
   var P_AIR = 1;              // bar, Luftdruck
   var AIR = { "O2(g)": 0.21 };   // was die Luft liefert, als Anteil
+  // Heiße Stellen an Feststoffen: Wärmeübergang an Wasser und an Luft in W/(cm² K), geschätzt; Abstrahlung mit Emissionsgrad 0,8
+  var H_WET = 0.35, H_DRY = 0.002, RADIATE = 0.8 * 5.670e-12;
+  var GLOW = 525;                 // °C: ab hier glüht ein Körper sichtbar (Draper-Punkt)
+  var H2_IGNITE = 560;            // °C: Zündtemperatur von Wasserstoff in Luft (GESTIS-Stoffdatenbank)
+  var SPATTER = 30;               // W/cm²: so viel Reaktionswärme an geschmolzenem Metall, dass es spritzt (geschätzt)
   var FIZZ = 1.5;             // s: so schnell perlt aus, was über dem Luftdruck gelöst ist
   var CRUST = 25;             // mol/L: dichter wird eine Lösung nicht, dann ist sie eingedampft
   var SMELL = 0.005;          // bar: ab diesem Druck riecht man ein Gas
@@ -2846,6 +2851,70 @@
 
   function stoppered(lab, v) { return !!toolAt(lab, v, function (def) { return def.stopper; }); }
 
+  // Heiße Stellen: Jedes Stück aus dem Regal hat seine eigene Temperatur. Die Reaktionen an seiner Oberfläche heizen es, und es gibt
+  // die Wärme an das Wasser ab oder, trocken, an die Luft und durch Strahlung; gerechnet wird der eingeschwungene Zustand, denn ein
+  // kleines Stück folgt in Bruchteilen einer Sekunde. Die Wärme selbst bucht weiter das Gefäß. Ein Stück, leichter als Wasser, schwimmt;
+  // ist es heißer als die Zündtemperatur des Wasserstoffs, den es freisetzt, brennt dieser an der Luft, in der Flammenfarbe des Metalls.
+  function hotSpots(lab, v, emit) {
+    var wet = volume(v) > 0, closed = stoppered(lab, v);
+    v.lumps.forEach(function (l) {
+      var s = L.db.species[l.id], a = l.made ? 0 : l.a0 * Math.pow(l.n / l.n0, l.p), total = area(v, l.id), P = 0, gas = 0, tint = null, x;
+      if (!(a > 0) || !(l.n > 0)) { l.T = null; l.heat = 0; l.flame = 0; return; }
+      L.db.reactions.forEach(function (r) {
+        var rate = v.rate[r.key], h = heatOf(r), id;
+        if (!rate || r.rate.surface !== l.id || !(total > 0)) return;
+        if (h != null && h < 0) P += rate * -h * 1000 * a / total;
+        if (r.nu["H2(g)"] > 0) gas += rate * r.nu["H2(g)"] * a / total;
+        for (id in r.nu) if (r.nu[id] > 0 && L.db.species[id].flame && !tint) tint = L.db.species[id].flame;
+      });
+      l.heat = P / a;
+      l.T = wet ? v.T + P / (H_WET * a) : dryTemp(v.T, P, a);
+      l.float = wet && s.rho != null && s.rho < 1;
+      if (l.float && !closed && l.T >= H2_IGNITE && gas > 0) {
+        x = Math.min(gas * DT, v.n["H2(g)"] || 0);                // 2 H2 + O2 -> 2 H2O, mit Sauerstoff aus der Luft
+        if (x > 0) {
+          v.n["H2(g)"] -= x;
+          if (!(v.n["H2(g)"] > TRACE)) delete v.n["H2(g)"];
+          v.taken["O2(g)"] = (v.taken["O2(g)"] || 0) + x / 2;
+          v.out[STEAM] = (v.out[STEAM] || 0) + x;
+          v.pipe = (v.pipe || 0) + x / DT;                     // es sprudelt trotzdem: der Wasserstoff verbrennt erst über dem Wasser
+        }
+        l.flame = gas; l.tint = tint || "#a9c2ff";
+        if (!l.lit && emit) emit({ key: "ignite", vessel: v.id, species: "H2(g)" });
+        l.lit = true;
+      } else {
+        if (l.lit && emit) emit({ key: "fireEnd", vessel: v.id, species: "H2(g)" });
+        l.lit = false; l.flame = 0;
+      }
+    });
+  }
+
+  // Temperatur eines trockenen Stücks, das P Watt auf a cm² abgibt: an die Luft und durch Strahlung, an einer Umgebung von T0 °C
+  function dryTemp(T0, P, a) {
+    var lo = T0, hi = T0 + 3000, mid, i;
+    if (!(P > 0)) return T0;
+    for (i = 0; i < 40; i++) {
+      mid = (lo + hi) / 2;
+      if (a * (H_DRY * (mid - T0) + RADIATE * (Math.pow(mid + KELVIN, 4) - Math.pow(T0 + KELVIN, 4))) < P) lo = mid; else hi = mid;
+    }
+    return (lo + hi) / 2;
+  }
+
+  // Farbe eines glühenden Körpers: Plancks Strahlungsgesetz über die Normspektralwerte, auf die hellste Grundfarbe bezogen.
+  // level: wie stark er leuchtet, 0 unter dem Draper-Punkt, 1 ab etwa 1200 °C
+  function glowColor(T) {
+    var K = T + KELVIN, sum = [0, 0, 0], i, k, lam, B, rgb, top;
+    for (i = 0; i < WAVES.length; i++) {
+      lam = WAVES[i] * 1e-9;
+      B = 1 / (Math.pow(lam, 5) * (Math.exp(1.4388e-2 / (lam * K)) - 1));
+      for (k = 0; k < 3; k++) sum[k] += B * CMF[i][k];
+    }
+    rgb = linear(sum).map(function (value) { return Math.max(0, value); });
+    top = Math.max(rgb[0], rgb[1], rgb[2]) || 1;
+    rgb = rgb.map(function (value) { var u = value / top; return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * Math.pow(u, 1 / 2.4) - 0.055)); });
+    return { rgb: rgb, level: Math.max(0, Math.min(1, (T - GLOW) / 700)) };
+  }
+
   // Gasraum: was keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest, leichte Gase schnell, schwere langsam.
   // Steht eine Flamme darunter, zündet ein brennbares Gemisch: einmal mit einer Verpuffung, danach brennt an der Öffnung ruhig ab,
   // was nachkommt.
@@ -2986,6 +3055,7 @@
     if (v.broken) return;
     boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
+    hotSpots(lab, v, emit);
     if (v.dirty || Math.abs(v.T - v.Teq) > 0.02) {              // auch wenn nur die Temperatur wandert: K hängt von ihr ab
       moving = equilibrate(lab, v, emit);
       v.Teq = v.T;
@@ -3426,8 +3496,13 @@
         return { species: fuel(r), rate: v.rate[r.key] || 0, color: look.color || "#ffb040", glare: look.glare || 0, smoke: look.smoke || null, glow: !!look.glow };
       }),
       // Feststoffe aus dem Regal. form: "strip" (Band, wird dünner) oder "grains"; g0: Masse am Anfang
+      // T: seine eigene Temperatur; molten, float: geschmolzen, schwimmt; glow: glüht (rgb, level); flame: brennender Wasserstoff;
+      // spatter: so heftig, dass geschmolzenes Metall spritzt
       solids: v.lumps.filter(function (l) { return !l.made; }).map(function (l) {
-        return { id: l.id, n: l.n, part: l.n / l.n0, g0: l.n0 * L.db.species[l.id].M, form: l.form || (l.p === 0 ? "strip" : "grains") };
+        var s = L.db.species[l.id], T = l.T != null ? l.T : v.T, glow = T >= GLOW ? glowColor(T) : null, molten = s.Tm != null && T >= s.Tm;
+        return { id: l.id, n: l.n, part: l.n / l.n0, g0: l.n0 * s.M, form: l.form || (l.p === 0 ? "strip" : "grains"),
+          T: T, molten: molten, float: vol > 0 && s.rho != null && s.rho < 1, glow: glow,
+          flame: l.flame > 0 ? { color: l.tint, rate: l.flame } : null, spatter: molten && (l.heat || 0) > SPATTER };
       }),
       inflow: lab.flows.some(function (f) { return f.to === v.id; }),
       outflow: lab.flows.some(function (f) { return f.from === v.id; })
@@ -3888,6 +3963,7 @@
   L.series = series;
   L.glassMass = glassMass;
   L.guess = guess;
+  L.glowColor = glowColor;
   L.tare = tare;
   L.curve = curve;
   L.changed = changed;

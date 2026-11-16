@@ -423,11 +423,31 @@
     return x - Math.floor(x);
   }
 
-  // Feststoffe am Boden. box: { x0, x1, bottom } – der Platz am Gefäßboden; tall: schmales Gefäß
-  function solids(w, box, tall) {
-    var out = "", width = box.x1 - box.x0, mid = (box.x0 + box.x1) / 2;
+  // Feststoffe am Boden. box: { x0, x1, bottom } – der Platz am Gefäßboden; tall: schmales Gefäß; surface: der Spiegel, wenn Flüssigkeit da ist
+  function solids(w, box, tall, ctx, surface) {
+    var out = "", width = box.x1 - box.x0, mid = (box.x0 + box.x1) / 2, t = ctx && !ctx.still ? ctx.t || 0 : 0;
     w.solids.forEach(function (s, index) {
       var color = L.species(s.id).color || "#9aa0a8", i, points = [], count, r, x, y;
+      if (s.float && surface != null) {
+        // schwimmt: ein Stück an der Oberfläche; geschmolzen eine Kugel, die vom Gas getrieben hin und her flitzt
+        r = 2.4 + 3 * Math.pow(s.part, 1 / 3);
+        x = mid + (s.molten && (s.spatter || s.flame) ? Math.sin(t * 2.3 + index) * 0.5 + Math.sin(t * 3.7 + 2 * index) * 0.35 : 0.2 * (pseudo(index + 1, 0) - 0.5)) * Math.max(0, width - 2 * r) * 0.5;
+        y = surface - (s.molten ? r * 0.4 : r * 0.2);
+        out += glowAt(s, x, y, r);
+        out += '<circle class="cl-solid' + (s.molten ? " cl-molten" : "") + '" cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(r) + '" fill="' + esc(s.glow ? css(s.glow.rgb) : color) + '" stroke-width="0.5"/>';
+        if (s.spatter) for (i = 0; i < 4; i++) {                // Spritzer: kleine Tropfen, die vom Metall aufsteigen und zurückfallen
+          var q = (t * 1.7 + pseudo(index + 3, i)) % 1, dx = (pseudo(index + 5, i) - 0.5) * 16;
+          out += '<circle class="cl-spatter" cx="' + f(x + dx * q) + '" cy="' + f(y - 14 * Math.sin(Math.PI * q)) + '" r="1.1"/>';
+        }
+        if (s.flame && L.fx) out += L.fx.fire(x - 6, x + 6, y + 2, [{ rate: 1, color: s.flame.color, glare: 0 }], t, index + 1, !!(ctx && ctx.still));
+        return;
+      }
+      if (s.molten) {                                          // geschmolzen am Boden: eine flache Lache
+        out += glowAt(s, mid, box.bottom - 2, width * 0.3);
+        out += '<ellipse class="cl-solid cl-molten" cx="' + f(mid) + '" cy="' + f(box.bottom - 2) + '" rx="' + f(width * 0.3 * Math.sqrt(s.part)) + '" ry="2.5" fill="' + esc(s.glow ? css(s.glow.rgb) : color) + '"/>';
+        return;
+      }
+      out += glowAt(s, mid, box.bottom - 4, width * 0.3);
       if (s.form === "strip") {
         // Band als Zickzack: so viele Stücke, wie es lang ist; es wird dünner, nicht kürzer
         count = Math.max(2, Math.min(14, Math.round(s.g0 / 0.0104)));
@@ -451,6 +471,12 @@
       }
     });
     return out;
+  }
+
+  // Schein um ein glühendes Stück: in seiner Glühfarbe, umso deutlicher, je heißer es ist
+  function glowAt(s, x, y, r) {
+    if (!s.glow || !(s.glow.level > 0)) return "";
+    return '<ellipse class="cl-glow" cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(r * 1.8 + 4) + '" ry="' + f(r * 1.4 + 3) + '" fill="' + css(s.glow.rgb) + '" fill-opacity="' + (0.25 + 0.5 * s.glow.level).toFixed(2) + '"/>';
   }
 
   // Scherben eines zersprungenen Gefäßes, auf dem Tisch verstreut
@@ -505,7 +531,7 @@
       layer = Math.min(14, 2.5 + 30 * Math.sqrt(w.residue));
       out += '<path class="cl-crust" d="' + shape.fill(shape.bottom - layer) + '"/>';
     }
-    out += solids(w, box, shape.tall);
+    out += solids(w, box, shape.tall, ctx, w.ml > 0.005 ? shape.top : null);
     if (w.ml > 0.005) {
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf
       if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.bubbles(box, Math.max(w.gas, w.steam), ctx.t, ctx.seed || 1, ctx.still) + "</g>";

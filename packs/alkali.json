@@ -2,47 +2,122 @@
   "about": "Alkalimetalle: Lithium, Natrium und Kalium reagieren mit Wasser zu Lauge und Wasserstoff",
   "species": {
     "Li(s)": {
-      "name": { "de": "Lithium", "en": "lithium" }, "Hf": 0, "S": 29.12, "color": "#b7bcc2",
-      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 29.12 J/(mol K)"
+      "name": {
+        "de": "Lithium",
+        "en": "lithium"
+      },
+      "Hf": 0,
+      "S": 29.12,
+      "color": "#b7bcc2",
+      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 29.12 J/(mol K); density 0.534 g/cm³ and melting point 180.5 °C: usual table values",
+      "rho": 0.534,
+      "Tm": 180.5
     },
     "Na(s)": {
-      "name": { "de": "Natrium", "en": "sodium" }, "Hf": 0, "S": 51.30, "color": "#c9ccd1",
-      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 51.30 J/(mol K)"
+      "name": {
+        "de": "Natrium",
+        "en": "sodium"
+      },
+      "Hf": 0,
+      "S": 51.3,
+      "color": "#c9ccd1",
+      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 51.30 J/(mol K); density 0.968 g/cm³ and melting point 97.8 °C: usual table values",
+      "rho": 0.968,
+      "Tm": 97.8
     },
     "K(s)": {
-      "name": { "de": "Kalium", "en": "potassium" }, "Hf": 0, "S": 64.68, "color": "#c2c6cc",
-      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 64.68 J/(mol K)"
+      "name": {
+        "de": "Kalium",
+        "en": "potassium"
+      },
+      "Hf": 0,
+      "S": 64.68,
+      "color": "#c2c6cc",
+      "src": "CODATA Key Values for Thermodynamics (Cox, Wagman, Medvedev 1989): S = 64.68 J/(mol K); density 0.862 g/cm³ and melting point 63.5 °C: usual table values",
+      "rho": 0.862,
+      "Tm": 63.5
     }
   },
   "reactions": [
     {
       "eq": "2 Li(s) + 2 H2O(l) -> 2 Li+(aq) + 2 OH-(aq) + H2(g)",
-      "rate": { "k": 1e-4, "Ea": 20, "surface": "Li(s)" },
+      "rate": {
+        "k": 0.0001,
+        "Ea": 20,
+        "surface": "Li(s)"
+      },
       "src": "estimated: a piece of lithium (0.03 g) reacts with water in about a minute, calmly with steady bubbling"
     },
     {
       "eq": "2 Na(s) + 2 H2O(l) -> 2 Na+(aq) + 2 OH-(aq) + H2(g)",
-      "rate": { "k": 3.5e-4, "Ea": 20, "surface": "Na(s)" },
+      "rate": {
+        "k": 0.00035,
+        "Ea": 20,
+        "surface": "Na(s)"
+      },
       "src": "estimated: a pea-sized piece of sodium (0.1 g) is used up on water in about ten seconds"
     },
     {
       "eq": "2 K(s) + 2 H2O(l) -> 2 K+(aq) + 2 OH-(aq) + H2(g)",
-      "rate": { "k": 6e-4, "Ea": 20, "surface": "K(s)" },
+      "rate": {
+        "k": 0.0006,
+        "Ea": 20,
+        "surface": "K(s)"
+      },
       "src": "estimated: a lentil-sized piece of potassium (0.05 g) is used up on water in a few seconds"
     }
   ],
   "reagents": {
     "Li piece": {
-      "name": { "de": "Lithium", "en": "lithium" }, "solid": "Li(s)", "start": 1, "area": 29.5, "group": "solid",
-      "piece": { "g": 0.03, "name": { "de": "Stückchen", "en": "piece" } }
+      "name": {
+        "de": "Lithium",
+        "en": "lithium"
+      },
+      "solid": "Li(s)",
+      "start": 1,
+      "area": 29.5,
+      "group": "solid",
+      "piece": {
+        "g": 0.03,
+        "name": {
+          "de": "Stückchen",
+          "en": "piece"
+        }
+      }
     },
     "Na piece": {
-      "name": { "de": "Natrium", "en": "sodium" }, "solid": "Na(s)", "start": 1, "area": 13, "group": "solid",
-      "piece": { "g": 0.1, "name": { "de": "Stückchen", "en": "piece" } }
+      "name": {
+        "de": "Natrium",
+        "en": "sodium"
+      },
+      "solid": "Na(s)",
+      "start": 1,
+      "area": 13,
+      "group": "solid",
+      "piece": {
+        "g": 0.1,
+        "name": {
+          "de": "Stückchen",
+          "en": "piece"
+        }
+      }
     },
     "K piece": {
-      "name": { "de": "Kalium", "en": "potassium" }, "solid": "K(s)", "start": 1, "area": 18, "group": "solid",
-      "piece": { "g": 0.05, "name": { "de": "Stückchen", "en": "piece" } }
+      "name": {
+        "de": "Kalium",
+        "en": "potassium"
+      },
+      "solid": "K(s)",
+      "start": 1,
+      "area": 18,
+      "group": "solid",
+      "piece": {
+        "g": 0.05,
+        "name": {
+          "de": "Stückchen",
+          "en": "piece"
+        }
+      }
     }
   }
 }
