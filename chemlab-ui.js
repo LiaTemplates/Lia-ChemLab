@@ -408,7 +408,7 @@
         kind = L.parts[h.id].probe;
         if (L.parts[L.vessel(lab, id).type].dispenser) { status(T("notHere")); return; }
         if (kind === "rod" && !lab.tools.some(function (t) { return t.flame === 2; })) { status(T("noFlame")); return; }
-        if (kind !== "rod" && lab.tools.some(function (t) { return t.in === id && L.parts[t.type].sense === "V"; })) { status(T("closed")); return; }
+        if (kind !== "rod" && lab.tools.some(function (t) { return t.in === id && L.parts[t.type].stopper; })) { status(T("closed")); return; }
         change(function (l, emit) { return kind === "rod" ? L.flameTest(l, id, emit) : L.probe(l, id, kind, emit); });
         return;
       }

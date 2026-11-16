@@ -2805,9 +2805,10 @@
   function bubbleInto(lab, v, id, x) {
     var e, key;
     if (!(volume(v) > 0)) { v.air[id] = (v.air[id] || 0) + x; return; }
-    v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
     e = L.db.equilibria.filter(function (q) { return q.gas === id; })[0];
-    if (!e) { v.air[id] = (v.air[id] || 0) + x; return; }      // steigt durch und steht im Gasraum
+    // steigt durch: als Gas in der Flüssigkeit, so zählt es wie selbst entstandenes (Blasen, Kolbenprober, nächstes Rohr)
+    if (!e) { v.n[id] = (v.n[id] || 0) + x; return; }
+    v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
     for (key in e.d) v.n[key] = (v.n[key] || 0) + e.d[key] * x;
     tally(v, e, x * e.f);
     v.dirty = true;

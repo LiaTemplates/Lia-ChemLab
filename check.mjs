@@ -7342,6 +7342,28 @@ test("Oberfläche: das Gasableitungsrohr setzen – erst die Quelle, dann das Zi
   assert.match(part(el, ".cl-status").textContent, /schon ein solches Gerät/, "im Stopfen ist kein Platz mehr");
 });
 
+test("Oberfläche: an ein Glas mit Gasableitungsrohr kommt kein Span", () => {
+  const el = mount({ bench: [{ type: "testtube", id: "a", contains: [{ reagent: "HCl 1M", ml: 5 }] }, { type: "tube", in: "a", to: "z" }, { type: "testtube", id: "z" }],
+    shelf: ["splint"] });
+  press(el, "hand", "splint");
+  tap(el, "a");
+  assert.match(part(el, ".cl-status").textContent, /mit einem Stopfen verschlossen/);
+});
+
+test("Gasableitungsrohr: Wasserstoff im zweiten Glas zählt der Kolbenprober, und er geht durch eine Waschflasche weiter", () => {
+  const zinc = [{ reagent: "HCl 2M", ml: 10 }, { reagent: "Zn powder", g: 0.3 }];
+  let l = lab([{ type: "testtube", id: "a", contains: zinc }, { type: "tube", in: "a", to: "b" },
+    { type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "syringe", id: "kp", in: "b" }], { room: 20 });
+  L.step(l, 120);
+  assert.ok(L.reading(l, "kp").value > 20, `Kolbenprober am zweiten Glas: ${L.reading(l, "kp").value} mL`);
+  l = lab([{ type: "testtube", id: "a", contains: zinc }, { type: "tube", in: "a", to: "b" },
+    { type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "tube", in: "b", to: "c" }, { type: "testtube", id: "c" }], { room: 20 });
+  L.step(l, 300);
+  const b = L.vessel(l, "b").air["H2(g)"] || 0, c = (L.vessel(l, "c").air["H2(g)"] || 0) + (L.vessel(l, "c").out["H2(g)"] || 0);
+  // gut durchmischt behält der Gasraum der Waschflasche gut 2 mmol · (1 − e^(−3,1/2,08)) ≈ 1,6 mmol, der Rest geht weiter (vorher: 1,05)
+  assert.ok(c > 1.3e-3, `durch die Waschflasche weiter: ${b} im mittleren, ${c} im letzten Glas`);
+});
+
 test("Zeichnung: Gasableitungsrohr für sich, zwischen zwei Gläsern und mit Blasen", () => {
   const place = { x1: 0, y1: -196, w: 26, x2: 120, y2: -196, s2: -60, end: -45 };
   clean(L.parts.tube.draw({ type: "tube" }, ctx()), "Rohr für sich");
