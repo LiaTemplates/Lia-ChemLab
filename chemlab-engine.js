@@ -538,7 +538,9 @@
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
-  registerPart("condenser", { kind: "tool", condenser: true });
+  registerPart("condenser", { kind: "tool", duct: true, condenser: true });
+  // Gasableitungsrohr mit Stopfen: verschließt das Gefäß und leitet, was dort an Gas entsteht, in ein zweites
+  registerPart("tube", { kind: "tool", duct: true, pipe: true, stopper: true });
   // Rückflusskühler: steht aufrecht im Gefäß; der Dampf wird darin wieder flüssig und läuft zurück
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
@@ -552,7 +554,7 @@
   registerPart("dish", { kind: "vessel", cap: 50, d: 2.5, Cv: 45, loss: 0.14, heat: 0.18 });      // Abdampfschale aus Porzellan
   // under: steht unter einem Gefäß; flames: Temperatur der Flamme in °C für aus, leuchtend, rauschend
   registerPart("burner", { kind: "tool", under: true, flames: [0, 600, 1150] });
-  registerPart("syringe", { kind: "tool", lag: 0, unit: "mL", sense: "V", cap: 100 });           // Kolbenprober
+  registerPart("syringe", { kind: "tool", lag: 0, unit: "mL", sense: "V", cap: 100, stopper: true });           // Kolbenprober
   // Wasserbad: steht wie der Brenner unter einem Gefäß und hält es auf der eingestellten Temperatur (range, in °C).
   // gain: so viel besser als eine Flamme überträgt das Wasser die Wärme
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
@@ -733,7 +735,7 @@
           item.nm = Math.round(raw.nm);
         }
         if (def.circuit === "supply") { item.volts = voltsOf(def, raw.volts); item.flip = !!raw.flip; }
-        if (def.bridge || def.condenser) item.to = raw.to != null ? String(raw.to) : null;
+        if (def.bridge || def.duct) item.to = raw.to != null ? String(raw.to) : null;
         if (def.electrode && raw.g != null) {
           if (!(raw.g > 0) || !(raw.g <= 1000)) throw fail("amount", item.id);
           item.g = +raw.g;
@@ -745,8 +747,11 @@
     bench.forEach(function (item) {
       var own = L.parts[item.type], slot = (own.electrode ? "electrode" : own.under ? "under" : item.type) + ">" + item.in;     // Brenner und Wasserbad teilen sich den Platz darunter
       if (item.in != null) {                           // von jedem Gerät gehört nur eines an ein Gefäß, von den Elektroden zwei
-        hung[slot] = (hung[slot] || 0) + 1;
-        if (hung[slot] > (own.electrode ? 2 : 1)) throw fail("place", item.in);
+        // Kolbenprober und Rohr sitzen beide im Stopfen, Kühler und Rohr führen beide hinaus: je Gefäß einer
+        [slot].concat(own.stopper ? ["stopper>" + item.in] : [], own.duct ? ["duct>" + item.in] : []).forEach(function (key) {
+          hung[key] = (hung[key] || 0) + 1;
+          if (hung[key] > (own.electrode ? 2 : 1)) throw fail("place", item.in);
+        });
       }
       var host = ids[item.in != null ? item.in : item.over], def = host && L.parts[host.type];
       var fits = !!(def && def.kind === "vessel" && !def.dispenser);       // in oder über einem Gefäß, nicht an einer Bürette
@@ -755,7 +760,7 @@
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
-        slot = (own.condenser ? "condenser<" : "bridge>") + item.to;          // in eine Vorlage führt nur ein Kühler
+        slot = (own.duct ? "duct<" : "bridge>") + item.to;                    // in eine Vorlage führt nur ein Kühler oder Rohr
         hung[slot] = (hung[slot] || 0) + 1;
         if (hung[slot] > 1) throw fail("place", item.to);
       }
@@ -914,7 +919,7 @@
     }
     if (def.circuit === "supply") { t.volts = item.volts || 0; t.flip = !!item.flip; }       // flip: umgepolt
     else if (def.circuit) { t.goal = def.circuit === "voltmeter" ? null : 0; t.lit = false; }     // goal: was das Gerät zeigen soll
-    if (def.bridge || def.condenser) t.to = item.to || null;
+    if (def.bridge || def.duct) t.to = item.to || null;
     return t;
   }
 
@@ -1021,7 +1026,8 @@
     if (host && def.electrode && (!L.parts[host.type].electrodes || electrodesIn(lab, host.id).length >= 2)) host = null;      // kein Platz für eine Elektrode
     if (host && def.circuit && !L.parts[host.type].electrodes) host = null;        // ein Stromkreis braucht ein Gefäß für Elektroden
     if (host && def.bridge && bridged(lab, host.id)) host = null;                  // dort hängt schon eine Salzbrücke
-    if (host && def.condenser && toolAt(lab, host, function (d) { return d.condenser; })) host = null;      // dort steckt schon ein Kühler
+    if (host && def.duct && toolAt(lab, host, function (d) { return d.duct; })) host = null;      // dort steckt schon ein Kühler oder Rohr
+    if (host && def.stopper && toolAt(lab, host, function (d) { return d.stopper; })) host = null;      // dort sitzt schon ein Stopfen
     if (def.kind === "vessel") {
       if (host && lab.vessels.some(function (v) { return v.over === host.id; })) host = null;    // dort hängt schon eine
       lab.vessels.push(makeVessel(lab, {
@@ -1029,9 +1035,9 @@
         over: def.dispenser && host ? host.id : null
       }));
     } else {
-      var far = (def.bridge || def.condenser) && host ? vessel(lab, raw.to) : null;
-      if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].condenser && t.to === far.id; })))) far = null;
-      if ((def.bridge || def.condenser) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
+      var far = (def.bridge || def.duct) && host ? vessel(lab, raw.to) : null;
+      if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].duct && t.to === far.id; })))) far = null;
+      if ((def.bridge || def.duct) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
       lab.tools.push((made = makeTool({
         id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame),
         volts: def.circuit === "supply" ? voltsOf(def, raw.volts) : 0, flip: raw.flip, to: far ? far.id : null, g: raw.g > 0 ? +raw.g : 0,
@@ -2756,7 +2762,7 @@
     return out;
   }
 
-  function stoppered(lab, v) { return !!toolAt(lab, v, function (def) { return def.sense === "V"; }); }
+  function stoppered(lab, v) { return !!toolAt(lab, v, function (def) { return def.stopper; }); }
 
   // Gasraum: was keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest, leichte Gase schnell, schwere langsam.
   // Steht eine Flamme darunter, zündet ein brennbares Gemisch: einmal mit einer Verpuffung, danach brennt an der Öffnung ruhig ab,
@@ -3650,7 +3656,7 @@
       if (def.bath) item.temp = t.temp;
       if (def.sense === "A") item.nm = t.nm;
       if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
-      if ((def.bridge || def.condenser) && item.in && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;      // ohne das erste Gefäß liegt sie für sich
+      if ((def.bridge || def.duct) && item.in && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;      // ohne das erste Gefäß liegt sie für sich
       if (def.electrode) { g = round(t.n0 * species(def.electrode).M); if (Math.abs(g - def.g) > 1e-9) item.g = g; }
       bench.push(item);
     });

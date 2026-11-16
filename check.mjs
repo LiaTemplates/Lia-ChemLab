@@ -7163,6 +7163,27 @@ test("Kühler: Beschreibung mit in und to, Fehler und Aufbau als Text", () => {
   assert.deepEqual([L.tool(placed, id).in, L.tool(placed, id).to], ["k", "v"]);
 });
 
+test("Gasableitungsrohr: Beschreibung, Platz und Fehler", () => {
+  const c = L.normalize({ bench: [{ type: "testtube", id: "a" }, { type: "tube", in: "a", to: "z" }, { type: "testtube", id: "z" }] });
+  assert.deepEqual(c.bench[1], { type: "tube", id: "tube1", in: "a", to: "z" });
+  assert.match(L.describe(L.createRun(c), {}), /\{"type":"tube","id":"tube1","in":"a","to":"z"\}/);
+  const a = { type: "testtube", id: "a" }, z = { type: "testtube", id: "z" };
+  for (const bench of [
+    [a, { type: "tube", in: "a", to: "a" }],
+    [a, { type: "tube", in: "a", to: "x" }],
+    [a, z, { type: "tube", in: "a", to: "z" }, { type: "tube", in: "a", to: "z" }],
+    [a, z, { type: "testtube", id: "y" }, { type: "tube", in: "a", to: "z" }, { type: "tube", in: "y", to: "z" }],
+    [a, z, { type: "tube", in: "a", to: "z" }, { type: "syringe", in: "a" }],
+    [a, z, { type: "syringe", in: "a" }, { type: "tube", in: "a", to: "z" }],
+    [a, { type: "burette", id: "bu" }, { type: "tube", in: "a", to: "bu" }],
+    [{ type: "flask", id: "k" }, z, { type: "beaker", id: "v" }, { type: "condenser", in: "k", to: "v" }, { type: "tube", in: "k", to: "z" }]
+  ]) assert.throws(() => L.normalize({ bench }), (e) => e.code === "place", JSON.stringify(bench));
+  const placed = L.createLab(L.normalize({ bench: [a, z] }));
+  const id = L.place(placed, { type: "tube", in: "a", to: "z" });
+  assert.deepEqual([L.tool(placed, id).in, L.tool(placed, id).to], ["a", "z"]);
+  assert.equal(L.tool(placed, L.place(placed, { type: "syringe", in: "a" })).in, null, "der Stopfen sitzt schon");
+});
+
 // wie im Messbericht: je 10 mL Ethanol und Eisessig mit 5 Tropfen Schwefelsäure; im Reagenzglas die Hälfte mit 3 Tropfen
 const esterMix = (acid, more, bath) => {
   L.register(organic);
