@@ -13,7 +13,7 @@
   L.strings = {
     de: {
       "shelf": "Regal", "stage": "Arbeitsfläche", "reset": "Zurücksetzen",
-      "part.testtube": "Reagenzglas", "part.beaker": "Becherglas", "part.thermometer": "Thermometer", "part.flask": "Rundkolben", "part.condenser": "Liebigkühler",
+      "part.testtube": "Reagenzglas", "part.beaker": "Becherglas", "part.thermometer": "Thermometer", "part.flask": "Rundkolben", "part.condenser": "Liebigkühler", "part.reflux": "Rückflusskühler",
       "hint.still1": "Nun das Gefäß antippen, aus dem destilliert wird.", "hint.still2": "Nun die Vorlage antippen, in die das Destillat läuft.",
       "sameStill": "Der Kühler führt in ein anderes Gefäß.",
       "eq.catalyst": "Katalysator",
@@ -176,7 +176,7 @@
     },
     en: {
       "shelf": "Shelf", "stage": "Bench", "reset": "Reset",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "eq.catalyst": "catalyst",
@@ -663,6 +663,7 @@
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
       if (type === "bridge" || type === "condenser") return { x: 6 * slot, rim: TUBE.top };
+      if (type === "reflux") return { x: 0, rim: TUBE.top, top: TUBE.top - REFLUX };
       if (type === "conductometer") return { x: -1, bottom: -14, top: -276, box: -74 };
       if (type === "photometer") return { x: 1, bottom: -14, top: -292, box: 8 };
       return type === "phmeter" ? { x: -5, bottom: -14, top: -236, box: -62 } : { x: 5, bottom: -14, top: -262, tag: 8 };
@@ -709,6 +710,7 @@
         return { x: (slot ? 1 : -1) * (s[0] / 2 - 10), bottom: -3 - gap * (s[1] - 16), top: -s[1] - 30, rim: -s[1] };
       }
       if (type === "bridge" || type === "condenser") return { x: slot * (s[0] / 2 - 21), rim: -s[1] };
+      if (type === "reflux") return { x: 0, rim: -s[1], top: -s[1] - REFLUX };
       if (type === "conductometer") return { x: -s[0] / 16, bottom: -8, top: -s[1] - 76, box: -40 };
       if (type === "photometer") return { x: s[0] / 8, bottom: -8, top: -s[1] - 100, box: -68 };      // Anzeige links der Sonde: rechts hängt die Bürette
       // von links nach rechts: Thermometer mit Anzeige links davon, Elektrode mit Anzeige darüber, rechts bleibt Platz für die Bürette.
@@ -771,6 +773,7 @@
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
       if (type === "bridge" || type === "condenser") return { x: 30 * slot, rim: -DISH.h - 4 };
+      if (type === "reflux") return { x: 0, rim: -DISH.h - 4, top: -DISH.h - 4 - REFLUX };
       if (type === "conductometer") return { x: 0, bottom: -6, top: -152, box: -37 };      // seine Anzeige steht über dem Schild des Thermometers
       if (type === "photometer") return { x: 5, bottom: -6, top: -180, box: -70 };
       return type === "phmeter" ? { x: 12, bottom: -6, top: -104, box: 8 } : { x: -12, bottom: -6, top: -150, tag: -62 };
@@ -1116,6 +1119,7 @@
       if (type === "syringe") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
       if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
       if (type === "bridge") return { x: 0, rim: FLASK.rim };
+      if (type === "reflux") return { x: FLASK.neck + 14, rim: FLASK.arm - 2, top: FLASK.arm - 2 - REFLUX, lean: 18 };      // auf dem Ansatzrohr: der Hals bleibt frei
       if (type === "conductometer" || type === "photometer") return { x: 1, bottom: FLASK_CY + 14, top: FLASK.rim - 76, box: -70 };
       return type === "phmeter" ? { x: 2, bottom: FLASK_CY + 14, top: FLASK.rim - 46, box: -62 } : { x: -2, bottom: FLASK_CY + 14, top: FLASK.rim - 70, tag: -62 };
     },
@@ -1157,6 +1161,27 @@
         '<path class="cl-glass" d="M' + f(d.x1) + "," + f(d.y1) + "L" + f(d.x3) + "," + f(d.y3) + "L" + f(d.x3) + "," + f(d.y4) + '"/>';
       if (w.drip && place && L.fx) out += L.fx.drops(d.x3, d.y4, d.s2, ctx.t || 0, ctx.still);
       return out + (place ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
+  // ------------------------------------------------------------------ Rückflusskühler
+
+  var REFLUX = 110;                     // so weit ragt er über die Öffnung
+
+  // place: { x, rim, top } aus probe() des Gefäßes: aufrecht über dessen Öffnung
+  L.registerPart("reflux", {
+    width: function () { return 40; },
+    bounds: function (t, place) {
+      var p = place || { x: 0, rim: 0, top: -REFLUX }, reach = (p.lean || 0) * Math.PI / 180, h = p.rim - p.top;
+      return { x0: p.x - 14, x1: p.x + 14 + h * Math.sin(reach), top: p.rim - h * Math.cos(reach) - 6, bottom: p.rim };
+    },
+    draw: function (w, ctx, place) {
+      var p = place || { x: 0, rim: 0, top: -REFLUX }, x = p.x, low = p.rim - 14, high = p.top + 14;
+      // lean: schräg gestellt (Grad), um den Fuß gedreht
+      return (p.lean ? '<g transform="rotate(' + p.lean + " " + x + " " + p.rim + ')">' : "") + '<path class="cl-jacket" d="M' + (x - 8) + "," + low + "L" + (x - 8) + "," + high + "L" + (x + 8) + "," + high + "L" + (x + 8) + "," + low + 'Z"/>' +
+        '<path class="cl-hose" d="M' + (x + 8) + "," + (low - 6) + "l10,0M" + (x - 8) + "," + (high + 6) + 'l-10,0"/>' +
+        '<path class="cl-glass" d="M' + (x - 3) + "," + (p.rim + 6) + "L" + (x - 3) + "," + p.top + "M" + (x + 3) + "," + (p.rim + 6) + "L" + (x + 3) + "," + p.top + '"/>' +
+        (p.lean ? "</g>" : "") + (place ? "" : badge(0, 14, ctx.no));
     }
   });
 
@@ -1256,6 +1281,7 @@
         : id === "lamp" ? '<circle class="cl-bulb" cx="14" cy="11" r="8" style="fill:#ffe98a"/><rect class="cl-device" x="10" y="18" width="8" height="5"/><rect class="cl-device" x="6" y="23" width="16" height="5" rx="1"/>'
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
+        : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
         : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'
         : id === "conductometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:6px">mS</text></g>'
         : id === "bath" ? '<rect class="cl-bath-water" x="4" y="15" width="20" height="11"/><path class="cl-glass" d="M3,9L3,25Q3,27 5,27L23,27Q25,27 25,25L25,9"/><path class="cl-glass" d="M11,3L11,19A3,3 0 0 0 17,19L17,3"/>'

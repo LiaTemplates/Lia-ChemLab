@@ -539,6 +539,8 @@
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
   registerPart("condenser", { kind: "tool", condenser: true });
+  // Rückflusskühler: steht aufrecht im Gefäß; der Dampf wird darin wieder flüssig und läuft zurück
+  registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
   // lag: Trägheit in s; sense: was es misst
@@ -2810,10 +2812,12 @@
     kept = list.reduce(function (sum, c) { return sum + c.y; }, 0);
     list.forEach(function (c) { c.y /= kept; heat += c.y * c.H; if (c.y > 0) boil = Math.min(boil, c.n / c.y); });
     boil = Math.min(boil, over / heat);                         // in mol Dampf; mehr, als da ist, verdampft nicht
-    if (strip) above(v, volume(v)).forEach(function (g) {      // jedes Gas mit seinem Anteil am Druck
+    var back = !!toolAt(lab, v, function (def) { return def.reflux; });      // Rückfluss: was verdampft, läuft wieder zurück
+    if (strip && !back) above(v, volume(v)).forEach(function (g) {      // jedes Gas mit seinem Anteil am Druck
       var share = Math.min(0.95, g.p / P_AIR);
       if (share > 1e-6) release(v, g, Math.min(g.most, boil * share / (1 - share)));       // Spuren bleiben in der Lösung
     });
+    if (back) list = [];                                       // unter Rückfluss bleibt alles im Gefäß: es siedet, ohne dass etwas fortgeht
     cool = toolAt(lab, v, function (def) { return def.condenser; });
     if (cool) into = vessel(lab, cool.to);
     if (into && (into.broken || L.parts[into.type].dispenser || free(lab, into) < 1)) into = null;      // die Vorlage läuft nicht über
@@ -3496,7 +3500,7 @@
 
   function loadPack(url) {
     var entry = packs[url];
-    if (entry) return entry.promise;
+    if (entry && entry.state !== "error") return entry.promise;       // ein gescheitertes Paket wird beim nächsten Aufruf neu versucht
     entry = packs[url] = { url: url, state: "loading", pack: null, error: null };
     function failed(code, detail) { entry.state = "error"; entry.error = { code: code, detail: detail || "" }; return entry; }
     // Antwortet der Server nicht, gilt das Paket nach L.PACK_WAIT Sekunden als gescheitert: sonst warteten alle Flächen für immer
@@ -3510,6 +3514,7 @@
         try { register(pack); } catch (error) { return failed("data", error.detail || error.message); }
         entry.state = "done";
         entry.pack = pack;
+        if (L.packDone) L.packDone();                            // Flächen, denen die Daten fehlten, bauen sich neu auf
         return entry;
       }, function () { return failed("json"); });
     }, function (error) { clearTimeout(timer); return failed("net", error && error.message); });

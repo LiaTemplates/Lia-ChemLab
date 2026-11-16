@@ -29,7 +29,20 @@
       .filter(function (file) { return !file[1] && !(L.pending && L.pending[file[0]]); }).map(function (file) { return file[0]; });
   }
 
-  function mount(el, source) {
+  // Flächen, die mit einem Fehler stehen, weil ihnen Daten fehlten: Sie bauen sich neu auf, sobald ein Paket geladen ist
+  // (eine Fläche, die auf ihrer Folie über dem Paket-Makro steht, ist vor ihm dran)
+  var stranded = [];
+  L.packDone = function () {
+    var list = stranded;
+    stranded = [];
+    list.forEach(function (w) {
+      var st = L.store[w.el.id];
+      if (w.el.isConnected !== false && st && st.error && st.source === w.text) mount(w.el, w.source);
+    });
+  };
+
+  // settled: die Pakete der Fläche wurden eben geladen (oder sind gescheitert); kein neuer Versuch
+  function mount(el, source, settled) {
     var doc = global.document;
     var lang = /^de/i.test((doc && doc.documentElement && doc.documentElement.lang) || "") ? "de" : "en";
     var esc = L.escape;
@@ -50,10 +63,10 @@
     // geänderte Beschreibung: neuer Aufbau. Ein Fehler bleibt nicht stehen: vielleicht sind die fehlenden Daten inzwischen da.
     if (st && (st.source !== text || st.error)) st = null;
     // Pakete der Fläche, und solche, die ein Makro gerade lädt: erst laden, dann den Aufbau lesen
-    var wanted = st ? [] : packsOf(text), open = wanted.filter(function (url) { var p = L.packState(url); return !p || p.state === "loading"; });
+    var wanted = st ? [] : packsOf(text), open = wanted.filter(function (url) { var p = L.packState(url); return !p || p.state === "loading" || (p.state === "error" && !settled); });
     if (!st && (open.length || L.loadingPacks())) {
       el.innerHTML = '<p class="cl-hint" role="status">' + esc(T("packs.loading")) + "</p>";
-      Promise.all(wanted.map(L.loadPack).concat([L.packsLoaded()])).then(function () { if (el.isConnected !== false) mount(el, source); });
+      Promise.all(wanted.map(L.loadPack).concat([L.packsLoaded()])).then(function () { if (el.isConnected !== false) mount(el, source, true); });
       return;
     }
     var broken = wanted.map(L.packState).filter(function (p) { return p.state === "error"; })[0];
@@ -71,6 +84,7 @@
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", data: "err.data",
         amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
+      stranded = stranded.filter(function (w) { return w.el !== el && w.el.isConnected !== false; }).concat([{ el: el, source: source, text: text }]);
       return;
     }
 
@@ -585,14 +599,14 @@
             place.surface = w.ml > 0.005 ? L.parts[host.type].surface(w) : null;
           }
           // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
-          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.condenser ? def.bounds(r, place)
+          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.condenser || def.reflux ? def.bounds(r, place)
             : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
           g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
           content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
-            : def.bridge || def.condenser ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
+            : def.bridge || def.condenser || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
           g.setAttribute("aria-label", label[item.id] + (def.bridge || def.condenser ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
@@ -784,7 +798,7 @@
             (w.coat.length ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
               return esc(L.nameOf(L.species(c.id), lang)) + (show.numbers ? " " + L.amount(c.n, lang) : "");
             }).join(", ") + "</p>" : "");
-        } else if (L.parts[t.type].bridge || L.parts[t.type].condenser) box.innerHTML = "";
+        } else if (L.parts[t.type].bridge || L.parts[t.type].condenser || L.parts[t.type].reflux) box.innerHTML = "";
         else if (L.parts[t.type].circuit === "load") {         // das Lämpchen zeigt nichts an: es leuchtet oder nicht
           w = shownValue(L.reading(lab, t.id));
           box.innerHTML = "<p>" + esc(w.charAt(0).toUpperCase() + w.slice(1)) + ".</p>";

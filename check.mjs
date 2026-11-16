@@ -7153,7 +7153,15 @@ test("Oberfläche: den Kühler setzen – erst den Kolben, dann die Vorlage anti
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
   L.register(organic);
-  const [ester] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));
+  const [ester, boiled] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));
+  // unter Rückfluss: siedet bei knapp 80 °C, nach zehn Minuten gut sechzig Prozent verestert, das Volumen bleibt
+  const hot = L.createRun(boiled), flask = boiled.bench.find((p) => p.type === "flask").id, ml0 = L.volume(L.vessel(hot.lab, flask));
+  L.act(hot, (l) => L.setFlame(l, boiled.bench.find((p) => p.type === "burner").id, 1));
+  L.advance(hot, 600);
+  const kv = L.vessel(hot.lab, flask);
+  near(kv.T, 79.5, 1.5, "Siedetemperatur unter Rückfluss");
+  near(kv.n["CH3COOC2H5(aq)"] / boiled.bench[0].contains.reduce((n, c) => n + (c.reagent === "ethanol" ? c.ml * 16.45 / 1000 : 0), 0), 0.62, 0.05, "gut sechzig Prozent verestert");
+  near(L.volume(kv), ml0, 0.001, "nichts verdampft");
   const tube = ester.bench.find((p) => p.type === "testtube").id, bath = ester.bench.find((p) => p.type === "bath").id;
   const smellAfter = (temp, drops) => {
     const run = L.createRun(ester);
@@ -7327,4 +7335,81 @@ test("Befund: ein Paket, dessen Server nie antwortet, hält nach der Wartezeit n
     assert.equal(L.loadingPacks(), false);
     assert.match(note.innerHTML, /Das Paket ließ sich nicht laden: https:\/\/example\.org\/stumm\.json \(keine Antwort\)/);
   } finally { globalThis.fetch = saved; L.PACK_WAIT = wait; }
+});
+
+// ================================================================ Offene Punkte nach Meilenstein 6
+
+test("Paket: ein gescheitertes Paket wird beim nächsten Aufruf neu versucht", async () => {
+  const url = "https://example.org/packs/flaky.json", saved = globalThis.fetch;
+  const cobalt = { species: { "Co(s)": { name: { de: "Cobalt", en: "cobalt" }, Hf: 0, S: 30.04, src: "Test" } },
+    reagents: { "Co granules": { name: { de: "Cobalt (Körner)", en: "cobalt granules" }, solid: "Co(s)", area: 6 } } };
+  let online = false;
+  globalThis.fetch = async (u) => online ? fakeFetch({ [url]: cobalt })(u) : Promise.reject(new TypeError("Failed to fetch"));
+  try {
+    const note = node(), source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "Co granules", g: 1 }] }] };
+    await L.usePack(note, url);
+    assert.match(note.innerHTML, /keine Verbindung/);
+    const el = mount(source, "flaky");
+    await settleAll();
+    assert.match(el.innerHTML, /Das Paket ließ sich nicht laden/);
+    online = true;                                              // die Verbindung ist wieder da: die Folie wird erneut gezeigt
+    await L.usePack(note, url);
+    assert.match(note.innerHTML, /Paket geladen/);
+    const again = mount(source, "flaky");
+    await settleAll();
+    assert.doesNotMatch(again.innerHTML, /role="alert"/);
+  } finally { globalThis.fetch = saved; }
+});
+
+test("Paket: eine Fläche über dem Paket-Makro baut sich auf, sobald das Paket da ist", async () => {
+  const url = "https://example.org/packs/later.json", saved = globalThis.fetch;
+  const rhodium = { species: { "Rh(s)": { name: { de: "Rhodium", en: "rhodium" }, Hf: 0, S: 31.5, src: "Test" } },
+    reagents: { "Rh sheet": { name: { de: "Rhodiumblech", en: "rhodium sheet" }, solid: "Rh(s)", area: 6 } } };
+  globalThis.fetch = fakeFetch({ [url]: rhodium });
+  try {
+    const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "Rh sheet", g: 1 }] }] });     // steht über dem Makro: noch kein Paket
+    assert.match(el.innerHTML, /role="alert"/);
+    await L.usePack(node(), url);
+    await settleAll();
+    assert.doesNotMatch(el.innerHTML, /role="alert"/, "nach dem Laden steht der Aufbau");
+    assert.ok(L.vessel(state(el).run.lab, "b").n["Rh(s)"] > 0);
+  } finally { globalThis.fetch = saved; }
+});
+
+const refluxed = (cooled) => {
+  L.register(organic);
+  return lab([{ type: "flask", id: "k", contains: [{ reagent: "ethanol", ml: 15 }, { reagent: "glacial acetic acid", ml: 15 }, { reagent: "sulfuric acid conc", drops: 5 }] },
+    { type: "burner", id: "br", under: "k", flame: 2 }].concat(cooled ? [{ type: "reflux", id: "r", in: "k" }] : []), { room: 20 });
+};
+
+test("Rückflusskühler: es siedet, aber nichts geht verloren; ohne ihn verdampft das Gemisch", () => {
+  const l = refluxed(true), start = totals(l).mass, ml = look(l, "k").ml;
+  until(l, () => L.vessel(l, "k").boil > 0, 900);
+  L.step(l, 300);
+  assert.ok(L.vessel(l, "k").boil > 0, "es siedet weiter");
+  assert.ok(L.vessel(l, "k").T < 95, `Siedetemperatur des Gemischs: ${L.vessel(l, "k").T.toFixed(1)} °C`);
+  near(look(l, "k").ml, ml, 0.3, "das Volumen bleibt (bis auf die Veresterung)");
+  near(totals(l).mass, start, 1e-6, "Masse");
+  assert.equal(Object.keys(L.vessel(l, "k").out).length, 0, "nichts entweicht");
+  assert.ok(amount(l, "CH3COOC2H5(aq)", "k") > 0.05, "der Ester entsteht");
+  const open = refluxed(false);
+  until(open, () => L.vessel(open, "k").boil > 0, 900);
+  L.step(open, 300);
+  assert.ok(look(open, "k").ml < ml - 5, "ohne Rückflusskühler verdampft das Gemisch");
+});
+
+test("Rückflusskühler: Beschreibung, Zeichnung und Aufbau als Text", () => {
+  L.register(organic);
+  const c = L.normalize({ bench: [{ type: "flask", id: "k" }, { type: "reflux", in: "k" }] });
+  assert.deepEqual(c.bench[1], { type: "reflux", id: "reflux1", in: "k" });
+  assert.throws(() => L.normalize({ bench: [{ type: "flask", id: "k" }, { type: "reflux", in: "k" }, { type: "reflux", in: "k" }] }), (e) => e.code === "place");
+  assert.match(L.describe(L.createRun(c), {}), /\{"type":"reflux","id":"reflux1","in":"k"\}/);
+  for (const type of ["flask", "beaker", "testtube", "dish"]) {
+    const el = mount({ bench: [{ type, id: "a", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "reflux", id: "r", in: "a" }] });
+    assert.doesNotMatch(item(el, "r").innerHTML, /NaN|undefined/, type);
+    assert.match(item(el, "r").innerHTML, /cl-jacket/, type);
+    assert.equal(item(el, "r").attributes["aria-label"], `Rückflusskühler 1 in ${{ flask: "Rundkolben", beaker: "Becherglas", testtube: "Reagenzglas", dish: "Abdampfschale" }[type]} 1`);
+  }
+  clean(L.parts.reflux.draw({ type: "reflux" }, ctx()), "Rückflusskühler für sich");
+  assert.match(L.icon("reflux"), /<svg/);
 });

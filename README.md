@@ -728,7 +728,7 @@ Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gege
 
 Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehört das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation. Ein Paket kommt auf drei Wegen in einen Kurs:
 
-- `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen, die auf derselben Folie nach dem Makro stehen, warten, bis es geladen ist; antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
+- `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
 - `@ChemLab.data` an einem JSON-Block trägt eigene Daten ein, wie ein Paket, nur ohne eigene Datei.
 
@@ -762,6 +762,19 @@ Ethanol und Eisessig reagieren zu Ethylacetat und Wasser, einem Ester mit frucht
  ],
  "shelf":["sulfuric acid conc","H2O"],
  "room":20,
+ "show":{"charts":["T","n"]}}
+```
+
+Schneller geht es beim Sieden. Damit dabei nichts verdampft, steckt im Kolben ein **Rückflusskühler**: Der Dampf wird darin wieder flüssig und läuft zurück. Das Gemisch siedet bei knapp 80 °C, und nach etwa zehn Minuten sind gut sechzig Prozent des Ethanols verestert; mehr wird es nicht, denn dann ist das Gleichgewicht erreicht.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"flask","id":"kolben","contains":[{"reagent":"ethanol","ml":20},{"reagent":"glacial acetic acid","ml":20},{"reagent":"sulfuric acid conc","drops":10}]},
+  {"type":"burner","under":"kolben"},
+  {"type":"reflux","in":"kolben"},
+  {"type":"thermometer","in":"kolben"}
+ ],
+ "shelf":["reflux","condenser","beaker"],
  "show":{"charts":["T","n"]}}
 ```
 
@@ -864,6 +877,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
 | `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
 | `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
+| `reflux` | Rückflusskühler: steht aufrecht im Gefäß; was verdampft, läuft zurück | `in` |
 | `splint`, `glowsplint`, `rod` | brennender Holzspan, Glimmspan, Magnesiastäbchen: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
 
 **Ziele einer Aufgabe** – jedes mit wahlweise `in` (nur dieses Gefäß, mit seinem Namen) und `label` (eigener Text statt des erzeugten):
