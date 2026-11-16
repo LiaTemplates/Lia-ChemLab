@@ -728,7 +728,7 @@ Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gege
 
 Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehört das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation. Ein Paket kommt auf drei Wegen in einen Kurs:
 
-- `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
+- `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen, die auf derselben Folie nach dem Makro stehen, warten, bis es geladen ist; antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
 - `@ChemLab.data` an einem JSON-Block trägt eigene Daten ein, wie ein Paket, nur ohne eigene Datei.
 

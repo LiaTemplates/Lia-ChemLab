@@ -17,7 +17,7 @@ const AGENT = "ChemLab-import (LiaScript-Baustein)";
 const HEADINGS = ["Boiling Point", "Melting Point", "Density", "Heat of Vaporization"];
 const HSDB = /Hazardous Substances Data Bank/;
 const PATTERN = {
-  "°C": /(-?\d+(?:\.\d+)?)\s*°C/,
+  "°C": /(-?\d+(?:\.\d+)?)(?:\s*-\s*\d+(?:\.\d+)?)?\s*°C/,          // bei einem Bereich "140-142 °C" der Anfang
   density: /(\d+(?:\.\d+)?)\s*g\/(?:cu ?cm|cm3|cm³|mL)/,
   kJ: /(\d+(?:\.\d+)?)\s*kJ\/mole?/
 };
@@ -34,8 +34,9 @@ export function hsdb(view, unit) {
     if (!node || typeof node !== "object") return;
     if (node.Value && HSDB.test(sources[node.ReferenceNumber] || "")) {
       const text = (node.Value.StringWithMarkup || []).map((m) => m.String).join(" ");
-      const match = PATTERN[unit].exec(text);
-      if (match) found.push({ value: +match[1], text });
+      // Teile wie "56 °C at 10 mm Hg" gelten bei vermindertem Druck: genommen wird der erste Teil bei Normaldruck
+      const part = text.replace(/\u2212/g, "-").split(";").find((p) => PATTERN[unit].test(p) && (!/mm ?Hg|kPa|torr/i.test(p) || /760 ?mm ?Hg|101\.3 ?kPa/i.test(p)));
+      if (part) found.push({ value: +PATTERN[unit].exec(part)[1], text });
     }
     Object.values(node).forEach(walk);
   })(record);

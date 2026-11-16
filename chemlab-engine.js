@@ -650,6 +650,7 @@
       });
       if (g.has) {
         lab.vessels.forEach(function (v) { if (g.in == null || v.id === g.in) total += (v.n[g.has] || 0) + (v.air[g.has] || 0); });
+        lab.tools.forEach(function (t) { if (t.coat && (g.in == null || t.in === g.in)) total += t.coat[g.has] || 0; });      // abgeschieden auf einer Elektrode
         return (g.min == null || total >= g.min) && (g.max == null || total <= g.max + 1e-10);
       }
       return events.some(function (e) {
@@ -658,7 +659,7 @@
         return !g.species || e.species === g.species || (Array.isArray(e.species) && e.species.indexOf(g.species) >= 0);
       });
     });
-    return { goals: goals, done: goals.every(Boolean) };
+    return { goals: goals, done: goals.length > 0 && goals.every(Boolean) };
   }
 
   function voltsOf(def, value) { return Math.round(Math.max(0, Math.min(def.max, +value || 0)) * 100) / 100; }
@@ -2416,8 +2417,8 @@
         if (!t.fizz && t.bub > 2 * REST) { t.fizz = true; if (emit) emit({ key: "bubbles", part: t.id, vessel: t.in }); }
         else if (t.fizz && t.bub < REST) t.fizz = false;
       } else if (def.circuit === "load") {
-        if (!t.lit && t.goal > 0.05) { t.lit = true; if (emit) emit({ key: "lampOn", part: t.id }); }
-        else if (t.lit && t.goal < 0.03) { t.lit = false; if (emit) emit({ key: "lampOff", part: t.id }); }
+        if (!t.lit && t.goal > 0.05) { t.lit = true; if (emit) emit({ key: "lampOn", part: t.id, vessel: t.in }); }
+        else if (t.lit && t.goal < 0.03) { t.lit = false; if (emit) emit({ key: "lampOff", part: t.id, vessel: t.in }); }
       }
     });
   }
@@ -3498,7 +3499,12 @@
     if (entry) return entry.promise;
     entry = packs[url] = { url: url, state: "loading", pack: null, error: null };
     function failed(code, detail) { entry.state = "error"; entry.error = { code: code, detail: detail || "" }; return entry; }
-    entry.promise = Promise.resolve().then(function () { return global.fetch(url); }).then(function (response) {
+    // Antwortet der Server nicht, gilt das Paket nach L.PACK_WAIT Sekunden als gescheitert: sonst warteten alle Flächen für immer
+    var timer;
+    entry.promise = Promise.race([Promise.resolve().then(function () { return global.fetch(url); }),
+      new Promise(function (resolve) { timer = setTimeout(function () { resolve(null); }, L.PACK_WAIT * 1000); })]).then(function (response) {
+      clearTimeout(timer);
+      if (!response) return failed("wait");
       if (!response.ok) return failed("http", "HTTP " + response.status);
       return response.json().then(function (pack) {
         try { register(pack); } catch (error) { return failed("data", error.detail || error.message); }
@@ -3506,12 +3512,17 @@
         entry.pack = pack;
         return entry;
       }, function () { return failed("json"); });
-    }, function (error) { return failed("net", error && error.message); });
+    }, function (error) { clearTimeout(timer); return failed("net", error && error.message); });
     return entry.promise;
   }
 
   function packState(url) { return packs[url] || null; }
   function loadingPacks() { return Object.keys(packs).some(function (url) { return packs[url].state === "loading"; }); }
+  // erfüllt sich, wenn kein Paket mehr lädt (auch eines, das während des Wartens dazukommt)
+  function packsLoaded() {
+    var open = Object.keys(packs).filter(function (url) { return packs[url].state === "loading"; });
+    return open.length ? Promise.all(open.map(function (url) { return packs[url].promise; })).then(packsLoaded) : Promise.resolve();
+  }
 
   // ------------------------------------------------------------------ Aufbau als Text
 
@@ -3562,9 +3573,11 @@
       if (v.broken) return;
       if (def.sizes) item.ml = v.size;
       if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
-      item.contains = (put[v.id] || []).map(function (c) {
+      // Wer nachfüllt, was ausgetropft oder verdampft ist, hat mehr hineingegeben, als das Gefäß fasst: dann zählt der Anteil, der hineinpasst
+      var list = put[v.id] || [], wet = list.reduce(function (sum, c) { return sum + liquid(c); }, 0), cap = spec(v).cap, fit = wet > cap ? cap / wet : 1;
+      item.contains = list.map(function (c) {
         var out = { reagent: c.reagent };
-        ["ml", "drops", "g"].forEach(function (unit) { if (c[unit] != null) out[unit] = round(c[unit]); });
+        ["ml", "drops", "g"].forEach(function (unit) { if (c[unit] != null) out[unit] = unit === "g" ? round(c[unit]) : round(c[unit] * fit); });
         return out;
       });
       bench.push(item);
@@ -3576,7 +3589,7 @@
       if (def.bath) item.temp = t.temp;
       if (def.sense === "A") item.nm = t.nm;
       if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
-      if ((def.bridge || def.condenser) && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;
+      if ((def.bridge || def.condenser) && item.in && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;      // ohne das erste Gefäß liegt sie für sich
       if (def.electrode) { g = round(t.n0 * species(def.electrode).M); if (Math.abs(g - def.g) > 1e-9) item.g = g; }
       bench.push(item);
     });
@@ -3601,6 +3614,8 @@
   L.loadPack = loadPack;
   L.packState = packState;
   L.loadingPacks = loadingPacks;
+  L.packsLoaded = packsLoaded;
+  L.PACK_WAIT = 30;
   L.MEASURES = MEASURES;
   L.registerPart = registerPart;
   L.lint = lint;

@@ -7237,3 +7237,94 @@ test("Import: ein Stoff, der bei Raumtemperatur schmilzt erst über 25 °C, wird
   assert.deepEqual(out.reagents, { lead: { name: { de: "Blei", en: "lead" }, solid: "Pb(s)", area: 10, group: "solid" } });
   assert.match(out.species["Pb(s)"].src, /Schmelzpunkt 327\.4 °C/);
 });
+
+// ================================================================ Befunde der Durchsicht von Meilenstein 6
+
+test("Befund: eine Fläche, die vor ihrem Paket gebaut werden soll, wartet und zeigt keinen bleibenden Fehler", async () => {
+  const url = "https://example.org/packs/slow.json", saved = globalThis.fetch;
+  let release;
+  const slow = { species: { "Sb(s)": { name: { de: "Antimon", en: "antimony" }, Hf: 0, S: 45.7, src: "Test" } },
+    reagents: { "Sb granules": { name: { de: "Antimon (Körner)", en: "antimony granules" }, solid: "Sb(s)", area: 6 } } };
+  globalThis.fetch = () => new Promise((resolve) => { release = () => resolve({ ok: true, status: 200, json: async () => slow }); });
+  try {
+    L.usePack(node(), url);                                     // das Makro hat zu laden begonnen
+    const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "Sb granules", g: 1 }] }] });   // die Fläche gibt nach 5 s nicht mehr nach
+    assert.doesNotMatch(el.innerHTML, /role="alert"/, "kein Fehler, solange das Paket lädt");
+    assert.match(el.innerHTML, /Pakete werden geladen/);
+    await settleAll();                                          // fetch kommt erst im nächsten Takt
+    release();
+    await settleAll();
+    assert.doesNotMatch(el.innerHTML, /role="alert"/);
+    assert.ok(L.vessel(state(el).run.lab, "b").n["Sb(s)"] > 0);
+  } finally { globalThis.fetch = saved; }
+  // ein Fehler bleibt nicht im Speicher der Fläche: kommen die Daten später, steht beim nächsten Aufbau der Versuch
+  const source = { bench: [{ type: "beaker", id: "b", contains: [{ reagent: "Pd granules", g: 1 }] }] };
+  const el = mount(source, "later");
+  assert.match(el.innerHTML, /role="alert"/);
+  L.register({ species: { "Pd(s)": { name: { de: "Palladium", en: "palladium" }, Hf: 0, S: 37.6, src: "Test" } },
+    reagents: { "Pd granules": { name: { de: "Palladium", en: "palladium" }, solid: "Pd(s)", area: 6 } } });
+  assert.doesNotMatch(mount(source, "later").innerHTML, /role="alert"/);
+});
+
+test("Befund: ein Kühler an Becherglas, Reagenzglas und Schale wird gezeichnet und lässt sich antippen", () => {
+  for (const type of ["beaker", "testtube", "dish"]) {
+    const el = mount({ bench: [{ type, id: "a", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "condenser", id: "c", in: "a", to: "v" }, { type: "beaker", id: "v" }] });
+    assert.doesNotMatch(item(el, "c").innerHTML, /NaN/, type + ": " + item(el, "c").innerHTML.slice(0, 300));
+    assert.match(item(el, "c").innerHTML, /cl-jacket/, type);
+  }
+});
+
+test("Befund: der kopierte Aufbau lässt sich immer wieder einlesen", () => {
+  const raw = { bench: [{ type: "beaker", id: "b" }, { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 40 }] },
+    { type: "beaker", id: "x", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "beaker", id: "y", contains: [{ reagent: "H2O", ml: 20 }] },
+    { type: "bridge", id: "s", in: "x", to: "y" }, { type: "flask", id: "k" }, { type: "condenser", id: "c", in: "k", to: "y" }] };
+  const run = L.createRun(L.normalize(raw));
+  L.act(run, (l) => L.setTap(l, "bu", 2)); L.advance(run, 10); L.act(run, (l) => L.setTap(l, "bu", 0));
+  L.act(run, (l) => L.add(l, "bu", "NaOH 0.1M", { ml: 20 }), { key: "added", vessel: "bu", reagent: "NaOH 0.1M", ml: 20 });     // nachgefüllt
+  L.act(run, (l) => L.remove(l, "x"), { key: "removed", part: "x" });
+  L.act(run, (l) => L.remove(l, "k"), { key: "removed", part: "k" });
+  const text = L.describe(run, raw), again = L.normalize(text);
+  near(again.bench.find((p) => p.id === "bu").contains[0].ml, 50, 1e-9, "die Bürette fasst höchstens 50 mL");
+  for (const id of ["s", "c"]) assert.deepEqual(again.bench.find((p) => p.id === id).in, null, id + " liegt für sich");
+});
+
+test("Befund: ein has-Ziel zählt auch, was sich auf einer Elektrode abgeschieden hat; eine Aufgabe ohne Ziele ist nie geschafft", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuCl2 0.5M", ml: 80 }] }, { type: "electrode-C", id: "e1", in: "b" }, { type: "electrode-C", id: "e2", in: "b" },
+    { type: "supply", id: "n", in: "b", volts: 6 }], { room: 25 });
+  L.step(l, 60);
+  assert.ok(L.reading(l, "e2").coat.length || L.reading(l, "e1").coat.length, "es hat sich Kupfer abgeschieden");
+  assert.deepEqual(L.checkTask({ goals: [{ has: "Cu(s)", min: 1e-6 }, { has: "Cu(s)", min: 1e-6, in: "b" }] }, l, []).goals, [true, true]);
+  assert.deepEqual(L.checkTask({ text: "Beobachte.", goals: [] }, l, []).done, false);
+  assert.equal(part(mount({ task: "Beobachte." }), ".cl-done").textContent, "");
+});
+
+test("Befund: Lämpchen-Ziel mit Gefäß, Geruchsziel ohne „stechend“", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuCl2 0.5M", ml: 80 }] }, { type: "electrode-C", id: "e1", in: "b" }, { type: "electrode-C", id: "e2", in: "b" },
+    { type: "supply", id: "n", in: "b", volts: 6 }, { type: "lamp", id: "la", in: "b" }], { room: 25 });
+  const seen = []; L.step(l, 5, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "lampOn"));
+  assert.equal(L.checkTask({ goals: [{ seen: "lamp", in: "b" }] }, l, seen).done, true);
+  L.register(organic);
+  assert.equal(L.goalText({ seen: "smell", species: "CH3COOC2H5(aq)" }, "de"), "Geruch: Ethylacetat (Essigsäureethylester)");
+  assert.equal(L.goalText({ seen: "smell" }, "en"), "Smell");
+});
+
+test("Befund: das Import-Werkzeug liest Bereiche, das Minuszeichen und den Siedepunkt bei Normaldruck", () => {
+  assert.equal(importer.hsdb(view("Boiling Point", [2, "140-142 °C"]), "°C").value, 140);
+  assert.equal(importer.hsdb(view("Melting Point", [2, "−114.1 °C"]), "°C").value, -114.1);
+  assert.equal(importer.hsdb(view("Boiling Point", [2, "56 °C at 10 mm Hg; 180 °C at 760 mm Hg"]), "°C").value, 180);
+});
+
+test("Befund: ein Paket, dessen Server nie antwortet, hält nach der Wartezeit niemanden mehr auf", async () => {
+  const saved = globalThis.fetch, wait = L.PACK_WAIT;
+  globalThis.fetch = () => new Promise(() => {});
+  L.PACK_WAIT = 0.05;                                          // s
+  try {
+    const note = node();
+    const done = L.usePack(note, "https://example.org/stumm.json");
+    assert.equal(L.loadingPacks(), true);
+    await done;
+    assert.equal(L.loadingPacks(), false);
+    assert.match(note.innerHTML, /Das Paket ließ sich nicht laden: https:\/\/example\.org\/stumm\.json \(keine Antwort\)/);
+  } finally { globalThis.fetch = saved; L.PACK_WAIT = wait; }
+});

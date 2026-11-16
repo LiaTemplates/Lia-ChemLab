@@ -154,7 +154,7 @@
       "err.data": "Fehler in den eigenen Stoffdaten",
       "err.task": "Die Aufgabe lässt sich nicht lesen",
       "err.pack": "Das Paket ließ sich nicht laden", "err.dataJson": "Die eigenen Daten sind kein gültiges JSON",
-      "pack.json": "kein gültiges JSON", "pack.net": "keine Verbindung", "pack.loading": "Paket wird geladen: {url}", "packs.loading": "Pakete werden geladen …",
+      "pack.json": "kein gültiges JSON", "pack.net": "keine Verbindung", "pack.wait": "keine Antwort", "pack.loading": "Paket wird geladen: {url}", "packs.loading": "Pakete werden geladen …",
       "pack.done": "Paket geladen", "data.done": "Eigene Daten eingetragen",
       "count.species": "{n} Stoff", "count.species.n": "{n} Stoffe", "count.equilibria": "{n} Gleichgewicht", "count.equilibria.n": "{n} Gleichgewichte",
       "count.reactions": "{n} Reaktion", "count.reactions.n": "{n} Reaktionen", "count.couples": "{n} Redoxpaar", "count.couples.n": "{n} Redoxpaare",
@@ -170,7 +170,7 @@
       "measure.I": "Stromstärke", "measure.U": "Spannung",
       "seen.gas": "Gasentwicklung", "seen.pop": "Knallgasprobe: Es knallt", "seen.relight": "Glimmspan: Er flammt auf", "seen.out": "Brennender Span: Er erlischt",
       "seen.solid": "Niederschlag", "seen.dissolved": "Feststoff löst sich", "seen.color": "Farbumschlag", "seen.colorOf": "Die Lösung wird {color}",
-      "seen.boil": "Die Flüssigkeit siedet", "seen.smell": "Stechender Geruch", "seen.ignite": "Es brennt", "seen.flame": "Flammenfärbung",
+      "seen.boil": "Die Flüssigkeit siedet", "seen.smell": "Geruch", "seen.ignite": "Es brennt", "seen.flame": "Flammenfärbung",
       "seen.plated": "Metall scheidet sich ab", "seen.lamp": "Das Lämpchen leuchtet", "seen.broken": "Das Glas zerspringt",
       "err.other": "Der Aufbau lässt sich nicht anzeigen"
     },
@@ -317,7 +317,7 @@
       "err.data": "Error in the custom substance data",
       "err.task": "The task cannot be read",
       "err.pack": "The pack could not be loaded", "err.dataJson": "The custom data are not valid JSON",
-      "pack.json": "not valid JSON", "pack.net": "no connection", "pack.loading": "Loading pack: {url}", "packs.loading": "Loading packs …",
+      "pack.json": "not valid JSON", "pack.net": "no connection", "pack.wait": "no answer", "pack.loading": "Loading pack: {url}", "packs.loading": "Loading packs …",
       "pack.done": "Pack loaded", "data.done": "Custom data added",
       "count.species": "{n} substance", "count.species.n": "{n} substances", "count.equilibria": "{n} equilibrium", "count.equilibria.n": "{n} equilibria",
       "count.reactions": "{n} reaction", "count.reactions.n": "{n} reactions", "count.couples": "{n} redox couple", "count.couples.n": "{n} redox couples",
@@ -333,7 +333,7 @@
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
       "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
-      "seen.boil": "The liquid boils", "seen.smell": "Pungent smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
+      "seen.boil": "The liquid boils", "seen.smell": "Smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
       "seen.plated": "A metal is deposited", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
       "err.other": "The setup cannot be shown"
     }
@@ -662,7 +662,7 @@
     // tag und box: wo neben dem Gerät seine Anzeige steht, damit sich zwei Anzeigen nicht verdecken
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
-      if (type === "bridge") return { x: 6 * slot, rim: TUBE.top };
+      if (type === "bridge" || type === "condenser") return { x: 6 * slot, rim: TUBE.top };
       if (type === "conductometer") return { x: -1, bottom: -14, top: -276, box: -74 };
       if (type === "photometer") return { x: 1, bottom: -14, top: -292, box: 8 };
       return type === "phmeter" ? { x: -5, bottom: -14, top: -236, box: -62 } : { x: 5, bottom: -14, top: -262, tag: 8 };
@@ -708,7 +708,7 @@
         var gap = L.PLATE.gap * Math.PI * size.d * size.d / 4 / size.cap;         // als Anteil am Fassungsvermögen
         return { x: (slot ? 1 : -1) * (s[0] / 2 - 10), bottom: -3 - gap * (s[1] - 16), top: -s[1] - 30, rim: -s[1] };
       }
-      if (type === "bridge") return { x: slot * (s[0] / 2 - 21), rim: -s[1] };
+      if (type === "bridge" || type === "condenser") return { x: slot * (s[0] / 2 - 21), rim: -s[1] };
       if (type === "conductometer") return { x: -s[0] / 16, bottom: -8, top: -s[1] - 76, box: -40 };
       if (type === "photometer") return { x: s[0] / 8, bottom: -8, top: -s[1] - 100, box: -68 };      // Anzeige links der Sonde: rechts hängt die Bürette
       // von links nach rechts: Thermometer mit Anzeige links davon, Elektrode mit Anzeige darüber, rechts bleibt Platz für die Bürette.
@@ -770,7 +770,7 @@
     foot: function () { return 24; },
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
-      if (type === "bridge") return { x: 30 * slot, rim: -DISH.h - 4 };
+      if (type === "bridge" || type === "condenser") return { x: 30 * slot, rim: -DISH.h - 4 };
       if (type === "conductometer") return { x: 0, bottom: -6, top: -152, box: -37 };      // seine Anzeige steht über dem Schild des Thermometers
       if (type === "photometer") return { x: 5, bottom: -6, top: -180, box: -70 };
       return type === "phmeter" ? { x: 12, bottom: -6, top: -104, box: 8 } : { x: -12, bottom: -6, top: -150, tag: -62 };

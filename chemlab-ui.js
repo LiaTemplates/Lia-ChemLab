@@ -47,12 +47,13 @@
 
     var text = typeof source === "string" ? source : JSON.stringify(source);
     var st = L.store[el.id];
-    if (st && st.source !== text) st = null;       // geänderte Beschreibung: neuer Aufbau, auch nach einem behobenen Fehler
-    // Pakete der Fläche: erst laden, dann den Aufbau lesen
+    // geänderte Beschreibung: neuer Aufbau. Ein Fehler bleibt nicht stehen: vielleicht sind die fehlenden Daten inzwischen da.
+    if (st && (st.source !== text || st.error)) st = null;
+    // Pakete der Fläche, und solche, die ein Makro gerade lädt: erst laden, dann den Aufbau lesen
     var wanted = st ? [] : packsOf(text), open = wanted.filter(function (url) { var p = L.packState(url); return !p || p.state === "loading"; });
-    if (open.length) {
+    if (!st && (open.length || L.loadingPacks())) {
       el.innerHTML = '<p class="cl-hint" role="status">' + esc(T("packs.loading")) + "</p>";
-      Promise.all(wanted.map(L.loadPack)).then(function () { if (el.isConnected !== false) mount(el, source); });
+      Promise.all(wanted.map(L.loadPack).concat([L.packsLoaded()])).then(function () { if (el.isConnected !== false) mount(el, source); });
       return;
     }
     var broken = wanted.map(L.packState).filter(function (p) { return p.state === "error"; })[0];
