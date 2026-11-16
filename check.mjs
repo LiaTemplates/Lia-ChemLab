@@ -1089,8 +1089,9 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["README.md", "check.mjs", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs"]);
+  assert.deepEqual(files, ["README.md", "check.mjs", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "packs", "tools"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["organic.json"], "Erweiterungspakete");
+  assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
 });
 
 // ================================================================ Befunde der Durchsicht
@@ -7177,4 +7178,62 @@ test("README: die Folien zu Veresterung und Destillation halten, was ihr Text ve
   while (L.volume(L.vessel(run.lab, v)) < 0.03) L.advance(run, 1);
   assert.ok(L.vessel(run.lab, k).T > 99, "die Siedetemperatur steigt auf 100 °C");
   assert.equal(run.lab.failed || 0, 0);
+});
+
+// ================================================================ Import-Werkzeug (ohne Netz: mit nachgebauten Antworten)
+
+const importer = await import("./tools/import.mjs");
+const view = (heading, ...values) => ({ Record: {
+  Reference: [{ ReferenceNumber: 1, SourceName: "CAMEO Chemicals" }, { ReferenceNumber: 2, SourceName: "Hazardous Substances Data Bank (HSDB)" }],
+  Section: [{ TOCHeading: heading, Information: values.map(([ref, text]) => ({ ReferenceNumber: ref, Value: { StringWithMarkup: [{ String: text }] } })) }] } });
+
+test("Import: Zahlen aus der Hazardous Substances Data Bank, andere Quellen zählen nicht", () => {
+  assert.deepEqual(importer.hsdb(view("Boiling Point", [1, "173.3 °F at 760 mmHg"], [2, "78.24 °C"]), "°C"), { value: 78.24, text: "78.24 °C" });
+  assert.deepEqual(importer.hsdb(view("Density", [2, "0.7893 g/cu cm at 20 °C"]), "density"), { value: 0.7893, text: "0.7893 g/cu cm at 20 °C" });
+  assert.deepEqual(importer.hsdb(view("Heat of Vaporization", [2, "42.32 kJ/mol at 25 °C"]), "kJ"), { value: 42.32, text: "42.32 kJ/mol at 25 °C" });
+  assert.deepEqual(importer.hsdb(view("Heat of Vaporization", [2, "23.36 at 25 °C; 23.70 kJ/mol at 117.9 °C;"]), "kJ"), { value: 23.7, text: "23.36 at 25 °C; 23.70 kJ/mol at 117.9 °C;" });
+  assert.equal(importer.hsdb(view("Boiling Point", [1, "78 °C"]), "°C"), null, "nur HSDB");
+  assert.equal(importer.hsdb({}, "°C"), null);
+});
+
+test("Import: aus PubChem, Wikidata und PHREEQC wird ein Eintrag mit Quellen und Hinweisen", () => {
+  const out = importer.entry({
+    cid: 702, formula: "C2H6O", M: 46.07, title: "Ethanol",
+    views: { "Boiling Point": view("Boiling Point", [2, "78.24 °C"]), "Density": view("Density", [2, "0.7893 g/cu cm at 20 °C"]),
+      "Heat of Vaporization": view("Heat of Vaporization", [2, "42.32 kJ/mol at 25 °C"]) },
+    wikidata: { results: { bindings: [{ item: { value: "http://www.wikidata.org/entity/Q153" }, de: { value: "Ethanol" }, en: { value: "ethanol" } }] } },
+    phreeqc: [{ file: "llnl.dat", text: "SOLUTION_SPECIES\nCO3-2 + H+ = HCO3-\n  log_k 10.33\nEthanol = Ethanol\n  log_k 0\n" }],
+    query: "ethanol"
+  });
+  const [id] = Object.keys(out.species), s = out.species[id];
+  assert.equal(id, "C2H6O(aq)");
+  assert.deepEqual(s.name, { de: "Ethanol", en: "ethanol" });
+  assert.deepEqual([s.Tb, s.Hvap, s.Hf], [78.24, 42.32, null]);
+  near(s.Vm, 58.37, 0.01, "Vm = M / Dichte");
+  assert.match(s.src, /PubChem CID 702/);
+  assert.match(s.src, /Hazardous Substances Data Bank/);
+  assert.match(s.src, /Wikidata Q153 \(CC0\)/);
+  assert.deepEqual(out.reagents, { ethanol: { name: { de: "Ethanol", en: "ethanol" }, solution: { "C2H6O(aq)": 17.13 }, group: "other" } });
+  assert.ok(out.notes.some((n) => /Bildungsenthalpie/.test(n)), "was fehlt, steht in den Hinweisen");
+  assert.ok(out.notes.some((n) => /llnl\.dat: Ethanol = Ethanol/.test(n)), "Zeilen aus PHREEQC als Vorschlag");
+  // der Eintrag lässt sich so eintragen (unter eigenem Namen: das Paket Organik hat schon eine Flasche "ethanol")
+  const pack = { species: out.species, reagents: { "ethanol (Import)": out.reagents.ethanol } };
+  L.register(pack);
+  assert.deepEqual(L.lint(pack), []);
+  // ohne Dichte und ohne Wikidata: englischer Name aus PubChem, kein Vm, keine Vorratsflasche
+  const bare = importer.entry({ cid: 1, formula: "CH4O", M: 32.04, title: "Methanol", views: {}, wikidata: null, phreeqc: [], query: "67-56-1" });
+  assert.deepEqual(bare.species["CH4O(aq)"].name, { en: "Methanol", de: "Methanol" });
+  assert.equal(bare.species["CH4O(aq)"].Vm, undefined);
+  assert.deepEqual(bare.reagents, {});
+  assert.ok(bare.notes.some((n) => /Dichte/.test(n)));
+});
+
+test("Import: ein Stoff, der bei Raumtemperatur schmilzt erst über 25 °C, wird als Feststoff vorgeschlagen", () => {
+  const out = importer.entry({ cid: 5352425, formula: "Pb", M: 207.2, title: "Lead", query: "7439-92-1", phreeqc: [],
+    views: { "Melting Point": view("Melting Point", [2, "327.4 °C"]), "Density": view("Density", [2, "11.34 g/cu cm at 20 °C"]) },
+    wikidata: { results: { bindings: [{ item: { value: "http://www.wikidata.org/entity/Q708" }, de: { value: "Blei" }, en: { value: "lead" } }] } } });
+  assert.deepEqual(Object.keys(out.species), ["Pb(s)"]);
+  assert.equal(out.species["Pb(s)"].Vm, undefined, "Eigenvolumen nur für Gelöstes");
+  assert.deepEqual(out.reagents, { lead: { name: { de: "Blei", en: "lead" }, solid: "Pb(s)", area: 10, group: "solid" } });
+  assert.match(out.species["Pb(s)"].src, /Schmelzpunkt 327\.4 °C/);
 });
