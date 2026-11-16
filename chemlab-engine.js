@@ -1029,6 +1029,7 @@
   function add(lab, vesselId, reagentId, raw) {
     var v = vessel(lab, vesselId), r = reagent(reagentId), a = amountOf(r, raw || {});
     if (!v || v.broken) return false;
+    v.seal = null;                                             // zugeben heißt: kurz öffnen; der Druck rechnet danach neu
     if (r.solid) {
       if (!(a.g > 0)) return false;
       putReagent(lab, v, r, a);
@@ -1060,7 +1061,7 @@
     if (!v) return false;
     lab.flows = lab.flows.filter(function (f) { return f.to !== vesselId && f.from !== vesselId; });
     v.n = {}; v.out = {}; v.lumps = []; v.ext = {}; v.rate = {}; v.gas = 0; v.T = lab.room; v.tap = 0;
-    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0;
+    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null;
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
@@ -1175,7 +1176,7 @@
     if (v && def.duct && (t.to === vesselId || ducts(lab, t).some(function (o) { return o.in === v.id; }) || (t.to && looped(ducts(lab, t), vesselId, t.to)))) return false;
     t.in = v ? vesselId : null;
     if ((def.bridge || def.duct) && !v) t.to = null;
-    if (def.sense === "V") t.held = 0;                        // ein Kolbenprober kommt leer an
+    if (def.sense === "V") { t.held = 0; t.n = 0; t.full = false; t.value = 0; }      // ein Kolbenprober kommt leer an
     seat(lab, t);
     survey(lab);
     return true;
@@ -2930,7 +2931,7 @@
   // vor sich her ins zweite Gefäß: erst vor allem Luft, die nicht gerechnet wird, dann zunehmend das Gas selbst.
   function vent(lab, v, emit, made) {
     var cap = headroom(lab, v), sum = 0, id, part, M, hit, steady, closed = stoppered(lab, v), pipe = toolAt(lab, v, function (def) { return def.pipe; }), into, flow = 0;
-    var meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
+    var meter = toolAt(lab, v, function (def) { return def.sense === "V"; }), plug = toolAt(lab, v, function (def) { return def.plug; });
     if (pipe) pipe.flow = 0;
     for (id in v.air) sum += v.air[id];
     if (!(sum > 0)) return;
@@ -2948,7 +2949,7 @@
     into = pipe && pipe.to ? vessel(lab, pipe.to) : null;
     if (into && into.broken) into = null;
     for (id in v.air) {
-      part = sum > cap ? v.air[id] * (1 - cap / sum) : 0;
+      part = sum > cap && !plug ? v.air[id] * (1 - cap / sum) : 0;      // durch einen Gummistopfen geht nichts hinaus: der Druck steigt
       if (pipe) part = Math.max(part, (made || 0) * v.air[id] / Math.max(sum, cap));
       M = L.db.species[id].M;
       if (!closed) part += (v.air[id] - part) * (1 - Math.exp(-DT / (M < 20 ? 8 : M < 36 ? 40 : 90)));      // ein Stopfen verschließt das Gefäß
@@ -2979,16 +2980,23 @@
   // Flüssigkeit aus dem zweiten Gefäß zurück, und trifft sie auf ein Glas, das heißer ist als CRACK, zerspringt es.
   function pressure(lab, v, emit) {
     var pipe = toolAt(lab, v, function (def) { return def.pipe; }), plug = toolAt(lab, v, function (def) { return def.plug; });
-    var V = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot;
+    var V = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot, room, x;
     if (!pipe && !plug) { v.seal = null; return; }
+    // während umgegossen wird, ist das Gefäß offen; danach rechnet der Druck neu
+    if (lab.flows.some(function (f) { return f.from === v.id || f.to === v.id; })) { v.seal = null; return; }
     for (id in v.air) gas += v.air[id];
     vap = volume(v) > 0 && v.n[WATER] > 0 ? Math.min(1, Math.exp(-VAPOR / R * (1 / T - 1 / (BOIL + KELVIN)))) * P_AIR : 0;
     full = P_AIR * V / (RL * T);                               // so viel Gas fasst der Gasraum bei Luftdruck
-    if (v.seal == null) v.seal = Math.max(0, full * (1 - vap / P_AIR) - gas);
+    if (v.seal == null) {                                      // eben verschlossen: was über den Luftdruck hinausgeht, ist vorher entwichen
+      room = full * (1 - vap / P_AIR);
+      if (gas > room) for (id in v.air) { x = v.air[id] * (1 - room / gas); v.out[id] = (v.out[id] || 0) + x; v.air[id] -= x; }
+      gas = Math.min(gas, room);
+      v.seal = Math.max(0, room - gas);
+    }
     total = v.seal + gas + vap * V / (RL * T);
     p = total * RL * T / V;
     if (plug) {
-      if (p > POP) {
+      if (p > POP || v.boil > 0) {                             // siedet es unter dem Stopfen, kann der Dampf nirgends hin
         plug.in = null; v.seal = null;
         if (emit) emit({ key: "popped", vessel: v.id, part: plug.id });
       }

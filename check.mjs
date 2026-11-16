@@ -2690,6 +2690,54 @@ test("Gasableitungsrohr: Brenner aus, solange das Rohr im Kalkwasser steckt – 
   assert.ok(dry.some((e) => e.key === "broken" && e.vessel === "a"), "kaltes Wasser im heißen Glas: es zerspringt");
 });
 
+test("Stopfen: auf ein Glas voller Gas gesetzt, fliegt er heraus statt es durchzulassen; auf siedendes Wasser auch; auf ein heißes nicht gleich", () => {
+  const pops = (setup, before, after) => {
+    const seen = [], l = lab(setup, { room: 20 });
+    if (typeof before === "function") until(l, () => before(l), 900); else L.step(l, before);
+    L.place(l, { type: "stopper", id: "st", in: "t" });
+    L.step(l, after, (e) => seen.push(e));
+    return { popped: seen.some((e) => e.key === "popped"), l, seen };
+  };
+  const co2 = pops([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 2M", ml: 10 }, { reagent: "marble", g: 0.5 }] }], 20, 300);
+  assert.ok(co2.popped, "voller Kohlenstoffdioxid: er fliegt heraus");
+  const boiling = pops([{ type: "testtube", id: "t", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "burner", under: "t", flame: 2 }], (l) => L.vessel(l, "t").boil > 0, 5);
+  assert.ok(boiling.popped, "auf siedendes Wasser: er fliegt heraus");
+  const hot = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "marble", g: 0.2 }] }, { type: "bath", under: "t", temp: 90 }], { room: 20 });
+  L.step(hot, 120);
+  const seen = [];
+  L.place(hot, { type: "stopper", id: "st", in: "t" });
+  L.step(hot, 0.2, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "popped"), "auf ein heißes Glas mit Gas: nicht sofort");
+});
+
+test("Stopfen und Rohr: Zugeben, Umgießen und Ausleeren sind kurzes Öffnen – kein falscher Knall, kein Zurücksteigen", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "stopper", id: "st", in: "t" }], { room: 20 });
+  L.step(l, 2);
+  L.add(l, "t", "H2O", { ml: 5 });
+  L.step(l, 10, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "popped"), "Wasser zugegeben: kein Knall");
+  for (const act of ["empty", "pour"]) {
+    const s2 = [], m = lab([{ type: "testtube", id: "a", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "tube", in: "a", to: "z" },
+      { type: "testtube", id: "z", contains: [{ reagent: "limewater", ml: 10 }] }, { type: "beaker", id: "b" }], { room: 20 });
+    L.step(m, 2);
+    if (act === "empty") L.empty(m, "a"); else L.pour(m, "a", "b", 8);
+    L.step(m, 20, (e) => s2.push(e));
+    assert.ok(!s2.some((e) => e.key === "suckBack"), act + ": nichts steigt zurück");
+  }
+});
+
+test("Kolbenprober: nach dem Herausspringen wieder angesetzt, zählt er von vorn", () => {
+  const seen = [], l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 2M", ml: 50 }, { reagent: "Mg ribbon", g: 0.2 }] }, { type: "syringe", id: "kp", in: "b" },
+    { type: "beaker", id: "c", contains: [{ reagent: "HCl 2M", ml: 50 }] }], { room: 20 });
+  L.step(l, 300);
+  assert.equal(L.tool(l, "kp").in, null);
+  L.attach(l, "kp", "c");
+  L.add(l, "c", "Mg ribbon", { g: 0.01 });
+  L.step(l, 60, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "plungerOut"), "springt nicht gleich wieder heraus");
+  assert.ok(L.reading(l, "kp").value > 5 && L.reading(l, "kp").value < 20, `zählt von vorn: ${L.reading(l, "kp").value} mL`);
+});
+
 test("Kolbenprober: ist er voll, springt der Kolben heraus", () => {
   const seen = [], l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 2M", ml: 50 }, { reagent: "Mg ribbon", g: 0.2 }] }, { type: "syringe", id: "kp", in: "b" }], { room: 20 });
   L.step(l, 300, (e) => seen.push(e));

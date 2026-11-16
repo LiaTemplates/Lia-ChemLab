@@ -382,11 +382,11 @@
               ember.position.copy(at);
             } else if (mark.result === "out") puffs(at, 3, 0x9a9a9a, t, 5, 2);
           }
-          if ((mark.key === "pop" || (mark.key === "splint" && mark.result === "pop")) && mark.level > 0 && mark.age >= 0 && mark.age < 0.5) {
+          if ((mark.key === "pop" || mark.key === "popped" || (mark.key === "splint" && mark.result === "pop")) && (mark.level > 0 || mark.key === "popped") && mark.age >= 0 && mark.age < 0.5) {
             part = mark.age / 0.5;
             flash.visible = true;
             flash.material.opacity = 0.9 * (1 - part);
-            flash.scale.setScalar((10 + 12 * mark.level) / 16 * (0.35 + 0.65 * part) * 2.5);
+            flash.scale.setScalar((10 + 12 * (mark.level || 1)) / 16 * (0.35 + 0.65 * part) * 2.5);
             flash.position.set(0, rim + 0.4, 0);
           }
         });
