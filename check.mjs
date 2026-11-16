@@ -8333,7 +8333,8 @@ test("README: die Folie zur Streuung der Messwerte hält, was ihr Text versprich
   const raw = JSON.parse(slide("Streuung der Messwerte")[0]), config = L.normalize(raw);
   assert.equal(raw.scatter, true, "für jeden Lernenden neu ausgelost");
   assert.ok(Number.isInteger(config.scatter));
-  assert.equal(config.table, true, "mit Messwerttabelle zum mehrfachen Ablesen");
+  assert.equal(config.table, true, "mit Messwerttabelle");
+  assert.deepEqual(config.shelf, ["NaOH 0.1M"], "Natronlauge zum Zugeben");
   const exact = L.createLab(L.normalize(Object.assign({}, raw, { scatter: false }))), l = L.createLab(config);
   L.step(exact, 30); L.step(l, 30);
   for (const t of config.bench.filter((p) => p.type === "thermometer" || p.type === "phmeter")) {
@@ -8342,6 +8343,11 @@ test("README: die Folie zur Streuung der Messwerte hält, was ihr Text versprich
   }
   near(L.reading(exact, config.bench.find((p) => p.type === "thermometer").id).value, 20, 1e-6, "das Wasser hat Raumtemperatur");
   near(L.reading(exact, config.bench.find((p) => p.type === "phmeter").id).value, 2, 0.02, "die Salzsäure hat pH 2");
+  // solange sich etwas tut, wackelt die letzte Stelle: in den Sekunden nach einer Zugabe ändert sich die Anzeige auch ohne neuen Wert
+  const ph = config.bench.find((p) => p.type === "phmeter").id, seen = new Set();
+  L.add(l, config.bench.find((p) => p.type === "beaker" && p.id !== "wasser").id, "NaOH 0.1M", { ml: 2 });
+  for (let i = 0; i < 8; i++) { L.step(l, 1); seen.add(L.reading(l, ph).value.toFixed(3)); }
+  assert.ok(seen.size > 3, "die Anzeige bewegt sich");
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {
