@@ -32,6 +32,10 @@
     "hint.still1": "Afei mia adekorade a wobɛdistil afi mu no so.",
     "hint.still2": "Afei mia adekorade a distillate no bɛkɔ mu no so.",
     "sameStill": "Condenser no kɔ adekorade foforɔ mu.",
+    "part.tube": "gas kwan dua",
+    "hint.tube1": "Afei mia ade a gas no fi mu ba no so.",
+    "hint.tube2": "Afei mia ade a wode gas no bɛkɔ mu no so.",
+    "sameTube": "Dua no kɔ ade foforo mu.",
     "eq.catalyst": "catalyst",
     "restMore": "Mia “Kɔ so” bio na ɛnkɔ so simma du foforɔ.",
     "lens.paste": "Nsuo no sua dodo ma aduro dodoɔ a ɛnane mu yi: ɛyɛ paste a particle view no ntumi nhwɛ mu.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "glacial acetic acid (99.8 %)",
     "ethyl acetate": "ethyl acetate",
     "sulfuric acid conc": "sulfuric acid, concentrated",
-    "wine": "white wine (12 % alcohol)"
+    "wine": "white wine (12 % alcohol)",
+    "limewater": "limewater (calcium hydroxide solution)"
   }
 }

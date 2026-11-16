@@ -32,6 +32,10 @@
     "hint.still1": "Nun das Gefäß antippen, aus dem destilliert wird.",
     "hint.still2": "Nun die Vorlage antippen, in die das Destillat läuft.",
     "sameStill": "Der Kühler führt in ein anderes Gefäß.",
+    "part.tube": "Gasableitungsrohr",
+    "hint.tube1": "Nun das Gefäß antippen, aus dem das Gas kommt.",
+    "hint.tube2": "Nun das Gefäß antippen, in das das Gas geleitet wird.",
+    "sameTube": "Das Rohr führt in ein anderes Gefäß.",
     "eq.catalyst": "Katalysator",
     "restMore": "Noch einmal „Abspielen“ lässt sie trotzdem zehn Minuten weiterlaufen.",
     "lens.paste": "Zu wenig Flüssigkeit für so viel Gelöstes: ein Brei, in den die Teilchenlupe nicht hineinsieht.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "Eisessig (Essigsäure 99,8 %)",
     "ethyl acetate": "Ethylacetat",
     "sulfuric acid conc": "Schwefelsäure, konzentriert",
-    "wine": "Weißwein (12 % Alkohol)"
+    "wine": "Weißwein (12 % Alkohol)",
+    "limewater": "Kalkwasser (Calciumhydroxid-Lösung)"
   }
 }

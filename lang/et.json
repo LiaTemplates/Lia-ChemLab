@@ -32,6 +32,10 @@
     "hint.still1": "Puuduta nüüd anumat, millest destilleeritakse.",
     "hint.still2": "Puuduta nüüd kogumisanumat, kuhu destillaat voolab.",
     "sameStill": "Jahuti viib teise anumasse.",
+    "part.tube": "gaasi juhtetoru",
+    "hint.tube1": "Nüüd puuduta anumat, millest gaas tuleb.",
+    "hint.tube2": "Nüüd puuduta anumat, kuhu gaas juhitakse.",
+    "sameTube": "Toru viib teise anumasse.",
     "eq.catalyst": "katalüsaator",
     "restMore": "Vajuta veel kord „Esita“, et lasta ajal siiski veel kümme minutit edasi minna.",
     "lens.paste": "Liiga vähe vedelikku nii suure hulga lahustunud aine jaoks: puder, mille sisse osakeste vaade ei näe.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "jää-äädikhape (äädikhape 99,8 %)",
     "ethyl acetate": "etüülatsetaat",
     "sulfuric acid conc": "väävelhape, kontsentreeritud",
-    "wine": "valge vein (12 % alkoholi)"
+    "wine": "valge vein (12 % alkoholi)",
+    "limewater": "lubjavesi (kaltsiumhüdroksiidi lahus)"
   }
 }

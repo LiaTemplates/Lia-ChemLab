@@ -32,6 +32,10 @@
     "hint.still1": "Tik nu op het vat waaruit gedestilleerd wordt.",
     "hint.still2": "Tik nu op het opvangvat voor het destillaat.",
     "sameStill": "De koeler leidt naar een ander vat.",
+    "part.tube": "gasafvoerbuis",
+    "hint.tube1": "Tik nu op het vat waar het gas uit komt.",
+    "hint.tube2": "Tik nu op het vat waarin het gas geleid wordt.",
+    "sameTube": "De buis leidt naar een ander vat.",
     "eq.catalyst": "katalysator",
     "restMore": "Druk nog een keer op “Afspelen” om de tijd toch nog tien minuten te laten doorlopen.",
     "lens.paste": "Te weinig vloeistof voor zoveel opgeloste stof: een brij waar de deeltjesloep niet in kan kijken.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ijsazijn (azijnzuur 99,8 %)",
     "ethyl acetate": "ethylacetaat",
     "sulfuric acid conc": "zwavelzuur, geconcentreerd",
-    "wine": "witte wijn (12 % alcohol)"
+    "wine": "witte wijn (12 % alcohol)",
+    "limewater": "kalkwater (calciumhydroxide-oplossing)"
   }
 }

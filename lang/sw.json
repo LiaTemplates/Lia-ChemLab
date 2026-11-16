@@ -32,6 +32,10 @@
     "hint.still1": "Sasa gusa chombo ambacho kioevu kitanerekwa kutoka humo.",
     "hint.still2": "Sasa gusa chombo kitakachopokea kioevu kilichonerekwa.",
     "sameStill": "Kondensa inaelekea kwenye chombo kingine.",
+    "part.tube": "mrija wa kupitishia gesi",
+    "hint.tube1": "Sasa gusa chombo ambacho gesi inatoka.",
+    "hint.tube2": "Sasa gusa chombo ambacho gesi itapelekwa.",
+    "sameTube": "Mrija unaelekea chombo kingine.",
     "eq.catalyst": "kichocheo",
     "restMore": "Bonyeza “Cheza” tena ili iendelee kwa dakika kumi zaidi hata hivyo.",
     "lens.paste": "Kioevu ni kidogo mno kwa kiyeyushwa kingi hivi: ni uji ambao mwonekano wa chembe hauwezi kuona ndani yake.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "asidi asetiki barafu (99.8 %)",
     "ethyl acetate": "ethili aseteti",
     "sulfuric acid conc": "asidi salfuriki, iliyokolea",
-    "wine": "divai nyeupe (12 % alkoholi)"
+    "wine": "divai nyeupe (12 % alkoholi)",
+    "limewater": "maji ya chokaa (myeyusho wa hidroksidi ya kalsiamu)"
   }
 }

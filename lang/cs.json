@@ -32,6 +32,10 @@
     "hint.still1": "Teď klepni na nádobu, ze které se destiluje.",
     "hint.still2": "Teď klepni na předlohu pro destilát.",
     "sameStill": "Chladič vede do jiné nádoby.",
+    "part.tube": "odvodná trubice",
+    "hint.tube1": "Nyní klepněte na nádobu, ze které plyn vychází.",
+    "hint.tube2": "Nyní klepněte na nádobu, do které se má plyn zavádět.",
+    "sameTube": "Trubice vede do jiné nádoby.",
     "eq.catalyst": "katalyzátor",
     "restMore": "Ještě jedním stisknutím „Přehrát“ poběží simulace i tak dalších deset minut.",
     "lens.paste": "Na tolik rozpuštěné látky je příliš málo kapaliny: vznikla kaše, do které částicový pohled nevidí.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ledová kyselina octová (99,8 %)",
     "ethyl acetate": "ethyl-acetát",
     "sulfuric acid conc": "kyselina sírová, koncentrovaná",
-    "wine": "bílé víno (12 % alkoholu)"
+    "wine": "bílé víno (12 % alkoholu)",
+    "limewater": "vápenná voda (roztok hydroxidu vápenatého)"
   }
 }

@@ -32,6 +32,10 @@
     "hint.still1": "Sekarang ketik bekas yang hendak disuling.",
     "hint.still2": "Sekarang ketik bekas penerima untuk hasil sulingan.",
     "sameStill": "Kondenser itu menyalur ke bekas lain.",
+    "part.tube": "tiub penghantar gas",
+    "hint.tube1": "Sekarang ketik bekas tempat gas keluar.",
+    "hint.tube2": "Sekarang ketik bekas yang akan menerima gas.",
+    "sameTube": "Tiub itu menuju ke bekas lain.",
     "eq.catalyst": "mangkin",
     "restMore": "Tekan “Main” sekali lagi untuk membiarkannya berjalan sepuluh minit lagi.",
     "lens.paste": "Terlalu sedikit cecair untuk zat terlarut sebanyak ini: bahan seperti pes yang tidak dapat dilihat oleh paparan zarah.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "asid etanoik glasial (99.8 %)",
     "ethyl acetate": "etil etanoat",
     "sulfuric acid conc": "asid sulfurik pekat",
-    "wine": "wain putih (12 % alkohol)"
+    "wine": "wain putih (12 % alkohol)",
+    "limewater": "air kapur (larutan kalsium hidroksida)"
   }
 }

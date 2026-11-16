@@ -32,6 +32,10 @@
     "hint.still1": "Tagad pieskarieties traukam, no kura destilē.",
     "hint.still2": "Tagad pieskarieties savācējtraukam destilātam.",
     "sameStill": "Dzesinātājs ved uz citu trauku.",
+    "part.tube": "gāzes novadcaurulīte",
+    "hint.tube1": "Tagad pieskarieties traukam, no kura nāk gāze.",
+    "hint.tube2": "Tagad pieskarieties traukam, kurā jāievada gāze.",
+    "sameTube": "Caurulīte ved uz citu trauku.",
     "eq.catalyst": "katalizators",
     "restMore": "Vēlreiz nospiežot „Atskaņot“, tas tomēr turpināsies vēl desmit minūtes.",
     "lens.paste": "Pārāk maz šķidruma tik daudz izšķīdušajai vielai: izveidojusies biezputra, kurā daļiņas nav saskatāmas.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ledus etiķskābe (99,8 %)",
     "ethyl acetate": "etilacetāts",
     "sulfuric acid conc": "sērskābe, koncentrēta",
-    "wine": "baltvīns (12 % alkohola)"
+    "wine": "baltvīns (12 % alkohola)",
+    "limewater": "kaļķūdens (kalcija hidroksīda šķīdums)"
   }
 }

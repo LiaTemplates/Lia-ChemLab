@@ -32,6 +32,10 @@
     "hint.still1": "Tani prek enën nga e cila distilohet.",
     "hint.still2": "Tani prek enën marrëse për distilatin.",
     "sameStill": "Ftohësi çon në një enë tjetër.",
+    "part.tube": "tub përcjellës gazi",
+    "hint.tube1": "Tani prekni enën nga e cila del gazi.",
+    "hint.tube2": "Tani prekni enën ku do të përcillet gazi.",
+    "sameTube": "Tubi të çon në një enë tjetër.",
     "eq.catalyst": "katalizator",
     "restMore": "Shtyp edhe një herë „Luaj“ që të vazhdojë gjithsesi edhe dhjetë minuta.",
     "lens.paste": "Shumë pak lëng për kaq shumë lëndë të tretur: një pastë ku pamja e grimcave nuk mund të shohë brenda.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "acid acetik glacial (99,8 %)",
     "ethyl acetate": "acetat etili",
     "sulfuric acid conc": "acid sulfurik, i përqendruar",
-    "wine": "verë e bardhë (12 % alkool)"
+    "wine": "verë e bardhë (12 % alkool)",
+    "limewater": "ujë gëlqereje (tretësirë e hidroksidit të kalciumit)"
   }
 }

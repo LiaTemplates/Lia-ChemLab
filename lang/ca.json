@@ -32,6 +32,10 @@
     "hint.still1": "Ara toca el recipient del qual es destil·la.",
     "hint.still2": "Ara toca el recipient col·lector del destil·lat.",
     "sameStill": "El refrigerant porta a un altre recipient.",
+    "part.tube": "tub de despreniment",
+    "hint.tube1": "Toca ara el recipient d'on surt el gas.",
+    "hint.tube2": "Toca ara el recipient on s'ha de conduir el gas.",
+    "sameTube": "El tub porta a un altre recipient.",
     "eq.catalyst": "catalitzador",
     "restMore": "Prem «Reprodueix» una altra vegada perquè continuï igualment deu minuts més.",
     "lens.paste": "Massa poc líquid per a tant de solut: una pasta dins la qual la vista de partícules no pot mirar.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "àcid acètic glacial (99,8 %)",
     "ethyl acetate": "acetat d'etil",
     "sulfuric acid conc": "àcid sulfúric concentrat",
-    "wine": "vi blanc (12 % d'alcohol)"
+    "wine": "vi blanc (12 % d'alcohol)",
+    "limewater": "aigua de calç (solució d'hidròxid de calci)"
   }
 }

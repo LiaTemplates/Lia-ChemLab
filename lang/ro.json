@@ -32,6 +32,10 @@
     "hint.still1": "Acum atinge vasul din care se distilă.",
     "hint.still2": "Acum atinge vasul colector pentru distilat.",
     "sameStill": "Refrigerentul duce spre alt vas.",
+    "part.tube": "tub de evacuare a gazului",
+    "hint.tube1": "Atingeți acum vasul din care iese gazul.",
+    "hint.tube2": "Atingeți acum vasul în care trebuie condus gazul.",
+    "sameTube": "Tubul duce într-un alt vas.",
     "eq.catalyst": "catalizator",
     "restMore": "Apasă încă o dată „Redă” pentru a continua totuși încă zece minute.",
     "lens.paste": "Prea puțin lichid pentru atâta substanță dizolvată: o pastă în care vederea particulelor nu poate privi.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "acid acetic glacial (99,8 %)",
     "ethyl acetate": "acetat de etil",
     "sulfuric acid conc": "acid sulfuric concentrat",
-    "wine": "vin alb (12 % alcool)"
+    "wine": "vin alb (12 % alcool)",
+    "limewater": "apă de var (soluție de hidroxid de calciu)"
   }
 }

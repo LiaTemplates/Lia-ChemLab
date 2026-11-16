@@ -32,6 +32,10 @@
     "hint.still1": "Tryck nu på kärlet som ska destilleras.",
     "hint.still2": "Tryck nu på uppsamlingskärlet för destillatet.",
     "sameStill": "Kylaren leder till ett annat kärl.",
+    "part.tube": "gasledningsrör",
+    "hint.tube1": "Tryck nu på kärlet som gasen kommer från.",
+    "hint.tube2": "Tryck nu på kärlet som gasen ska ledas ner i.",
+    "sameTube": "Röret leder till ett annat kärl.",
     "eq.catalyst": "katalysator",
     "restMore": "Tryck på ”Spela upp” en gång till för att ändå låta tiden gå tio minuter till.",
     "lens.paste": "För lite vätska för så mycket löst ämne: en gröt som partikelluppen inte kan se in i.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "isättika (ättiksyra 99,8 %)",
     "ethyl acetate": "etylacetat",
     "sulfuric acid conc": "svavelsyra, koncentrerad",
-    "wine": "vitt vin (12 % alkohol)"
+    "wine": "vitt vin (12 % alkohol)",
+    "limewater": "kalkvatten (kalciumhydroxidlösning)"
   }
 }

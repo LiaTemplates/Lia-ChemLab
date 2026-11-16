@@ -32,6 +32,10 @@
     "hint.still1": "Şimdi damıtma yapılacak kaba dokunun.",
     "hint.still2": "Şimdi damıtığın toplanacağı kaba dokunun.",
     "sameStill": "Soğutucu başka bir kaba gidiyor.",
+    "part.tube": "gaz iletim borusu",
+    "hint.tube1": "Şimdi gazın çıktığı kaba dokunun.",
+    "hint.tube2": "Şimdi gazın iletileceği kaba dokunun.",
+    "sameTube": "Boru başka bir kaba gider.",
     "eq.catalyst": "katalizör",
     "restMore": "Yine de on dakika daha sürmesi için “Oynat”a bir kez daha basın.",
     "lens.paste": "Bu kadar çözünen madde için sıvı çok az: tanecik görünümünün içini göremediği bir macun.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "buzlu asetik asit (%99,8)",
     "ethyl acetate": "etil asetat",
     "sulfuric acid conc": "sülfürik asit, derişik",
-    "wine": "beyaz şarap (%12 alkol)"
+    "wine": "beyaz şarap (%12 alkol)",
+    "limewater": "kireç suyu (kalsiyum hidroksit çözeltisi)"
   }
 }

@@ -32,6 +32,10 @@
     "hint.still1": "Teraz stuknij naczynie, z którego prowadzi się destylację.",
     "hint.still2": "Teraz stuknij odbieralnik na destylat.",
     "sameStill": "Chłodnica prowadzi do innego naczynia.",
+    "part.tube": "rurka odprowadzająca gaz",
+    "hint.tube1": "Teraz dotknij naczynia, z którego wydobywa się gaz.",
+    "hint.tube2": "Teraz dotknij naczynia, do którego ma być wprowadzony gaz.",
+    "sameTube": "Rurka prowadzi do innego naczynia.",
     "eq.catalyst": "katalizator",
     "restMore": "Naciśnij „Odtwórz” jeszcze raz, aby mimo to symulacja trwała kolejne dziesięć minut.",
     "lens.paste": "Za mało cieczy na tyle substancji rozpuszczonej: powstała pasta, do której widok cząstek nie zajrzy.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "lodowaty kwas octowy (99,8 %)",
     "ethyl acetate": "octan etylu",
     "sulfuric acid conc": "kwas siarkowy(VI), stężony",
-    "wine": "białe wino (12 % alkoholu)"
+    "wine": "białe wino (12 % alkoholu)",
+    "limewater": "woda wapienna (roztwór wodorotlenku wapnia)"
   }
 }

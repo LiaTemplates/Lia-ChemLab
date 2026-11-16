@@ -32,6 +32,10 @@
     "hint.still1": "Most koppints arra az edényre, amelyből desztillálunk.",
     "hint.still2": "Most koppints a szedőre, ahová a desztillátum folyik.",
     "sameStill": "A hűtő egy másik edénybe vezet.",
+    "part.tube": "gázelvezető cső",
+    "hint.tube1": "Most koppintson arra az edényre, amelyből a gáz jön.",
+    "hint.tube2": "Most koppintson arra az edényre, amelybe a gázt vezetni kell.",
+    "sameTube": "A cső egy másik edénybe vezet.",
     "eq.catalyst": "katalizátor",
     "restMore": "Nyomd meg még egyszer a „Lejátszás” gombot, és a szimuláció így is fut még tíz percig.",
     "lens.paste": "Túl kevés folyadék ennyi oldott anyaghoz: pép keletkezett, amelybe a részecskenézet nem lát bele.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "jégecet (99,8 %)",
     "ethyl acetate": "etil-acetát",
     "sulfuric acid conc": "tömény kénsav",
-    "wine": "fehérbor (12 % alkohol)"
+    "wine": "fehérbor (12 % alkohol)",
+    "limewater": "meszes víz (kalcium-hidroxid-oldat)"
   }
 }

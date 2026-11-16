@@ -32,6 +32,10 @@
     "hint.still1": "Anois tapáil an t-árthach as a ndriogfar.",
     "hint.still2": "Anois tapáil an glacadán don driogáit.",
     "sameStill": "Téann an comhdhlúthadán isteach in árthach eile.",
+    "part.tube": "feadán seachadta gáis",
+    "hint.tube1": "Tapáil anois an soitheach as a dtagann an gás.",
+    "hint.tube2": "Tapáil anois an soitheach ina seolfar an gás.",
+    "sameTube": "Téann an feadán go soitheach eile.",
     "eq.catalyst": "catalaíoch",
     "restMore": "Brúigh “Seinn” arís chun ligean dó rith ar feadh deich nóiméad eile mar sin féin.",
     "lens.paste": "Ró-bheagán leachta don oiread sin tuaslagáite: taos nach féidir leis an amharc cáithníní féachaint isteach ann.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "aigéad aicéiteach oighreach (99.8 %)",
     "ethyl acetate": "aicéatáit eitile",
     "sulfuric acid conc": "aigéad sulfarach, tiubhaithe",
-    "wine": "fíon bán (12 % alcóil)"
+    "wine": "fíon bán (12 % alcóil)",
+    "limewater": "uisce aoil (tuaslagán hiodrocsaíde cailciam)"
   }
 }

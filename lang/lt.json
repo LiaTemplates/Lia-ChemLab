@@ -32,6 +32,10 @@
     "hint.still1": "Dabar bakstelėkite indą, iš kurio distiliuojama.",
     "hint.still2": "Dabar bakstelėkite imtuvą distiliatui.",
     "sameStill": "Aušintuvas veda į kitą indą.",
+    "part.tube": "dujų išvado vamzdelis",
+    "hint.tube1": "Dabar bakstelėkite indą, iš kurio išeina dujos.",
+    "hint.tube2": "Dabar bakstelėkite indą, į kurį reikia nukreipti dujas.",
+    "sameTube": "Vamzdelis veda į kitą indą.",
     "eq.catalyst": "katalizatorius",
     "restMore": "Dar kartą paspaudus „Leisti“, viskas vis tiek vyks dar dešimt minučių.",
     "lens.paste": "Per mažai skysčio tokiam kiekiui ištirpusios medžiagos: susidarė košė, kurioje dalelių nematyti.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ledinė acto rūgštis (99,8 %)",
     "ethyl acetate": "etilacetatas",
     "sulfuric acid conc": "sieros rūgštis, koncentruota",
-    "wine": "baltasis vynas (12 % alkoholio)"
+    "wine": "baltasis vynas (12 % alkoholio)",
+    "limewater": "kalkių vanduo (kalcio hidroksido tirpalas)"
   }
 }

@@ -32,6 +32,10 @@
     "hint.still1": "Tryk nu på den beholder, der skal destilleres fra.",
     "hint.still2": "Tryk nu på opsamlingsbeholderen til destillatet.",
     "sameStill": "Køleren fører over i en anden beholder.",
+    "part.tube": "gasudledningsrør",
+    "hint.tube1": "Tryk nu på den beholder, gassen kommer fra.",
+    "hint.tube2": "Tryk nu på den beholder, gassen skal ledes ned i.",
+    "sameTube": "Røret fører til en anden beholder.",
     "eq.catalyst": "katalysator",
     "restMore": "Tryk på »Afspil« en gang til for alligevel at lade tiden løbe ti minutter mere.",
     "lens.paste": "For lidt væske til så meget opløst stof: en grød, som partikellupen ikke kan se ind i.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "iseddike (eddikesyre 99,8 %)",
     "ethyl acetate": "ethylacetat",
     "sulfuric acid conc": "svovlsyre, koncentreret",
-    "wine": "hvidvin (12 % alkohol)"
+    "wine": "hvidvin (12 % alkohol)",
+    "limewater": "kalkvand (calciumhydroxidopløsning)"
   }
 }

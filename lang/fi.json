@@ -32,6 +32,10 @@
     "hint.still1": "Napauta nyt astiaa, josta tislataan.",
     "hint.still2": "Napauta nyt keräysastiaa, johon tisle valuu.",
     "sameStill": "Jäähdytin johtaa toiseen astiaan.",
+    "part.tube": "kaasunjohtoputki",
+    "hint.tube1": "Napauta nyt astiaa, josta kaasu tulee.",
+    "hint.tube2": "Napauta nyt astiaa, johon kaasu johdetaan.",
+    "sameTube": "Putki johtaa toiseen astiaan.",
     "eq.catalyst": "katalyytti",
     "restMore": "Paina ”Toista” vielä kerran, niin aika kulkee silti vielä kymmenen minuuttia.",
     "lens.paste": "Liian vähän nestettä näin paljolle liuenneelle aineelle: puuromaista seosta, jonka sisään hiukkasnäkymä ei näe.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "jääetikka (etikkahappo 99,8 %)",
     "ethyl acetate": "etyyliasetaatti",
     "sulfuric acid conc": "rikkihappo, väkevä",
-    "wine": "valkoviini (12 % alkoholia)"
+    "wine": "valkoviini (12 % alkoholia)",
+    "limewater": "kalkkivesi (kalsiumhydroksidiliuos)"
   }
 }

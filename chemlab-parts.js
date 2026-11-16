@@ -21,6 +21,8 @@
       "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
+      "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
+      "sameTube": "The tube leads into another vessel.",
       "eq.catalyst": "catalyst",
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",

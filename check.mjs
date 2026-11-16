@@ -7202,6 +7202,20 @@ for (const model of ["ideal", "real"]) test(`Gasableitungsrohr: Marmor und Salzs
   assert.equal(carbon(a.out), 0, "aus dem verschlossenen Glas entweicht nichts ins Freie");
 });
 
+test("Kalkwasser: klar in beiden Modellen, pH um 12,3; Name und Gerät in allen Sprachen", () => {
+  for (const model of ["ideal", "real"]) {
+    const l = beaker([{ reagent: "limewater", ml: 10 }], { model, room: 25 });
+    L.step(l, 30);
+    assert.equal(amount(l, "Ca(OH)2(s)"), 0, `${model}: nichts fällt aus`);
+    if (model === "ideal") near(look(l).pH, 12.34, 0.1, "pH");
+  }
+  for (const code of fs.readdirSync(new URL("lang/", here)).map((f) => f.replace(".json", ""))) {
+    const table = JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here)));
+    for (const key of ["part.tube", "hint.tube1", "hint.tube2", "sameTube"]) assert.ok(table.strings[key], `${code}: ${key}`);
+  }
+  assert.equal(JSON.parse(fs.readFileSync(new URL("lang/de.json", here))).strings["part.tube"], "Gasableitungsrohr");
+});
+
 test("Gasableitungsrohr: verschließt – kein Span am ersten Glas", () => {
   const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
   L.step(l, 2);

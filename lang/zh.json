@@ -32,6 +32,10 @@
     "hint.still1": "现在点击要从中蒸馏的容器。",
     "hint.still2": "现在点击接收馏出液的容器。",
     "sameStill": "冷凝管已通向另一个容器。",
+    "part.tube": "导气管",
+    "hint.tube1": "现在点击产生气体的容器。",
+    "hint.tube2": "现在点击要通入气体的容器。",
+    "sameTube": "导气管通向另一个容器。",
     "eq.catalyst": "催化剂",
     "restMore": "再按一次“播放”，仍可让它再运行十分钟。",
     "lens.paste": "溶质太多而液体太少：成了糊状，粒子视图无法看清其内部。",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "冰醋酸（99.8 %）",
     "ethyl acetate": "乙酸乙酯",
     "sulfuric acid conc": "浓硫酸",
-    "wine": "白葡萄酒（酒精度 12 %）"
+    "wine": "白葡萄酒（酒精度 12 %）",
+    "limewater": "石灰水（氢氧化钙溶液）"
   }
 }

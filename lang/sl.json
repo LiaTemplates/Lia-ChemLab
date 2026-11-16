@@ -32,6 +32,10 @@
     "hint.still1": "Zdaj tapni posodo, iz katere destiliramo.",
     "hint.still2": "Zdaj tapni predložko za destilat.",
     "sameStill": "Hladilnik vodi v drugo posodo.",
+    "part.tube": "odvodna cevka za plin",
+    "hint.tube1": "Zdaj tapnite posodo, iz katere prihaja plin.",
+    "hint.tube2": "Zdaj tapnite posodo, v katero naj se plin uvaja.",
+    "sameTube": "Cevka vodi v drugo posodo.",
     "eq.catalyst": "katalizator",
     "restMore": "Še en pritisk na »Predvajaj« in simulacija vseeno teče še deset minut.",
     "lens.paste": "Premalo tekočine za toliko raztopljene snovi: nastala je kaša, v katero pogled na delce ne seže.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ledocetna kislina (99,8 %)",
     "ethyl acetate": "etil etanoat",
     "sulfuric acid conc": "žveplova(VI) kislina, koncentrirana",
-    "wine": "belo vino (12 % alkohola)"
+    "wine": "belo vino (12 % alkohola)",
+    "limewater": "apnenica (raztopina kalcijevega hidroksida)"
   }
 }

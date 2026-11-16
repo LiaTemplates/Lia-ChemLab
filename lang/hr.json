@@ -32,6 +32,10 @@
     "hint.still1": "Sada dodirni posudu iz koje se destilira.",
     "hint.still2": "Sada dodirni predložak za destilat.",
     "sameStill": "Hladilo vodi u drugu posudu.",
+    "part.tube": "cijev za odvod plina",
+    "hint.tube1": "Sada dodirnite posudu iz koje izlazi plin.",
+    "hint.tube2": "Sada dodirnite posudu u koju se plin uvodi.",
+    "sameTube": "Cijev vodi u drugu posudu.",
     "eq.catalyst": "katalizator",
     "restMore": "Još jedan pritisak na „Pokreni” i simulacija ipak teče još deset minuta.",
     "lens.paste": "Premalo tekućine za toliko otopljene tvari: nastala je kaša u koju prikaz čestica ne može pogledati.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ledena octena kiselina (99,8 %)",
     "ethyl acetate": "etil-acetat",
     "sulfuric acid conc": "sumporna kiselina, koncentrirana",
-    "wine": "bijelo vino (12 % alkohola)"
+    "wine": "bijelo vino (12 % alkohola)",
+    "limewater": "vapnena voda (otopina kalcijeva hidroksida)"
   }
 }

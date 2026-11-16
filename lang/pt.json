@@ -32,6 +32,10 @@
     "hint.still1": "Agora tocar no recipiente a partir do qual se destila.",
     "hint.still2": "Agora tocar no recipiente que recolhe o destilado.",
     "sameStill": "O condensador leva a outro recipiente.",
+    "part.tube": "tubo de saída de gás",
+    "hint.tube1": "Toque agora no recipiente de onde sai o gás.",
+    "hint.tube2": "Toque agora no recipiente para onde o gás deve ser conduzido.",
+    "sameTube": "O tubo leva a outro recipiente.",
     "eq.catalyst": "catalisador",
     "restMore": "Carregar mais uma vez em «Reproduzir» para continuar mesmo assim mais dez minutos.",
     "lens.paste": "Pouco líquido para tanto soluto: uma pasta para dentro da qual a vista de partículas não consegue olhar.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "ácido acético glacial (99,8 %)",
     "ethyl acetate": "acetato de etilo",
     "sulfuric acid conc": "ácido sulfúrico concentrado",
-    "wine": "vinho branco (12 % de álcool)"
+    "wine": "vinho branco (12 % de álcool)",
+    "limewater": "água de cal (solução de hidróxido de cálcio)"
   }
 }

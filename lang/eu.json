@@ -32,6 +32,10 @@
     "hint.still1": "Orain sakatu destilatu beharreko ontzia.",
     "hint.still2": "Orain sakatu destilatua jasoko duen ontzia.",
     "sameStill": "Hozgailua beste ontzi batera doa.",
+    "part.tube": "gas-hodi eroalea",
+    "hint.tube1": "Ukitu orain gasa ateratzen den ontzia.",
+    "hint.tube2": "Ukitu orain gasa eraman behar den ontzia.",
+    "sameTube": "Hodiak beste ontzi batera darama.",
     "eq.catalyst": "katalizatzailea",
     "restMore": "Sakatu berriro «Erreproduzitu», hala ere beste hamar minutuz jarraitzeko.",
     "lens.paste": "Likido gutxiegi hainbeste solutuarentzat: ore bat da, eta partikula-ikuspegiak ezin du barrura begiratu.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "azido azetiko glaziala (% 99,8)",
     "ethyl acetate": "etil azetatoa",
     "sulfuric acid conc": "azido sulfuriko kontzentratua",
-    "wine": "ardo zuria (% 12 alkohol)"
+    "wine": "ardo zuria (% 12 alkohol)",
+    "limewater": "kare-ura (kaltzio hidroxidoaren disoluzioa)"
   }
 }

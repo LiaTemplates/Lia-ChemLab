@@ -32,6 +32,10 @@
     "hint.still1": "Toucher maintenant le récipient à distiller.",
     "hint.still2": "Toucher maintenant le récipient qui recueille le distillat.",
     "sameStill": "Le réfrigérant mène à un autre récipient.",
+    "part.tube": "tube à dégagement",
+    "hint.tube1": "Toucher maintenant le récipient d'où sort le gaz.",
+    "hint.tube2": "Toucher maintenant le récipient dans lequel conduire le gaz.",
+    "sameTube": "Le tube mène à un autre récipient.",
     "eq.catalyst": "catalyseur",
     "restMore": "Appuyer encore une fois sur « Lecture » pour continuer quand même dix minutes de plus.",
     "lens.paste": "Trop peu de liquide pour autant de soluté : une pâte dans laquelle la vue des particules ne peut pas regarder.",
@@ -599,6 +603,7 @@
     "glacial acetic acid": "acide acétique glacial (99,8 %)",
     "ethyl acetate": "éthanoate d'éthyle",
     "sulfuric acid conc": "acide sulfurique concentré",
-    "wine": "vin blanc (12 % d'alcool)"
+    "wine": "vin blanc (12 % d'alcool)",
+    "limewater": "eau de chaux (solution d'hydroxyde de calcium)"
   }
 }
