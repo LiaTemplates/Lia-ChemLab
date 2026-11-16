@@ -6145,8 +6145,8 @@ test("Reales Modell an der Fläche: das Feld eines Gefäßes nennt die Ionenstä
   assert.match(contents(acid("HCl 0.1M", { model: "real" })), /Flüssigkeit 20,0 mL · pH 1,08 · Ionenstärke 0,10 mol\/L/);
   // verdünnt mit einer Stelle mehr
   assert.match(contents(acid("HCl 0.01M", { model: "real" })), /Ionenstärke 0,010 mol\/L/);
-  // knapp unter 0,1 mol/L (hier 0,09999…) steht gerundet 0,10 da und nicht 0,100
-  assert.match(contents({ room: 25, model: "real", bench: [{ type: "beaker", id: "b", contains: [{ reagent: "NaHCO3 0.05M", ml: 20 }, { reagent: "Na2CO3 0.05M", ml: 20 }] }] }), /Ionenstärke 0,10 mol\/L/);
+  // knapp unter 0,1 mol/L (hier 0,0999) steht gerundet 0,10 da und nicht 0,100
+  assert.match(contents(acid("HCl 0.0999M", { model: "real" })), /Ionenstärke 0,10 mol\/L/);
   // im idealen Modell und ohne Zahlen steht davon nichts da
   assert.match(contents(acid("HCl 0.1M")), /Flüssigkeit 20,0 mL · pH 1,00<\/p>/);
   assert.doesNotMatch(contents(acid("HCl 0.1M", { model: "real", show: { numbers: false } })), /Ionenstärke/);
@@ -6452,9 +6452,10 @@ test("Daten: ein Gleichgewicht kann dem realen Modell vorbehalten sein", () => {
     assert.ok(amount(real([{ reagent: "Li2SO4 0.5M", ml: 10 }]), "LiSO4-(aq)") > 1e-4, "real: dabei");
   } finally { L.db = before; }
   // im Grundpaket: die Ionenpaare des realen Modells stammen aus phreeqc.dat und minteq.v4.dat
-  const pairs = L.db.equilibria.filter((e) => e.model === "real");
-  assert.deepEqual(pairs.map((e) => e.text).sort(), ["Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)",
-    "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)"]);
+  const six = ["Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", "Ca^2+(aq) + SO4^2-(aq) <=> CaSO4(aq)", "K+(aq) + SO4^2-(aq) <=> KSO4-(aq)",
+    "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", "Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)"];
+  const pairs = L.db.equilibria.filter((e) => e.model === "real" && six.includes(e.text));
+  assert.deepEqual(pairs.map((e) => e.text).sort(), six, "die Sulfat-Paare und die Hydroxo-Ionen");
   for (const e of pairs) assert.match(e.src, /phreeqc\.dat|minteq\.v4\.dat/, e.text);
   // die Werte, wie sie in den Quelldateien stehen
   const logK = Object.fromEntries(pairs.map((e) => [e.solid || Object.keys(e.nu).find((id) => /SO4-\(aq\)|SO4\(aq\)|OH\+\(aq\)/.test(id) && id !== "SO4^2-(aq)"), [e.logK, e.dH == null ? null : e.dH]]));
@@ -6519,4 +6520,65 @@ test("Löser: viel Bodensatz in einem Rest von Wasser lässt sich berechnen", ()
     assert.ok(amount(salt, "Na+(aq)") > 2e-4 && amount(salt, "Na+(aq)") < 5e-4, `${model}: der Tropfen ist mit Kochsalz gesättigt (${amount(salt, "Na+(aq)")} mol)`);
     assert.ok(amount(salt, "NaCl(s)") > 0.09, model + ": das meiste Salz liegt noch da");
   }
+});
+
+// ---------------------------------------------------------------- Carbonat-Ionenpaare und Chlorokomplexe des realen Modells
+
+test("Daten: die Ionenpaare der Erdalkalicarbonate und die Chlorokomplexe des Silbers sind dem realen Modell vorbehalten", () => {
+  // Gleichung → [lg K, Reaktionsenthalpie in kJ/mol oder null, Quelldatei], wie in den Datenbanken des USGS
+  const expected = {
+    "Ca^2+(aq) + CO3^2-(aq) <=> CaCO3(aq)": [3.2, 16, "minteq"], "Ca^2+(aq) + H+(aq) + CO3^2-(aq) <=> CaHCO3+(aq)": [11.599, 5.4, "minteq"],
+    "Mg^2+(aq) + CO3^2-(aq) <=> MgCO3(aq)": [2.92, 12, "minteq"], "Mg^2+(aq) + H+(aq) + CO3^2-(aq) <=> MgHCO3+(aq)": [11.339, -10.6, "minteq"],
+    "Sr^2+(aq) + CO3^2-(aq) <=> SrCO3(aq)": [2.81, 20, "minteq"], "Sr^2+(aq) + H+(aq) + CO3^2-(aq) <=> SrHCO3+(aq)": [11.539, 10.4, "minteq"],
+    "Ba^2+(aq) + CO3^2-(aq) <=> BaCO3(aq)": [2.71, 16, "minteq"], "Ba^2+(aq) + H+(aq) + CO3^2-(aq) <=> BaHCO3+(aq)": [11.309, 10.4, "minteq"],
+    "Ag+(aq) + Cl-(aq) <=> AgCl(aq)": [3.31, -12, "minteq"], "Ag+(aq) + 2 Cl-(aq) <=> AgCl2-(aq)": [5.25, -16, "minteq"],
+    "Ag+(aq) + 3 Cl-(aq) <=> AgCl3^2-(aq)": [5.2, null, "minteq"]
+  };
+  for (const [text, [logK, dH, file]] of Object.entries(expected)) {
+    const e = L.db.equilibria.find((x) => x.text === text);
+    assert.ok(e, text + " ist eingetragen");
+    assert.equal(e.model, "real", text);
+    assert.deepEqual([e.logK, e.dH == null ? null : e.dH], [logK, dH], text);
+    assert.match(e.src, new RegExp(file === "minteq" ? "minteq\\.v4\\.dat" : "phreeqc\\.dat"), text);
+  }
+  assert.equal(L.db.equilibria.filter((e) => e.model === "real").length, 6 + 11, "sechs Sulfat- und Hydroxo-Paare, dazu diese elf");
+  // Parameter der Aktivitätskoeffizienten, wo phreeqc.dat welche nennt
+  assert.deepEqual(["CaHCO3+(aq)", "MgHCO3+(aq)", "SrHCO3+(aq)", "BaHCO3+(aq)", "AgCl2-(aq)"].map((id) => L.db.species[id].gamma || null), [[6, 0], [4, 0], [5.4, 0], null, null]);
+  // bewusst nicht eingetragen, weil die Messung dagegen spricht (siehe die Anmerkungen in den Daten)
+  for (const id of ["NaHCO3(aq)", "KHCO3(aq)", "CuCl+(aq)", "CuCl4^2-(aq)", "AgCl4^3-(aq)"]) assert.equal(L.db.species[id], undefined, id);
+  // im idealen Modell kommt keines dieser Teilchen vor
+  const mix = [{ reagent: "CaCl2 0.1M", ml: 5 }, { reagent: "NaHCO3 0.1M", ml: 5 }, { reagent: "CuCl2 0.5M", ml: 5 }, { reagent: "AgNO3 0.01M", ml: 1 }, { reagent: "KNO3 0.1M", ml: 2 }];
+  const ideal = beaker(mix, { room: 25 }), realMix = real(mix), pairs = Object.keys(expected).map((text) => text.split(" <=> ")[1]);
+  for (const id of pairs) assert.equal(amount(ideal, id), 0, id + " fehlt im idealen Modell");
+  for (const id of ["CaHCO3+(aq)", "CaCO3(aq)", "AgCl(aq)", "AgCl2-(aq)"]) assert.ok(amount(realMix, id) > 1e-12, id + " liegt im realen Modell vor");
+  near(totals(realMix).charge, 0, 1e-12, "Ladung");
+  assert.equal(realMix.failed || 0, 0);
+});
+
+test("Reales Modell: Silberchlorid löst sich in konzentrierter Salzsäure, weil Chlorokomplexe entstehen", () => {
+  const silver = (model) => { const l = beaker([{ reagent: "AgNO3 0.01M", ml: 2 }, { reagent: "NaCl 0.01M", ml: 2 }], { room: 25, model }); L.add(l, "b", "HCl 12M", { ml: 20 }); restAfter(l, 3000); return l; };
+  const r = silver("real"), i = silver("ideal");
+  near(amount(i, "AgCl(s)"), 2e-5, 1e-7, "ideal: der Niederschlag bleibt");
+  assert.ok(amount(r, "AgCl(s)") < 1e-9, `real: er hat sich gelöst (${amount(r, "AgCl(s)")} mol übrig)`);
+  assert.ok(amount(r, "AgCl3^2-(aq)") + amount(r, "AgCl2-(aq)") > 1.9e-5, "das Silber steckt in den Chlorokomplexen");
+  assert.equal(r.failed || 0, 0);
+  // Löslichkeit in Chlorid-Lösung von 1 mol/L: im Labor etwa 1e-4 mol/L, hier 6e-5. Mit dem vierten Komplex AgCl4^3- wären es
+  // 2,7e-4 und in konzentrierter Salzsäure das Zehnfache des Laborwerts; deshalb ist er nicht eingetragen.
+  const brine = real([{ reagent: "NaCl 1M", ml: 20 }, { reagent: "AgNO3 0.01M", ml: 1 }]);
+  assert.ok(amount(brine, "AgCl(s)") > 5e-6, "in Kochsalzlösung 1 mol/L bleibt Niederschlag liegen");
+  near(inSolution(brine, ["Ag+(aq)", "AgCl(aq)", "AgCl2-(aq)", "AgCl3^2-(aq)"]), 6.2e-5, 0.6e-5, "gelöstes Silber in Kochsalzlösung 1 mol/L");
+  // in verdünnter Kochsalzlösung bleibt er liegen; das Massenwirkungsgesetz des Dichloro-Komplexes gilt für die Aktivitäten
+  const salt = real([{ reagent: "NaCl 0.1M", ml: 20 }, { reagent: "AgNO3 0.01M", ml: 1 }]);
+  assert.ok(amount(salt, "AgCl(s)") > 9.8e-6, `in Kochsalzlösung 0,1 mol/L fällt fast alles aus (${amount(salt, "AgCl(s)")} mol)`);
+  near(Math.log10(act(salt, "AgCl2-(aq)")) - Math.log10(act(salt, "Ag+(aq)")) - 2 * Math.log10(act(salt, "Cl-(aq)")), 5.25, 1e-6, "lg β2 = 5,25");
+  near(Math.log10(act(salt, "Ag+(aq)")) + Math.log10(act(salt, "Cl-(aq)")), -9.75, 1e-6, "gesättigt");
+});
+
+test("Reales Modell: Carbonat-Ionenpaare – Massenwirkungsgesetz, und die Eichlösung stimmt weiter", () => {
+  const hard = real([{ reagent: "CaCl2 0.01M", ml: 10 }, { reagent: "NaHCO3 0.01M", ml: 10 }]);
+  near(Math.log10(act(hard, "CaHCO3+(aq)")) - Math.log10(act(hard, "Ca^2+(aq)")) - Math.log10(act(hard, "H+(aq)")) - Math.log10(act(hard, "CO3^2-(aq)")), 11.599, 1e-6, "Calciumhydrogencarbonat-Ionenpaar");
+  near(Math.log10(act(hard, "CaCO3(aq)")) - Math.log10(act(hard, "Ca^2+(aq)")) - Math.log10(act(hard, "CO3^2-(aq)")), 3.2, 1e-6, "Calciumcarbonat-Ionenpaar");
+  // die Carbonat-Eichlösung (pH 10,012 bei 25 °C) bleibt auf 0,005 getroffen: Paare mit Natrium sind nicht eingetragen
+  near(look(real([{ reagent: "NaHCO3 0.05M", ml: 10 }, { reagent: "Na2CO3 0.05M", ml: 10 }])).pH, 10.012, 0.005, "Carbonatpuffer");
+  assert.equal(hard.failed || 0, 0);
 });

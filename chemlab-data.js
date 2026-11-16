@@ -110,6 +110,18 @@
       "CaOH+(aq)": { name: name("Calciumhydroxid-Ion", "calcium hydroxide ion"), Hf: null, src: NONE },
       "MgSO4(aq)": { name: name("Magnesiumsulfat, gelöst als Ionenpaar", "magnesium sulfate, dissolved ion pair"), Hf: null, src: NONE },
       "MgOH+(aq)": { name: name("Magnesiumhydroxid-Ion", "magnesium hydroxide ion"), Hf: null, src: NONE },
+      "CaCO3(aq)": { name: name("Calciumcarbonat, gelöst als Ionenpaar", "calcium carbonate, dissolved ion pair"), Hf: null, src: NONE },
+      "CaHCO3+(aq)": { name: name("Calciumhydrogencarbonat-Ion (Ionenpaar)", "calcium hydrogen carbonate ion pair"), Hf: null, D: 0.506, src: NONE + DW },
+      "MgCO3(aq)": { name: name("Magnesiumcarbonat, gelöst als Ionenpaar", "magnesium carbonate, dissolved ion pair"), Hf: null, src: NONE },
+      "MgHCO3+(aq)": { name: name("Magnesiumhydrogencarbonat-Ion (Ionenpaar)", "magnesium hydrogen carbonate ion pair"), Hf: null, D: 0.478, src: NONE + DW },
+      "SrCO3(aq)": { name: name("Strontiumcarbonat, gelöst als Ionenpaar", "strontium carbonate, dissolved ion pair"), Hf: null, src: NONE },
+      "SrHCO3+(aq)": { name: name("Strontiumhydrogencarbonat-Ion (Ionenpaar)", "strontium hydrogen carbonate ion pair"), Hf: null, src: NONE },
+      "BaCO3(aq)": { name: name("Bariumcarbonat, gelöst als Ionenpaar", "barium carbonate, dissolved ion pair"), Hf: null, src: NONE },
+      "BaHCO3+(aq)": { name: name("Bariumhydrogencarbonat-Ion (Ionenpaar)", "barium hydrogen carbonate ion pair"), Hf: null, src: NONE },
+      // Chlorokomplexe des Silbers, ebenfalls nur im realen Modell: mit ihnen löst sich Silberchlorid in konzentrierter Salzsäure
+      "AgCl(aq)": { name: name("Silberchlorid, gelöst", "silver chloride, dissolved"), Hf: null, src: NONE },
+      "AgCl2-(aq)": { name: name("Dichloroargentat(I)-Ion", "dichloroargentate(I) ion"), Hf: null, src: NONE },
+      "AgCl3^2-(aq)": { name: name("Trichloroargentat(I)-Ion", "trichloroargentate(I) ion"), Hf: null, src: NONE },
       "ZnSO4(aq)": { name: name("Zinksulfat, gelöst als Ionenpaar", "zinc sulfate, dissolved ion pair"), Hf: null, src: NONE },
       // color und at: nur eine Farbe bekannt; sie gilt für die Konzentration at in mol/L
       "Fe^2+(aq)": { name: name("Eisen(II)-Ion", "iron(II) ion"), Hf: -92.26, D: 0.719, color: "#cfe6c4", at: 0.5,
@@ -271,6 +283,26 @@
       { eq: "Ca^2+(aq) + H2O(l) <=> CaOH+(aq) + H+(aq)", logK: -12.697, dH: 64.11, model: "real", src: MINTEQ + "Ca+2 + H2O = CaOH+ + H+, log_k -12.697, delta_h 64.11 kJ" },
       { eq: "Mg^2+(aq) + SO4^2-(aq) <=> MgSO4(aq)", logK: 2.42, dH: 19, model: "real", src: "phreeqc.dat (USGS): Mg+2 + SO4-2 = MgSO4, log_k 2.42, delta_h 19.0 kJ" },
       { eq: "Mg^2+(aq) + H2O(l) <=> MgOH+(aq) + H+(aq)", logK: -11.397, dH: 67.81, model: "real", src: MINTEQ + "Mg+2 + H2O = MgOH+ + H+, log_k -11.397, delta_h 67.81 kJ" },
+      // Ionenpaare der Carbonate von Calcium, Magnesium, Strontium und Barium, aus minteq.v4.dat wie die Löslichkeitsprodukte dieser
+      // Carbonate. Nicht eingetragen, weil die Messung dagegen spricht: die Hydrogencarbonat-Paare von Natrium und Kalium aus
+      // phreeqc.dat (sie verschieben die Carbonat-Eichlösung vom Sollwert 10,012 weg, auf 10,021 statt 10,013).
+      { eq: "Ca^2+(aq) + CO3^2-(aq) <=> CaCO3(aq)", logK: 3.2, dH: 16, model: "real", src: MINTEQ + "CO3-2 + Ca+2 = CaCO3, log_k 3.2, delta_h 16 kJ" },
+      { eq: "Ca^2+(aq) + H+(aq) + CO3^2-(aq) <=> CaHCO3+(aq)", logK: 11.599, dH: 5.4, model: "real", src: MINTEQ + "Ca+2 + H+ + CO3-2 = CaHCO3+, log_k 11.599, delta_h 5.4 kJ" },
+      { eq: "Mg^2+(aq) + CO3^2-(aq) <=> MgCO3(aq)", logK: 2.92, dH: 12, model: "real", src: MINTEQ + "Mg+2 + CO3-2 = MgCO3, log_k 2.92, delta_h 12 kJ" },
+      { eq: "Mg^2+(aq) + H+(aq) + CO3^2-(aq) <=> MgHCO3+(aq)", logK: 11.339, dH: -10.6, model: "real", src: MINTEQ + "Mg+2 + H+ + CO3-2 = MgHCO3+, log_k 11.339, delta_h -10.6 kJ" },
+      { eq: "Sr^2+(aq) + CO3^2-(aq) <=> SrCO3(aq)", logK: 2.81, dH: 20, model: "real", src: MINTEQ + "Sr+2 + CO3-2 = SrCO3, log_k 2.81, delta_h 20 kJ" },
+      { eq: "Sr^2+(aq) + H+(aq) + CO3^2-(aq) <=> SrHCO3+(aq)", logK: 11.539, dH: 10.4, model: "real", src: MINTEQ + "Sr+2 + H+ + CO3-2 = SrHCO3+, log_k 11.539, delta_h 10.4 kJ" },
+      { eq: "Ba^2+(aq) + CO3^2-(aq) <=> BaCO3(aq)", logK: 2.71, dH: 16, model: "real", src: MINTEQ + "Ba+2 + CO3-2 = BaCO3, log_k 2.71, delta_h 16 kJ" },
+      { eq: "Ba^2+(aq) + H+(aq) + CO3^2-(aq) <=> BaHCO3+(aq)", logK: 11.309, dH: 10.4, model: "real", src: MINTEQ + "Ba+2 + H+ + CO3-2 = BaHCO3+, log_k 11.309, delta_h 10.4 kJ" },
+      // Chlorokomplexe des Silbers aus minteq.v4.dat (wie das Löslichkeitsprodukt von Silberchlorid), bis zum dritten. Der vierte
+      // (Ag+ + 4 Cl- = AgCl4-3, log_k 5.51) ist nicht eingetragen: Für das dreifach geladene Ion nennt keine der Datenbanken
+      // Parameter des Aktivitätskoeffizienten, und nach Davies gerechnet löste sich Silberchlorid in Chlorid-Lösung von 1 mol/L
+      // knapp dreimal, in konzentrierter Salzsäure zehnmal so gut wie im Labor (etwa 1e-4 und 0,03 mol/L). Ohne ihn sind es
+      // 6e-5 und 5e-3 mol/L. Auch die Chlorokomplexe des Kupfers(II) aus phreeqc.dat sind nicht eingetragen: Mit ihnen läge der
+      // mittlere Aktivitätskoeffizient von Kupferchlorid bei 1 mol/L um 38 % statt um 10 % unter dem Tabellenwert.
+      { eq: "Ag+(aq) + Cl-(aq) <=> AgCl(aq)", logK: 3.31, dH: -12, model: "real", src: MINTEQ + "Ag+ + Cl- = AgCl, log_k 3.31, delta_h -12 kJ" },
+      { eq: "Ag+(aq) + 2 Cl-(aq) <=> AgCl2-(aq)", logK: 5.25, dH: -16, model: "real", src: MINTEQ + "Ag+ + 2 Cl- = AgCl2-, log_k 5.25, delta_h -16 kJ" },
+      { eq: "Ag+(aq) + 3 Cl-(aq) <=> AgCl3^2-(aq)", logK: 5.2, model: "real", src: MINTEQ + "Ag+ + 3 Cl- = AgCl3-2, log_k 5.2" },
       { eq: "Fe^2+(aq) + H2O(l) <=> FeOH+(aq) + H+(aq)", logK: -9.397, dH: 55.81, src: MINTEQ + "Fe+2 + H2O = FeOH+ + H+, log_k -9.397, delta_h 55.81 kJ" },
       { eq: "Fe^2+(aq) + SO4^2-(aq) <=> FeSO4(aq)", logK: 2.39, dH: 8, src: MINTEQ + "Fe+2 + SO4-2 = FeSO4, log_k 2.39, delta_h 8 kJ" },
 
@@ -564,7 +596,8 @@
     "Zn^2+(aq)": [5, 0], "Cu^2+(aq)": [6, 0], "CuOH+(aq)": [4, 0],
     "OH-(aq)": [3.5, 0], "Cl-(aq)": [3.63, 0.017], "Br-(aq)": [3, 0.045], "NO3-(aq)": [3, 0], "SO4^2-(aq)": [5, -0.04],
     "CO3^2-(aq)": [5.4, 0], "HCO3-(aq)": [5.4, 0.0078], "CO2(aq)": [0, 0.066],
-    "NaSO4-(aq)": [3.5, 0.1072], "KSO4-(aq)": [5.4, 0.19], "CaSO4(aq)": [0, 0.0445], "MgSO4(aq)": [0, 0.2], "MgOH+(aq)": [6.5, 0]
+    "NaSO4-(aq)": [3.5, 0.1072], "KSO4-(aq)": [5.4, 0.19], "CaSO4(aq)": [0, 0.0445], "MgSO4(aq)": [0, 0.2], "MgOH+(aq)": [6.5, 0],
+    "CaHCO3+(aq)": [6, 0], "MgHCO3+(aq)": [4, 0], "SrHCO3+(aq)": [5.4, 0]
   };
   Object.keys(GAMMA).forEach(function (id) {
     var sp = L.core.species[id];
