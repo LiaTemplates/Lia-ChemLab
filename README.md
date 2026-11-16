@@ -524,6 +524,22 @@ Der Äquivalenzpunkt lässt sich auch ohne Indikator finden. Die Lauge ersetzt d
  "show":{"charts":["titration"],"equations":false}}
 ```
 
+## Bleichen und Chlor
+
+**Bleichlauge** (Natriumhypochlorit, wie in Chlorreinigern) entfärbt Farbstoffe. In beide Gläser mit Indikator etwas Bleichlauge geben: Die Farbe verschwindet nach und nach. Im rechten Glas Salzsäure zu Bleichlauge geben: Es entsteht Chlor, und es riecht stechend. Deshalb dürfen Chlorreiniger und saure Reiniger nie zusammenkommen.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"pp","contains":[{"reagent":"NaOH 0.1M","ml":20},{"reagent":"PP","drops":3}]},
+  {"type":"beaker","id":"ui","contains":[{"reagent":"HCl 0.1M","ml":20},{"reagent":"UI","drops":3}]},
+  {"type":"beaker","id":"reiniger","contains":[{"reagent":"NaOCl 1M","ml":10}]}
+ ],
+ "shelf":["NaOCl 1M","HCl 2M","paper"],
+ "show":{"charts":false}}
+```
+
+Bei der Elektrolyse von Kochsalzlösung löst sich ein Teil des Chlors in der Lauge, die an der anderen Elektrode entsteht: Es bildet sich Bleichlauge, und ein Indikator verblasst mit der Zeit.
+
 ## Elektrolyse
 
 Kupferchlorid-Lösung zwischen zwei Graphit-Elektroden. Das Netzgerät antippen und die Spannung einstellen: Am Minuspol scheidet sich Kupfer ab, am Pluspol steigt Chlor auf, man riecht es. Unter der Fläche stehen die Vorgänge an den beiden Elektroden, mit Elektronen geschrieben. „Umpolen“ vertauscht die Pole: Das Kupfer löst sich wieder und wandert auf die andere Elektrode.
@@ -1222,6 +1238,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `CaCl2`, `SrCl2`, `LiCl` | Calciumchlorid, Strontiumchlorid, Lithiumchlorid | `ml` |
 | `ZnSO4`, `ZnI2`, `CuCl2`, `FeSO4`, `KNO3` | Zinksulfat, Zinkiodid, Kupferchlorid, Eisen(II)-sulfat, Kaliumnitrat | `ml` |
 | `Na2S2O3`, `Na2SO3`, `K2S2O8` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat | `ml` |
+| `NaOCl` | Natriumhypochlorit-Lösung (Bleichlauge) mit etwas Natronlauge | `ml` |
 | `K2CrO4`, `K2Cr2O7`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
 | `H2O2`, `sugar` | Wasserstoffperoxid, Zuckerlösung | `ml` |
@@ -1424,6 +1441,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Gasraum:** Entstandenes Gas steht zuerst über der Flüssigkeit. Was dort keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest: Wasserstoff in etwa 8 s, Sauerstoff in 40 s, Kohlenstoffdioxid in 90 s. Im Diagramm der Stoffmengen zählt das entwichene Gas weiter mit.
 - **Indikatorpapier:** Sein Wasserfilm steht mit jedem Gas im Gleichgewicht, das ein Lösungsgleichgewicht hat (Ammoniak, Chlorwasserstoff, Kohlenstoffdioxid, Schwefeldioxid): mit dem Teildruck im Gasraum oder, wenn er höher ist, mit dem Druck, den das Gas über der Lösung hätte. Unter 10 ppm (1·10⁻⁵ bar) erreicht ein Gas das Papier nicht merklich; so färbt verdünnte Salzsäure es nicht, konzentrierte schon, und über Ammoniumchlorid ohne Lauge bleibt es grün. Gerechnet wird wie in 10 mL Wasser mit drei Tropfen Universalindikator bei Raumtemperatur; von dort kommen pH-Wert und Farbe. Die Nachweisgrenze ist geschätzt.
 - **Alkalimetalle** (Paket): Sie reagieren mit Wasser nach einem Geschwindigkeitsgesetz mit ihrer Oberfläche, wie Magnesium in Säure. Die Konstanten sind geschätzt, nach der Zeit, in der ein Stückchen im Schulversuch verbraucht ist; die Wärme folgt aus den Bildungsenthalpien.
+- **Chlor:** Gelöstes Chlor steht mit Chlorgas im Gleichgewicht (Henry-Konstante nach Sander 2015) und reagiert mit Wasser zu hypochloriger Säure (Wang und Margerum 1994), deren pKs 7,53 ist. Chlor, das an einer Elektrode entsteht, perlt durch die Lösung und gibt dabei einen Teil ab wie eine Blase aus dem Gasableitungsrohr; in Lauge mehr. So entsteht bei der Elektrolyse von Kochsalzlösung Bleichlauge.
 - **Mischwärme beim Zugeben:** Was aus dem Regal zugegeben, umgegossen oder aus der Bürette getropft wird, mischt sich zuerst nur mit einem Teil des Inhalts: so viel, wie es selbst ist, oder, wenn es schwerer ist und durchsinkt, mit zehnmal so viel. Für diese Mischzone rechnet der Baustein Gleichgewichte und sofortige Reaktionen für sich. Wird sie mehr als 5 K heißer als der Siedepunkt des Wassers, spritzt es, und ein Teil der Flüssigkeit fliegt aus dem Gefäß, umso mehr, je heißer. Die Wärme selbst bucht wie immer das ganze Gefäß. Der Faktor zehn ist geschätzt.
 - **Heiße Stellen:** Jedes Stück aus dem Regal hat seine eigene Temperatur. Die Reaktionen an seiner Oberfläche heizen es; es gibt die Wärme an das Wasser ab (0,35 W/(cm² K)) oder, trocken, an die Luft (0,002 W/(cm² K)) und durch Strahlung (Emissionsgrad 0,8). Beide Übergangszahlen sind geschätzt; die im Wasser ist so gewählt, dass Lithium (132 °C) fest bleibt, Natrium (gut 350 °C) schmilzt und Kalium (gut 600 °C) den Wasserstoff zündet. Ein Stück mit Schmelzpunkt (`Tm`) darunter ist geschmolzen; eines, das leichter ist als Wasser (`rho`), schwimmt. Ab 525 °C glüht es in der Farbe, die das Plancksche Strahlungsgesetz für seine Temperatur ergibt. Ab 560 °C, der Zündtemperatur von Wasserstoff in Luft, verbrennt der Wasserstoff, den ein schwimmendes Stück freisetzt, mit Sauerstoff aus der Luft, in der Flammenfarbe des Metall-Ions. Geschmolzenes Metall, das mehr als 30 W/cm² freisetzt, spritzt. Die Wärme selbst bleibt beim Gefäß, wie bisher. Die Wärme an der Oberfläche folgt aus dem Geschwindigkeitsgesetz je cm²; sie hängt deshalb nicht davon ab, wie groß das Stück noch ist, und ein Stück wird zum Schluss nicht heißer. Heißer als 1500 °C wird ein Stück im Wasser nicht. Was selbst brennt (Holzkohle, Schwefel, Magnesium), zeigt sein eigenes Feuer; seine Verbrennungswärme heizt das Stück nicht zusätzlich.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
@@ -1456,7 +1474,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Redoxreaktionen laufen an Metallen und Elektroden ab. Zwischen gelösten Teilchen laufen nur die eigens eingetragenen: Peroxodisulfat mit Iodid, Iod mit Thiosulfat, Permanganat mit Eisen(II) und mit Wasserstoffperoxid, Kupfer(II) und Eisen(III) mit Iodid. Andere bleiben ohne Wirkung, etwa Permanganat mit Oxalsäure oder mit Iodid und Dichromat mit Eisen(II). Auch Metalle reduzieren Permanganat nicht, weil dafür kein Redoxpaar eingetragen ist.
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
 - Gelöster Luftsauerstoff wird nicht gerechnet. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
-- Chlor entweicht als Gas und löst sich nicht in der Lösung: Bei der Elektrolyse von Kochsalzlösung bleibt Natronlauge zurück, Bleichlauge entsteht nicht, und Indikatoren werden nicht gebleicht.
+- Chlor löst sich nach dem Henry-Gesetz und bildet mit Wasser hypochlorige Säure; diese und das Hypochlorit-Ion bleichen die Indikatorfarbstoffe und Kristallviolett zu einem farblosen Stoff, der vereinfacht ein Sauerstoffatom mehr trägt. Die Geschwindigkeit des Bleichens ist geschätzt. Andere Farbstoffe (Iod-Stärke, Metallkomplexe) bleicht es nicht, und Chlor oxidiert Iodid oder Bromid hier nicht.
 - Ein Belag auf einer Elektrode hemmt den Strom nicht. Das Silberchlorid, mit dem sich eine Silber-Elektrode am Pluspol in Kochsalzlösung überzieht, wächst deshalb beliebig weiter; im Labor wird die Schicht dicht, und der Strom geht zurück.
 - Zink löst sich in Natronlauge nur langsam und nur als Pulver sichtbar, in der Wärme deutlich schneller. Wie schnell genau, ist geschätzt.
 - Weil jedes Gefäß durchmischt ist, zeigt ein Indikator bei der Elektrolyse nur das Ergebnis für die ganze Lösung, nicht die Zonen an den Elektroden. Wasserstoff und Sauerstoff bleiben nicht an den Elektroden haften: Nach dem Abschalten zeigt der Spannungsmesser keine Polarisationsspannung.

@@ -643,6 +643,22 @@
     "limewater": "água de cal (solução de hidróxido de cálcio)",
     "H2SO4(l)": "ácido sulfúrico (puro)",
     "H2SO4 conc": "ácido sulfúrico concentrado",
-    "Fe3O4(s)": "óxido de ferro(II,III)"
+    "Fe3O4(s)": "óxido de ferro(II,III)",
+    "Cl2(aq)": "cloro dissolvido",
+    "HOCl(aq)": "ácido hipocloroso",
+    "OCl-(aq)": "ião hipoclorito",
+    "NaOCl": "solução de hipoclorito de sódio (lixívia)",
+    "C27H28Br2O6S(aq)": "corante branqueado (incolor)",
+    "C27H27Br2O6S-(aq)": "corante branqueado (incolor)",
+    "C20H14O5(aq)": "corante branqueado (incolor)",
+    "C20H13O5-(aq)": "corante branqueado (incolor)",
+    "C14H15N3O4S(aq)": "corante branqueado (incolor)",
+    "C14H14N3O4S-(aq)": "corante branqueado (incolor)",
+    "C27H30O6S(aq)": "corante branqueado (incolor)",
+    "C27H29O6S-(aq)": "corante branqueado (incolor)",
+    "C27H28O6S^2-(aq)": "corante branqueado (incolor)",
+    "C15H15N3O3(aq)": "corante branqueado (incolor)",
+    "C15H14N3O3-(aq)": "corante branqueado (incolor)",
+    "C25H30N3O+(aq)": "corante branqueado (incolor)"
   }
 }

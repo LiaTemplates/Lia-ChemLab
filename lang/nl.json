@@ -643,6 +643,22 @@
     "limewater": "kalkwater (calciumhydroxide-oplossing)",
     "H2SO4(l)": "zwavelzuur (zuiver)",
     "H2SO4 conc": "geconcentreerd zwavelzuur",
-    "Fe3O4(s)": "ijzer(II,III)oxide"
+    "Fe3O4(s)": "ijzer(II,III)oxide",
+    "Cl2(aq)": "chloor, opgelost",
+    "HOCl(aq)": "hypochlorigzuur",
+    "OCl-(aq)": "hypochlorietion",
+    "NaOCl": "natriumhypochlorietoplossing (bleekwater)",
+    "C27H28Br2O6S(aq)": "gebleekte kleurstof (kleurloos)",
+    "C27H27Br2O6S-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C20H14O5(aq)": "gebleekte kleurstof (kleurloos)",
+    "C20H13O5-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C14H15N3O4S(aq)": "gebleekte kleurstof (kleurloos)",
+    "C14H14N3O4S-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C27H30O6S(aq)": "gebleekte kleurstof (kleurloos)",
+    "C27H29O6S-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C27H28O6S^2-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C15H15N3O3(aq)": "gebleekte kleurstof (kleurloos)",
+    "C15H14N3O3-(aq)": "gebleekte kleurstof (kleurloos)",
+    "C25H30N3O+(aq)": "gebleekte kleurstof (kleurloos)"
   }
 }

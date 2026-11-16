@@ -643,6 +643,22 @@
     "limewater": "eau de chaux (solution d'hydroxyde de calcium)",
     "H2SO4(l)": "acide sulfurique (pur)",
     "H2SO4 conc": "acide sulfurique concentré",
-    "Fe3O4(s)": "oxyde de fer(II,III)"
+    "Fe3O4(s)": "oxyde de fer(II,III)",
+    "Cl2(aq)": "chlore dissous",
+    "HOCl(aq)": "acide hypochloreux",
+    "OCl-(aq)": "ion hypochlorite",
+    "NaOCl": "solution d'hypochlorite de sodium (eau de Javel)",
+    "C27H28Br2O6S(aq)": "colorant blanchi (incolore)",
+    "C27H27Br2O6S-(aq)": "colorant blanchi (incolore)",
+    "C20H14O5(aq)": "colorant blanchi (incolore)",
+    "C20H13O5-(aq)": "colorant blanchi (incolore)",
+    "C14H15N3O4S(aq)": "colorant blanchi (incolore)",
+    "C14H14N3O4S-(aq)": "colorant blanchi (incolore)",
+    "C27H30O6S(aq)": "colorant blanchi (incolore)",
+    "C27H29O6S-(aq)": "colorant blanchi (incolore)",
+    "C27H28O6S^2-(aq)": "colorant blanchi (incolore)",
+    "C15H15N3O3(aq)": "colorant blanchi (incolore)",
+    "C15H14N3O3-(aq)": "colorant blanchi (incolore)",
+    "C25H30N3O+(aq)": "colorant blanchi (incolore)"
   }
 }

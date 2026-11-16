@@ -643,6 +643,22 @@
     "limewater": "ujë gëlqereje (tretësirë e hidroksidit të kalciumit)",
     "H2SO4(l)": "acid sulfurik (i pastër)",
     "H2SO4 conc": "acid sulfurik i përqendruar",
-    "Fe3O4(s)": "oksid hekuri(II,III)"
+    "Fe3O4(s)": "oksid hekuri(II,III)",
+    "Cl2(aq)": "klor i tretur",
+    "HOCl(aq)": "acid hipoklorik",
+    "OCl-(aq)": "jon hipoklorit",
+    "NaOCl": "tretësirë hipokloriti natriumi (zbardhues)",
+    "C27H28Br2O6S(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C27H27Br2O6S-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C20H14O5(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C20H13O5-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C14H15N3O4S(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C14H14N3O4S-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C27H30O6S(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C27H29O6S-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C27H28O6S^2-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C15H15N3O3(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C15H14N3O3-(aq)": "ngjyrues i zbardhur (pa ngjyrë)",
+    "C25H30N3O+(aq)": "ngjyrues i zbardhur (pa ngjyrë)"
   }
 }

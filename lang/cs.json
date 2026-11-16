@@ -643,6 +643,22 @@
     "limewater": "vápenná voda (roztok hydroxidu vápenatého)",
     "H2SO4(l)": "kyselina sírová (čistá)",
     "H2SO4 conc": "kyselina sírová, koncentrovaná",
-    "Fe3O4(s)": "oxid železnato-železitý"
+    "Fe3O4(s)": "oxid železnato-železitý",
+    "Cl2(aq)": "chlor, rozpuštěný",
+    "HOCl(aq)": "kyselina chlorná",
+    "OCl-(aq)": "chlornanový ion",
+    "NaOCl": "roztok chlornanu sodného (bělidlo)",
+    "C27H28Br2O6S(aq)": "vybělené barvivo (bezbarvé)",
+    "C27H27Br2O6S-(aq)": "vybělené barvivo (bezbarvé)",
+    "C20H14O5(aq)": "vybělené barvivo (bezbarvé)",
+    "C20H13O5-(aq)": "vybělené barvivo (bezbarvé)",
+    "C14H15N3O4S(aq)": "vybělené barvivo (bezbarvé)",
+    "C14H14N3O4S-(aq)": "vybělené barvivo (bezbarvé)",
+    "C27H30O6S(aq)": "vybělené barvivo (bezbarvé)",
+    "C27H29O6S-(aq)": "vybělené barvivo (bezbarvé)",
+    "C27H28O6S^2-(aq)": "vybělené barvivo (bezbarvé)",
+    "C15H15N3O3(aq)": "vybělené barvivo (bezbarvé)",
+    "C15H14N3O3-(aq)": "vybělené barvivo (bezbarvé)",
+    "C25H30N3O+(aq)": "vybělené barvivo (bezbarvé)"
   }
 }

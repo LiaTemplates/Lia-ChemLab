@@ -643,6 +643,22 @@
     "limewater": "Kalkwasser (Calciumhydroxid-Lösung)",
     "H2SO4(l)": "Schwefelsäure (rein)",
     "H2SO4 conc": "Schwefelsäure, konzentriert",
-    "Fe3O4(s)": "Eisen(II,III)-oxid"
+    "Fe3O4(s)": "Eisen(II,III)-oxid",
+    "Cl2(aq)": "Chlor, gelöst",
+    "HOCl(aq)": "hypochlorige Säure",
+    "OCl-(aq)": "Hypochlorit-Ion",
+    "NaOCl": "Natriumhypochlorit-Lösung (Bleichlauge)",
+    "C27H28Br2O6S(aq)": "gebleichter Farbstoff (farblos)",
+    "C27H27Br2O6S-(aq)": "gebleichter Farbstoff (farblos)",
+    "C20H14O5(aq)": "gebleichter Farbstoff (farblos)",
+    "C20H13O5-(aq)": "gebleichter Farbstoff (farblos)",
+    "C14H15N3O4S(aq)": "gebleichter Farbstoff (farblos)",
+    "C14H14N3O4S-(aq)": "gebleichter Farbstoff (farblos)",
+    "C27H30O6S(aq)": "gebleichter Farbstoff (farblos)",
+    "C27H29O6S-(aq)": "gebleichter Farbstoff (farblos)",
+    "C27H28O6S^2-(aq)": "gebleichter Farbstoff (farblos)",
+    "C15H15N3O3(aq)": "gebleichter Farbstoff (farblos)",
+    "C15H14N3O3-(aq)": "gebleichter Farbstoff (farblos)",
+    "C25H30N3O+(aq)": "gebleichter Farbstoff (farblos)"
   }
 }

@@ -643,6 +643,22 @@
     "limewater": "woda wapienna (roztwór wodorotlenku wapnia)",
     "H2SO4(l)": "kwas siarkowy (czysty)",
     "H2SO4 conc": "stężony kwas siarkowy",
-    "Fe3O4(s)": "tlenek żelaza(II,III)"
+    "Fe3O4(s)": "tlenek żelaza(II,III)",
+    "Cl2(aq)": "chlor rozpuszczony",
+    "HOCl(aq)": "kwas podchlorawy",
+    "OCl-(aq)": "jon podchlorynowy",
+    "NaOCl": "roztwór podchlorynu sodu (wybielacz)",
+    "C27H28Br2O6S(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C27H27Br2O6S-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C20H14O5(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C20H13O5-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C14H15N3O4S(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C14H14N3O4S-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C27H30O6S(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C27H29O6S-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C27H28O6S^2-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C15H15N3O3(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C15H14N3O3-(aq)": "odbarwiony barwnik (bezbarwny)",
+    "C25H30N3O+(aq)": "odbarwiony barwnik (bezbarwny)"
   }
 }

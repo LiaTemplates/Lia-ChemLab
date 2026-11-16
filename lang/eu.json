@@ -643,6 +643,22 @@
     "limewater": "kare-ura (kaltzio hidroxidoaren disoluzioa)",
     "H2SO4(l)": "azido sulfurikoa (garbia)",
     "H2SO4 conc": "azido sulfuriko kontzentratua",
-    "Fe3O4(s)": "burdina(II,III) oxidoa"
+    "Fe3O4(s)": "burdina(II,III) oxidoa",
+    "Cl2(aq)": "kloro disolbatua",
+    "HOCl(aq)": "azido hipoklorosoa",
+    "OCl-(aq)": "hipoklorito ioia",
+    "NaOCl": "sodio hipokloritoaren disoluzioa (lixiba)",
+    "C27H28Br2O6S(aq)": "kolore zuritua (kolorgabea)",
+    "C27H27Br2O6S-(aq)": "kolore zuritua (kolorgabea)",
+    "C20H14O5(aq)": "kolore zuritua (kolorgabea)",
+    "C20H13O5-(aq)": "kolore zuritua (kolorgabea)",
+    "C14H15N3O4S(aq)": "kolore zuritua (kolorgabea)",
+    "C14H14N3O4S-(aq)": "kolore zuritua (kolorgabea)",
+    "C27H30O6S(aq)": "kolore zuritua (kolorgabea)",
+    "C27H29O6S-(aq)": "kolore zuritua (kolorgabea)",
+    "C27H28O6S^2-(aq)": "kolore zuritua (kolorgabea)",
+    "C15H15N3O3(aq)": "kolore zuritua (kolorgabea)",
+    "C15H14N3O3-(aq)": "kolore zuritua (kolorgabea)",
+    "C25H30N3O+(aq)": "kolore zuritua (kolorgabea)"
   }
 }

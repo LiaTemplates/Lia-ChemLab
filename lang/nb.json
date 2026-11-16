@@ -643,6 +643,22 @@
     "limewater": "kalkvann (kalsiumhydroksidløsning)",
     "H2SO4(l)": "svovelsyre (ren)",
     "H2SO4 conc": "svovelsyre, konsentrert",
-    "Fe3O4(s)": "jern(II,III)oksid"
+    "Fe3O4(s)": "jern(II,III)oksid",
+    "Cl2(aq)": "klor, oppløst",
+    "HOCl(aq)": "hypoklorsyrling",
+    "OCl-(aq)": "hypoklorittion",
+    "NaOCl": "natriumhypoklorittløsning (klorin)",
+    "C27H28Br2O6S(aq)": "bleket fargestoff (fargeløst)",
+    "C27H27Br2O6S-(aq)": "bleket fargestoff (fargeløst)",
+    "C20H14O5(aq)": "bleket fargestoff (fargeløst)",
+    "C20H13O5-(aq)": "bleket fargestoff (fargeløst)",
+    "C14H15N3O4S(aq)": "bleket fargestoff (fargeløst)",
+    "C14H14N3O4S-(aq)": "bleket fargestoff (fargeløst)",
+    "C27H30O6S(aq)": "bleket fargestoff (fargeløst)",
+    "C27H29O6S-(aq)": "bleket fargestoff (fargeløst)",
+    "C27H28O6S^2-(aq)": "bleket fargestoff (fargeløst)",
+    "C15H15N3O3(aq)": "bleket fargestoff (fargeløst)",
+    "C15H14N3O3-(aq)": "bleket fargestoff (fargeløst)",
+    "C25H30N3O+(aq)": "bleket fargestoff (fargeløst)"
   }
 }

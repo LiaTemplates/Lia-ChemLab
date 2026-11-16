@@ -643,6 +643,22 @@
     "limewater": "kalkių vanduo (kalcio hidroksido tirpalas)",
     "H2SO4(l)": "sieros rūgštis (gryna)",
     "H2SO4 conc": "koncentruota sieros rūgštis",
-    "Fe3O4(s)": "geležies(II,III) oksidas"
+    "Fe3O4(s)": "geležies(II,III) oksidas",
+    "Cl2(aq)": "chloras, ištirpęs",
+    "HOCl(aq)": "hipochlorito rūgštis",
+    "OCl-(aq)": "hipochlorito jonas",
+    "NaOCl": "natrio hipochlorito tirpalas (baliklis)",
+    "C27H28Br2O6S(aq)": "išbalintas dažiklis (bespalvis)",
+    "C27H27Br2O6S-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C20H14O5(aq)": "išbalintas dažiklis (bespalvis)",
+    "C20H13O5-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C14H15N3O4S(aq)": "išbalintas dažiklis (bespalvis)",
+    "C14H14N3O4S-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C27H30O6S(aq)": "išbalintas dažiklis (bespalvis)",
+    "C27H29O6S-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C27H28O6S^2-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C15H15N3O3(aq)": "išbalintas dažiklis (bespalvis)",
+    "C15H14N3O3-(aq)": "išbalintas dažiklis (bespalvis)",
+    "C25H30N3O+(aq)": "išbalintas dažiklis (bespalvis)"
   }
 }

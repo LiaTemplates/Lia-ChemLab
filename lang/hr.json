@@ -643,6 +643,22 @@
     "limewater": "vapnena voda (otopina kalcijeva hidroksida)",
     "H2SO4(l)": "sumporna kiselina (čista)",
     "H2SO4 conc": "koncentrirana sumporna kiselina",
-    "Fe3O4(s)": "željezov(II,III) oksid"
+    "Fe3O4(s)": "željezov(II,III) oksid",
+    "Cl2(aq)": "klor, otopljen",
+    "HOCl(aq)": "hipoklorasta kiselina",
+    "OCl-(aq)": "hipokloritni ion",
+    "NaOCl": "otopina natrijeva hipoklorita (izbjeljivač)",
+    "C27H28Br2O6S(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C27H27Br2O6S-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C20H14O5(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C20H13O5-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C14H15N3O4S(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C14H14N3O4S-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C27H30O6S(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C27H29O6S-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C27H28O6S^2-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C15H15N3O3(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C15H14N3O3-(aq)": "izbijeljeno bojilo (bezbojno)",
+    "C25H30N3O+(aq)": "izbijeljeno bojilo (bezbojno)"
   }
 }

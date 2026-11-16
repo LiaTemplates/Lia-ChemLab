@@ -2465,7 +2465,13 @@
   function bubbles(v, t, steps, part) {
     var sum = 0;
     steps.forEach(function (st) {
-      (st.s > 0 ? st.c.ox : st.c.red).forEach(function (x) { if (L.db.species[x.id].phase === "g") sum += x.n * part * st.e / st.c.n; });
+      (st.s > 0 ? st.c.ox : st.c.red).forEach(function (x) {
+        var n = x.n * part * st.e / st.c.n;
+        if (L.db.species[x.id].phase !== "g") return;
+        sum += n;
+        v.egas = v.egas || {};
+        v.egas[x.id] = (v.egas[x.id] || 0) + n;               // je Gas, damit ein lösliches (Chlor) sich zum Teil löst
+      });
     });
     t.bub = sum / DT;
     v.eg += sum;
@@ -3046,18 +3052,21 @@
 
   // Gas aus einem Rohr kommt ins Gefäß v. Steht Flüssigkeit darin, perlt es hindurch: Was ein Lösungsgleichgewicht hat (CO₂, NH₃, HCl),
   // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
+  // Wie viel eine Blase des Gases mit dem Lösungsgleichgewicht e auf ihrem Weg durch die Flüssigkeit in v abgibt (siehe bubbleInto)
+  function bubbleShare(v, e) {
+    var h = heatOf(e);
+    if (Object.keys(e.d).length !== 1) return 1;
+    return 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
+      (1 + LYE * (v.n["OH-(aq)"] || 0) / volume(v)));
+  }
+
   function bubbleInto(lab, v, id, x) {
-    var e = volume(v) > 0 ? L.db.equilibria.filter(function (q) { return q.gas === id; })[0] : null, key, h, part = 1, keys;
+    var e = volume(v) > 0 ? L.db.equilibria.filter(function (q) { return q.gas === id; })[0] : null, key, part;
     // steigt durch: als Gas in der Flüssigkeit, so zählt es wie selbst entstandenes (Blasen, Kolbenprober, nächstes Rohr)
     if (!e) { v.n[id] = (v.n[id] || 0) + x; return; }
     // Eine Blase gibt auf ihrem Weg nur einen Teil ab, je nach Löslichkeit (Henry: c/p = K): 1 − e^(−K·R·T).
     // Kohlenstoffdioxid gut die Hälfte, Ammoniak und Chlorwasserstoff praktisch alles.
-    keys = Object.keys(e.d);
-    if (keys.length === 1) {                                   // Lauge bindet ein saures Gas schon unterwegs: Faktor 1 + LYE·[OH⁻]
-      h = heatOf(e);
-      part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
-        (1 + LYE * (v.n["OH-(aq)"] || 0) / volume(v)));
-    }
+    part = bubbleShare(v, e);                                  // Lauge bindet ein saures Gas schon unterwegs: Faktor 1 + LYE·[OH⁻]
     if (part < 1) v.n[id] = (v.n[id] || 0) + x * (1 - part);
     x *= part;
     v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
@@ -3215,6 +3224,15 @@
     boilOff(lab, v, emit, true);
 
     meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
+    if (vol > 0) for (id in v.egas || {}) {                    // Gas von den Elektroden perlt durch die Lösung; ein lösliches löst sich zum Teil
+      var eq = L.db.equilibria.filter(function (q) { return q.gas === id; })[0], x, key;
+      if (!eq || !(v.n[id] > 0)) continue;
+      x = Math.min(v.n[id], v.egas[id]) * bubbleShare(v, eq);
+      v.n[id] -= x;
+      for (key in eq.d) v.n[key] = (v.n[key] || 0) + eq.d[key] * x;
+      tally(v, eq, x * eq.f);
+      v.dirty = true;
+    }
     for (id in v.n) {                                          // Gase verlassen die Flüssigkeit und stehen im Gasraum darüber
       if (L.db.species[id].phase !== "g") continue;
       if (id === STEAM) v.out[id] = (v.out[id] || 0) + v.n[id];     // Dampf schlägt sich draußen nieder
@@ -3451,7 +3469,7 @@
     lab.t = lab.tick / TICKS;
     if (lab.flows.length) flow(lab, emit);
     drip(lab, emit);
-    lab.vessels.forEach(function (v) { v.rate = {}; v.q = 0; v.boil = 0; v.eg = 0; });      // q: Reaktionswärme dieses Schritts in J
+    lab.vessels.forEach(function (v) { v.rate = {}; v.q = 0; v.boil = 0; v.eg = 0; v.egas = {}; });      // q: Reaktionswärme dieses Schritts in J
     electro(lab, emit);
     lab.vessels.forEach(function (v) { advanceVessel(lab, v, emit); });
     lab.tools.forEach(function (t) {                           // Messgeräte folgen mit etwas Trägheit

@@ -643,6 +643,22 @@
     "limewater": "maji ya chokaa (myeyusho wa hidroksidi ya kalsiamu)",
     "H2SO4(l)": "asidi sulfuriki (safi)",
     "H2SO4 conc": "asidi sulfuriki kali",
-    "Fe3O4(s)": "oksidi ya chuma(II,III)"
+    "Fe3O4(s)": "oksidi ya chuma(II,III)",
+    "Cl2(aq)": "klorini iliyoyeyushwa",
+    "HOCl(aq)": "asidi hipoklorasi",
+    "OCl-(aq)": "ioni ya hipokloriti",
+    "NaOCl": "myeyusho wa hipokloriti ya sodiamu (bleach)",
+    "C27H28Br2O6S(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C27H27Br2O6S-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C20H14O5(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C20H13O5-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C14H15N3O4S(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C14H14N3O4S-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C27H30O6S(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C27H29O6S-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C27H28O6S^2-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C15H15N3O3(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C15H14N3O3-(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "C25H30N3O+(aq)": "rangi iliyopauka (isiyo na rangi)"
   }
 }

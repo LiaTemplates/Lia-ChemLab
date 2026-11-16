@@ -643,6 +643,22 @@
     "limewater": "apă de var (soluție de hidroxid de calciu)",
     "H2SO4(l)": "acid sulfuric (pur)",
     "H2SO4 conc": "acid sulfuric concentrat",
-    "Fe3O4(s)": "oxid de fier(II,III)"
+    "Fe3O4(s)": "oxid de fier(II,III)",
+    "Cl2(aq)": "clor dizolvat",
+    "HOCl(aq)": "acid hipocloros",
+    "OCl-(aq)": "ion hipoclorit",
+    "NaOCl": "soluție de hipoclorit de sodiu (înălbitor)",
+    "C27H28Br2O6S(aq)": "colorant decolorat (incolor)",
+    "C27H27Br2O6S-(aq)": "colorant decolorat (incolor)",
+    "C20H14O5(aq)": "colorant decolorat (incolor)",
+    "C20H13O5-(aq)": "colorant decolorat (incolor)",
+    "C14H15N3O4S(aq)": "colorant decolorat (incolor)",
+    "C14H14N3O4S-(aq)": "colorant decolorat (incolor)",
+    "C27H30O6S(aq)": "colorant decolorat (incolor)",
+    "C27H29O6S-(aq)": "colorant decolorat (incolor)",
+    "C27H28O6S^2-(aq)": "colorant decolorat (incolor)",
+    "C15H15N3O3(aq)": "colorant decolorat (incolor)",
+    "C15H14N3O3-(aq)": "colorant decolorat (incolor)",
+    "C25H30N3O+(aq)": "colorant decolorat (incolor)"
   }
 }

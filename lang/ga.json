@@ -643,6 +643,22 @@
     "limewater": "uisce aoil (tuaslagán hiodrocsaíde cailciam)",
     "H2SO4(l)": "aigéad sulfarach (íon)",
     "H2SO4 conc": "aigéad sulfarach tiubhaithe",
-    "Fe3O4(s)": "ocsaíd iarainn(II,III)"
+    "Fe3O4(s)": "ocsaíd iarainn(II,III)",
+    "Cl2(aq)": "clóirín tuaslagtha",
+    "HOCl(aq)": "aigéad hipeaclórúil",
+    "OCl-(aq)": "ian hipeaclóiríte",
+    "NaOCl": "tuaslagán hipeaclóiríte sóidiam (tuar)",
+    "C27H28Br2O6S(aq)": "ruaimneach tuartha (gan dath)",
+    "C27H27Br2O6S-(aq)": "ruaimneach tuartha (gan dath)",
+    "C20H14O5(aq)": "ruaimneach tuartha (gan dath)",
+    "C20H13O5-(aq)": "ruaimneach tuartha (gan dath)",
+    "C14H15N3O4S(aq)": "ruaimneach tuartha (gan dath)",
+    "C14H14N3O4S-(aq)": "ruaimneach tuartha (gan dath)",
+    "C27H30O6S(aq)": "ruaimneach tuartha (gan dath)",
+    "C27H29O6S-(aq)": "ruaimneach tuartha (gan dath)",
+    "C27H28O6S^2-(aq)": "ruaimneach tuartha (gan dath)",
+    "C15H15N3O3(aq)": "ruaimneach tuartha (gan dath)",
+    "C15H14N3O3-(aq)": "ruaimneach tuartha (gan dath)",
+    "C25H30N3O+(aq)": "ruaimneach tuartha (gan dath)"
   }
 }

@@ -36,6 +36,7 @@
   var L = (global.LiaChemLab = global.LiaChemLab || {});
   if (!L.register) { (L.pending = L.pending || {})["chemlab-data.js"] = start; return; }      // der Rechenkern kommt noch und ruft diese Datei dann auf
   var CODATA = "CODATA Key Values for Thermodynamics (1989)";
+  var NBS = "NBS Tables of Chemical Thermodynamic Properties (Wagman et al. 1982)";
   var TABLE = "; heat capacity and density: usual table values";
   var NONE = "no enthalpy of formation in CODATA";
   var LOOK = "colour of the solid from its usual appearance";
@@ -204,6 +205,10 @@
       "CH3COOH(g)": { name: name("acetic acid vapour"), Hf: null, cp: 63.4, smell: true, src: NONE + GAS },
       "H2O2(g)": { name: name("hydrogen peroxide vapour"), Hf: null, cp: 43.1, src: NONE + GAS },
       "Cl2(g)": { name: name("chlorine"), Hf: 0, S: 223.081, cp: 33.9, smell: true, src: CODATA + GAS },
+      // Chlor in Wasser: gelöst, als hypochlorige Säure und als Hypochlorit-Ion; die beiden letzten bleichen Farbstoffe
+      "Cl2(aq)": { name: name("chlorine, dissolved"), Hf: -23.4, S: 121, bands: [[325, 70, 70]], src: NBS + "; absorption band estimated (chlorine water is pale yellow-green)" },
+      "HOCl(aq)": { name: name("hypochlorous acid"), Hf: -120.9, S: 142, src: NBS },
+      "OCl-(aq)": { name: name("hypochlorite ion"), Hf: -107.1, S: 42, src: NBS },
       // Metalle: als Stücke, als Elektroden und als Belag, der sich abscheidet
       "Zn(s)": { name: name("zinc"), Hf: 0, S: 41.63, cp: 25.4, rho: 7.14, color: "#9aa3ad", src: CODATA + TABLE + "; " + LOOK },
       "Cu(s)": { name: name("copper"), Hf: 0, S: 33.15, cp: 24.4, rho: 8.96, color: "#b5653a", settle: 4, src: CODATA + TABLE + "; " + LOOK },
@@ -329,6 +334,9 @@
       // ---------------------------------------------------------------- Gase über der Lösung
       // logK: gelöste Konzentration in mol/L bei 1 bar des Gases
       { eq: "CO2(g) <=> CO2(aq)", logK: -1.468, src: "phreeqc.dat (USGS): CO2(g), CO2 = CO2, log_k -1.468" },
+      { eq: "Cl2(g) <=> Cl2(aq)", logK: -1.04, src: "Henry constant 0.092 mol/(kg bar) at 25 °C: Sander, Atmos. Chem. Phys. 15 (2015) 4399" },
+      { eq: "Cl2(aq) + H2O(l) <=> HOCl(aq) + H+(aq) + Cl-(aq)", logK: -3.29, src: "hydrolysis constant 5.1e-4 at 25 °C: Wang and Margerum, Inorg. Chem. 33 (1994) 1123" },
+      { eq: "HOCl(aq) <=> H+(aq) + OCl-(aq)", logK: -7.53, src: "pKa 7.53 at 25 °C: Morris, J. Phys. Chem. 70 (1966) 3798" },
       { eq: "SO2(g) <=> SO2(aq)", logK: 0.17, src: LLNL + "SO2(g), SO2 = SO2, log_k 0.17" },
       { eq: "NH3(g) <=> NH3(aq)", logK: 1.7966, dH: -35.23, src: LLNL + "NH3(g), NH3 = NH3, log_k 1.7966, delta_H -35.2251 kJ/mol" },
       { eq: "HCl(g) <=> H+(aq) + Cl-(aq)", logK: 6.3055, src: LLNL + "HCl(g), HCl = Cl- + H+, log_k 6.3055" },
@@ -566,6 +574,8 @@
       "KMnO4": { name: name("potassium permanganate solution"), solution: { "K+(aq)": 1, "MnO4-(aq)": 1 }, molar: true, group: "salt" },
       "K2S2O8": { name: name("potassium peroxodisulfate solution"), solution: { "K+(aq)": 2, "S2O8^2-(aq)": 1 }, molar: true, group: "salt" },
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
+      // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
+      "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 1.05, "OCl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
       "KNO3": { name: name("potassium nitrate solution"), solution: { "K+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "salt" },
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
       // Kristallviolett-Lösung mit 25 µmol/L (10 mg/L), wie für die Fotometrie üblich
@@ -625,6 +635,18 @@
     var sp = L.core.species[id];
     sp.gamma = GAMMA[id];
     sp.src += "; activity coefficient: phreeqc.dat (USGS), -gamma " + GAMMA[id].join(" ");
+  });
+
+  // Bleichen: Hypochlorige Säure und Hypochlorit oxidieren jeden Farbstoff zu einem farblosen Stoff mit einem Sauerstoffatom mehr
+  // (vereinfacht; die wirklichen Produkte sind vielfältig). Geschwindigkeit geschätzt: in Sekunden bei einigen mmol/L.
+  var DYES = ["C27H28Br2O5S(aq)", "C27H27Br2O5S-(aq)", "C20H14O4(aq)", "C20H13O4-(aq)", "C14H15N3O3S(aq)", "C14H14N3O3S-(aq)",
+    "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)"];
+  DYES.forEach(function (dye) {
+    var o = /O(\d*)(?=[A-Z^+\-(]|$)/.exec(dye), done = o ? dye.replace(o[0], "O" + ((+o[1] || 1) + 1)) : dye.replace(/((?:\^\d+)?[+-]?\(aq\))$/, "O$1");
+    L.core.species[done] = { name: name("bleached dye (colourless)"), Hf: null, src: "simplified product of bleaching; colourless" };
+    L.core.reactions.push(
+      { eq: dye + " + HOCl(aq) -> " + done + " + H+(aq) + Cl-(aq)", rate: { k: 50, order: (function (o) { o[dye] = 1; o["HOCl(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by hypochlorous acid" },
+      { eq: dye + " + OCl-(aq) -> " + done + " + Cl-(aq)", rate: { k: 5, order: (function (o) { o[dye] = 1; o["OCl-(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by hypochlorite" });
   });
 
   L.register(L.core);

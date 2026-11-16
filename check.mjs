@@ -2122,6 +2122,8 @@ const heated = (vessel, more, flame) => lab([Object.assign({ id: "b" }, vessel),
 const collect = (l, seconds) => { const seen = []; L.step(l, seconds, (e) => seen.push(e)); return seen; };
 const keys = (events) => events.map((e) => e.key);
 const gasOf = (l, id, vessel) => { const v = L.vessel(l, vessel || "b"); return (v.air[id] || 0) + (v.out[id] || 0); };
+// Chlor, das an der Elektrode entstand: als Gas, gelöst und als hypochlorige Säure oder Hypochlorit (je ein Cl2)
+const chlorineOf = (l, vessel) => gasOf(l, "Cl2(g)", vessel) + ["Cl2(aq)", "HOCl(aq)", "OCl-(aq)"].reduce((sum, id) => sum + (L.vessel(l, vessel || "b").n[id] || 0), 0);
 // rechnet sekundenweise weiter, bis die Bedingung gilt; gibt die Zeit zurück und sammelt die Ereignisse in seen
 const until = (l, test, limit, seen) => { let t = 0; while (!test() && t < limit) { L.step(l, 1, (e) => seen && seen.push(e)); t++; } return t; };
 
@@ -2829,6 +2831,25 @@ test("Umgießen mit Mischwärme: Wasser in konzentrierte Säure gießen spritzt,
   };
   assert.equal(pour("H2O", 5, "H2SO4 conc", 20), true, "Wasser in Säure gegossen");
   assert.equal(pour("H2SO4 conc", 5, "H2O", 50), false, "Säure in Wasser gegossen");
+});
+
+test("Chlor: Bleichlauge entfärbt Indikatoren, mit Säure setzt sie Chlor frei; Elektrolyse von Kochsalzlösung macht Bleichlauge", () => {
+  for (const ind of ["PP", "BTB", "UI"]) {
+    const l = beaker([{ reagent: "NaOH 0.1M", ml: 20 }, { reagent: ind, drops: 3 }], { room: 20 });
+    L.step(l, 2);
+    assert.notEqual(look(l).color.name, "colorless", ind + ": vorher farbig");
+    L.add(l, "b", "NaOCl 1M", { ml: 2 });
+    L.step(l, 60);
+    assert.equal(look(l).color.name, "colorless", ind + ": gebleicht");
+  }
+  const seen = [], acid = beaker([{ reagent: "NaOCl 1M", ml: 10 }], { room: 20 });
+  L.add(acid, "b", "HCl 2M", { ml: 10 });
+  L.step(acid, 20, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "smell" && e.species === "Cl2(g)"), "Chlorreiniger und Säure: es riecht nach Chlor");
+  const cell = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 1M", ml: 80 }, { reagent: "PP", drops: 3 }] }, { type: "electrode-C", id: "e1", in: "b" },
+    { type: "electrode-C", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts: 6 }], { room: 20 });
+  L.step(cell, 120);
+  assert.ok(amount(cell, "OCl-(aq)") + amount(cell, "HOCl(aq)") > 1e-5, "bei der Elektrolyse entsteht Bleichlauge");
 });
 
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
@@ -3918,7 +3939,7 @@ test("Kupferchlorid mit Graphit: Kupfer am Minuspol, Chlor am Pluspol", () => {
   assert.deepEqual([plated.part, plated.species], ["e2", "Cu(s)"], "Kupferbelag auf der rechten Elektrode");
   assert.ok(seen.some((e) => e.key === "bubbles" && e.part === "e1"), "Gasblasen an der linken");
   assert.ok(seen.some((e) => e.key === "smell" && e.species === "Cl2(g)"), "es riecht nach Chlor");
-  const copper = L.reading(l, "e2").coat.find((c) => c.id === "Cu(s)").n, chlorine = gasOf(l, "Cl2(g)");
+  const copper = L.reading(l, "e2").coat.find((c) => c.id === "Cu(s)").n, chlorine = chlorineOf(l);
   assert.ok(copper > 1e-5, `${copper} mol Kupfer`);
   assert.ok(chlorine > 0.9 * copper && chlorine <= copper * (1 + 1e-9), "fast aller Strom macht am Pluspol Chlor, ein Rest Sauerstoff");
   near(2 * chlorine + 4 * gasOf(l, "O2(g)"), 2 * copper + 2 * gasOf(l, "H2(g)"), 1e-9, "an beiden Elektroden gleich viele Elektronen");
@@ -3975,7 +3996,7 @@ test("Kochsalzlösung mit Graphit: Wasserstoff und Chlor, und die Lösung wird z
   const seen = collect(l, 120);
   assert.ok(look(l).pH > 10.5, "pH " + look(l).pH);
   assert.ok(["pink", "violet"].includes(look(l).color.name), "Phenolphthalein schlägt um: " + look(l).color.name);
-  assert.ok(gasOf(l, "Cl2(g)") > 0.85 * gasOf(l, "H2(g)"), "am Pluspol vor allem Chlor");
+  assert.ok(chlorineOf(l) > 0.85 * gasOf(l, "H2(g)"), "am Pluspol vor allem Chlor");
   assert.ok(seen.some((e) => e.key === "smell" && e.species === "Cl2(g)"));
   assert.ok(halves(l).includes("e2: 2 H2O(l) + 2 e- -> H2(g) + 2 OH-(aq)"), "am Minuspol wird Wasser zerlegt");
 });
@@ -8212,6 +8233,17 @@ test("README: die Folie „Erst das Wasser, dann die Säure“ hält, was ihr Te
   assert.ok(seen.some((e) => e.key === "spatter" && e.vessel === acid), "Wasser in die Säure: es spritzt");
   assert.ok(!seen.some((e) => e.key === "spatter" && e.vessel === water), "Säure ins Wasser: nicht");
   assert.ok(L.vessel(l, water).T > 35, "aber es wird heiß");
+});
+
+test("README: die Folie zu Bleichen und Chlor hält, was ihr Text verspricht", () => {
+  const [block] = slide("Bleichen und Chlor").map((b) => L.normalize(b));
+  const l = L.createLab(block), seen = [];
+  L.step(l, 2);
+  ["pp", "ui"].forEach((id) => { assert.notEqual(look(l, id).color.name, "colorless", id + " vorher"); L.add(l, id, "NaOCl 1M", { ml: 2 }); });
+  L.add(l, "reiniger", "HCl 2M", { ml: 10 });
+  L.step(l, 60, (e) => seen.push(e));
+  ["pp", "ui"].forEach((id) => assert.equal(look(l, id).color.name, "colorless", id + " gebleicht"));
+  assert.ok(seen.some((e) => e.key === "smell" && e.species === "Cl2(g)" && e.vessel === "reiniger"), "Chlorgeruch");
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

@@ -643,6 +643,22 @@
     "limewater": "limewater (calcium hydroxide solution)",
     "H2SO4(l)": "sulfuric acid (pure)",
     "H2SO4 conc": "sulfuric acid, concentrated",
-    "Fe3O4(s)": "iron(II,III) oxide"
+    "Fe3O4(s)": "iron(II,III) oxide",
+    "Cl2(aq)": "chlorine, dissolved",
+    "HOCl(aq)": "hypochlorous acid",
+    "OCl-(aq)": "hypochlorite ion",
+    "NaOCl": "sodium hypochlorite solution (bleach)",
+    "C27H28Br2O6S(aq)": "bleached dye (colourless)",
+    "C27H27Br2O6S-(aq)": "bleached dye (colourless)",
+    "C20H14O5(aq)": "bleached dye (colourless)",
+    "C20H13O5-(aq)": "bleached dye (colourless)",
+    "C14H15N3O4S(aq)": "bleached dye (colourless)",
+    "C14H14N3O4S-(aq)": "bleached dye (colourless)",
+    "C27H30O6S(aq)": "bleached dye (colourless)",
+    "C27H29O6S-(aq)": "bleached dye (colourless)",
+    "C27H28O6S^2-(aq)": "bleached dye (colourless)",
+    "C15H15N3O3(aq)": "bleached dye (colourless)",
+    "C15H14N3O3-(aq)": "bleached dye (colourless)",
+    "C25H30N3O+(aq)": "bleached dye (colourless)"
   }
 }
