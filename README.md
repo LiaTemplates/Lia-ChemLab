@@ -1428,3 +1428,15 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Die Simulation ersetzt keine Sicherheitsunterweisung. Was hier gefahrlos geht, braucht im Labor Schutzbrille und Aufsicht.
 
 Geprüft wird der Baustein mit `node --test check.mjs`.
+
+## Lizenz
+
+ChemLab steht unter [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.de) (Namensnennung, nicht kommerziell, Weitergabe unter gleichen Bedingungen), © Andre Dietrich. Der vollständige Text liegt in der Datei `LICENSE`. Die Lizenz gilt für den Rechenkern, die Daten, die Pakete, die Übersetzungen und diese Folien.
+
+Frei nutzen dürfen den Baustein Schulen, Hochschulen und alle, die offene Bildungsmaterialien (OER) erstellen. Wer ChemLab verändert und weitergibt, stellt seine Fassung wieder unter dieselbe Lizenz. Ein Kurs, der ChemLab nur mit `import:` einbindet, kann eine eigene Lizenz haben. Für eine kommerzielle Nutzung bitte anfragen.
+
+Ausgenommen sind die Teile anderer Urheber, für die ihre eigene Lizenz gilt:
+
+- [three.js](https://threejs.org) im Ordner `vendor/three`: MIT-Lizenz, siehe `vendor/three/LICENSE`.
+- Texturen und Raumlichter im Ordner `assets/3d`: [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) von Poly Haven, siehe `assets/3d/QUELLEN.md`.
+- Die Stoffdaten aus PHREEQC sind als Werk des U.S. Geological Survey gemeinfrei; die Quellen stehen im Kopf dieser Datei und bei jedem Eintrag in `chemlab-data.js`.
