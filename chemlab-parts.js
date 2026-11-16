@@ -1317,7 +1317,9 @@
     GHS02: '<path d="M12 6c1 2.4 3.6 3.6 3.6 7.2a3.6 3.6 0 0 1-7.2 0c0-1.8 1-2.6 1.6-3.6.2 1.2.9 1.8 1.4 2 .2-2.2-.4-3.8.6-5.6z"/><rect x="7.5" y="17.6" width="9" height="1.2"/>',
     GHS03: '<path d="M12 5.6c.8 1.8 2.8 2.6 2.8 5.2a2.8 2.8 0 0 1-5.6 0c0-1.3.7-1.9 1.2-2.7.2.9.7 1.3 1 1.5.2-1.6-.2-2.6.6-4z"/><circle cx="12" cy="15.6" r="2.6" fill="none" stroke="#000" stroke-width="1.3"/><rect x="7.5" y="18.6" width="9" height="1"/>',
     GHS04: '<rect x="7" y="10.2" width="10" height="4.4" rx="2.2" transform="rotate(-25 12 12.4)"/><rect x="16.2" y="8.2" width="1.6" height="2.6" transform="rotate(-25 17 9.5)"/>',
-    GHS05: '<path d="M7.6 7.4l2.2 1.2-1 1.8-2.2-1.2zM14.2 7.4l2.2-1.2 1 1.8-2.2 1.2z"/><path d="M8.6 10.6v2.2M15.4 10.6v2.2" stroke="#000" stroke-width=".9"/><path d="M6.6 14.2h5v1.6h-5zM12.6 14.6c1.2-.6 2.4-.4 3.6.2l1.2 1.2h-4.8z"/>',
+    GHS05: '<rect x="6.4" y="5.6" width="2.4" height="5.2" rx=".5" transform="rotate(-40 7.6 8.2)"/><rect x="15.2" y="5.6" width="2.4" height="5.2" rx=".5" transform="rotate(40 16.4 8.2)"/>' +
+      '<circle cx="9.4" cy="11.8" r=".55"/><circle cx="9.4" cy="13.4" r=".55"/><circle cx="14.6" cy="11.8" r=".55"/><circle cx="14.6" cy="13.4" r=".55"/>' +
+      '<path d="M5.8 14.8h1.8l.5.7.6-.7.5.7.5-.7h1.4v1.8H5.8z"/><path d="M12.4 16.6h5.4c.4 0 .5-.4.2-.6l-.9-.5h-1.1l.3-.5h-1.3l.2-.5h-1.2l.2-.4h-.9c-.6 0-1 .4-1.2.9z"/>',
     GHS06: '<circle cx="12" cy="9.8" r="3.4"/><circle cx="10.8" cy="9.6" r=".8" fill="#fff"/><circle cx="13.2" cy="9.6" r=".8" fill="#fff"/><path d="M8 14l8 3.6M16 14l-8 3.6" stroke="#000" stroke-width="1.4"/>',
     GHS07: '<rect x="11" y="6.6" width="2" height="7.6" rx="1"/><circle cx="12" cy="16.6" r="1.2"/>',
     GHS08: '<circle cx="12" cy="8" r="2"/><path d="M8 18.4c0-4.6 1.6-7.6 4-7.6s4 3 4 7.6z"/><path d="M12 12.4l.7 1.6 1.7.2-1.3 1.1.4 1.7-1.5-.9-1.5.9.4-1.7-1.3-1.1 1.7-.2z" fill="#fff"/>',
