@@ -124,6 +124,23 @@
     }
   }));
 
+  // ------------------------------------------------------------------ Kalorimeter
+
+  // Styroporbecher mit Deckelring: durchscheinend, damit man den Inhalt noch ahnt
+  L.registerLook("calorimeter", "lab", vessel({
+    thick: 0.42, lip: 0.06,
+    shape: function (d) { var shape = beakerShape(d); shape.id = "calorimeter" + shape.size[0]; return shape; },
+    material: function () { var m = fx.matte(0xf4f3ee, 0.95); m.transparent = true; m.opacity = 0.72; return m; },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.calorimeter.surface(w)) : cm(2); },
+    extra: function (group, kit, d, shape) {
+      var r = shape.inner(shape.rim), lid = new THREE.Mesh(new THREE.RingGeometry(r * 0.62, r + 0.5, 40).rotateX(-Math.PI / 2), fx.matte(0xe9e7df, 0.95));
+      lid.material.side = THREE.DoubleSide;
+      lid.position.y = shape.rim + 0.07;
+      lid.castShadow = true;
+      group.add(lid);
+    }
+  }));
+
   // ------------------------------------------------------------------ Abdampfschale
 
   var dishShape = {

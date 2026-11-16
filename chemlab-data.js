@@ -224,6 +224,10 @@
       "S(s)": { name: name("sulfur"), Hf: 0, S: 32.054, color: "#e8d44a", colloid: true, src: CODATA + "; " + LOOK },
       "C(s)": { name: name("carbon (charcoal, graphite)"), Hf: 0, S: 5.74, color: "#2a2a2a", src: CODATA + " (graphite); " + LOOK },
       "MnO2(s)": { name: name("manganese dioxide"), Hf: null, color: "#2b2622", src: LOOK },
+      // Salze für die Lösungswärme
+      "NH4NO3(s)": { name: name("ammonium nitrate"), Hf: -365.56, S: 151.08, color: WHITE, src: NBS + "; " + LOOK },
+      "NaOH(s)": { name: name("sodium hydroxide"), Hf: -425.609, S: 64.455, color: WHITE, flame: "#ffd21f", shine: 30, src: NBS + "; " + LOOK + GLOW },
+      "CaCl2(s)": { name: name("calcium chloride, anhydrous"), Hf: -795.8, S: 104.6, color: WHITE, flame: "#ff6a2a", src: NBS + "; " + LOOK + GLOW },
       "NaCl(s)": { name: name("sodium chloride"), Hf: -411.12, color: WHITE, flame: "#ffd21f", shine: 30,
         src: "llnl.dat (USGS): Halite, Enthalpy of formation -98.26 kcal/mol; " + LOOK + GLOW },
       "CuSO4*5H2O(s)": { name: name("copper sulfate pentahydrate"), Hf: null, color: "#2f6fd0", flame: "#3ddc84", src: LOOK + GLOW },
@@ -379,6 +383,10 @@
       { eq: "I2(s) + I-(aq) <=> I3-(aq)", logK: -0.0806, dH: 5.44, src: LLNL + "I2 + H2O = 0.5 O2 + 2 H+ + 2 I-, log_k -24.8084, delta_H 165.967 kJ/mol, and 3 I- + 2 H+ + 0.5 O2 = I3- + H2O, log_k 24.7278, delta_H -160.528 kJ/mol; added together" },
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
+      // aus den Bildungsenthalpien und Entropien dieser Tabelle; die Lösungswärme folgt ebenso daraus (+25,45, −44,75, −81,36 kJ/mol)
+      { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from " + NBS },
+      { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from " + NBS },
+      { eq: "CaCl2(s) <=> Ca^2+(aq) + 2 Cl-(aq)", logK: 11.767, src: "calculated from " + NBS },
       { eq: "CuSO4*5H2O(s) <=> Cu^2+(aq) + SO4^2-(aq) + 5 H2O(l)", logK: -2.24, dH: 6.025,
         src: "adjusted to the solubility of 1.4 mol/L at 25 °C, together with the ion pair CuSO4(aq). " + MINTEQ + "Chalcanthite, CuSO4:5H2O = Cu+2 + SO4-2 + 5 H2O, log_k -2.64, delta_h 6.025 kJ" },
       { eq: "CuSO4(s) <=> Cu^2+(aq) + SO4^2-(aq)", logK: 2.9395, dH: -73.04, src: MINTEQ + "CuSO4 = Cu+2 + SO4-2, log_k 2.9395, delta_h -73.04 kJ" },
@@ -614,7 +622,10 @@
       "Zn granules": { name: name("zinc granules"), solid: "Zn(s)", area: 6, group: "solid" },
       "Zn powder": { name: name("zinc powder"), solid: "Zn(s)", area: 300, form: "powder", group: "solid" },
       "Fe wool": { name: name("iron wool"), solid: "Fe(s)", area: 60, form: "powder", group: "solid" },
-      "Cu sheet": { name: name("copper sheet (strip)"), solid: "Cu(s)", area: 20, shape: 0, group: "solid" }
+      "Cu sheet": { name: name("copper sheet (strip)"), solid: "Cu(s)", area: 20, shape: 0, group: "solid" },
+      "NH4NO3 salt": { name: name("ammonium nitrate (salt)"), solid: "NH4NO3(s)", area: 40, form: "powder", group: "solid" },
+      "NaOH pellets": { name: name("sodium hydroxide pellets"), solid: "NaOH(s)", area: 8, group: "solid" },
+      "CaCl2 anhydrous": { name: name("calcium chloride, anhydrous (granules)"), solid: "CaCl2(s)", area: 20, group: "solid" }
     }
   };
 

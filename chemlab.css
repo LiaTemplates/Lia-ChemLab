@@ -10,6 +10,7 @@
   --cl-bench: #d9c9ae;
   --cl-edge: #a8906a;
   --cl-wood: #c29a62;
+  --cl-foam: #f4f3ee;
   --cl-glass: #55677a;
   --cl-shine: #ffffff;
   --cl-mercury: #d8322c;
@@ -39,6 +40,7 @@ html.lia-variant-dark .lia-chemlab {
   --cl-bench: #5a4a35;
   --cl-edge: #86704c;
   --cl-wood: #9a7748;
+  --cl-foam: #8d9197;
   --cl-glass: #c3cfdb;
   --cl-shine: #e8eef5;
   --cl-s0: #ff8a80; --cl-s1: #7fc4ff; --cl-s2: #7fe0a8; --cl-s3: #d6a2f2; --cl-s4: #f5c46b; --cl-s5: #b8c4d0;
@@ -158,6 +160,7 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-bench { fill: var(--cl-bench); }
 .lia-chemlab .cl-edge { stroke: var(--cl-edge); stroke-width: 3; }
 .lia-chemlab .cl-wood { fill: var(--cl-wood); stroke: var(--cl-edge); stroke-width: 1; }
+.lia-chemlab .cl-foam { fill: var(--cl-foam); stroke: var(--cl-edge); stroke-width: 1; }
 
 .lia-chemlab .cl-item { cursor: pointer; outline: none; }
 /* Ein Gerät wird nur über seine Trefferfläche angetippt. So fängt ein Thermometer im Glas keine Klicks ab, die dem Glas gelten. */

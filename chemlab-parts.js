@@ -18,7 +18,7 @@
       "card.give": "Add {amount}", "card.pick": "Choose a substance, then add it.", "card.again": "Or tap the vessel once more.",
       "card.place": "Put on the bench:", "card.none": "No substance matches the search.", "hand.drop": "Back to the shelf", "hand": "In hand",
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
@@ -47,7 +47,7 @@
       "hint.electrode": "Now tap the beaker it should dip into.",
       "hint.circuit": "Now tap the vessel whose electrodes it is connected to.",
       "hint.bridge1": "Now tap the first vessel.", "hint.bridge2": "Now tap the second vessel.",
-      "twoOnly": "This vessel already holds two electrodes.", "tooNarrow": "Electrodes only fit into a beaker.",
+      "twoOnly": "This vessel already holds two electrodes.", "tooNarrow": "Electrodes only fit into a beaker.", "insulated": "The calorimeter is insulated: it does not go on a burner or water bath.",
       "sameVessel": "The salt bridge needs two different vessels.",
       "noCircuit": "A circuit needs electrodes: this only works at a beaker.",
       "electrodeOf": "{name} electrode", "say.voltsSet": "{part}: voltage set",
@@ -680,6 +680,25 @@
     }
   });
 
+  // ------------------------------------------------------------------ Kalorimeter
+
+  // Styroporbecher mit Deckel, im Schnitt: dicke Wände, man sieht hinein. Maße wie das Becherglas mit 250 mL.
+  var beakerPart = L.parts.beaker;
+  L.registerPart("calorimeter", {
+    width: beakerPart.width, bounds: beakerPart.bounds, surface: beakerPart.surface, foot: beakerPart.foot, probe: beakerPart.probe, mount: beakerPart.mount,
+    draw: function (w, ctx) {
+      var s = beakerSize(w), a = s[0] / 2, h = s[1], y = beakerSurface(w), t = 7;
+      var fill = function (level) {
+        return "M" + (-a + 2) + "," + f(level) + "L" + (-a + 2) + ",-2L" + (a - 2) + ",-2L" + (a - 2) + "," + f(level) + "Z";
+      };
+      if (w.broken) return shards(a, ctx);
+      return contents(w, ctx, { path: fill(y), fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -2, rim: -h, tall: false }) +
+        '<path class="cl-foam" d="M' + (-a - t) + "," + (-h) + "L" + (-a) + "," + (-h) + "L" + (-a) + ",0L" + a + ",0L" + a + "," + (-h) + "L" + (a + t) + "," + (-h) + "L" + (a + t - 2) + "," + t + "L" + (-a - t + 2) + "," + t + 'Z"/>' +
+        '<rect class="cl-foam" x="' + (-a - t - 3) + '" y="' + (-h - 7) + '" width="' + (2 * a + 2 * t + 6) + '" height="5" rx="2"/>' +
+        badge(0, 14 + t + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
   // ------------------------------------------------------------------ Abdampfschale
 
   var DISH = { a: 46, h: 30 };          // halbe Breite am Rand, Tiefe
@@ -1285,6 +1304,7 @@
     var def = L.parts[id], r, rgb, body;
     if (def) {
       body = id === "testtube" ? '<path class="cl-glass" d="M9,3L9,22A5,5 0 0 0 19,22L19,3"/>'
+        : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
         : id === "beaker" ? '<path class="cl-glass" d="M5,6L5,24Q5,27 8,27L20,27Q23,27 23,24L23,6"/>'
         : id === "dish" ? '<path class="cl-porcelain-edge" d="M3,11Q5,25 11,25L17,25Q23,25 25,11"/>'
         : id === "burner" ? '<rect class="cl-burner" x="7" y="25" width="14" height="3" rx="1"/><rect class="cl-burner" x="12.5" y="13" width="3" height="12"/><path class="cl-flame cl-roaring" d="M10.5,13Q10.5,6 14,2Q17.5,6 17.5,13Z"/>'

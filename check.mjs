@@ -1985,19 +1985,23 @@ const stress = (model, seeds) => {
     // in Ruhe: nichts ist übersättigt, und kein Niederschlag liegt in einer Lösung, die ihn lösen müsste
     L.setTap(l, "bu", 0);
     L.step(l, 1500);
-    for (const v of l.vessels) {
+    const metals = l.vessels.map((v) => Object.fromEntries(v.lumps.map((p) => [p.id, v.n[p.id] || 0])));
+    L.step(l, 10);
+    l.vessels.forEach((v, i) => {
       const vol = L.volume(v), T = v.T + 273.15;
-      if (!(vol > 1e-9)) continue;
+      if (!(vol > 1e-9)) return;
+      // ein Metall, das sich noch merklich löst, liefert Ionen nach; der Niederschlag folgt ihm mit etwa einer Sekunde Verzug
+      const feeding = Object.entries(metals[i]).some(([id, n]) => n - (v.n[id] || 0) > 1e-10);
       for (const e of L.db.equilibria.filter((x) => x.solid)) {
         const ions = Object.entries(e.d), here = ions.every(([id]) => v.n[id] > 0);
         // mit Aktivitäten; im idealen Modell ist jeder Koeffizient 1
         const logQ = here ? ions.reduce((sum, [id, nu]) => sum + nu * Math.log10(v.n[id] / vol * L.gamma(l, v.id, id)), 0) : -Infinity;
         const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
-        assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
+        if (!feeding) assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
         // (ein Stück mit eigenem Geschwindigkeitsgesetz darf liegen bleiben, wenn es sich unmerklich langsam löst: Marmor in Wasser)
         if (v.n[e.solid] > 0 && !e.rate) assert.ok(logQ - logK > -0.01, `${e.solid} in ${v.id} bleibt liegen, obwohl die Lösung es lösen müsste (Folge ${seed})`);
       }
-    }
+    });
   }
 };
 
@@ -2209,18 +2213,30 @@ test("Eindampfen: Flüchtiges entweicht, was kein Salz bildet, bleibt als Rücks
   near(totals(acid).mass, before, 1e-9, "Masse");
   assert.equal(acid.failed || 0, 0);
 
-  const base = heated({ type: "testtube", contains: [{ reagent: "NaOH 1M", ml: 5 }] });
-  const events = collect(base, 300);
-  assert.equal(amount(base, "H2O(l)"), 0);
-  near(amount(base, "Na+(aq)"), 0.005, 1e-6, "das Natriumhydroxid bleibt im Glas");
-  assert.ok(look(base).residue > 0.009, "als Rückstand");
+  // Kaliumnitrat hat keinen Feststoff in den Daten: es bleibt als Rückstand aus Ionen
+  const salt = heated({ type: "testtube", contains: [{ reagent: "KNO3 1M", ml: 5 }] });
+  const events = collect(salt, 300);
+  assert.equal(amount(salt, "H2O(l)"), 0);
+  near(amount(salt, "K+(aq)"), 0.005, 1e-6, "das Kaliumnitrat bleibt im Glas");
+  assert.ok(look(salt).residue > 0.009, "als Rückstand");
   assert.ok(keys(events).includes("dry"));
+  assert.equal(salt.failed || 0, 0);
+  L.setFlame(salt, "br", 0);
+  L.step(salt, 2500);
+  L.add(salt, "b", "H2O", { ml: 5 });
+  L.step(salt, 30);
+  assert.equal(look(salt).residue, 0);
+  near(look(salt).pH, 7.08, 0.05, "wieder gelöst, bei 20 °C");
+  // Natronlauge kristallisiert zu festem Natriumhydroxid und löst sich wieder
+  const base = heated({ type: "testtube", contains: [{ reagent: "NaOH 1M", ml: 5 }] });
+  L.step(base, 300);
+  near(amount(base, "NaOH(s)"), 0.005, 1e-6, "das Natriumhydroxid bleibt als Feststoff");
   assert.equal(base.failed || 0, 0);
   L.setFlame(base, "br", 0);
   L.step(base, 2500);
   L.add(base, "b", "H2O", { ml: 5 });
-  L.step(base, 30);
-  assert.equal(look(base).residue, 0);
+  L.step(base, 3000);                                          // das Lösen hat das Glas erwärmt: abkühlen lassen
+  assert.ok(!(amount(base, "NaOH(s)") > 0), "ganz gelöst");
   near(look(base).pH, 14.17, 0.1, "wieder gelöst: Natronlauge mit 1 mol/L, bei 20 °C");
 });
 
@@ -3079,7 +3095,7 @@ test("Zeichnung: Dampf, Rückstand, Feuer, Scherben und der Span an der Öffnung
   assert.match(hot, /cl-steam/);
   assert.match(hot, /cl-bubble/);
   clean(hot, "siedendes Wasser");
-  const dry = heated({ type: "testtube", contains: [{ reagent: "NaOH 1M", ml: 2 }] });
+  const dry = heated({ type: "testtube", contains: [{ reagent: "KNO3 1M", ml: 2 }] });
   L.step(dry, 200);
   assert.match(L.parts.testtube.draw(look(dry), ctx()), /cl-crust/, "Rückstand am Glas");
   const mg = burning("Mg ribbon", 0.104);
@@ -3476,7 +3492,7 @@ test("Verbrennung: das Gefäß wird nicht heißer als die Flamme, auch mit viel 
 });
 
 test("Ein Tropfen auf einen Rückstand: zu wenig Flüssigkeit löst ihn nicht, und die Rechnung scheitert nicht", () => {
-  const l = heated({ type: "dish", contains: [{ reagent: "NaOH 1M", ml: 20 }] }), seen = [];
+  const l = heated({ type: "dish", contains: [{ reagent: "KNO3 1M", ml: 20 }] }), seen = [];
   const t = until(l, () => keys(seen).includes("dry"), 900, seen);
   // die Wärme zum Verdampfen wird bis zum letzten Rest aufgebracht: 1,1 mol Wasser brauchen 45 kJ, die Flamme gibt höchstens 203 W
   assert.ok(t > 250 && t < 600, `trocken nach ${t} s`);
@@ -3490,7 +3506,7 @@ test("Ein Tropfen auf einen Rückstand: zu wenig Flüssigkeit löst ihn nicht, u
   assert.equal(L.atRest(l), true);
   L.add(l, "b", "H2O", { ml: 20 });
   L.step(l, 30);
-  near(look(l).pH, 14.17, 0.1, "mit genug Wasser wieder Natronlauge");
+  near(look(l).pH, 7.0, 0.05, "mit genug Wasser wieder Kaliumnitrat-Lösung (der Tropfen Phenolphthalein säuert kaum)");
   assert.equal(look(l).residue, 0);
   assert.equal(l.failed || 0, 0);
 });
@@ -4315,6 +4331,53 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
     assert.ok(shelf.indexOf(name, at) > at, name);
   }
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
+});
+
+test("Kalorimeter: hält die Wärme; Neutralisationswärme etwa −57 kJ/mol; nicht auf Brenner oder Wasserbad", () => {
+  const run = (type) => {
+    const l = lab([{ type, id: "k", size: 250, contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20 });
+    L.step(l, 5);
+    L.add(l, "k", "NaOH 1M", { ml: 50 });
+    L.step(l, 30);
+    const top = L.vessel(l, "k").T;
+    L.step(l, 300);
+    return { top, drop: top - L.vessel(l, "k").T, read: L.reading(l, "th").value };
+  };
+  const cal = run("calorimeter"), glass = run("beaker");
+  const dH = -(100 * 4.18 + L.parts.calorimeter.Cv) * (cal.top - 20) / 0.05 / 1000;
+  near(dH, -57, 3, "Neutralisationswärme in kJ/mol aus ΔT");
+  assert.ok(cal.drop < 0.3, `in 5 min kühlt es kaum ab: ${cal.drop} K`);
+  assert.ok(glass.drop > 4 * cal.drop, `das Becherglas verliert viel mehr: ${glass.drop} gegen ${cal.drop} K`);
+  near(cal.read, cal.top - cal.drop, 0.1, "das Thermometer im Kalorimeter");
+  for (const type of ["burner", "bath"]) assert.throws(() => lab([{ type: "calorimeter", id: "k" }, { type, in: "k" }]), (e) => e.code === "place", type);
+  assert.doesNotThrow(() => lab([{ type: "calorimeter", id: "k" }, { type: "balance", in: "k" }]), "auf die Waage darf es");
+});
+
+test("Salze aus dem Regal: Ammoniumnitrat kühlt, Natriumhydroxid und Calciumchlorid wärmen beim Lösen", () => {
+  const dT = (salt, g) => {
+    const l = lab([{ type: "calorimeter", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }], { room: 20 });
+    L.add(l, "k", salt, { g });
+    L.step(l, 120);
+    const v = L.vessel(l, "k");
+    assert.ok(!Object.keys(v.n).some((id) => /\(s\)$/.test(id) && v.n[id] > 1e-9), salt + " löst sich ganz");
+    return v.T - 20;
+  };
+  near(dT("NH4NO3 salt", 5), -1000 * 25.45 * 5 / 80.04 / (50 * 4.18 + 10 + 5 * 1.7), 1, "Ammoniumnitrat");
+  near(dT("NaOH pellets", 2), 1000 * 44.75 * 2 / 40.0 / (50 * 4.18 + 10 + 2 * 1.5), 1, "Natriumhydroxid");
+  near(dT("CaCl2 anhydrous", 2), 1000 * 81.4 * 2 / 110.98 / (50 * 4.18 + 10 + 2 * 0.7), 1, "Calciumchlorid");
+});
+
+test("Kalorimeter in der Fläche: kein Brenner darunter, Hinweis statt dessen", () => {
+  const el = mount({ bench: [{ type: "calorimeter", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }], shelf: ["burner", "bath", "thermometer"] });
+  press(el, "hand", "burner");
+  tap(el, "k");
+  assert.equal(part(el, ".cl-status").textContent, "Das Kalorimeter ist wärmegedämmt: Es kommt nicht auf Brenner oder Wasserbad.");
+  assert.deepEqual(state(el).run.lab.tools.map((t) => t.type), []);
+  press(el, "hand", "thermometer");
+  tap(el, "k");
+  assert.deepEqual(state(el).run.lab.tools.map((t) => t.type + ">" + t.in), ["thermometer>k"]);
+  assert.match(L.icon("calorimeter"), /<svg/);
+  assert.equal(L.text("part.calorimeter", "de"), "Kalorimeter");
 });
 
 test("Elektroden einsetzen: zwei je Becherglas, keine ins Reagenzglas; Netzgerät und Messgeräte daneben", () => {
@@ -8214,6 +8277,23 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   L.setFlame(l, burner.id, 0);
   L.step(l, 120, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
+});
+
+test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {
+  const [config] = slide("Kalorimetrie").map((b) => L.normalize(b));
+  const cals = config.bench.filter((p) => p.type === "calorimeter");
+  const acid = cals.find((p) => p.contains.some((c) => c.reagent === "HCl 1M")), water = cals.find((p) => p !== acid);
+  for (const k of cals) assert.ok(config.bench.some((t) => t.type === "thermometer" && t.in === k.id), k.id + " hat ein Thermometer");
+  for (const id of ["NaOH 1M", "NH4NO3 salt", "NaOH pellets", "CaCl2 anhydrous", "calorimeter", "thermometer"]) assert.ok(config.shelf.includes(id), id + " im Regal");
+  const l = L.createLab(config), T0 = L.vessel(l, acid.id).T;
+  L.add(l, acid.id, "NaOH 1M", { ml: 50 });
+  L.step(l, 30);
+  const dT = L.vessel(l, acid.id).T - T0;
+  near(dT, 6.7, 0.3, "Erwärmung in K");
+  near(-(100 * 4.18 + 10) * dT / 0.05 / 1000, -57, 2, "Neutralisationswärme in kJ/mol");
+  L.add(l, water.id, "NH4NO3 salt", { g: 2 });
+  L.step(l, 60);
+  assert.ok(L.vessel(l, water.id).T < T0 - 2, "Ammoniumnitrat kühlt");
 });
 
 test("Mischwärme: konzentrierte Säure und Lauge spritzen; Lauge löst nicht mehr Schwefelsäure, als das Wasser aufnimmt; kein Spritzen beim Sieden ohne Grund", () => {

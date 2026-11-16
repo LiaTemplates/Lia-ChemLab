@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Kalorimeter, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -407,6 +407,27 @@ Konzentrierte Schwefelsäure setzt beim Verdünnen viel Wärme frei. Links stehe
   {"type":"thermometer","in":"wasser"}
  ],
  "shelf":["H2O","H2SO4 conc","beaker"],
+ "show":{"charts":["T"]}}
+```
+
+## Kalorimetrie
+
+Im **Kalorimeter**, zwei ineinandergesteckten Styroporbechern mit Deckel, bleibt die Wärme fast ganz im Inhalt; die Becher selbst nehmen nur 10 J/K auf. Im linken stehen 50 mL Salzsäure von 1 mol/L. 50 mL Natronlauge von 1 mol/L zugeben und die höchste Temperatur ablesen. Aus der Erwärmung ΔT folgt die Neutralisationswärme:
+
+ΔH = −(m · c + C) · ΔT / n
+
+mit m = 100 g Lösung, c = 4,18 J/(g·K), C = 10 J/K für das Kalorimeter und n = 0,05 mol Wasser, die entstehen. Die Lösung wird etwa 6,7 °C wärmer; das ergibt rund −57 kJ/mol.
+
+Im rechten steht Wasser. Darin 2 g eines Salzes lösen: Ammoniumnitrat kühlt, wie in einem Kältekissen; Natriumhydroxid und Calciumchlorid wärmen. Für jedes Salz ein neues Kalorimeter mit 50 mL Wasser nehmen.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"calorimeter","id":"neutral","contains":[{"reagent":"HCl 1M","ml":50}]},
+  {"type":"thermometer","in":"neutral"},
+  {"type":"calorimeter","id":"salz","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"thermometer","in":"salz"}
+ ],
+ "shelf":["NaOH 1M","NH4NO3 salt","NaOH pellets","CaCl2 anhydrous","H2O","calorimeter","thermometer"],
  "show":{"charts":["T"]}}
 ```
 
@@ -1189,6 +1210,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 |---|---|---|
 | `testtube` | Reagenzglas, 20 mL | `contains` |
 | `beaker` | Becherglas | `ml` Größe: 50, 100 (Vorgabe), 250 oder 600; `contains` |
+| `calorimeter` | Kalorimeter: zwei Styroporbecher mit Deckel, 250 mL; hält die Wärme. Es kommt nicht auf Brenner oder Wasserbad | `contains` |
 | `burette` | Bürette, 50 mL, mit Hahn | `over`, `contains` |
 | `dish` | Abdampfschale aus Porzellan, 50 mL | `contains` |
 | `thermometer` | Thermometer, −10 °C bis 110 °C; ist es heißer, zeigt es „> 110 °C“ | `in` |
@@ -1250,6 +1272,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `sulfur`, `charcoal` | Schwefelpulver, Holzkohle | `g` |
 | `Zn granules`, `Zn powder` | Zink als Granalien und als Pulver | `g` |
 | `Fe wool`, `Cu sheet` | Eisenwolle, Kupferblech in Streifen | `g` |
+| `NH4NO3 salt`, `NaOH pellets`, `CaCl2 anhydrous` | Ammoniumnitrat, Natriumhydroxid-Plätzchen, wasserfreies Calciumchlorid; lösen sich in Wasser mit Lösungswärme | `g` |
 
 ## Eigene Stoffe und Reaktionen
 
@@ -1431,6 +1454,8 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Fotometer:** Die Extinktion ist die Summe über alle gelösten Teilchen aus Absorptionskoeffizient bei der gewählten Wellenlänge, Konzentration und 1 cm Schichtdicke; dazu kommt die Trübung durch alles, was schwebt, bei jeder Wellenlänge gleich. Die Anzeige folgt mit einer halben Sekunde Verzögerung und endet bei 3. Von einem Stoff, von dem nur die Farbe eingetragen ist, kennt das Fotometer drei breite Bereiche (blau, grün, rot).
 - **Teilchenlupe:** Je 20 mmol/L eines gelösten Teilchens ein Punkt, gerundet; was darunter liegt, erscheint nicht. Über 2,4 mol/L gelöster Teilchen wird der Maßstab gröber, damit es höchstens 120 Punkte sind. Feststoffe erscheinen als bis zu zwölf Bausteine, nach ihrem Anteil. Der Ort jedes Teilchens folgt aus seiner Nummer und dem Weg, den es schon hinter sich hat; je wärmer, desto schneller kommt es voran, mit der Wurzel der absoluten Temperatur.
 - **Wärme:** Die Reaktionswärme folgt nach dem Satz von Hess aus den Bildungsenthalpien, etwa −55,8 kJ/mol für die Neutralisation und −467 kJ/mol für Magnesium in Säure. Wo eine Bildungsenthalpie fehlt, gilt die Reaktionsenthalpie aus der Datenbank; wo auch die fehlt, rechnet der Vorgang ohne Wärme. Sie erwärmt Lösung und Glas; das Gefäß gibt Wärme an den Raum ab und kühlt wieder aus.
+- **Kalorimeter:** Es nimmt 10 J/K auf und gibt 0,012 W/K an den Raum ab, ein Zwanzigstel des Becherglases mit 250 mL (0,25 W/K); beides ist für zwei Styroporbecher mit Deckel geschätzt. Neutralisiert man darin je 50 mL Säure und Lauge von 1 mol/L, verliert es in fünf Minuten weniger als 0,3 °C.
+- **Lösungswärme:** Ammoniumnitrat, Natriumhydroxid und Calciumchlorid lösen sich nach ihrem Löslichkeitsgleichgewicht, so schnell, wie ihre Oberfläche es erlaubt (etwa eine halbe Minute für 2 g in 50 mL). Die Wärme folgt aus den Bildungsenthalpien: +25,5, −44,8 und −81,4 kJ/mol; die Konstanten der Gleichgewichte sind aus denselben Tabellenwerten gerechnet.
 - **Thermometer:** Es folgt der Temperatur mit einer Verzögerung von etwa drei Sekunden und reicht bis 110 °C; darüber zeigt es das Ende seiner Skala. Die Temperaturkurve im Diagramm ist das, was das Thermometer zeigt; ohne Thermometer gibt es keine Kurve.
 - **Zugießen** dauert je nach Menge eine halbe bis vier Sekunden, ein Tropfen eine Viertelsekunde. Deshalb schlägt der Indikator mitten im Zugießen um.
 - **Farbe:** Lambert-Beer für jede Wellenlänge des sichtbaren Lichts, danach Umrechnung in eine Bildschirmfarbe. Die Schichtdicke ist die Weite des Gefäßes: 1,4 cm im Reagenzglas, 5 cm im Becherglas für 100 mL.
@@ -1500,6 +1525,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Iod gibt es als Lösung in Kaliumiodid, nicht als Kristalle: Festes Iod, das bei einer Elektrolyse ausfällt, reagiert nur, soweit Iodid es wieder löst.
 - Was langsamer als 1 nmol/s abläuft und die Farbe nicht merklich ändert, lässt die Uhr anhalten, auch wenn es nach langer Zeit sichtbar würde (eine stark verdünnte Ioduhr). Der zweite Druck auf „Abspielen“ lässt sie dann weiterlaufen.
 - Stärke ist als Zahl von Plätzen für Iod gerechnet, je 18 Glucose-Einheiten einer; die Konstante des Komplexes und seine Wärmetönung sind geschätzt.
+- Im idealen Modell ist Ammoniumnitrat schon bei 3,6 mol/L gesättigt; im Labor lösen sich in 100 g Wasser fast 200 g. Kaliumnitrat gibt es aus demselben Grund nicht als Feststoff: Die ideale Rechnung sättigte es schon bei 0,75 mol/L statt gut 3 mol/L. Gerührt wird nicht eigens, jedes Gefäß gilt als durchmischt; Calciumchlorid ist das wasserfreie Salz, nicht das Hexahydrat, das sich unter Abkühlung löst.
 - Das Wasserbad hat seine Temperatur sofort; aufheizen und abkühlen muss nur das Gefäß darin. Über 95 °C und unter 0 °C geht es nicht.
 - Die Teilchenlupe zeigt Mengenverhältnisse, keine Größen, Formen oder Abstände der Teilchen, und ihre Wege sind erfunden. Stöße und Reaktionen einzelner Teilchen sieht man nicht.
 - Der Gasraum ist ein einziger durchmischter Raum mit festen Zeiten für das Verfliegen. Gase lassen sich noch nicht in ein anderes Gefäß leiten. Im verschlossenen Gefäß brennt gar nichts, auch nicht mit dem Sauerstoff, der noch darin wäre.

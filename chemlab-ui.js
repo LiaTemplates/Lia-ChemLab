@@ -435,6 +435,7 @@
           if (!L.parts[L.vessel(lab, id).type].electrodes) { status(T("tooNarrow")); return; }
           if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
         } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
+        else if ((def.flames || def.bath) && L.parts[L.vessel(lab, id).type].insulated) { status(T("insulated")); return; }
         else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
         // Kühler und Rohr: aus jedem Gefäß führt einer, in jedes zweite Gefäß einer; in einem Stopfen steckt nur ein Gerät
         else if (def.duct && lab.tools.some(function (t) { return L.parts[t.type].duct && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }
