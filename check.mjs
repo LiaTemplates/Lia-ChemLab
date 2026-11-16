@@ -4495,7 +4495,8 @@ test("GHS in der Fläche: Piktogramme im Regal, an der Flasche in der Hand mit S
   assert.doesNotMatch(of("thermometer"), /cl-ghs/, "Geräte ohne");
   press(el, "hand", "NaOH 1M");
   assert.match(part(el, ".cl-hand").innerHTML, /cl-ghs[\s\S]*cl-signal[^>]*>Gefahr</, "in der Hand mit Signalwort");
-  assert.match(L.ghsIcon("GHS05"), /<svg[\s\S]*#e00/, "rot umrandet");
+  assert.match(L.ghsIcon("GHS05"), /<svg[\s\S]*fill="#f00"/, "rot umrandet, nach der amtlichen Vorlage");
+  for (const code of ["GHS01", "GHS02", "GHS03", "GHS04", "GHS06", "GHS07", "GHS08", "GHS09"]) assert.match(L.ghsIcon(code), /^<svg class="cl-ghs" viewBox="[\d. ]+"[\s\S]*<path/, code);
 });
 
 test("Elektroden einsetzen: zwei je Becherglas, keine ins Reagenzglas; Netzgerät und Messgeräte daneben", () => {
