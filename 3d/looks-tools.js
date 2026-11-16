@@ -293,6 +293,7 @@
         sub.add(mesh(new THREE.CylinderGeometry(cm(w / 2), cm(w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8), x, y0));
         sub.add(mesh(new THREE.CylinderGeometry(cm(1.5), cm(1.5), cm(30), 10), fx.steel(), x, y0 + cm(20)));
         sub.add(mesh(new THREE.CylinderGeometry(cm(16), cm(16), cm(6), 32).rotateX(Math.PI / 2), fx.matte(fx.style.device, 0.45), x, dial));
+        sub.add(mesh(new THREE.TorusGeometry(cm(16), cm(1.4), 8, 40), fx.matte(0x3a3d42, 0.5), x, dial));      // dunkler Rand: das helle Gehäuse vor heller Wand
       });
       // Zeiger wie in 2D: 0 bar links unten, 2 bar rechts unten, 1 bar senkrecht
       u.needle.position.set(x, dial, cm(3.4));
