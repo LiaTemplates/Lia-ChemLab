@@ -554,6 +554,9 @@
       600: { cap: 600, d: 9.0, Cv: 110, loss: 0.40, heat: 0.32 }
     }
   });
+  // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
+  // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
+  registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
@@ -810,6 +813,7 @@
       var fits = !!(def && def.kind === "vessel" && !def.dispenser);       // in oder über einem Gefäß, nicht an einer Bürette
       // Elektroden und die Geräte eines Stromkreises gehören an ein Gefäß, in dem Elektroden Platz haben
       if (item.in != null && (!fits || ((own.electrode || own.circuit) && !def.electrodes))) throw fail("place", item.in);
+      if (item.in != null && def.insulated && (own.flames || own.bath)) throw fail("place", item.in);
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
@@ -889,9 +893,9 @@
   }
 
   function volume(v) {            // Flüssigkeit in L
-    var ml = 0, id, s;
-    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) ml += v.n[id] * s.Vm; }
-    return ml / 1000;
+    var ml = 0, solute = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) solute += v.n[id] * s.Vm; }
+    return ml > 0 ? (ml + solute) / 1000 : 0;      // ein trockener Rückstand ist keine Flüssigkeit, auch wenn seine Ionen ein Eigenvolumen haben
   }
 
   function heatCapacity(v) {      // J/K, mit dem Glas
@@ -1160,6 +1164,7 @@
     })) host = null;                                           // dort steht schon einer
     if (host && def.electrode && (!L.parts[host.type].electrodes || electrodesIn(lab, host.id).length >= 2)) host = null;      // kein Platz für eine Elektrode
     if (host && def.circuit && !L.parts[host.type].electrodes) host = null;        // ein Stromkreis braucht ein Gefäß für Elektroden
+    if (host && L.parts[host.type].insulated && (def.flames || def.bath)) host = null;      // das Kalorimeter kommt nicht auf Brenner oder Wasserbad
     if (host && def.bridge && bridged(lab, host.id)) host = null;                  // dort hängt schon eine Salzbrücke
     if (host && def.duct && toolAt(lab, host, function (d) { return d.duct; })) host = null;      // dort steckt schon ein Kühler oder Rohr
     if (host && def.stopper && toolAt(lab, host, function (d) { return d.stopper; })) host = null;      // dort sitzt schon ein Stopfen
@@ -1203,7 +1208,7 @@
   }
 
   // Glas aus seiner Wärmekapazität: 0,84 J/(g K)
-  function glassMass(v) { return spec(v).Cv / 0.84; }
+  function glassMass(v) { return spec(v).mass != null ? spec(v).mass : spec(v).Cv / 0.84; }      // mass: kein Glas, eigene Masse in g
 
   // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit und das Gas im Kolbenprober
   function weigh(lab, v) {
@@ -1975,7 +1980,7 @@
         left -= part;
       });
     }
-    v.lumps = v.lumps.filter(function (l) { return l.n > 0; });
+    v.lumps = v.lumps.filter(function (l) { return l.n > 1e-300; });      // wie überall: darunter ist nichts mehr da
     v.lumps.forEach(function (l) { if (l.id === id) total += l.n; });
     if (total > 0) v.n[id] = total;
     else {
@@ -2763,8 +2768,10 @@
     if (bathed) { f.heat = 0; f.base = v.T; }                  // im Wasserbad kommt die Wärme vom Bad: kein Temperaturmaximum zu melden
     else if (f.heat) {
       if (v.T > f.max) f.max = v.T;
-      else if (v.T < f.max - 0.3) { f.heat = 0; f.base = v.T; if (emit) emit({ key: "tempMax", vessel: v.id, T: f.max }); }
-    } else if (v.T > f.base + 1.5) { f.heat = 1; f.max = v.T; }
+      if (v.T > f.peak + 0.01) { f.peak = v.T; f.since = lab.t; }
+      // gemeldet wird, wenn es merklich abkühlt oder 20 s lang nicht mehr wärmer wird (im Kalorimeter kühlt es kaum ab)
+      if (v.T < f.max - 0.3 || lab.t - f.since > 20) { f.heat = 0; f.base = v.T; if (emit) emit({ key: "tempMax", vessel: v.id, T: f.max }); }
+    } else if (v.T > f.base + 1.5) { f.heat = 1; f.max = f.peak = v.T; f.since = lab.t; }
     else if (v.T < f.base) f.base = v.T;
   }
 
