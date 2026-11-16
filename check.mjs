@@ -7322,6 +7322,41 @@ test("Oberfläche: den Kühler setzen – erst den Kolben, dann die Vorlage anti
   assert.match(item(el, t.id).innerHTML, /cl-jacket/);
 });
 
+test("Oberfläche: das Gasableitungsrohr setzen – erst die Quelle, dann das Ziel; ein Stopfen je Glas", () => {
+  const el = mount({ bench: [{ type: "testtube", id: "a", contains: [{ reagent: "HCl 1M", ml: 5 }] }, { type: "testtube", id: "z", contains: [{ reagent: "limewater", ml: 10 }] }],
+    shelf: ["tube", "syringe"] });
+  press(el, "hand", "tube");
+  assert.match(part(el, ".cl-hand").innerHTML, /aus dem das Gas kommt/);
+  tap(el, "a");
+  assert.match(part(el, ".cl-hand").innerHTML, /in das das Gas geleitet wird/);
+  tap(el, "a");
+  assert.match(part(el, ".cl-status").textContent, /Das Rohr führt in ein anderes Gefäß/);
+  tap(el, "z");
+  const t = state(el).run.lab.tools.find((x) => x.type === "tube");
+  assert.deepEqual([t.in, t.to], ["a", "z"]);
+  assert.match(logOf(el), /Gasableitungsrohr 1 zwischen Reagenzglas 1 und Reagenzglas 2 gesetzt/);
+  assert.equal(item(el, t.id).attributes["aria-label"], "Gasableitungsrohr 1 zwischen Reagenzglas 1 und Reagenzglas 2");
+  assert.match(item(el, t.id).innerHTML, /cl-stopper/);
+  press(el, "hand", "syringe");
+  tap(el, "a");
+  assert.match(part(el, ".cl-status").textContent, /schon ein solches Gerät/, "im Stopfen ist kein Platz mehr");
+});
+
+test("Zeichnung: Gasableitungsrohr für sich, zwischen zwei Gläsern und mit Blasen", () => {
+  const place = { x1: 0, y1: -196, w: 26, x2: 120, y2: -196, s2: -60, end: -45 };
+  clean(L.parts.tube.draw({ type: "tube" }, ctx()), "Rohr für sich");
+  const idle = L.parts.tube.draw({ type: "tube", flow: 0 }, ctx(), place);
+  clean(idle, "Rohr");
+  assert.match(idle, /cl-stopper/);
+  assert.doesNotMatch(idle, /cl-bubble/);
+  assert.match(L.parts.tube.draw({ type: "tube", flow: 1e-4 }, ctx(), place), /cl-bubble/, "am Ende des Rohrs perlt Gas");
+  assert.match(L.icon("tube"), /<svg/);
+  const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
+  L.step(l, 3);
+  assert.ok(L.reading(l, "r").flow > 0, "die Anzeige kennt den Gasstrom");
+  assert.equal(L.reading(l, "r").to, "z");
+});
+
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
   L.register(organic);
   const [ester, boiled] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));

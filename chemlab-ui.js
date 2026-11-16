@@ -331,7 +331,7 @@
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
           esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
-            : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
+            : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
           (name.under ? ' <button type="button" class="cl-btn" data-act="bench">' + esc(T("hand.bench")) + "</button>" : "") + drop;
         return;
@@ -420,18 +420,19 @@
           if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
         } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
         else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
-        // der Kühler: aus jedem Gefäß führt einer, in jede Vorlage einer
-        else if (def.condenser && lab.tools.some(function (t) { return L.parts[t.type].condenser && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }
-        else if ((def.bridge || def.condenser) && !h.from) {    // Salzbrücke und Kühler brauchen zwei Gefäße: das erste merken
+        // Kühler und Rohr: aus jedem Gefäß führt einer, in jedes zweite Gefäß einer; in einem Stopfen steckt nur ein Gerät
+        else if (def.duct && lab.tools.some(function (t) { return L.parts[t.type].duct && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }
+        else if (def.stopper && !h.from && lab.tools.some(function (t) { return L.parts[t.type].stopper && t.in === id; })) { status(T("occupied")); return; }
+        else if ((def.bridge || def.duct) && !h.from) {         // Salzbrücke, Kühler und Rohr brauchen zwei Gefäße: das erste merken
           st.hand = { id: h.id, tool: true, from: id };
           status("");
           renderHand();
           return;
-        } else if ((def.bridge || def.condenser) && h.from === id) { status(T(def.condenser ? "sameStill" : "sameVessel")); return; }
+        } else if ((def.bridge || def.duct) && h.from === id) { status(T(def.pipe ? "sameTube" : def.condenser ? "sameStill" : "sameVessel")); return; }
         else if (over ? lab.vessels.some(function (v) { return v.over === id; })
           : lab.tools.some(function (t) { return t.in === id && (def.under ? L.parts[t.type].under : t.type === h.id); })) { status(T("occupied")); return; }      // unter einem Gefäß steht ein Brenner oder ein Wasserbad
         setHand(null);
-        if (def.bridge || def.condenser) {
+        if (def.bridge || def.duct) {
           change(function (l) { return L.place(l, { type: h.id, in: h.from, to: id }); }, function (made) { return { key: "bridged", part: made, vessel: h.from, to: id }; });
           return;
         }
@@ -658,6 +659,21 @@
       return { x1: pa.x, y1: pa.rim, x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: (w.ml > 0.005 ? L.parts[far.type].surface(w) : -4) + up, up: up };
     }
 
+    // Das Gasableitungsrohr: vom Stopfen im ersten Gefäß zum zweiten, dort bis unter den Spiegel oder, ist es leer, fast bis zum Boden.
+    // Stellen in den Koordinaten seines Platzes; up wie beim Kühler
+    function pipeline(lab, t) {
+      var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), pa, pb, up, w, s2;
+      if (!host || !a) return null;
+      pa = L.parts[host.type].probe(host, "tube");
+      if (!b) return { x1: pa.x, y1: pa.rim, w: pa.w, x2: pa.x + 60, y2: pa.rim, end: pa.rim + 30, up: 0 };       // das andere Ende hängt frei
+      pb = L.parts[far.type].probe(far, "tube");
+      up = (a.lift || 0) - (b.lift || 0);
+      w = L.view(lab, far);
+      s2 = w.ml > 0.005 ? L.parts[far.type].surface(w) : null;
+      return { x1: pa.x, y1: pa.rim, w: pa.w, x2: b.x - a.x + pb.x - 4, y2: pb.rim + up, s2: s2 == null ? null : s2 + up,
+        end: (s2 == null ? L.parts[far.type].probe(far, "thermometer").bottom : Math.min(s2 + 22, L.parts[far.type].probe(far, "thermometer").bottom)) + up, up: up };
+    }
+
     // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden.
     // Jede Leitung verbindet zwei Anschlüsse [Gerät, Nummer]; cls: Pol (" cl-plus", " cl-minus" oder ""), circuit: Nummer des Stromkreises.
     // Gilt für 2D und 3D; ends sagt nur, welche Geräte Anschlüsse haben.
@@ -718,7 +734,7 @@
         var g = nodes[item.id], def = L.parts[item.type];
         var ctx = { lang: lang, numbers: show.numbers, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
-          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].condenser && L.vessel(lab, t.to); }) };
+          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to); }) };
         var v, w, r, host, place, b, content, hang, aria;
         if (item.vessel) {
           v = L.vessel(lab, item.id);
@@ -742,7 +758,7 @@
         } else {
           r = L.reading(lab, item.id);
           host = L.vessel(lab, r.in);
-          place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.condenser ? duct(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
+          place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.pipe ? pipeline(lab, L.tool(lab, item.id)) : def.condenser ? duct(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
             : L.parts[host.type].probe(host, item.type, def.electrode ? slotOf(lab, L.tool(lab, item.id)) : 0);
           if (def.sense === "V" && place && lab.vessels.some(function (o) { return o.over === host.id; })) {
             // hängt über dem Gefäß eine Bürette, beginnt der Zylinder des Kolbenprobers erst rechts von ihr und ihrem Stativ
@@ -754,17 +770,17 @@
             place.surface = w.ml > 0.005 ? L.parts[host.type].surface(w) : null;
           }
           // im Gefäß ist nur antippbar, was über dessen Rand hinausragt; das Gefäß selbst bleibt frei
-          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.condenser || def.reflux ? def.bounds(r, place)
+          b = def.under || def.sense === "V" || def.circuit || def.bridge || def.duct || def.reflux ? def.bounds(r, place)
             : place ? { x0: place.x - (def.electrode ? 9 : 14), x1: place.x + (def.electrode ? 9 : 14), top: place.top - (def.electrode ? 16 : 4), bottom: L.parts[host.type].bounds(host).top } : def.bounds();
           if (!three) g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(r, ctx, place);
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
           content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
-            : def.bridge || def.condenser || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
+            : def.bridge || def.duct || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
-          aria = label[item.id] + (def.bridge || def.condenser ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
+          aria = label[item.id] + (def.bridge || def.duct ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
             : host ? " " + T(def.under ? "aria.under" : def.sense === "V" || def.circuit ? "aria.at" : "aria.in", { vessel: label[host.id] }) : "") + (content ? ": " + content : "");
           g.setAttribute("aria-label", aria);
           if (three) three.item({ id: item.id, type: item.type, vessel: false, data: r, place: place, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
@@ -1091,7 +1107,7 @@
             (w.coat.length ? "<p>" + esc(T("coat")) + ": " + w.coat.map(function (c) {
               return esc(L.nameOf(L.species(c.id), lang)) + (show.numbers ? " " + L.amount(c.n, lang) : "");
             }).join(", ") + "</p>" : "");
-        } else if (L.parts[t.type].bridge || L.parts[t.type].condenser || L.parts[t.type].reflux) box.innerHTML = "";
+        } else if (L.parts[t.type].bridge || L.parts[t.type].duct || L.parts[t.type].reflux) box.innerHTML = "";
         else if (L.parts[t.type].circuit === "load") {         // das Lämpchen zeigt nichts an: es leuchtet oder nicht
           w = shownValue(L.reading(lab, t.id));
           box.innerHTML = "<p>" + esc(w.charAt(0).toUpperCase() + w.slice(1)) + ".</p>";

@@ -509,6 +509,7 @@
 
   // ------------------------------------------------------------------ Reagenzglas
 
+  var PIPE_RISE = 34;                   // so weit steigt das Gasableitungsrohr über den höheren der beiden Ränder
   var TUBE = { r: 12, floor: -9, top: -196, rise: 175 };   // Innenradius, tiefster Punkt, Rand, Höhe für 20 mL
 
   function tubeSurface(w) { return TUBE.floor - Math.min(1, w.ml / w.cap) * TUBE.rise; }
@@ -528,6 +529,7 @@
     // tag und box: wo neben dem Gerät seine Anzeige steht, damit sich zwei Anzeigen nicht verdecken
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: TUBE.top, w: 26 };        // Stopfen in der Öffnung
+      if (type === "tube") return { x: 0, rim: TUBE.top, w: 26, top: TUBE.top - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 6 * slot, rim: TUBE.top };
       if (type === "reflux") return { x: 0, rim: TUBE.top, top: TUBE.top - REFLUX };
       if (type === "conductometer") return { x: -1, bottom: -14, top: -276, box: -74 };
@@ -569,6 +571,7 @@
     probe: function (v, type, slot) {
       var s = beakerSize(v);
       if (type === "syringe") return { x: 0, rim: -s[1], w: s[0] - 2 };
+      if (type === "tube") return { x: 0, rim: -s[1], w: s[0] - 2, top: -s[1] - PIPE_RISE };
       // Die Elektrode endet so weit über dem Boden wie in der Rechnung: bei der Füllhöhe, die dem Abstand L.PLATE.gap entspricht
       if (L.parts[type] && L.parts[type].electrode) {
         var size = L.parts.beaker.sizes[v.size || v.cap] || L.parts.beaker.sizes[100];
@@ -638,6 +641,7 @@
     foot: function () { return 24; },
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4 };
+      if (type === "tube") return { x: 0, rim: -DISH.h - 4, w: 2 * DISH.a - 4, top: -DISH.h - 4 - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: 30 * slot, rim: -DISH.h - 4 };
       if (type === "reflux") return { x: 0, rim: -DISH.h - 4, top: -DISH.h - 4 - REFLUX };
       if (type === "conductometer") return { x: 0, bottom: -6, top: -152, box: -37 };      // seine Anzeige steht über dem Schild des Thermometers
@@ -983,6 +987,7 @@
     // slot beim Kühler: die Seite, auf der die Vorlage steht (−1 oder 1); dorthin zeigt das Ansatzrohr
     probe: function (v, type, slot) {
       if (type === "syringe") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
+      if (type === "tube") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4, top: FLASK.rim - PIPE_RISE };
       if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
       if (type === "bridge") return { x: 0, rim: FLASK.rim };
       if (type === "reflux") return { x: FLASK.neck + 14, rim: FLASK.arm - 2, top: FLASK.arm - 2 - REFLUX, lean: 18 };      // auf dem Ansatzrohr: der Hals bleibt frei
@@ -1026,6 +1031,34 @@
         '<path class="cl-hose" d="M' + f(b.x + nx) + "," + f(b.y + ny) + "l0,10M" + f(a.x - nx) + "," + f(a.y - ny) + 'l0,-10"/>' +
         '<path class="cl-glass" d="M' + f(d.x1) + "," + f(d.y1) + "L" + f(d.x3) + "," + f(d.y3) + "L" + f(d.x3) + "," + f(d.y4) + '"/>';
       if (w.drip && place && L.fx) out += L.fx.drops(d.x3, d.y4, d.s2, ctx.t || 0, ctx.still);
+      return out + (place ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
+  // ------------------------------------------------------------------ Gasableitungsrohr
+
+  // place: { x1, y1, w } Stopfen im ersten Gefäß (Mitte, Rand, Breite); { x2, y2 } Öffnung des zweiten, end: wo das Rohr dort endet
+  // (unter dem Spiegel oder nahe am Boden eines leeren Gefäßes). Das Rohr steigt über beide Ränder, läuft hinüber und taucht ein.
+  function pipeAt(place) {
+    var p = place || { x1: -24, y1: -30, w: 16, x2: 24, y2: -30, end: -6 };
+    return { x1: p.x1, y1: p.y1, w: p.w, x2: p.x2, top: Math.min(p.y1, p.y2) - PIPE_RISE, end: Math.max(p.end, p.y2 + 8) };
+  }
+
+  L.registerPart("tube", {
+    width: function () { return 70; },
+    room: 110,                                                  // Platz bis zum zweiten Gefäß
+    bounds: function (t, place) {
+      var d = pipeAt(place);
+      return { x0: Math.min(d.x1, d.x2) - 8, x1: Math.max(d.x1, d.x2) + 8, top: d.top - 6, bottom: place ? d.y1 + 8 : d.end + 4 };
+    },
+    draw: function (w, ctx, place) {
+      var d = pipeAt(place), r = 6, dir = d.x2 >= d.x1 ? 1 : -1, out = "";
+      out += '<path class="cl-stopper" d="M' + f(d.x1 - d.w / 2) + "," + (d.y1 - 4) + "L" + f(d.x1 + d.w / 2) + "," + (d.y1 - 4) + "L" +
+        f(d.x1 + d.w / 2 - 2) + "," + (d.y1 + 7) + "L" + f(d.x1 - d.w / 2 + 2) + "," + (d.y1 + 7) + 'Z"/>';
+      // Glasrohr mit zwei gerundeten Knien
+      out += '<path class="cl-glass cl-pipe" d="M' + f(d.x1) + "," + (d.y1 + 6) + "L" + f(d.x1) + "," + f(d.top + r) + "Q" + f(d.x1) + "," + f(d.top) + " " + f(d.x1 + dir * r) + "," + f(d.top) +
+        "L" + f(d.x2 - dir * r) + "," + f(d.top) + "Q" + f(d.x2) + "," + f(d.top) + " " + f(d.x2) + "," + f(d.top + r) + "L" + f(d.x2) + "," + f(d.end) + '"/>';
+      if (place && w.flow > 0 && L.fx) out += L.fx.bubbles({ x0: d.x2 - 6, x1: d.x2 + 6, top: Math.max(place.s2 != null ? place.s2 : d.end - 30, d.end - 60), bottom: d.end }, w.flow, ctx.t || 0, (ctx.seed || 1) + 17, ctx.still);
       return out + (place ? "" : badge(0, 14, ctx.no));
     }
   });
@@ -1148,6 +1181,7 @@
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
         : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
+        : id === "tube" ? '<path class="cl-stopper" d="M2,13L10,13L9,18L3,18Z"/><path class="cl-glass" d="M6,13L6,5Q6,3 8,3L20,3Q22,3 22,5L22,27"/>'
         : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'
         : id === "conductometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:6px">mS</text></g>'
         : id === "bath" ? '<rect class="cl-bath-water" x="4" y="15" width="20" height="11"/><path class="cl-glass" d="M3,9L3,25Q3,27 5,27L23,27Q25,27 25,25L25,9"/><path class="cl-glass" d="M11,3L11,19A3,3 0 0 0 17,19L17,3"/>'

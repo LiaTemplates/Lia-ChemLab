@@ -3336,6 +3336,7 @@
     }
     if (def.circuit === "supply") { out.volts = t.volts; out.flip = t.flip; }
     if (def.bridge) out.to = t.to;
+    if (def.pipe) { out.to = t.to; out.flow = t.flow || 0; }   // flow: Gas in mol/s, das gerade durch das Rohr perlt
     if (def.condenser) {                                         // to: die Vorlage; drip: aus dem Kühler tropft Destillat
       out.to = t.to;
       out.drip = !!(t.in && vessel(lab, t.in) && vessel(lab, t.in).boil > 0 && vessel(lab, t.to) && !vessel(lab, t.to).broken);
