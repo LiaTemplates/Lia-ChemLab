@@ -346,7 +346,8 @@
     var lang = ctx.lang, name = function (id) { return (ctx.names && ctx.names[id]) || id; };
     var vars = { vessel: name(event.vessel), from: name(event.from), part: event.label || name(event.part), to: name(event.to) };
     // eine unbekannte Probe: Beobachtungen ja, Stoffnamen nein
-    if (ctx.hidden && ctx.hidden[event.vessel]) switch (event.key) {
+    var veiled = event.hidden || !!(ctx.hidden && ctx.hidden[event.vessel]);
+    if (veiled) switch (event.key) {
       case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
       case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
       case "solid": if (event.colloid) return text("hidden.haze", lang, vars);
@@ -356,7 +357,7 @@
         vars.bin = text("bin." + event.bin, lang);
         if (event.spare) return text("say.disposedSpare", lang, vars);
         if (event.right) return text("say.disposed", lang, vars);
-        if (ctx.hidden && ctx.hidden[event.vessel]) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
+        if (veiled) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
         vars.want = text("bin." + event.want, lang);
         vars.why = text("why." + event.want, lang);
         return text("say.disposedWrong", lang, vars);

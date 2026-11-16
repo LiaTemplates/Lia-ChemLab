@@ -7705,6 +7705,19 @@ test("Unbekannte Probe: das Protokoll nennt beim Geruch keinen Stoff", () => {
   frames(30);
   assert.match(logOf(el), /Probe B: Es riecht stechend\./);
   assert.doesNotMatch(logOf(el), /Ammoniak/);
+  // auch nachdem die Probe weggeräumt ist: Der Eintrag merkt sich, dass sie verborgen war
+  assert.ok(L.logAt(state(el).run).filter((e) => e.vessel === "p").every((e) => e.hidden), "jeder Eintrag zur Probe ist als verborgen vermerkt");
+  let copied = null;
+  const saved = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+  Object.defineProperty(globalThis, "navigator", { value: { clipboard: { writeText: (t) => { copied = t; return Promise.resolve(); } } }, configurable: true });
+  try {
+    tap(el, "p");
+    press(el, "remove");
+    frames(2);
+    press(el, "copyLog");
+    assert.match(copied, /Probe B: Es riecht stechend\./);
+    assert.doesNotMatch(copied, /Ammoniak/, "die Kopie verrät die weggeräumte Probe nicht");
+  } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
 });
 
 test("Anzeigen sperren: ohne Volumen unter den Gefäßen und an der Bürette", () => {
@@ -7882,6 +7895,18 @@ test("Oberfläche: Protokoll als Text kopieren, alle Einträge bis zur Zeit des 
     press(el, "copyLog");
     assert.equal(copied, "0:00 Becherglas 1: entsorgt – Ausguss. Besser: Schwermetallsalze. Schwermetall-Ionen dürfen nicht ins Abwasser.");
     assert.match(part(el, ".cl-panel").innerHTML, /<textarea class="cl-copy" readonly[\s\S]*Protokoll als Text/);
+    // mehr als die 60 Einträge der Liste; zurückgespult nur, was bis dahin geschah
+    const run = state(el).run;
+    for (let i = 0; i < 70; i++) L.act(run, (l) => L.add(l, "b", "H2O", { ml: 0.05 }), { key: "added", vessel: "b", reagent: "H2O", ml: 0.05 });
+    frames(2);
+    press(el, "copyLog");
+    assert.equal(copied.split("\n").length, L.logAt(run).length);
+    assert.ok(copied.split("\n").length > 70, "alle Einträge, nicht nur die letzten 60");
+    L.seek(run, 0);
+    frames(1);
+    copied = null;
+    press(el, "copyLog");
+    assert.equal(copied, null, "am Anfang gibt es nichts zu kopieren");
   } finally { if (saved) Object.defineProperty(globalThis, "navigator", saved); else delete globalThis.navigator; }
 });
 

@@ -528,6 +528,7 @@
     function reset() {
       st.run = L.createRun(st.config);
       st.sel = null;
+      st.copyText = null;                                        // ein kopierter Text gehört zum alten Versuch
       st.play = 0; st.names = {}; st.counts = {}; st.types = {}; st.solved = false;
       pending = 0;
       status("");
