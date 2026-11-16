@@ -1091,7 +1091,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["3d", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "tools", "vendor"]);
+  assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
@@ -2556,6 +2556,51 @@ test("Zeichnung: Natrium als Kugel an der Oberfläche, Kalium mit violetter Flam
   assert.doesNotMatch(draw(cu, "s"), /cl-glow/);
   L.step(cu, 240);
   assert.match(draw(cu, "s"), /cl-glow/, "glüht");
+});
+
+test("Heiße Stellen bis zum letzten Rest: Natrium zündet nie, Lithium schmilzt nie, Kalium meldet das Ende seiner Flamme", () => {
+  for (const [id, tm] of [["Na piece", 97.8], ["Li piece", 180.5]]) {
+    const seen = [], l = onWater(id, 0, seen);
+    let most = 0, molten = false;
+    for (let t = 0; t < 200 && L.vessel(l, "b").lumps.length; t++) {
+      L.step(l, 0.25, (e) => seen.push(e));
+      const s = look(l).solids[0];
+      if (s) { most = Math.max(most, s.T); molten = molten || s.molten; }
+    }
+    assert.ok(most < 560, `${id}: höchstens ${most} °C`);
+    assert.ok(!seen.some((e) => e.key === "ignite"), `${id}: entzündet sich nicht`);
+    if (id === "Li piece") assert.equal(molten, false, "Lithium schmilzt nicht");
+  }
+  const seen = [];
+  L.register(alkali());
+  const two = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }] }], { room: 20 });
+  L.add(two, "b", "K piece", { g: 0.05 }); L.add(two, "b", "K piece", { g: 0.05 });
+  L.step(two, 20, (e) => seen.push(e));
+  assert.equal(seen.filter((e) => e.key === "ignite").length, 1, "eine Meldung für beide Stücke");
+  assert.equal(seen.filter((e) => e.key === "fireEnd" && e.species === "H2(g)").length, 1, "und das Ende der Flamme");
+  const hot = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }], { room: 20 });
+  L.add(hot, "b", "K piece", { g: 5 });
+  L.step(hot, 0.5);
+  assert.ok(look(hot).solids[0].T <= 1500, "nie heißer als 1500 °C");
+});
+
+test("Heiße Stellen: brennender Schwefel und brennende Holzkohle glühen nicht zusätzlich; knapp glühend fast noch in der eigenen Farbe", () => {
+  for (const reagent of ["sulfur", "charcoal"]) {
+    const l = lab([{ type: "dish", id: "s", contains: [{ reagent, g: 0.5 }] }, { type: "burner", under: "s", flame: 2 }], { room: 20 });
+    let burned = false;
+    for (let t = 0; t < 150; t++) {
+      L.step(l, 2);
+      const w = look(l, "s");
+      if (w.fire.length && w.solids[0]) { burned = true; assert.equal(w.solids[0].glow, null, reagent + " brennt mit eigenem Feuer"); }
+    }
+    assert.ok(burned, reagent + " brennt");
+  }
+  const draw = (T) => L.parts.dish.draw(Object.assign(look(lab([{ type: "dish", id: "s", contains: [{ reagent: "Cu sheet", g: 1 }] }]), "s"), { solids: [{ id: "Cu(s)", n: 0.01, part: 1, g0: 1, form: "grains", T, molten: false, float: false, glow: L.glowColor(T), flame: null, spatter: false }] }), ctx());
+  const faint = draw(530), bright = draw(1100);
+  assert.ok(+/cl-glow"[^>]*fill-opacity="([\d.]+)"/.exec(faint)[1] < 0.3, "knapp über 525 °C nur ein schwacher Schein");
+  assert.ok(+/cl-glow"[^>]*fill-opacity="([\d.]+)"/.exec(bright)[1] > 0.6, "heiß ein kräftiger");
+  const ball = (T) => L.parts.beaker.draw(Object.assign(look(lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }])), { solids: [{ id: "Cu(s)", n: 0.01, part: 1, g0: 1, form: "grains", T, molten: true, float: true, glow: L.glowColor(T), flame: null, spatter: false }] }), ctx());
+  assert.doesNotMatch(ball(530), /class="cl-solid cl-molten"[^>]*fill="rgb\(25[0-5],\d{1,2},0\)"/, "die Kugel wird nicht schlagartig knallrot");
 });
 
 test("Heiße Stellen: brennender Wasserstoff verbraucht Sauerstoff, die Masse bleibt; Kupfer glüht in der Flamme, kalt nicht", () => {

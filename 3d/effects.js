@@ -150,6 +150,15 @@
           pieces[index].push(ball);
           return;
         }
+        if (s.molten) {                  // geschmolzen am Boden: eine flache, glänzende Lache
+          ball = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10), fx.matte(color, 0.15, 0.9));
+          r = shape.inner(shape.floor + 0.05) * 0.6 * Math.sqrt(s.part);
+          ball.scale.set(r, 0.06, r);
+          ball.position.set(0, shape.floor + 0.04, 0);
+          solids.add(ball);
+          pieces[index].push(ball);
+          return;
+        }
         if (s.form === "strip") {        // Band im Zickzack, wird dünner, nicht kürzer
           count = Math.max(2, Math.min(14, Math.round(s.g0 / 0.0104)));
           path = new THREE.CurvePath();

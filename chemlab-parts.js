@@ -434,7 +434,7 @@
         x = mid + (s.molten && (s.spatter || s.flame) ? Math.sin(t * 2.3 + index) * 0.5 + Math.sin(t * 3.7 + 2 * index) * 0.35 : 0.2 * (pseudo(index + 1, 0) - 0.5)) * Math.max(0, width - 2 * r) * 0.5;
         y = surface - (s.molten ? r * 0.4 : r * 0.2);
         out += glowAt(s, x, y, r);
-        out += '<circle class="cl-solid' + (s.molten ? " cl-molten" : "") + '" cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(r) + '" fill="' + esc(s.glow ? css(s.glow.rgb) : color) + '" stroke-width="0.5"/>';
+        out += '<circle class="cl-solid' + (s.molten ? " cl-molten" : "") + '" cx="' + f(x) + '" cy="' + f(y) + '" r="' + f(r) + '" fill="' + esc(hotFill(s, color)) + '" stroke-width="0.5"/>';
         if (s.spatter) for (i = 0; i < 4; i++) {                // Spritzer: kleine Tropfen, die vom Metall aufsteigen und zurückfallen
           var q = (t * 1.7 + pseudo(index + 3, i)) % 1, dx = (pseudo(index + 5, i) - 0.5) * 16;
           out += '<circle class="cl-spatter" cx="' + f(x + dx * q) + '" cy="' + f(y - 14 * Math.sin(Math.PI * q)) + '" r="1.1"/>';
@@ -444,7 +444,7 @@
       }
       if (s.molten) {                                          // geschmolzen am Boden: eine flache Lache
         out += glowAt(s, mid, box.bottom - 2, width * 0.3);
-        out += '<ellipse class="cl-solid cl-molten" cx="' + f(mid) + '" cy="' + f(box.bottom - 2) + '" rx="' + f(width * 0.3 * Math.sqrt(s.part)) + '" ry="2.5" fill="' + esc(s.glow ? css(s.glow.rgb) : color) + '"/>';
+        out += '<ellipse class="cl-solid cl-molten" cx="' + f(mid) + '" cy="' + f(box.bottom - 2) + '" rx="' + f(width * 0.3 * Math.sqrt(s.part)) + '" ry="2.5" fill="' + esc(hotFill(s, color)) + '"/>';
         return;
       }
       out += glowAt(s, mid, box.bottom - 4, width * 0.3);
@@ -471,6 +471,13 @@
       }
     });
     return out;
+  }
+
+  // Farbe eines Stücks: seine eigene, mit wachsender Glut zunehmend in der Glühfarbe
+  function hotFill(s, color) {
+    var own = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color), k = s.glow ? 0.15 + 0.85 * s.glow.level : 0;
+    if (!s.glow || !own) return s.glow ? css(s.glow.rgb) : color;
+    return css([1, 2, 3].map(function (i, j) { return Math.round(parseInt(own[i], 16) * (1 - k) + s.glow.rgb[j] * k); }));
   }
 
   // Schein um ein glühendes Stück: in seiner Glühfarbe, umso deutlicher, je heißer es ist
