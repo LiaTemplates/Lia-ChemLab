@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Čep izleti!",
     "say.plungerOut": "{part}: Klip iskoči.",
     "say.suckBack": "{vessel}: Tekućina se usisava natrag kroz cijev.",
+    "say.spatter": "{vessel}: Prska!",
     "seen.popped": "Čep izleti",
     "seen.suckBack": "Tekućina se usisava natrag",
+    "seen.spatter": "Prska",
     "seen.plungerOut": "Klip iskoči",
     "seen.boil": "Tekućina vrije",
     "seen.smell": "Miris",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etil-acetat",
     "sulfuric acid conc": "sumporna kiselina, koncentrirana",
     "wine": "bijelo vino (12 % alkohola)",
-    "limewater": "vapnena voda (otopina kalcijeva hidroksida)"
+    "limewater": "vapnena voda (otopina kalcijeva hidroksida)",
+    "H2SO4(l)": "sumporna kiselina (čista)",
+    "H2SO4 conc": "koncentrirana sumporna kiselina"
   }
 }

@@ -739,7 +739,7 @@
       var sign = lab.vessels.map(function (v) { return v.id + ">" + v.over + (v.broken ? "!" : ""); }).concat(lab.tools.map(function (t) { return t.id + ">" + t.in + ">" + (t.to || ""); })).join("|");
       // was eben geschah und kurz zu sehen bleibt: der Span an der Öffnung, der Blitz einer Verpuffung
       st.run.log.slice(Math.max(0, st.run.frames[st.run.cursor].n - 8), st.run.frames[st.run.cursor].n).forEach(function (event) {
-        if ((event.key !== "splint" && event.key !== "pop" && event.key !== "popped") || !(now - event.t < SHOWN) || now < event.t) return;
+        if ((event.key !== "splint" && event.key !== "pop" && event.key !== "popped" && event.key !== "spatter") || !(now - event.t < SHOWN) || now < event.t) return;
         (marks[event.vessel] = marks[event.vessel] || []).push(Object.assign({ age: now - event.t }, event));
       });
       if (sign !== shape) {
@@ -1485,6 +1485,7 @@
         else if (event.key === "ignite") sound.shot("whoosh", 0);
         else if (event.key === "broken") sound.shot("crash", 0);
         else if (event.key === "popped" || event.key === "plungerOut") sound.shot("pop", 1);
+        else if (event.key === "spatter") sound.shot("hiss", 0);
       });
       heard = n;
     }

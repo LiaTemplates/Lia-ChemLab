@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Penyumbat tercabut!",
     "say.plungerOut": "{part}: Omboh tercabut keluar.",
     "say.suckBack": "{vessel}: Cecair tersedut balik melalui tiub.",
+    "say.spatter": "{vessel}: Ia memercik!",
     "seen.popped": "Penyumbat tercabut",
     "seen.suckBack": "Cecair tersedut balik",
+    "seen.spatter": "Ia memercik",
     "seen.plungerOut": "Omboh tercabut keluar",
     "seen.boil": "Cecair mendidih",
     "seen.smell": "Bau",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etil etanoat",
     "sulfuric acid conc": "asid sulfurik pekat",
     "wine": "wain putih (12 % alkohol)",
-    "limewater": "air kapur (larutan kalsium hidroksida)"
+    "limewater": "air kapur (larutan kalsium hidroksida)",
+    "H2SO4(l)": "asid sulfurik (tulen)",
+    "H2SO4 conc": "asid sulfurik pekat"
   }
 }

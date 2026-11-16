@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Korken spretter ut!",
     "say.plungerOut": "{part}: Stempelet spretter ut.",
     "say.suckBack": "{vessel}: Væske suges tilbake gjennom røret.",
+    "say.spatter": "{vessel}: Det spruter!",
     "seen.popped": "Korken spretter ut",
     "seen.suckBack": "Væske suges tilbake",
+    "seen.spatter": "Det spruter",
     "seen.plungerOut": "Stempelet spretter ut",
     "seen.boil": "Væsken koker",
     "seen.smell": "Lukt",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etylacetat",
     "sulfuric acid conc": "svovelsyre, konsentrert",
     "wine": "hvitvin (12 % alkohol)",
-    "limewater": "kalkvann (kalsiumhydroksidløsning)"
+    "limewater": "kalkvann (kalsiumhydroksidløsning)",
+    "H2SO4(l)": "svovelsyre (ren)",
+    "H2SO4 conc": "svovelsyre, konsentrert"
   }
 }

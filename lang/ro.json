@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Dopul sare!",
     "say.plungerOut": "{part}: Pistonul sare afară.",
     "say.suckBack": "{vessel}: Lichidul este aspirat înapoi prin tub.",
+    "say.spatter": "{vessel}: Stropește!",
     "seen.popped": "Dopul sare",
     "seen.suckBack": "Lichidul este aspirat înapoi",
+    "seen.spatter": "Stropește",
     "seen.plungerOut": "Pistonul sare afară",
     "seen.boil": "Lichidul fierbe",
     "seen.smell": "Miros",
@@ -636,6 +638,8 @@
     "ethyl acetate": "acetat de etil",
     "sulfuric acid conc": "acid sulfuric concentrat",
     "wine": "vin alb (12 % alcool)",
-    "limewater": "apă de var (soluție de hidroxid de calciu)"
+    "limewater": "apă de var (soluție de hidroxid de calciu)",
+    "H2SO4(l)": "acid sulfuric (pur)",
+    "H2SO4 conc": "acid sulfuric concentrat"
   }
 }

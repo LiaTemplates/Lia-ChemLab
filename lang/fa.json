@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: درپوش بیرون می‌پرد!",
     "say.plungerOut": "{part}: پیستون بیرون می‌پرد.",
     "say.suckBack": "{vessel}: مایع از لوله برمی‌گردد.",
+    "say.spatter": "{vessel}: پاشیده می‌شود!",
     "seen.popped": "درپوش بیرون می‌پرد",
     "seen.suckBack": "مایع برمی‌گردد",
+    "seen.spatter": "پاشیده می‌شود",
     "seen.plungerOut": "پیستون بیرون می‌پرد",
     "seen.boil": "مایع می‌جوشد",
     "seen.smell": "بو",
@@ -636,6 +638,8 @@
     "ethyl acetate": "اتیل استات",
     "sulfuric acid conc": "سولفوریک اسید غلیظ",
     "wine": "شراب سفید (12 % الکل)",
-    "limewater": "آب آهک (محلول کلسیم هیدروکسید)"
+    "limewater": "آب آهک (محلول کلسیم هیدروکسید)",
+    "H2SO4(l)": "سولفوریک اسید (خالص)",
+    "H2SO4 conc": "سولفوریک اسید غلیظ"
   }
 }

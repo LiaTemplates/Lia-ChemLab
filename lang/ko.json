@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: 마개가 튀어나온다!",
     "say.plungerOut": "{part}: 피스톤이 튀어나온다.",
     "say.suckBack": "{vessel}: 액체가 관을 따라 역류한다.",
+    "say.spatter": "{vessel}: 튄다!",
     "seen.popped": "마개가 튀어나온다",
     "seen.suckBack": "액체가 역류한다",
+    "seen.spatter": "튄다",
     "seen.plungerOut": "피스톤이 튀어나온다",
     "seen.boil": "액체가 끓음",
     "seen.smell": "냄새",
@@ -636,6 +638,8 @@
     "ethyl acetate": "아세트산 에틸",
     "sulfuric acid conc": "진한 황산",
     "wine": "백포도주(알코올 12 %)",
-    "limewater": "석회수 (수산화 칼슘 용액)"
+    "limewater": "석회수 (수산화 칼슘 용액)",
+    "H2SO4(l)": "황산 (순수)",
+    "H2SO4 conc": "진한 황산"
   }
 }

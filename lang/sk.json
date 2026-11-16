@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Zátka vyletí!",
     "say.plungerOut": "{part}: Piest vyskočí.",
     "say.suckBack": "{vessel}: Kvapalina sa nasáva späť trubicou.",
+    "say.spatter": "{vessel}: Strieka to!",
     "seen.popped": "Zátka vyletí",
     "seen.suckBack": "Kvapalina sa nasáva späť",
+    "seen.spatter": "Strieka to",
     "seen.plungerOut": "Piest vyskočí",
     "seen.boil": "Kvapalina vrie",
     "seen.smell": "Zápach",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etylacetát",
     "sulfuric acid conc": "kyselina sírová, koncentrovaná",
     "wine": "biele víno (12 % alkoholu)",
-    "limewater": "vápenná voda (roztok hydroxidu vápenatého)"
+    "limewater": "vápenná voda (roztok hydroxidu vápenatého)",
+    "H2SO4(l)": "kyselina sírová (čistá)",
+    "H2SO4 conc": "koncentrovaná kyselina sírová"
   }
 }

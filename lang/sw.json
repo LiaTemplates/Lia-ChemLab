@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Kizibo kinaruka nje!",
     "say.plungerOut": "{part}: Pistoni inaruka nje.",
     "say.suckBack": "{vessel}: Kimiminika kinavutwa nyuma kupitia mrija.",
+    "say.spatter": "{vessel}: Inarusha matone!",
     "seen.popped": "Kizibo kinaruka nje",
     "seen.suckBack": "Kimiminika kinavutwa nyuma",
+    "seen.spatter": "Inarusha matone",
     "seen.plungerOut": "Pistoni inaruka nje",
     "seen.boil": "Kioevu kinachemka",
     "seen.smell": "Harufu",
@@ -636,6 +638,8 @@
     "ethyl acetate": "ethili aseteti",
     "sulfuric acid conc": "asidi salfuriki, iliyokolea",
     "wine": "divai nyeupe (12 % alkoholi)",
-    "limewater": "maji ya chokaa (myeyusho wa hidroksidi ya kalsiamu)"
+    "limewater": "maji ya chokaa (myeyusho wa hidroksidi ya kalsiamu)",
+    "H2SO4(l)": "asidi sulfuriki (safi)",
+    "H2SO4 conc": "asidi sulfuriki kali"
   }
 }

@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Proppen flyger ut!",
     "say.plungerOut": "{part}: Kolven hoppar ut.",
     "say.suckBack": "{vessel}: Vätska sugs tillbaka genom röret.",
+    "say.spatter": "{vessel}: Det stänker!",
     "seen.popped": "Proppen flyger ut",
     "seen.suckBack": "Vätska sugs tillbaka",
+    "seen.spatter": "Det stänker",
     "seen.plungerOut": "Kolven hoppar ut",
     "seen.boil": "Vätskan kokar",
     "seen.smell": "Lukt",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etylacetat",
     "sulfuric acid conc": "svavelsyra, koncentrerad",
     "wine": "vitt vin (12 % alkohol)",
-    "limewater": "kalkvatten (kalciumhydroxidlösning)"
+    "limewater": "kalkvatten (kalciumhydroxidlösning)",
+    "H2SO4(l)": "svavelsyra (ren)",
+    "H2SO4 conc": "koncentrerad svavelsyra"
   }
 }

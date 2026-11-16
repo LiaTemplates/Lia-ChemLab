@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Kork lendab välja!",
     "say.plungerOut": "{part}: Kolb hüppab välja.",
     "say.suckBack": "{vessel}: Vedelik imetakse toru kaudu tagasi.",
+    "say.spatter": "{vessel}: Pritsib!",
     "seen.popped": "Kork lendab välja",
     "seen.suckBack": "Vedelik imetakse tagasi",
+    "seen.spatter": "Pritsib",
     "seen.plungerOut": "Kolb hüppab välja",
     "seen.boil": "Vedelik keeb",
     "seen.smell": "Lõhn",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etüülatsetaat",
     "sulfuric acid conc": "väävelhape, kontsentreeritud",
     "wine": "valge vein (12 % alkoholi)",
-    "limewater": "lubjavesi (kaltsiumhüdroksiidi lahus)"
+    "limewater": "lubjavesi (kaltsiumhüdroksiidi lahus)",
+    "H2SO4(l)": "väävelhape (puhas)",
+    "H2SO4 conc": "väävelhape, kontsentreeritud"
   }
 }

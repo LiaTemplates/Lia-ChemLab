@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Stopper no tu fi mu!",
     "say.plungerOut": "{part}: Piston no tu fi mu.",
     "say.suckBack": "{vessel}: Nsu san fa dua no mu ba.",
+    "say.spatter": "{vessel}: Ɛpete!",
     "seen.popped": "Stopper no tu fi mu",
     "seen.suckBack": "Nsu san ba",
+    "seen.spatter": "Ɛpete",
     "seen.plungerOut": "Piston no tu fi mu",
     "seen.boil": "Nsuo no huru",
     "seen.smell": "Hua",
@@ -636,6 +638,8 @@
     "ethyl acetate": "ethyl acetate",
     "sulfuric acid conc": "sulfuric acid, concentrated",
     "wine": "white wine (12 % alcohol)",
-    "limewater": "limewater (calcium hydroxide solution)"
+    "limewater": "limewater (calcium hydroxide solution)",
+    "H2SO4(l)": "sulfuric acid (pure)",
+    "H2SO4 conc": "sulfuric acid, concentrated"
   }
 }

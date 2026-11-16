@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Kamštis iššoka!",
     "say.plungerOut": "{part}: Stūmoklis iššoka.",
     "say.suckBack": "{vessel}: Skystis įsiurbiamas atgal vamzdeliu.",
+    "say.spatter": "{vessel}: Taško!",
     "seen.popped": "Kamštis iššoka",
     "seen.suckBack": "Skystis įsiurbiamas atgal",
+    "seen.spatter": "Taško",
     "seen.plungerOut": "Stūmoklis iššoka",
     "seen.boil": "Skystis verda",
     "seen.smell": "Kvapas",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etilacetatas",
     "sulfuric acid conc": "sieros rūgštis, koncentruota",
     "wine": "baltasis vynas (12 % alkoholio)",
-    "limewater": "kalkių vanduo (kalcio hidroksido tirpalas)"
+    "limewater": "kalkių vanduo (kalcio hidroksido tirpalas)",
+    "H2SO4(l)": "sieros rūgštis (gryna)",
+    "H2SO4 conc": "koncentruota sieros rūgštis"
   }
 }

@@ -1960,7 +1960,7 @@ const stress = (model, seeds) => {
           const ml = give.ml != null ? give.ml : (give.drops || 0) * 0.05;
           // Wasser nur so viel, wie neben den gelösten Stoffen Platz hat (Eigenvolumen Vm)
           const water = 1 - Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * (L.species(sp).Vm || 0) / 1000, 0);
-          added = r.solid ? give.g : ml * water * 0.997 + Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * ml / 1000 * L.species(sp).M, 0);
+          added = r.solid ? give.g : r.liquid ? ml * L.species(r.liquid).rho : ml * water * 0.997 + Object.entries(r.solution || {}).reduce((sum, [sp, c]) => sum + c * ml / 1000 * L.species(sp).M, 0);
         }
         trail.push(`${id} ${JSON.stringify(give)} → ${to}`);
       } else if (kind < 0.85) { const from = pick(ids), to = pick(ids), ml = +(rnd() * 25).toFixed(1); L.pour(l, from, to, ml); trail.push(`gieße ${ml} mL ${from} → ${to}`); }
@@ -1977,7 +1977,9 @@ const stress = (model, seeds) => {
         near(charge, 0, 1e-9, `Ladung in ${v.id} (${where})`);
         for (const piece of v.lumps) lumps[piece.id] = (lumps[piece.id] || 0) + piece.n;
         for (const [id, n] of Object.entries(lumps)) near(n, v.n[id] || 0, 1e-12 + 1e-9 * n, `Feststoff ${id} in ${v.id} (${where})`);
-        assert.ok(v.T >= 0 && v.T <= 100.001, `Temperatur ${v.T} (${where})`);
+        // Wasser begrenzt auf 100 °C; konzentrierte Schwefelsäure mit wenig Wasser darf heißer werden (sie siedet erst bei 337 °C)
+        const acid = v.n["H2SO4(l)"] > 0 || !(v.n["H2O(l)"] > 1e-3);
+        assert.ok(v.T >= 0 && v.T <= (acid ? 337 : 100.001), `Temperatur ${v.T} (${where})`);
         const pH = L.view(l, v).pH;
         assert.ok(pH == null || (pH > -1.5 && pH < 15.5), `pH ${pH} in ${v.id} (${where})`);
       }
@@ -2764,6 +2766,26 @@ test("Stopfen an der Fläche: aufsetzen, herausfliegen, Protokoll; Zeichnung und
   assert.equal(L.say({ key: "suckBack", vessel: "t", from: "z" }, c), "Reagenzglas 1: Flüssigkeit steigt durch das Rohr zurück.");
   assert.equal(L.say({ key: "plungerOut", part: "kp", vessel: "t" }, c), "Kolbenprober 1: Der Kolben springt heraus.");
   assert.equal(L.goalText({ seen: "popped" }, "de"), "Der Stopfen fliegt heraus");
+});
+
+test("Erst das Wasser, dann die Säure: Wasser in konzentrierte Schwefelsäure spritzt, Säure in Wasser wird nur heiß", () => {
+  const mix = (first, ml, then) => {
+    const seen = [], l = lab([{ type: "beaker", id: "b", ml: 100, contains: [{ reagent: first, ml }] }, { type: "thermometer", id: "th", in: "b" }], { room: 20 });
+    const start = totals(l).mass;
+    L.add(l, "b", then, { ml: 5 });
+    L.step(l, 20, (e) => seen.push(e));
+    return { l, seen, start, spat: seen.some((e) => e.key === "spatter" && e.vessel === "b") };
+  };
+  const wrong = mix("H2SO4 conc", 20, "H2O"), right = mix("H2O", 50, "H2SO4 conc");
+  assert.ok(wrong.spat, "Wasser in Säure: es spritzt");
+  assert.ok(L.volume(L.vessel(wrong.l, "b")) * 1000 < 24.5, `und es fliegt etwas heraus: ${L.volume(L.vessel(wrong.l, "b")) * 1000} mL übrig`);
+  near(totals(wrong.l).mass, wrong.start + 5 * 0.997, 0.05, "was herausfliegt, zählt weiter mit");
+  assert.ok(!right.spat, "Säure in Wasser: es spritzt nicht");
+  assert.ok(L.reading(right.l, "th").value > 35, `aber es wird heiß: ${L.reading(right.l, "th").value} °C`);
+  assert.ok(amount(right.l, "H2SO4(l)") < 1e-6, "die Säure hat sich gelöst");
+  const c = { lang: "de", numbers: true, names: { b: "Becherglas 1" } };
+  assert.equal(L.say(wrong.seen.find((e) => e.key === "spatter"), c), "Becherglas 1: Es spritzt!");
+  assert.equal(L.goalText({ seen: "spatter" }, "de"), "Es spritzt");
 });
 
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
@@ -8076,6 +8098,17 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   L.setFlame(l, burner.id, 0);
   L.step(l, 120, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
+});
+
+test("README: die Folie „Erst das Wasser, dann die Säure“ hält, was ihr Text verspricht", () => {
+  const [both] = slide("Erst das Wasser, dann die Säure").map((b) => L.normalize(b));
+  const l = L.createLab(both), seen = [], [acid, water] = both.bench.filter((p) => p.type === "beaker").map((p) => p.id);
+  L.add(l, acid, "H2O", { ml: 5 });
+  L.add(l, water, "H2SO4 conc", { ml: 5 });
+  L.step(l, 20, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "spatter" && e.vessel === acid), "Wasser in die Säure: es spritzt");
+  assert.ok(!seen.some((e) => e.key === "spatter" && e.vessel === water), "Säure ins Wasser: nicht");
+  assert.ok(L.vessel(l, water).T > 35, "aber es wird heiß");
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

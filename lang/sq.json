@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Tapa fluturon jashtë!",
     "say.plungerOut": "{part}: Pistoni kërcen jashtë.",
     "say.suckBack": "{vessel}: Lëngu thithet mbrapsht nëpër tub.",
+    "say.spatter": "{vessel}: Spërkat!",
     "seen.popped": "Tapa fluturon jashtë",
     "seen.suckBack": "Lëngu thithet mbrapsht",
+    "seen.spatter": "Spërkat",
     "seen.plungerOut": "Pistoni kërcen jashtë",
     "seen.boil": "Lëngu vlon",
     "seen.smell": "Erë",
@@ -636,6 +638,8 @@
     "ethyl acetate": "acetat etili",
     "sulfuric acid conc": "acid sulfurik, i përqendruar",
     "wine": "verë e bardhë (12 % alkool)",
-    "limewater": "ujë gëlqereje (tretësirë e hidroksidit të kalciumit)"
+    "limewater": "ujë gëlqereje (tretësirë e hidroksidit të kalciumit)",
+    "H2SO4(l)": "acid sulfurik (i pastër)",
+    "H2SO4 conc": "acid sulfurik i përqendruar"
   }
 }

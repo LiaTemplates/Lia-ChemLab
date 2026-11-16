@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Korek wylatuje!",
     "say.plungerOut": "{part}: Tłok wyskakuje.",
     "say.suckBack": "{vessel}: Ciecz cofa się przez rurkę.",
+    "say.spatter": "{vessel}: Pryska!",
     "seen.popped": "Korek wylatuje",
     "seen.suckBack": "Ciecz się cofa",
+    "seen.spatter": "Pryska",
     "seen.plungerOut": "Tłok wyskakuje",
     "seen.boil": "Ciecz wrze",
     "seen.smell": "Zapach",
@@ -636,6 +638,8 @@
     "ethyl acetate": "octan etylu",
     "sulfuric acid conc": "kwas siarkowy(VI), stężony",
     "wine": "białe wino (12 % alkoholu)",
-    "limewater": "woda wapienna (roztwór wodorotlenku wapnia)"
+    "limewater": "woda wapienna (roztwór wodorotlenku wapnia)",
+    "H2SO4(l)": "kwas siarkowy (czysty)",
+    "H2SO4 conc": "stężony kwas siarkowy"
   }
 }

@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: El tap surt disparat!",
     "say.plungerOut": "{part}: L'èmbol salta.",
     "say.suckBack": "{vessel}: El líquid retrocedeix pel tub.",
+    "say.spatter": "{vessel}: Esquitxa!",
     "seen.popped": "El tap surt disparat",
     "seen.suckBack": "El líquid retrocedeix",
+    "seen.spatter": "Esquitxa",
     "seen.plungerOut": "L'èmbol salta",
     "seen.boil": "El líquid bull",
     "seen.smell": "Olor",
@@ -636,6 +638,8 @@
     "ethyl acetate": "acetat d'etil",
     "sulfuric acid conc": "àcid sulfúric concentrat",
     "wine": "vi blanc (12 % d'alcohol)",
-    "limewater": "aigua de calç (solució d'hidròxid de calci)"
+    "limewater": "aigua de calç (solució d'hidròxid de calci)",
+    "H2SO4(l)": "àcid sulfúric (pur)",
+    "H2SO4 conc": "àcid sulfúric concentrat"
   }
 }

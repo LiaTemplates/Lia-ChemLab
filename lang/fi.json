@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Tulppa lentää irti!",
     "say.plungerOut": "{part}: Mäntä ponnahtaa ulos.",
     "say.suckBack": "{vessel}: Nestettä imeytyy takaisin putkea pitkin.",
+    "say.spatter": "{vessel}: Roiskuu!",
     "seen.popped": "Tulppa lentää irti",
     "seen.suckBack": "Nestettä imeytyy takaisin",
+    "seen.spatter": "Roiskuu",
     "seen.plungerOut": "Mäntä ponnahtaa ulos",
     "seen.boil": "Neste kiehuu",
     "seen.smell": "Haju",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etyyliasetaatti",
     "sulfuric acid conc": "rikkihappo, väkevä",
     "wine": "valkoviini (12 % alkoholia)",
-    "limewater": "kalkkivesi (kalsiumhydroksidiliuos)"
+    "limewater": "kalkkivesi (kalsiumhydroksidiliuos)",
+    "H2SO4(l)": "rikkihappo (puhdas)",
+    "H2SO4 conc": "väkevä rikkihappo"
   }
 }

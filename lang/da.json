@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Proppen skyder ud!",
     "say.plungerOut": "{part}: Stemplet springer ud.",
     "say.suckBack": "{vessel}: Væske suges tilbage gennem røret.",
+    "say.spatter": "{vessel}: Det sprøjter!",
     "seen.popped": "Proppen skyder ud",
     "seen.suckBack": "Væske suges tilbage",
+    "seen.spatter": "Det sprøjter",
     "seen.plungerOut": "Stemplet springer ud",
     "seen.boil": "Væsken koger",
     "seen.smell": "Lugt",
@@ -636,6 +638,8 @@
     "ethyl acetate": "ethylacetat",
     "sulfuric acid conc": "svovlsyre, koncentreret",
     "wine": "hvidvin (12 % alkohol)",
-    "limewater": "kalkvand (calciumhydroxidopløsning)"
+    "limewater": "kalkvand (calciumhydroxidopløsning)",
+    "H2SO4(l)": "svovlsyre (ren)",
+    "H2SO4 conc": "svovlsyre, koncentreret"
   }
 }

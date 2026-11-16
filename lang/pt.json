@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: A rolha salta!",
     "say.plungerOut": "{part}: O êmbolo salta.",
     "say.suckBack": "{vessel}: O líquido recua pelo tubo.",
+    "say.spatter": "{vessel}: Salpica!",
     "seen.popped": "A rolha salta",
     "seen.suckBack": "O líquido recua",
+    "seen.spatter": "Salpica",
     "seen.plungerOut": "O êmbolo salta",
     "seen.boil": "O líquido ferve",
     "seen.smell": "Cheiro",
@@ -636,6 +638,8 @@
     "ethyl acetate": "acetato de etilo",
     "sulfuric acid conc": "ácido sulfúrico concentrado",
     "wine": "vinho branco (12 % de álcool)",
-    "limewater": "água de cal (solução de hidróxido de cálcio)"
+    "limewater": "água de cal (solução de hidróxido de cálcio)",
+    "H2SO4(l)": "ácido sulfúrico (puro)",
+    "H2SO4 conc": "ácido sulfúrico concentrado"
   }
 }

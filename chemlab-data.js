@@ -64,6 +64,9 @@
     species: {
       // ---------------------------------------------------------------- Wasser und seine Ionen
       "H2O(l)": { name: name("water"), Hf: -285.830, S: 69.95, cp: 75.3, rho: 0.997, src: CODATA + TABLE },
+      // konzentrierte Schwefelsäure als reiner Stoff: Mit Wasser löst sie sich sofort, und dabei wird viel Wärme frei
+      "H2SO4(l)": { name: name("sulfuric acid (pure)"), Hf: -813.989, S: 156.904, cp: 138.9, rho: 1.8302,
+        src: CODATA + "; heat capacity 138.9 J/(mol K): NIST Chemistry WebBook; density 1.8302 g/cm³: usual table value" },
       "H2O(g)": { name: name("water vapour"), Hf: -241.826, S: 188.835, cp: 33.6, src: CODATA + TABLE },
       "H+(aq)": { name: name("hydrogen ion"), Hf: 0, S: 0, D: 9.31, src: CODATA + DW },
       "OH-(aq)": { name: name("hydroxide ion"), Hf: -230.015, S: -10.90, D: 5.27, src: CODATA + DW },
@@ -445,6 +448,10 @@
       // Redoxreaktionen zwischen gelösten Teilchen: sie laufen sofort ab (fast), in der Schreibweise für saure Lösung.
       // Mit logK nur bis zum Gleichgewicht: Wo Iodid nur in Spuren vorliegt (neben Silberiodid), bleibt die Reaktion aus.
       {
+        eq: "H2SO4(l) -> H+(aq) + HSO4-(aq)", rate: { fast: true, needs: { "H2O(l)": 1 } },
+        src: "dissolving of sulfuric acid in water; the heat follows from the enthalpies of formation (about −73 kJ/mol)"
+      },
+      {
         eq: "MnO4-(aq) + 5 Fe^2+(aq) + 8 H+(aq) -> Mn^2+(aq) + 5 Fe^3+(aq) + 4 H2O(l)", rate: { fast: true },
         src: "textbook value: permanganate oxidises iron(II) in acidic solution instantly and completely (basis of permanganometry)"
       },
@@ -520,6 +527,7 @@
 
       "HCl": { name: name("hydrochloric acid"), solution: { "H+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "acid" },
       "H2SO4": { name: name("sulfuric acid"), solution: { "H+(aq)": 1, "HSO4-(aq)": 1 }, molar: true, group: "acid" },
+      "H2SO4 conc": { name: name("sulfuric acid, concentrated"), liquid: "H2SO4(l)", group: "acid" },
       "CH3COOH": { name: name("acetic acid"), solution: { "CH3COOH(aq)": 1 }, molar: true, group: "acid" },
       "NaOH": { name: name("sodium hydroxide solution"), solution: { "Na+(aq)": 1, "OH-(aq)": 1 }, molar: true, group: "acid" },
       "NH3": { name: name("ammonia solution"), solution: { "NH3(aq)": 1 }, molar: true, group: "acid" },

@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Pléascann an stopallán amach!",
     "say.plungerOut": "{part}: Léimeann an loine amach.",
     "say.suckBack": "{vessel}: Súitear leacht ar ais tríd an bhfeadán.",
+    "say.spatter": "{vessel}: Spréachann sé!",
     "seen.popped": "Pléascann an stopallán amach",
     "seen.suckBack": "Súitear leacht ar ais",
+    "seen.spatter": "Spréachann sé",
     "seen.plungerOut": "Léimeann an loine amach",
     "seen.boil": "Fiuchann an leacht",
     "seen.smell": "Boladh",
@@ -636,6 +638,8 @@
     "ethyl acetate": "aicéatáit eitile",
     "sulfuric acid conc": "aigéad sulfarach, tiubhaithe",
     "wine": "fíon bán (12 % alcóil)",
-    "limewater": "uisce aoil (tuaslagán hiodrocsaíde cailciam)"
+    "limewater": "uisce aoil (tuaslagán hiodrocsaíde cailciam)",
+    "H2SO4(l)": "aigéad sulfarach (íon)",
+    "H2SO4 conc": "aigéad sulfarach tiubhaithe"
   }
 }

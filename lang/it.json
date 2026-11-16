@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Il tappo salta via!",
     "say.plungerOut": "{part}: Lo stantuffo salta fuori.",
     "say.suckBack": "{vessel}: Il liquido risale nel tubo.",
+    "say.spatter": "{vessel}: Schizza!",
     "seen.popped": "Il tappo salta via",
     "seen.suckBack": "Il liquido risale",
+    "seen.spatter": "Schizza",
     "seen.plungerOut": "Lo stantuffo salta fuori",
     "seen.boil": "Il liquido bolle",
     "seen.smell": "Odore",
@@ -636,6 +638,8 @@
     "ethyl acetate": "acetato di etile",
     "sulfuric acid conc": "acido solforico concentrato",
     "wine": "vino bianco (12 % di alcol)",
-    "limewater": "acqua di calce (soluzione di idrossido di calcio)"
+    "limewater": "acqua di calce (soluzione di idrossido di calcio)",
+    "H2SO4(l)": "acido solforico (puro)",
+    "H2SO4 conc": "acido solforico concentrato"
   }
 }

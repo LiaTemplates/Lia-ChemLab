@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Tapoia ateratzen da!",
     "say.plungerOut": "{part}: Enboloa irteten da.",
     "say.suckBack": "{vessel}: Likidoa hoditik itzultzen da.",
+    "say.spatter": "{vessel}: Zipriztintzen du!",
     "seen.popped": "Tapoia ateratzen da",
     "seen.suckBack": "Likidoa itzultzen da",
+    "seen.spatter": "Zipriztintzen du",
     "seen.plungerOut": "Enboloa irteten da",
     "seen.boil": "Likidoa irakiten ari da",
     "seen.smell": "Usaina",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etil azetatoa",
     "sulfuric acid conc": "azido sulfuriko kontzentratua",
     "wine": "ardo zuria (% 12 alkohol)",
-    "limewater": "kare-ura (kaltzio hidroxidoaren disoluzioa)"
+    "limewater": "kare-ura (kaltzio hidroxidoaren disoluzioa)",
+    "H2SO4(l)": "azido sulfurikoa (garbia)",
+    "H2SO4 conc": "azido sulfuriko kontzentratua"
   }
 }

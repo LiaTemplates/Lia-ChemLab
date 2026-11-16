@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: De stop vliegt eruit!",
     "say.plungerOut": "{part}: De zuiger schiet eruit.",
     "say.suckBack": "{vessel}: Vloeistof wordt door de buis teruggezogen.",
+    "say.spatter": "{vessel}: Het spat!",
     "seen.popped": "De stop vliegt eruit",
     "seen.suckBack": "Vloeistof wordt teruggezogen",
+    "seen.spatter": "Het spat",
     "seen.plungerOut": "De zuiger schiet eruit",
     "seen.boil": "De vloeistof kookt",
     "seen.smell": "Geur",
@@ -636,6 +638,8 @@
     "ethyl acetate": "ethylacetaat",
     "sulfuric acid conc": "zwavelzuur, geconcentreerd",
     "wine": "witte wijn (12 % alcohol)",
-    "limewater": "kalkwater (calciumhydroxide-oplossing)"
+    "limewater": "kalkwater (calciumhydroxide-oplossing)",
+    "H2SO4(l)": "zwavelzuur (zuiver)",
+    "H2SO4 conc": "geconcentreerd zwavelzuur"
   }
 }

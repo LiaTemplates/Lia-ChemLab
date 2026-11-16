@@ -419,8 +419,10 @@
     "say.popped": "{vessel} : Le bouchon saute !",
     "say.plungerOut": "{part} : Le piston saute.",
     "say.suckBack": "{vessel} : Du liquide remonte par le tube.",
+    "say.spatter": "{vessel} : Ça projette !",
     "seen.popped": "Le bouchon saute",
     "seen.suckBack": "Le liquide remonte",
+    "seen.spatter": "Projections",
     "seen.plungerOut": "Le piston saute",
     "seen.boil": "Le liquide bout",
     "seen.smell": "Odeur",
@@ -636,6 +638,8 @@
     "ethyl acetate": "éthanoate d'éthyle",
     "sulfuric acid conc": "acide sulfurique concentré",
     "wine": "vin blanc (12 % d'alcool)",
-    "limewater": "eau de chaux (solution d'hydroxyde de calcium)"
+    "limewater": "eau de chaux (solution d'hydroxyde de calcium)",
+    "H2SO4(l)": "acide sulfurique (pur)",
+    "H2SO4 conc": "acide sulfurique concentré"
   }
 }

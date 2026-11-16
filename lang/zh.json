@@ -419,8 +419,10 @@
     "say.popped": "{vessel}：塞子冲了出来！",
     "say.plungerOut": "{part}：活塞弹了出来。",
     "say.suckBack": "{vessel}：液体沿导管倒吸回来。",
+    "say.spatter": "{vessel}：溅出来了！",
     "seen.popped": "塞子冲出",
     "seen.suckBack": "液体倒吸",
+    "seen.spatter": "溅出",
     "seen.plungerOut": "活塞弹出",
     "seen.boil": "液体沸腾",
     "seen.smell": "气味",
@@ -636,6 +638,8 @@
     "ethyl acetate": "乙酸乙酯",
     "sulfuric acid conc": "浓硫酸",
     "wine": "白葡萄酒（酒精度 12 %）",
-    "limewater": "石灰水（氢氧化钙溶液）"
+    "limewater": "石灰水（氢氧化钙溶液）",
+    "H2SO4(l)": "硫酸（纯）",
+    "H2SO4 conc": "浓硫酸"
   }
 }

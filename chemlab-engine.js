@@ -29,7 +29,8 @@
   var SPATTER = 30;               // W/cm²: so viel Reaktionswärme an geschmolzenem Metall, dass es spritzt (geschätzt)
   var POP = 1.5;                  // bar: so viel hält ein Gummistopfen (geschätzt)
   var CRACK = 200;                // °C: trifft kalte Flüssigkeit auf ein heißeres Glas, zerspringt es (geschätzt)
-  var HOT_MAX = 1500;             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
+  var HOT_MAX = 1500;
+  var SINK = 10;                  // eine schwerere Zugabe sinkt durch und mischt sich mit zehnmal so viel vom Inhalt wie eine leichtere (geschätzt)             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
   var FIZZ = 1.5;             // s: so schnell perlt aus, was über dem Luftdruck gelöst ist
   var CRUST = 25;             // mol/L: dichter wird eine Lösung nicht, dann ist sie eingedampft
   var SMELL = 0.005;          // bar: ab diesem Druck riecht man ein Gas
@@ -607,7 +608,7 @@
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
   var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g" };
-  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
   function readTask(raw, bench) {
@@ -912,6 +913,34 @@
     after = heatCapacity(v);
     if (after > before) v.T = (before * v.T + (after - before) * T) / after;
     v.dirty = true;
+  }
+
+  // Zugeben mit örtlicher Mischwärme: Die Portion mischt sich zuerst nur mit einem Teil des Inhalts, so viel wie sie selbst, oder,
+  // ist sie schwerer und sinkt durch, mit SINK-mal so viel. Gerechnet wird diese Mischzone für sich: Wird sie heißer als der Siedepunkt,
+  // spritzt es, und ein Teil der Flüssigkeit fliegt aus dem Gefäß (nach out). Die Wärme selbst bucht wie immer das ganze Gefäß.
+  function splash(lab, v, r, ml, emit) {
+    var amounts = portion(r, { ml: ml }), vol = volume(v) * 1000, mass = 0, own = 0, id, s, zone, share, tmp, w, C = 0, T, k;
+    putReagent(lab, v, r, { ml: ml });
+    if (!(vol > 0.05)) return;
+    for (id in amounts) mass += amounts[id] * L.db.species[id].M;
+    for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && !amounts[id]) own += v.n[id] * s.M; }
+    zone = Math.min(vol, ml * (mass / ml > own / vol ? SINK : 1));
+    share = zone / (vol + ml);
+    tmp = createLab({ room: lab.room, model: lab.model, bench: [{ type: "beaker", id: "z", size: 600, contains: [] }] });
+    w = vessel(tmp, "z");
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") w.n[id] = v.n[id] * share; }
+    for (id in amounts) w.n[id] = (w.n[id] || 0) + amounts[id] * (1 - share);      // die Portion selbst ganz in der Zone
+    w.T = v.T; w.dirty = true;
+    equilibrate(tmp, w);
+    kinetics(w, null, false);
+    for (id in w.n) C += w.n[id] * L.db.species[id].cp;
+    T = w.T + (C > 0 ? w.q / C : 0);
+    if (!(T > BOIL)) return;
+    k = Math.min(1, (T - BOIL) / 100) * 0.5 * (zone + ml) / (volume(v) * 1000);      // so viel der Flüssigkeit fliegt heraus
+    for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && v.n[id] > 0) { v.out[id] = (v.out[id] || 0) + v.n[id] * k; v.n[id] *= 1 - k; } }
+    v.dirty = true;
+    if (!(lab.t - (v.flag.spat == null ? -9 : v.flag.spat) < 1) && emit) emit({ key: "spatter", vessel: v.id });
+    v.flag.spat = lab.t;
   }
 
   function putReagent(lab, v, r, a) {
@@ -1946,7 +1975,9 @@
   }
 
   function limit(v, r) {          // größter möglicher Umsatz in mol
-    var most = Infinity;
+    var most = Infinity, id;
+    // needs: was da sein muss, ohne verbraucht zu werden (Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt)
+    if (r.rate.needs) for (id in r.rate.needs) most = Math.min(most, (v.n[id] || 0) / r.rate.needs[id]);
     r.left.forEach(function (t) {
       if (AIR[t.id] && !(v.n[t.id] > 0)) return;               // kommt aus der Luft und geht nicht aus
       most = Math.min(most, (v.n[t.id] || 0) / t.n);
@@ -2605,7 +2636,7 @@
     return ml;
   }
 
-  function flow(lab) {
+  function flow(lab, emit) {
     lab.flows = lab.flows.filter(function (f) {
       var to = vessel(lab, f.to), from, dv = Math.min(f.left, f.rate * DT);
       if (!to) return false;
@@ -2613,7 +2644,7 @@
         from = vessel(lab, f.from);
         dv = from ? transfer(from, to, dv) : 0;
         if (!(dv > 0)) return false;
-      } else putReagent(lab, to, reagent(f.reagent), { ml: dv });
+      } else splash(lab, to, reagent(f.reagent), dv, emit);
       f.left -= dv;
       return f.left > 1e-9;
     });
@@ -3354,7 +3385,7 @@
   function tick(lab, emit) {
     lab.tick++;
     lab.t = lab.tick / TICKS;
-    if (lab.flows.length) flow(lab);
+    if (lab.flows.length) flow(lab, emit);
     drip(lab, emit);
     lab.vessels.forEach(function (v) { v.rate = {}; v.q = 0; v.boil = 0; v.eg = 0; });      // q: Reaktionswärme dieses Schritts in J
     electro(lab, emit);

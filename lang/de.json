@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Der Stopfen fliegt heraus!",
     "say.plungerOut": "{part}: Der Kolben springt heraus.",
     "say.suckBack": "{vessel}: Flüssigkeit steigt durch das Rohr zurück.",
+    "say.spatter": "{vessel}: Es spritzt!",
     "seen.popped": "Der Stopfen fliegt heraus",
     "seen.suckBack": "Flüssigkeit steigt zurück",
+    "seen.spatter": "Es spritzt",
     "seen.plungerOut": "Der Kolben springt heraus",
     "seen.boil": "Die Flüssigkeit siedet",
     "seen.smell": "Geruch",
@@ -636,6 +638,8 @@
     "ethyl acetate": "Ethylacetat",
     "sulfuric acid conc": "Schwefelsäure, konzentriert",
     "wine": "Weißwein (12 % Alkohol)",
-    "limewater": "Kalkwasser (Calciumhydroxid-Lösung)"
+    "limewater": "Kalkwasser (Calciumhydroxid-Lösung)",
+    "H2SO4(l)": "Schwefelsäure (rein)",
+    "H2SO4 conc": "Schwefelsäure, konzentriert"
   }
 }

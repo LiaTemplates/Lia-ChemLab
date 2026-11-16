@@ -395,6 +395,21 @@ Hier siedet Wasser, und der Dampf geht durch das Rohr ins Kalkwasser. Den Brenne
  "show":{"charts":["T"]}}
 ```
 
+## Erst das Wasser, dann die Säure
+
+Konzentrierte Schwefelsäure setzt beim Verdünnen viel Wärme frei. Links stehen 20 mL Säure: 5 mL Wasser hineingeben. Das Wasser ist leichter und bleibt oben, die Wärme bleibt in der dünnen Schicht, wo beide sich treffen, und dort siedet es: Es spritzt, und ein Teil der Säure fliegt aus dem Glas. Rechts stehen 50 mL Wasser: 5 mL Säure hineingeben. Die Säure ist schwerer, sinkt durch und mischt sich mit viel Wasser; das Glas wird heiß, aber es spritzt nicht. Deshalb gilt: erst das Wasser, dann die Säure.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"saeure","contains":[{"reagent":"H2SO4 conc","ml":20}]},
+  {"type":"thermometer","in":"saeure"},
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"thermometer","in":"wasser"}
+ ],
+ "shelf":["H2O","H2SO4 conc","beaker"],
+ "show":{"charts":["T"]}}
+```
+
 ## Massenerhaltung
 
 Beide Bechergläser stehen auf einer **Waage**. In beide Gläser je 0,3 g Marmor geben. Links entweicht das Kohlenstoffdioxid, und die Waage zeigt immer weniger an. Rechts fängt der Kolbenprober das Gas auf, und die Masse bleibt gleich. Bei der Reaktion geht keine Masse verloren; aus dem offenen Glas entweicht nur ein Teil der Stoffe. Mit mehr als etwa 0,4 g Marmor wird der Kolbenprober voll, und sein Kolben springt heraus: Dann entweicht auch rechts das Gas, auch das, was schon im Kolbenprober war.
@@ -1185,6 +1200,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 |---|---|---|
 | `H2O` | destilliertes Wasser | `ml` |
 | `HCl`, `H2SO4`, `CH3COOH` | Salzsäure, Schwefelsäure, Essigsäure | `ml` |
+| `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻, soweit Wasser da ist, und setzt dabei etwa 73 kJ/mol frei | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
 | `NaCl`, `KBr`, `KI` | Natriumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
@@ -1278,6 +1294,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `fire` | Aussehen des Feuers: `color` Farbe der Flamme, `glare` wie grell (0 bis 1), `smoke` Farbe des Rauchs, `glow: true` für Glut statt Flamme, `T` Flammentemperatur in °C (Vorgabe 800) |
 | `rate.dry` | `true`: läuft nur ohne Flüssigkeit, zum Beispiel das Entwässern eines Kristallhydrats |
 | `rate.fast` | `true`: läuft in Lösung sofort ab, bis einer der Ausgangsstoffe verbraucht ist, zum Beispiel Iod mit Thiosulfat. Braucht kein `k`. |
+| `rate.needs` | Nur mit `rate.fast`: Stoffe, die da sein müssen, ohne verbraucht zu werden, mit der Menge je Formelumsatz, etwa `{"H2O(l)":1}`: Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt. |
 | `logK` | Nur mit `rate.fast`: Die Reaktion läuft bis zu diesem Gleichgewicht (mit Konzentrationen in mol/L; Feststoffe, Wasser und Gase zählen 1) und nicht weiter. Der Wert gilt bei jeder Temperatur. Ohne die Angabe läuft sie vollständig ab. Die Rückreaktion wird nicht gerechnet. |
 | `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
@@ -1395,6 +1412,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Gasraum:** Entstandenes Gas steht zuerst über der Flüssigkeit. Was dort keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest: Wasserstoff in etwa 8 s, Sauerstoff in 40 s, Kohlenstoffdioxid in 90 s. Im Diagramm der Stoffmengen zählt das entwichene Gas weiter mit.
 - **Indikatorpapier:** Sein Wasserfilm steht mit jedem Gas im Gleichgewicht, das ein Lösungsgleichgewicht hat (Ammoniak, Chlorwasserstoff, Kohlenstoffdioxid, Schwefeldioxid): mit dem Teildruck im Gasraum oder, wenn er höher ist, mit dem Druck, den das Gas über der Lösung hätte. Unter 10 ppm (1·10⁻⁵ bar) erreicht ein Gas das Papier nicht merklich; so färbt verdünnte Salzsäure es nicht, konzentrierte schon, und über Ammoniumchlorid ohne Lauge bleibt es grün. Gerechnet wird wie in 10 mL Wasser mit drei Tropfen Universalindikator bei Raumtemperatur; von dort kommen pH-Wert und Farbe. Die Nachweisgrenze ist geschätzt.
 - **Alkalimetalle** (Paket): Sie reagieren mit Wasser nach einem Geschwindigkeitsgesetz mit ihrer Oberfläche, wie Magnesium in Säure. Die Konstanten sind geschätzt, nach der Zeit, in der ein Stückchen im Schulversuch verbraucht ist; die Wärme folgt aus den Bildungsenthalpien.
+- **Mischwärme beim Zugeben:** Was aus dem Regal zugegeben wird, mischt sich zuerst nur mit einem Teil des Inhalts: so viel, wie es selbst ist, oder, wenn es schwerer ist und durchsinkt, mit zehnmal so viel. Für diese Mischzone rechnet der Baustein Gleichgewichte und sofortige Reaktionen für sich. Wird sie heißer als der Siedepunkt des Wassers, spritzt es, und ein Teil der Flüssigkeit fliegt aus dem Gefäß, umso mehr, je heißer. Die Wärme selbst bucht wie immer das ganze Gefäß. Der Faktor zehn ist geschätzt.
 - **Heiße Stellen:** Jedes Stück aus dem Regal hat seine eigene Temperatur. Die Reaktionen an seiner Oberfläche heizen es; es gibt die Wärme an das Wasser ab (0,35 W/(cm² K)) oder, trocken, an die Luft (0,002 W/(cm² K)) und durch Strahlung (Emissionsgrad 0,8). Beide Übergangszahlen sind geschätzt; die im Wasser ist so gewählt, dass Lithium (132 °C) fest bleibt, Natrium (gut 350 °C) schmilzt und Kalium (gut 600 °C) den Wasserstoff zündet. Ein Stück mit Schmelzpunkt (`Tm`) darunter ist geschmolzen; eines, das leichter ist als Wasser (`rho`), schwimmt. Ab 525 °C glüht es in der Farbe, die das Plancksche Strahlungsgesetz für seine Temperatur ergibt. Ab 560 °C, der Zündtemperatur von Wasserstoff in Luft, verbrennt der Wasserstoff, den ein schwimmendes Stück freisetzt, mit Sauerstoff aus der Luft, in der Flammenfarbe des Metall-Ions. Geschmolzenes Metall, das mehr als 30 W/cm² freisetzt, spritzt. Die Wärme selbst bleibt beim Gefäß, wie bisher. Die Wärme an der Oberfläche folgt aus dem Geschwindigkeitsgesetz je cm²; sie hängt deshalb nicht davon ab, wie groß das Stück noch ist, und ein Stück wird zum Schluss nicht heißer. Heißer als 1500 °C wird ein Stück im Wasser nicht. Was selbst brennt (Holzkohle, Schwefel, Magnesium), zeigt sein eigenes Feuer; seine Verbrennungswärme heizt das Stück nicht zusätzlich.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
 - **Kolbenprober:** Er verschließt das Gefäß und zählt alles Gas, das entsteht, als Volumen bei Raumtemperatur und Luftdruck, bis 100 mL; dann springt der Kolben heraus (siehe Druck). Wird das Gefäß ausgeleert, zählt er von vorn.
@@ -1436,6 +1454,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Kalkwasser klärt sich deshalb schneller wieder als im Versuch.
 - Die Waage rechnet ohne Auftrieb in der Luft, und Elektroden, Messfühler und Kolbenprober zählen nicht mit: Sie hängen am Stativ. Ein Gefäß auf der Waage lässt sich nicht zugleich heizen.
 - Heiße Stellen gibt es nur an Stücken aus dem Regal, nicht an einem Niederschlag. Das Flitzen eines geschmolzenen Stücks ist gezeichnet, nicht gerechnet, und in der 3D-Ansicht spritzt es nicht; brennen dort mehrere Stücke in einem Glas, zeigt sie nur eine Flamme. Der brennende Wasserstoff steht nicht in den Gleichungen, und seine Wärme geht mit der Flamme fort. Indikatorpapier wird nur über die Öffnung gehalten, nicht eingetaucht, und Chlor bleicht es nicht, weil sich Chlor hier nicht löst.
+- Die Mischwärme beim Zugeben gilt nur für Stoffe aus dem Regal, nicht beim Umgießen von Gefäß zu Gefäß. Schlieren und Schichten, die sich dabei bilden, gibt es nicht; die Mischzone ist eine Abschätzung für den Augenblick des Zugebens.
 - Ein Glas platzt nie allein durch Überdruck, denn der Stopfen gibt vorher nach; ein Unterdruck ohne Rohr bleibt ohne Wirkung. Der Druck ist nicht als Messwert zu sehen.
 - Kalkwasser hat hier 0,011 mol/L statt der rund 0,02 mol/L einer im Labor gesättigten Lösung, denn das ideale Modell rechnet Calciumhydroxid schon bei 0,0117 mol/L als gesättigt.
 - Wasser verdunstet nur beim Sieden; unterhalb von 100 °C verliert ein Gefäß nichts. Gelöste Gase entweichen nur, wenn sie ausperlen oder mit dem Dampf fortgehen.

@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: A dugó kirepül!",
     "say.plungerOut": "{part}: A dugattyú kiugrik.",
     "say.suckBack": "{vessel}: Folyadék szívódik vissza a csövön.",
+    "say.spatter": "{vessel}: Fröcsköl!",
     "seen.popped": "A dugó kirepül",
     "seen.suckBack": "Folyadék szívódik vissza",
+    "seen.spatter": "Fröcsköl",
     "seen.plungerOut": "A dugattyú kiugrik",
     "seen.boil": "A folyadék forr",
     "seen.smell": "Szag",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etil-acetát",
     "sulfuric acid conc": "tömény kénsav",
     "wine": "fehérbor (12 % alkohol)",
-    "limewater": "meszes víz (kalcium-hidroxid-oldat)"
+    "limewater": "meszes víz (kalcium-hidroxid-oldat)",
+    "H2SO4(l)": "kénsav (tiszta)",
+    "H2SO4 conc": "tömény kénsav"
   }
 }

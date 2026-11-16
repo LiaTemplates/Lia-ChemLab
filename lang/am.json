@@ -419,8 +419,10 @@
     "say.popped": "{vessel}፦ ክዳኑ ተፈናጠረ!",
     "say.plungerOut": "{part}፦ ፒስተኑ ወጣ።",
     "say.suckBack": "{vessel}፦ ፈሳሽ በቱቦው ተመልሶ ይወጣል።",
+    "say.spatter": "{vessel}፦ ይረጫል!",
     "seen.popped": "ክዳኑ ይፈናጠራል",
     "seen.suckBack": "ፈሳሽ ተመልሶ ይወጣል",
+    "seen.spatter": "ይረጫል",
     "seen.plungerOut": "ፒስተኑ ይወጣል",
     "seen.boil": "ፈሳሹ ይፈላል",
     "seen.smell": "ሽታ",
@@ -636,6 +638,8 @@
     "ethyl acetate": "ኢታይል አሴቴት",
     "sulfuric acid conc": "ሰልፈሪክ አሲድ፣ የተከማቸ",
     "wine": "ነጭ ወይን (12 % አልኮል)",
-    "limewater": "የኖራ ውሃ (የካልሲየም ሃይድሮክሳይድ መፍትሄ)"
+    "limewater": "የኖራ ውሃ (የካልሲየም ሃይድሮክሳይድ መፍትሄ)",
+    "H2SO4(l)": "ሰልፈሪክ አሲድ (ንጹህ)",
+    "H2SO4 conc": "ሰልፈሪክ አሲድ፣ የተጠናከረ"
   }
 }

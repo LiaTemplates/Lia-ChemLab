@@ -419,8 +419,10 @@
     "say.popped": "{vessel}：栓が飛び出す！",
     "say.plungerOut": "{part}：ピストンが飛び出す。",
     "say.suckBack": "{vessel}：液体が誘導管を逆流する。",
+    "say.spatter": "{vessel}：飛び散る！",
     "seen.popped": "栓が飛び出す",
     "seen.suckBack": "液体が逆流する",
+    "seen.spatter": "飛び散る",
     "seen.plungerOut": "ピストンが飛び出す",
     "seen.boil": "液体が沸騰する",
     "seen.smell": "におい",
@@ -636,6 +638,8 @@
     "ethyl acetate": "酢酸エチル",
     "sulfuric acid conc": "濃硫酸",
     "wine": "白ワイン（アルコール 12 %）",
-    "limewater": "石灰水（水酸化カルシウム水溶液）"
+    "limewater": "石灰水（水酸化カルシウム水溶液）",
+    "H2SO4(l)": "硫酸（純粋）",
+    "H2SO4 conc": "濃硫酸"
   }
 }

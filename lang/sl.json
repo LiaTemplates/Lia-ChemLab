@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Zamašek odleti!",
     "say.plungerOut": "{part}: Bat izskoči.",
     "say.suckBack": "{vessel}: Tekočina se po cevki vsrka nazaj.",
+    "say.spatter": "{vessel}: Brizga!",
     "seen.popped": "Zamašek odleti",
     "seen.suckBack": "Tekočina se vsrka nazaj",
+    "seen.spatter": "Brizga",
     "seen.plungerOut": "Bat izskoči",
     "seen.boil": "Tekočina vre",
     "seen.smell": "Vonj",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etil etanoat",
     "sulfuric acid conc": "žveplova(VI) kislina, koncentrirana",
     "wine": "belo vino (12 % alkohola)",
-    "limewater": "apnenica (raztopina kalcijevega hidroksida)"
+    "limewater": "apnenica (raztopina kalcijevega hidroksida)",
+    "H2SO4(l)": "žveplova kislina (čista)",
+    "H2SO4 conc": "koncentrirana žveplova kislina"
   }
 }

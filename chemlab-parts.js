@@ -189,7 +189,7 @@
       "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "part.paper": "indicator paper",
       "say.paper": "{vessel}: The moist indicator paper turns {color}.",
       "part.stopper": "rubber stopper", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
-      "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.",
+      "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.", "say.spatter": "{vessel}: It spatters!", "seen.spatter": "It spatters",
       "seen.popped": "The stopper pops out", "seen.suckBack": "Liquid is sucked back", "seen.plungerOut": "The plunger pops out",
       "seen.boil": "The liquid boils", "seen.smell": "Smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
       "seen.plated": "A metal is deposited", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
@@ -556,6 +556,12 @@
       (ctx.marks || []).forEach(function (mark) {              // Proben an der Öffnung: der Span, und der Blitz einer Verpuffung
         if (mark.key === "splint" && mark.age < 2) out += L.fx.splint(shape.tall ? 4 : shape.x1 * 0.5, shape.rim - 4, mark, ctx.t, ctx.still);
         if ((mark.key === "pop" || (mark.key === "splint" && mark.result === "pop")) && mark.level > 0) out += L.fx.flash(0, shape.rim - 6, mark.age, mark.level);
+        if (mark.key === "spatter" && mark.age < 1) {         // es spritzt: Tropfen fliegen aus der Mischzone über den Rand
+          for (var k = 0; k < 7; k++) {
+            var q = mark.age + 0.12 * pseudo(9, k), dx = (pseudo(11, k) - 0.5) * 70;
+            if (q < 1) out += '<circle class="cl-spatter" cx="' + f(dx * q) + '" cy="' + f(shape.top - 90 * q + 110 * q * q) + '" r="' + f(1.3 + pseudo(13, k)) + '"/>';
+          }
+        }
         if (mark.key === "popped" && mark.age < 0.8) {        // der Stopfen fliegt heraus: hinauf und zur Seite, sich drehend
           out += '<g transform="translate(' + f(mark.age * 50) + "," + f(-mark.age * 160 + mark.age * mark.age * 120) + ") rotate(" + f(mark.age * 400) + " 0 " + f(shape.rim) + ')">' +
             plugShape(0, shape.rim, shape.tall ? 26 : 30) + "</g>" + L.fx.flash(0, shape.rim - 6, mark.age, 1);

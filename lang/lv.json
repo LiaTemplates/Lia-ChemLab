@@ -419,8 +419,10 @@
     "say.popped": "{vessel}: Aizbāznis izlido!",
     "say.plungerOut": "{part}: Virzulis izlec.",
     "say.suckBack": "{vessel}: Šķidrums pa cauruli iesūcas atpakaļ.",
+    "say.spatter": "{vessel}: Šļakstās!",
     "seen.popped": "Aizbāznis izlido",
     "seen.suckBack": "Šķidrums iesūcas atpakaļ",
+    "seen.spatter": "Šļakstās",
     "seen.plungerOut": "Virzulis izlec",
     "seen.boil": "Šķidrums vārās",
     "seen.smell": "Smarža",
@@ -636,6 +638,8 @@
     "ethyl acetate": "etilacetāts",
     "sulfuric acid conc": "sērskābe, koncentrēta",
     "wine": "baltvīns (12 % alkohola)",
-    "limewater": "kaļķūdens (kalcija hidroksīda šķīdums)"
+    "limewater": "kaļķūdens (kalcija hidroksīda šķīdums)",
+    "H2SO4(l)": "sērskābe (tīra)",
+    "H2SO4 conc": "koncentrēta sērskābe"
   }
 }
