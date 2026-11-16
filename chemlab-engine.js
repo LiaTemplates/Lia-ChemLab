@@ -923,7 +923,7 @@
     if (def.flames) { t.flame = item.flame || 0; t.tint = null; }      // tint: Flammenfärbung { rgb, until }
     if (def.bath) t.temp = item.temp == null ? null : item.temp;       // eingestellte Temperatur; null: die des Raums
     if (def.sense === "A") t.nm = item.nm || def.nm;                   // Wellenlänge in nm
-    if (def.sense === "V") { t.n = 0; t.full = false; t.lost = 0; }   // n: aufgefangenes Gas in mol, lost: was am vollen Kolben vorbei entwich
+    if (def.sense === "V") { t.n = 0; t.full = false; t.held = 0; }   // n: aufgefangenes Gas in mol, held: seine Masse in g (ohne Luft)
     if (def.scale) t.tare = 0;
     if (def.electrode) {
       // n: Stoffmenge des Elektrodenmaterials, coat: was sich darauf abgeschieden hat, seen: Beläge, die schon gemeldet sind,
@@ -1021,7 +1021,7 @@
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
-    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.lost = 0; t.value = 0; } });   // … und der Kolbenprober
+    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.held = 0; t.value = 0; } });   // … und der Kolbenprober
     survey(lab);
     return true;
   }
@@ -1083,19 +1083,15 @@
     return true;
   }
 
-  // Flamme eines Brenners: 0 aus, 1 leuchtend, 2 rauschend
   // Glas aus seiner Wärmekapazität: 0,84 J/(g K)
   function glassMass(v) { return spec(v).Cv / 0.84; }
 
-  // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit und, was ein Kolbenprober aufgefangen
-  // hat; ist er voll, entweicht der Rest am Kolben vorbei
+  // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit und das Gas im Kolbenprober
   function weigh(lab, v) {
-    var m = glassMass(v), id, out = 0, gas = 0, meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
+    var m = glassMass(v), id, meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
     for (id in v.n) m += v.n[id] * L.db.species[id].M;
     for (id in v.air) m += v.air[id] * L.db.species[id].M;
-    if (!meter) return m;
-    for (id in v.out) { out += v.out[id]; gas += v.out[id] * L.db.species[id].M; }
-    return m + (out > 0 ? gas * Math.max(0, 1 - (meter.lost || 0) / out) : 0);
+    return m + (meter ? meter.held || 0 : 0);
   }
 
   function tare(lab, id) {
@@ -1107,6 +1103,7 @@
     return true;
   }
 
+  // Flamme eines Brenners: 0 aus, 1 leuchtend, 2 rauschend
   function setFlame(lab, id, level) {
     var t = tool(lab, id);
     if (!t || !L.parts[t.type].flames) return false;
@@ -1126,6 +1123,7 @@
     if (v && def.duct && (t.to === vesselId || ducts(lab, t).some(function (o) { return o.in === v.id; }) || (t.to && looped(ducts(lab, t), vesselId, t.to)))) return false;
     t.in = v ? vesselId : null;
     if ((def.bridge || def.duct) && !v) t.to = null;
+    if (def.sense === "V") t.held = 0;                        // ein Kolbenprober kommt leer an
     seat(lab, t);
     survey(lab);
     return true;
@@ -2812,6 +2810,7 @@
   // vor sich her ins zweite Gefäß: erst vor allem Luft, die nicht gerechnet wird, dann zunehmend das Gas selbst.
   function vent(lab, v, emit, made) {
     var cap = headroom(lab, v), sum = 0, id, part, M, hit, steady, closed = stoppered(lab, v), pipe = toolAt(lab, v, function (def) { return def.pipe; }), into, flow = 0;
+    var meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
     if (pipe) pipe.flow = 0;
     for (id in v.air) sum += v.air[id];
     if (!(sum > 0)) return;
@@ -2836,6 +2835,7 @@
       if (v.air[id] - part < 1e-12) part = v.air[id];
       if (into && part > 0) { bubbleInto(lab, into, id, part); flow += part; }
       else v.out[id] = (v.out[id] || 0) + part;
+      if (meter && !meter.full && part > 0) meter.held = (meter.held || 0) + part * M;      // im Kolbenprober; ist er voll, entweicht es
       if ((v.air[id] -= part) <= 0) delete v.air[id];
     }
     if (pipe) pipe.flow = flow / DT;
@@ -2844,9 +2844,7 @@
   // Gas aus einem Rohr kommt ins Gefäß v. Steht Flüssigkeit darin, perlt es hindurch: Was ein Lösungsgleichgewicht hat (CO₂, NH₃, HCl),
   // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
   function bubbleInto(lab, v, id, x) {
-    var e, key;
-    if (!(volume(v) > 0)) { v.air[id] = (v.air[id] || 0) + x; return; }
-    e = L.db.equilibria.filter(function (q) { return q.gas === id; })[0];
+    var e = volume(v) > 0 ? L.db.equilibria.filter(function (q) { return q.gas === id; })[0] : null, key;
     // steigt durch: als Gas in der Flüssigkeit, so zählt es wie selbst entstandenes (Blasen, Kolbenprober, nächstes Rohr)
     if (!e) { v.n[id] = (v.n[id] || 0) + x; return; }
     v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
@@ -2971,8 +2969,8 @@
         if (meter && !meter.full) {                            // der Kolbenprober zählt mit, bis er voll ist
           room = L.parts[meter.type].cap / 1000 / molar(lab);
           meter.n += v.n[id];
-          if (meter.n >= room) { meter.lost = (meter.lost || 0) + meter.n - room; meter.n = room; meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
-        } else if (meter) meter.lost = (meter.lost || 0) + v.n[id];
+          if (meter.n >= room) { meter.n = room; meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
+        }
       }
       delete v.n[id];
     }
@@ -3203,7 +3201,7 @@
     }) && lab.tools.every(function (t) {
       var target = sense(lab, t), def = L.parts[t.type];
       if (target == null || t.value == null) return target == null && t.value == null;      // ein Gerät, das eben erst etwas zu messen bekam (oder nichts mehr), muss noch umspringen
-      return Math.abs(target - t.value) < (def.fine ? def.fine * Math.abs(target) + 1e-12 : def.sense === "pH" ? 0.01 : 0.05);
+      return Math.abs(target - t.value) < (def.scale ? 0.005 : def.fine ? def.fine * Math.abs(target) + 1e-12 : def.sense === "pH" ? 0.01 : 0.05);
     });
   }
 
@@ -3446,7 +3444,7 @@
 
   function measure(lab) {         // was die Diagramme brauchen
     var m = { tools: {}, v: {} };
-    lab.tools.forEach(function (t) { if (t.value != null) m.tools[t.id] = t.value; });
+    lab.tools.forEach(function (t) { if (t.value != null) m.tools[t.id] = t.value + (t.tare || 0); });      // die Waage ohne Tara: das Diagramm zeigt Änderungen
     lab.vessels.forEach(function (v) {
       var n = {}, id;
       for (id in v.n) n[id] = v.n[id];

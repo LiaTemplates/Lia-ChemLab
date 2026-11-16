@@ -2418,6 +2418,43 @@ test("Waage: unter einem Gefäß, nicht zusammen mit Brenner oder Wasserbad, nic
   assert.ok("m" in L.MEASURES, "Aufgabenziel measure: m");
 });
 
+test("Waage: die Uhr hält erst an, wenn die Anzeige auf 0,01 g stimmt", () => {
+  const l = lab([{ type: "beaker", id: "b", ml: 250 }, { type: "balance", id: "w", under: "b" }], { room: 20 });
+  L.step(l, 3);
+  L.add(l, "b", "H2O", { ml: 50 });
+  until(l, () => L.atRest(l), 120);
+  near(L.reading(l, "w").value, 60 / 0.84 + contents(l, "b"), 0.005, "Anzeige in Ruhe");
+});
+
+test("Waage: ein Kolbenprober bringt kein schon entwichenes Gas zurück; Rohr in ein leeres Glas mit Kolbenprober", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }, { reagent: "marble", g: 0.3 }] }, { type: "balance", id: "w", under: "b" },
+    { type: "syringe", id: "kp" }], { room: 20 });
+  L.step(l, 300);
+  const before = L.reading(l, "w").value;
+  L.attach(l, "kp", "b");
+  L.step(l, 5);
+  near(L.reading(l, "w").value, before, 0.005, "angeschlossen: nicht schwerer");
+  const t = lab([{ type: "testtube", id: "a", contains: [{ reagent: "HCl 2M", ml: 10 }, { reagent: "marble", g: 1 }] }, { type: "tube", in: "a", to: "z" },
+    { type: "testtube", id: "z" }, { type: "syringe", id: "kp", in: "z" }], { room: 20 });
+  L.step(t, 120);
+  assert.ok(L.reading(t, "kp").value > 50, `der Kolbenprober am leeren Glas füllt sich: ${L.reading(t, "kp").value} mL`);
+});
+
+test("Waage: Ziel mit Masse als Text, Diagramm nach Tara, Platz neben dem Nachbarn", () => {
+  assert.equal(L.goalText({ measure: "m", min: 50, max: 60 }, "de"), "Masse von 50 bis 60 g");
+  const el = mount({ room: 20, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }, { type: "balance", id: "w", under: "b" }], shelf: ["marble"], show: { charts: ["m"] } });
+  frames(3);
+  tap(el, "w");
+  press(el, "tare");
+  press(el, "hand", "marble");
+  tap(el, "b");
+  frames(120);
+  assert.match(part(el, ".cl-charts").innerHTML, /in mg/, "das Tarieren erscheint nicht als Sprung im Diagramm");
+  const two = mount({ bench: [{ type: "testtube", id: "a" }, { type: "balance", under: "a" }, { type: "testtube", id: "c" }, { type: "balance", under: "c" }] });
+  const x = (id) => +/translate\(([\d.]+)/.exec(part(two, ".cl-svg").innerHTML.split(`data-id="${id}"`)[1])[1];
+  assert.ok(x("c") - x("a") >= 2 * (40 + 24), `zwei Waagen nebeneinander: ${x("c") - x("a")} px`);
+});
+
 test("Waage an der Fläche: unter das Glas stellen, Anzeige, Tara und Diagramm der Masse", () => {
   const el = mount({ room: 20, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }], shelf: ["balance", "marble"], show: { charts: ["m"] } });
   press(el, "hand", "balance");

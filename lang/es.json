@@ -385,6 +385,7 @@
     "measure.kappa": "Conductividad",
     "measure.A": "Absorbancia",
     "measure.V": "Volumen de gas",
+    "measure.m": "Masa",
     "measure.I": "Intensidad de corriente",
     "measure.U": "Tensión",
     "seen.gas": "Desprendimiento de gas",

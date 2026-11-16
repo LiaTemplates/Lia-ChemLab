@@ -385,6 +385,7 @@
     "measure.kappa": "Conductivity",
     "measure.A": "Absorbance",
     "measure.V": "Gas volume",
+    "measure.m": "Mass",
     "measure.I": "Current",
     "measure.U": "Voltage",
     "seen.gas": "Gas fi mu ba",

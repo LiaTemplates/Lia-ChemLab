@@ -178,7 +178,7 @@
       "task": "Task", "task.done": "Well done!", "goal.met": "met", "goal.open": "still open",
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
       "goal.has": "{name} is present", "goal.gone": "{name}: no longer present",
-      "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume",
+      "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
       "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
@@ -704,8 +704,9 @@
   // place: { lift, half } aus stand(), wenn ein Gefäß darauf steht
   L.registerPart("balance", {
     width: function () { return 96; },
-    bounds: function (t, place) { var a = place ? place.half : 40; return { x0: -a - 4, x1: a + 4, top: -SCALE.lift - 2 }; },
+    bounds: function (t, place) { var a = place ? place.half : 40; return { x0: -a - 4, x1: a + 24, top: -SCALE.lift - 2 }; },      // rechts mit der Nummer
     stand: function (host) { var b = L.parts[host.type].bounds(host); return { lift: SCALE.lift, half: Math.max(40, (b.x1 - b.x0) / 2), clamp: false }; },
+    span: function (host) { return 2 * (this.stand(host).half + 24); },     // so breit samt Nummer
     draw: function (w, ctx, place) {
       var a = place ? place.half : 40;
       return '<rect class="cl-scale" x="' + (-a) + '" y="' + (-SCALE.h) + '" width="' + 2 * a + '" height="' + SCALE.h + '" rx="3"/>' +

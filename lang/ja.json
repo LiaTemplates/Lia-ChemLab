@@ -385,6 +385,7 @@
     "measure.kappa": "電気伝導率",
     "measure.A": "吸光度",
     "measure.V": "気体の体積",
+    "measure.m": "質量",
     "measure.I": "電流",
     "measure.U": "電圧",
     "seen.gas": "気体の発生",

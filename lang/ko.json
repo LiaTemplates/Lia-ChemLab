@@ -385,6 +385,7 @@
     "measure.kappa": "전기 전도도",
     "measure.A": "흡광도",
     "measure.V": "기체의 부피",
+    "measure.m": "질량",
     "measure.I": "전류",
     "measure.U": "전압",
     "seen.gas": "기체 발생",
