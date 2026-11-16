@@ -336,6 +336,7 @@
     "err.size": "Nádoba v této velikosti neexistuje",
     "err.model": "Takový výpočetní model neexistuje (ideal nebo real)",
     "err.view": "Takové zobrazení neexistuje (2d nebo 3d)",
+    "err.scatter": "scatter je true, false nebo číslo",
     "err.scene": "Tento údaj o scéně nesedí",
     "view": "3D",
     "view.loading": "Načítá se 3D zobrazení …",

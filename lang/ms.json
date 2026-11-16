@@ -336,6 +336,7 @@
     "err.size": "Bekas ini tiada dalam saiz tersebut",
     "err.model": "Model pengiraan sedemikian tidak wujud (ideal atau real)",
     "err.view": "Paparan sedemikian tidak wujud (2d atau 3d)",
+    "err.scatter": "scatter ialah true, false atau nombor",
     "err.scene": "Tetapan babak ini tidak sesuai",
     "view": "3D",
     "view.loading": "Memuatkan paparan 3D …",

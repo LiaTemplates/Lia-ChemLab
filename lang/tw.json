@@ -336,6 +336,7 @@
     "err.size": "Adekorade no nni saa kɛseɛ yi",
     "err.model": "Calculation model a ɛte saa nni hɔ (ideal anaa real)",
     "err.view": "View a ɛte saa nni hɔ (2d anaa 3d)",
+    "err.scatter": "scatter yɛ true, false anaa nɔma bi",
     "err.scene": "Scene ho nhyehyɛeɛ yi nhyia",
     "view": "3D",
     "view.loading": "3D view no reba …",

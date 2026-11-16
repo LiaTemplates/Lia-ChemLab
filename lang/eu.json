@@ -336,6 +336,7 @@
     "err.size": "Ontzi hau ez dago tamaina horretan",
     "err.model": "Ez dago horrelako kalkulu-eredurik (ideal edo real)",
     "err.view": "Ez dago horrelako ikuspegirik (2d edo 3d)",
+    "err.scatter": "scatter true, false edo zenbaki bat da",
     "err.scene": "Eszenaren ezarpen hau ez da egokia",
     "view": "3D",
     "view.loading": "3D ikuspegia kargatzen …",

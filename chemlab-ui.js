@@ -105,7 +105,7 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", sample: "err.sample", data: "err.data",
-        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene", scatter: "err.scatter" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       stranded = stranded.filter(function (w) { return w.el !== el && w.el.isConnected !== false; }).concat([{ el: el, source: source, text: text }]);
       return;
@@ -1362,7 +1362,7 @@
       lab.tools.forEach(function (t) {
         var def = L.parts[t.type], unit = def.circuit === "supply" ? "V" : def.sense || def.circuit === "ammeter" || def.circuit === "voltmeter" || def.electrode ? def.unit : null, c, value;
         if (!unit || !COLUMN[unit]) return;
-        c = COLUMN[unit];
+        c = def.scale ? ["g", 2, 1] : COLUMN[unit];             // die Waage zeigt zwei Stellen; drei hat nur die Masse einer Elektrode
         value = def.circuit === "supply" ? t.volts : t.value;
         out.push({ key: t.id, unit: unit === "E" || unit === "pH" ? "" : c[0], label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });

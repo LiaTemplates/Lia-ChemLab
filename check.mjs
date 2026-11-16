@@ -4335,6 +4335,51 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
+test("Streuung: ohne Angabe zeigt jedes Gerät den Rechenwert; mit scatter streut nur die Anzeige, je Auslosung anders", () => {
+  const bench = () => [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "thermometer", id: "th", in: "b" }, { type: "phmeter", id: "ph", in: "b" },
+    { type: "beaker", id: "w", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "balance", id: "bal", in: "w" }];
+  const run = (scatter, t) => { const l = lab(bench(), Object.assign({ room: 20 }, scatter == null ? {} : { scatter })); L.step(l, t || 30); return l; };
+  const exact = run();
+  near(L.reading(exact, "th").value, 20, 1e-9, "ohne Streuung: genau");
+  const a = run(7), b = run(7), c = run(8);
+  assert.equal(L.reading(a, "th").value, L.reading(b, "th").value, "feste Auslosung: dieselben Werte");
+  assert.notEqual(L.reading(a, "th").value, L.reading(c, "th").value, "andere Auslosung, andere Werte");
+  near(L.vessel(a, "b").T, 20, 1e-9, "die Chemie rechnet exakt");
+  const dT = [], dpH = [];
+  for (let seed = 1; seed <= 40; seed++) {
+    const l = run(seed);
+    dT.push(L.reading(l, "th").value - 20);
+    dpH.push(L.reading(l, "ph").value - L.reading(exact, "ph").value);
+    assert.equal(L.atRest(l), true, "auch mit Streuung kommt der Versuch zur Ruhe");
+  }
+  assert.ok(dT.every((d) => Math.abs(d) <= 0.35 + 1e-9) && Math.max(...dT) - Math.min(...dT) > 0.3, `Thermometer: höchstens 0,3 °C systematisch und 0,05 °C Rauschen: ${Math.min(...dT)} … ${Math.max(...dT)}`);
+  assert.ok(dpH.every((d) => Math.abs(d) <= 0.06 + 1e-9) && Math.max(...dpH) - Math.min(...dpH) > 0.05, "pH-Meter: höchstens 0,05 systematisch und 0,01 Rauschen");
+  // systematisch: dasselbe Gerät weicht später gleich ab, bis auf das Rauschen; die letzte Stelle wackelt
+  const late = run(7, 90);
+  near(L.reading(late, "th").value, L.reading(a, "th").value, 0.1, "dieselbe Abweichung");
+  const seen = new Set();
+  for (let i = 0; i < 20; i++) { L.step(late, 1); seen.add(L.reading(late, "th").value.toFixed(3)); }
+  // (im Ruhezustand läuft die Uhr nicht weiter; step rechnet trotzdem)
+  assert.ok(seen.size > 1, "das Rauschen ändert sich mit der Zeit");
+  // Tara stellt die Waage auf null, bis auf das Rauschen der letzten Stelle
+  L.tare(a, "bal");
+  L.step(a, 5);
+  assert.ok(Math.abs(L.reading(a, "bal").value) <= 0.006, `nach Tara: ${L.reading(a, "bal").value} g`);
+  // true: je Aufbau neu ausgelost; falsche Angabe: Fehler
+  const one = L.normalize({ bench: bench(), scatter: true }).scatter, two = L.normalize({ bench: bench(), scatter: true }).scatter;
+  assert.ok(Number.isInteger(one) && Number.isInteger(two) && one !== two, `${one} ${two}`);
+  assert.equal(L.normalize({ bench: bench() }).scatter, null);
+  assert.throws(() => L.normalize({ bench: bench(), scatter: "ja" }), (e) => e.code === "scatter");
+  // zurückspulen: dieselben Werte
+  const r = L.createRun(L.normalize({ bench: bench(), scatter: 5, room: 20 }));
+  L.act(r, (l) => L.add(l, "b", "HCl 1M", { ml: 5 }));
+  L.advance(r, 20);
+  const at20 = L.reading(r.lab, "ph").value;
+  L.advance(r, 20);
+  L.seek(r, 20);
+  assert.equal(L.reading(r.lab, "ph").value, at20, "zurückgespult: derselbe Wert");
+});
+
 test("Kalorimeter: hält die Wärme; Neutralisationswärme etwa −57 kJ/mol; nicht auf Brenner oder Wasserbad", () => {
   const run = (type) => {
     const l = lab([{ type, id: "k", ml: 250, contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20 }), seen = [];
@@ -8282,6 +8327,63 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   L.setFlame(l, burner.id, 0);
   L.step(l, 120, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
+});
+
+test("Streuung: das Rauschen liegt sichtbar auf der Anzeige; am Anschlag zeigt das Gerät das Ende; das Protokoll nennt die Anzeige", () => {
+  // bei gleichbleibendem wahrem Wert wackelt die letzte angezeigte Stelle
+  let moving = 0;
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "thermometer", id: "th", in: "b" }, { type: "phmeter", id: "ph", in: "b" }], { room: 20, scatter: seed });
+    L.step(l, 10);
+    const T = new Set(), pH = new Set();
+    for (let i = 0; i < 30; i++) { L.step(l, 1); T.add(L.reading(l, "th").value.toFixed(1)); pH.add(L.reading(l, "ph").value.toFixed(2)); }
+    if (T.size > 1 && pH.size > 1) moving++;
+  }
+  assert.ok(moving >= 7, `bei ${moving} von 10 Auslosungen wackeln beide Anzeigen`);
+  // am Ende der Skala: „> 110 °C“, bei jeder Auslosung
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "testtube", id: "t" }, { type: "burner", id: "br", under: "t", flame: 2 }, { type: "thermometer", id: "th", in: "t" }], { room: 20, scatter: seed });
+    L.step(l, 120);
+    assert.equal(L.reading(l, "th").over, true, "Auslosung " + seed);
+    assert.equal(L.reading(l, "th").value, 110);
+  }
+  // der volle Kolbenprober zeigt nicht mehr als 100 mL; ein Strommesser ohne Strom zeigt 0
+  for (let seed = 1; seed <= 10; seed++) {
+    const l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 2M", ml: 10 }, { reagent: "Mg ribbon", g: 0.2 }] }, { type: "syringe", id: "kp", in: "t" },
+      { type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "ammeter", id: "a", in: "b" }], { room: 20, scatter: seed });
+    L.step(l, 200);
+    assert.ok(L.reading(l, "kp").value <= 100, `Kolbenprober: ${L.reading(l, "kp").value}`);
+    assert.equal(L.reading(l, "a").value, 0, "kein Strom: 0");
+  }
+  // das Protokoll nennt die höchste Temperatur, wie das Thermometer sie zeigt
+  const seen = [], k = lab([{ type: "calorimeter", id: "k", contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "thermometer", id: "th", in: "k" }], { room: 20, scatter: 11 });
+  L.step(k, 5);
+  L.add(k, "k", "NaOH 1M", { ml: 50 });
+  let shownMax = 0, trueMax = 0;
+  for (let i = 0; i < 80; i++) { L.step(k, 1, (e) => seen.push(e)); shownMax = Math.max(shownMax, L.reading(k, "th").value); trueMax = Math.max(trueMax, L.vessel(k, "k").T); }
+  const max = seen.find((e) => e.key === "tempMax");
+  assert.ok(max && Math.abs(max.T - shownMax) < 0.08, `Protokoll ${max && max.T}, höchste Anzeige ${shownMax}, wahr ${trueMax}`);
+});
+
+test("README: die Folie zur Streuung der Messwerte hält, was ihr Text verspricht", () => {
+  const raw = JSON.parse(slide("Streuung der Messwerte")[0]), config = L.normalize(raw);
+  assert.equal(raw.scatter, true, "für jeden Lernenden neu ausgelost");
+  assert.ok(Number.isInteger(config.scatter));
+  assert.equal(config.table, true, "mit Messwerttabelle");
+  assert.deepEqual(config.shelf, ["NaOH 0.1M"], "Natronlauge zum Zugeben");
+  const exact = L.createLab(L.normalize(Object.assign({}, raw, { scatter: false }))), l = L.createLab(config);
+  L.step(exact, 30); L.step(l, 30);
+  for (const t of config.bench.filter((p) => p.type === "thermometer" || p.type === "phmeter")) {
+    const want = L.reading(exact, t.id).value, got = L.reading(l, t.id).value;
+    assert.ok(Math.abs(got - want) <= (t.type === "thermometer" ? 0.35 : 0.06) + 1e-9, `${t.id}: ${got} statt ${want}`);
+  }
+  near(L.reading(exact, config.bench.find((p) => p.type === "thermometer").id).value, 20, 1e-6, "das Wasser hat Raumtemperatur");
+  near(L.reading(exact, config.bench.find((p) => p.type === "phmeter").id).value, 2, 0.02, "die Salzsäure hat pH 2");
+  // solange sich etwas tut, wackelt die letzte Stelle: in den Sekunden nach einer Zugabe ändert sich die Anzeige auch ohne neuen Wert
+  const ph = config.bench.find((p) => p.type === "phmeter").id, seen = new Set();
+  L.add(l, config.bench.find((p) => p.type === "beaker" && p.id !== "wasser").id, "NaOH 0.1M", { ml: 2 });
+  for (let i = 0; i < 8; i++) { L.step(l, 1); seen.add(L.reading(l, ph).value.toFixed(3)); }
+  assert.ok(seen.size > 3, "die Anzeige bewegt sich");
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {

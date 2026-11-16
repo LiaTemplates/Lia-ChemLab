@@ -336,6 +336,7 @@
     "err.size": "Aquest recipient no existeix en aquesta mida",
     "err.model": "Aquest model de càlcul no existeix (ideal o real)",
     "err.view": "Aquesta vista no existeix (2d o 3d)",
+    "err.scatter": "scatter és true, false o un nombre",
     "err.scene": "Aquesta dada de l'escena no és vàlida",
     "view": "3D",
     "view.loading": "S'està carregant la vista 3D …",

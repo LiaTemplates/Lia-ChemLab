@@ -336,6 +336,7 @@
     "err.size": "Ce récipient n'existe pas dans cette taille",
     "err.model": "Ce modèle de calcul n'existe pas (ideal ou real)",
     "err.view": "Cette vue n'existe pas (2d ou 3d)",
+    "err.scatter": "scatter vaut true, false ou un nombre",
     "err.scene": "Ce paramètre de scène ne convient pas",
     "view": "3D",
     "view.loading": "Chargement de la vue 3D …",

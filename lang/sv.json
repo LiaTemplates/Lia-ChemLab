@@ -336,6 +336,7 @@
     "err.size": "Kärlet finns inte i den storleken",
     "err.model": "Den beräkningsmodellen finns inte (ideal eller real)",
     "err.view": "Den vyn finns inte (2d eller 3d)",
+    "err.scatter": "scatter är true, false eller ett tal",
     "err.scene": "Den här angivelsen för scenen stämmer inte",
     "view": "3D",
     "view.loading": "3D-vyn laddas …",

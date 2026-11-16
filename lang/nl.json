@@ -336,6 +336,7 @@
     "err.size": "Dit vat bestaat niet in deze maat",
     "err.model": "Dit rekenmodel bestaat niet (ideal of real)",
     "err.view": "Deze weergave bestaat niet (2d of 3d)",
+    "err.scatter": "scatter is true, false of een getal",
     "err.scene": "Deze instelling van de scène klopt niet",
     "view": "3D",
     "view.loading": "De 3D-weergave wordt geladen …",

@@ -336,6 +336,7 @@
     "err.size": "Seda anumat pole selles suuruses",
     "err.model": "Sellist arvutusmudelit pole (ideal või real)",
     "err.view": "Sellist vaadet pole (2d või 3d)",
+    "err.scatter": "scatter on true, false või arv",
     "err.scene": "See stseeni seadistus ei sobi",
     "view": "3D",
     "view.loading": "3D-vaade laadib …",

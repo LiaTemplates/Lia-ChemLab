@@ -336,6 +336,7 @@
     "err.size": "Tokio dydžio indo nėra",
     "err.model": "Tokio skaičiavimo modelio nėra (ideal arba real)",
     "err.view": "Tokio vaizdo nėra (2d arba 3d)",
+    "err.scatter": "scatter yra true, false arba skaičius",
     "err.scene": "Šis scenos nustatymas netinka",
     "view": "3D",
     "view.loading": "Įkeliamas 3D vaizdas …",

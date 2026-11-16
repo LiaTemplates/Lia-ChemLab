@@ -336,6 +336,7 @@
     "err.size": "이 용기에는 그런 크기가 없습니다",
     "err.model": "그런 계산 모델은 없습니다(ideal 또는 real)",
     "err.view": "그런 보기는 없습니다(2d 또는 3d)",
+    "err.scatter": "scatter는 true, false 또는 숫자이다",
     "err.scene": "장면 설정이 맞지 않습니다",
     "view": "3D",
     "view.loading": "3D 보기를 불러오는 중…",

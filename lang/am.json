@@ -336,6 +336,7 @@
     "err.size": "ዕቃው በዚህ መጠን አይገኝም",
     "err.model": "እንዲህ ያለ የስሌት ሞዴል የለም (ideal ወይም real)",
     "err.view": "እንዲህ ያለ እይታ የለም (2d ወይም 3d)",
+    "err.scatter": "scatter እውነት፣ ሐሰት ወይም ቁጥር ነው",
     "err.scene": "ይህ የትዕይንት ቅንብር አይስማማም",
     "view": "3D",
     "view.loading": "የ3D እይታው እየተጫነ ነው …",

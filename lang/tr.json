@@ -336,6 +336,7 @@
     "err.size": "Bu kabın bu boyutu yok",
     "err.model": "Böyle bir hesaplama modeli yok (ideal ya da real)",
     "err.view": "Böyle bir görünüm yok (2d ya da 3d)",
+    "err.scatter": "scatter true, false ya da bir sayıdır",
     "err.scene": "Bu sahne ayarı uygun değil",
     "view": "3B",
     "view.loading": "3B görünüm yükleniyor …",

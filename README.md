@@ -900,6 +900,27 @@ In einem **gesperrten** Aufbau bleiben die Geräte, wo sie stehen. Stoffe zugebe
  "show":{"charts":["titration"]}}
 ```
 
+## Streuung der Messwerte
+
+Echte Messgeräte zeigen nicht genau den wahren Wert. Mit `"scatter": true` hat hier jedes Messgerät eine eigene feste Abweichung, für jede und jeden neu ausgelost, und die letzte Stelle wackelt ein wenig.
+
+Das Wasser links hat Raumtemperatur, 20,0 °C; die Salzsäure rechts hat pH 2,00. Was zeigen deine Geräte? Notiere die Werte in der Tabelle und vergleicht sie in der Klasse: Die Einzelwerte streuen um den wahren Wert, und der Mittelwert vieler Gruppen liegt näher daran als die meisten Einzelwerte.
+
+Gib dann Natronlauge in kleinen Portionen zur Säure. Solange sich etwas tut, wackelt die letzte Stelle der Anzeige; notiere nach jeder Portion. Das Wackeln mittelt sich über viele Messungen heraus, die feste Abweichung eines Geräts nicht.
+
+```json @ChemLab.sim
+{"scatter":true,
+ "table":true,
+ "bench":[
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"thermometer","in":"wasser"},
+  {"type":"beaker","id":"saeure","contains":[{"reagent":"HCl 0.01M","ml":50}]},
+  {"type":"phmeter","in":"saeure"}
+ ],
+ "shelf":["NaOH 0.1M"],
+ "show":{"charts":["pH"]}}
+```
+
 ## Aufbau als Text kopieren
 
 „Aufbau kopieren“ schreibt den Aufbau als Text in die Zwischenablage, im selben Format wie die Beschreibung unter jeder Fläche; falls der Browser das nicht erlaubt, steht der Text zum Markieren unter der Fläche. In einen Kurs eingefügt, ergibt er denselben Tisch. So lässt sich ein Versuch durch Antippen aufbauen statt von Hand beschreiben.
@@ -1201,6 +1222,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
 - `table` – `true`: mit Messwerttabelle; nur, solange Zahlen gezeigt werden.
 - `room` – die Raumtemperatur in °C, Vorgabe 20.
+- `scatter` – die Anzeigen der Messgeräte streuen wie bei echten Geräten: `true` lost für jede und jeden neu aus, auch bei jedem Neuladen der Seite; eine Zahl gibt allen dieselbe Auslosung (etwa für eine Aufgabe mit fester Lösung). Vorgabe: keine Streuung. Siehe „Streuung der Messwerte“. Ziele mit `measure` brauchen dann Spielraum: Grenzen enger als die Streuung des Geräts sind für manche Auslosungen nicht erreichbar.
 - `view` – womit die Fläche beginnt: `"2d"` (Vorgabe) oder `"3d"`. Der Knopf **3D** schaltet jederzeit um.
 - `scene` – wie die Fläche in 3D aussieht: `"lab"` (Labor, Vorgabe), `"kitchen"` (Küche) oder `"1880"` (Labor um 1880). Ausführlich als Objekt: `{"base":"kitchen","gear":{"burner":"lab"},"quality":"low"}` – `gear` nimmt für einzelne Geräte das Aussehen einer anderen Szene, `quality` ist `"auto"` (Vorgabe), `"high"` oder `"low"` (ohne Schatten und Raumlicht-Bild, mit weniger Bildpunkten; „auto“ wählt das am Handy und auf schmalen Flächen). An der Rechnung ändert die Szene nichts.
 - `model` – womit die Gleichgewichte rechnen: `"ideal"` mit Konzentrationen (Vorgabe) oder `"real"` mit Aktivitäten, siehe „Ideale und reale Lösung“.
@@ -1456,6 +1478,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Wärme:** Die Reaktionswärme folgt nach dem Satz von Hess aus den Bildungsenthalpien, etwa −55,8 kJ/mol für die Neutralisation und −467 kJ/mol für Magnesium in Säure. Wo eine Bildungsenthalpie fehlt, gilt die Reaktionsenthalpie aus der Datenbank; wo auch die fehlt, rechnet der Vorgang ohne Wärme. Sie erwärmt Lösung und Glas; das Gefäß gibt Wärme an den Raum ab und kühlt wieder aus.
 - **Kalorimeter:** Es nimmt 10 J/K auf und gibt 0,012 W/K an den Raum ab, ein Zwanzigstel des Becherglases mit 250 mL (0,25 W/K); beides ist für zwei Styroporbecher mit Deckel geschätzt. Neutralisiert man darin je 50 mL Säure und Lauge von 1 mol/L, verliert es in fünf Minuten weniger als 0,3 °C. Die höchste Temperatur steht im Protokoll, sobald es merklich abkühlt (0,3 °C) oder 20 s lang nicht mehr wärmer wird.
 - **Lösungswärme:** Ammoniumnitrat, Natriumhydroxid und Calciumchlorid lösen sich nach ihrem Löslichkeitsgleichgewicht, so schnell, wie ihre Oberfläche es erlaubt (etwa eine halbe Minute für 2 g in 50 mL). Die Wärme folgt aus den Bildungsenthalpien: +25,5, −44,8 und −81,4 kJ/mol; die Konstanten der Gleichgewichte sind aus denselben Tabellenwerten gerechnet.
+- **Streuung** (mit `scatter`): Jedes Messgerät weicht fest um einen ausgelosten Betrag ab und rauscht dazu; das Rauschen wechselt jede Sekunde, und die Trägheit des Geräts glättet es. Die größten Abweichungen (fest / Rauschen, geschätzt nach Schulgeräten): Thermometer 0,3 / 0,05 °C, pH-Meter 0,05 / 0,01, Leitfähigkeit 2 % / 0,5 %, Fotometer 0,005 + 1 % / 0,002, Manometer 0,01 / 0,002 bar, Strom- und Spannungsmesser 1 % / 0,5 mA bzw. 2 mV (ohne Strom zeigt der Strommesser 0), Kolbenprober 2 % ohne Rauschen und höchstens 100 mL, Waage 0,02 % / 0,005 g (Tara stellt sie genau auf null). Das Rauschen liegt auf der Anzeige, nach der Trägheit des Fühlers. Am Ende seiner Skala zeigt ein Gerät das Ende. Die Chemie rechnet weiter mit den wahren Werten; Aufgaben, Diagramme, Tabelle und die höchste Temperatur im Protokoll sehen die Anzeige. Die Auslosung bleibt beim Zurückspulen und Zurücksetzen dieselbe. Im Ruhezustand steht die Uhr und mit ihr das Rauschen.
 - **Thermometer:** Es folgt der Temperatur mit einer Verzögerung von etwa drei Sekunden und reicht bis 110 °C; darüber zeigt es das Ende seiner Skala. Die Temperaturkurve im Diagramm ist das, was das Thermometer zeigt; ohne Thermometer gibt es keine Kurve.
 - **Zugießen** dauert je nach Menge eine halbe bis vier Sekunden, ein Tropfen eine Viertelsekunde. Deshalb schlägt der Indikator mitten im Zugießen um.
 - **Farbe:** Lambert-Beer für jede Wellenlänge des sichtbaren Lichts, danach Umrechnung in eine Bildschirmfarbe. Die Schichtdicke ist die Weite des Gefäßes: 1,4 cm im Reagenzglas, 5 cm im Becherglas für 100 mL.

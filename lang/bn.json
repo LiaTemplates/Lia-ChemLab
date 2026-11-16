@@ -336,6 +336,7 @@
     "err.size": "এই পাত্র এই আকারে পাওয়া যায় না",
     "err.model": "এমন কোনো গণনা মডেল নেই (ideal বা real)",
     "err.view": "এমন কোনো দৃশ্য নেই (2d বা 3d)",
+    "err.scatter": "scatter হয় true, false অথবা একটি সংখ্যা",
     "err.scene": "দৃশ্যপটের এই তথ্যটি মেলে না",
     "view": "3D",
     "view.loading": "3D দৃশ্য লোড হচ্ছে …",

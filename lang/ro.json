@@ -336,6 +336,7 @@
     "err.size": "Acest vas nu există în această mărime",
     "err.model": "Acest model de calcul nu există (ideal sau real)",
     "err.view": "Această vedere nu există (2d sau 3d)",
+    "err.scatter": "scatter este true, false sau un număr",
     "err.scene": "Această setare a scenei nu se potrivește",
     "view": "3D",
     "view.loading": "Se încarcă vederea 3D …",

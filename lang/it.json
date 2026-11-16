@@ -336,6 +336,7 @@
     "err.size": "Questo recipiente non esiste in questa misura",
     "err.model": "Questo modello di calcolo non esiste (ideal o real)",
     "err.view": "Questa vista non esiste (2d o 3d)",
+    "err.scatter": "scatter è true, false o un numero",
     "err.scene": "Questa impostazione della scena non è valida",
     "view": "3D",
     "view.loading": "Caricamento della vista 3D …",

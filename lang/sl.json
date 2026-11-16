@@ -336,6 +336,7 @@
     "err.size": "Posode v tej velikosti ni",
     "err.model": "Takega računskega modela ni (ideal ali real)",
     "err.view": "Takega pogleda ni (2d ali 3d)",
+    "err.scatter": "scatter je true, false ali število",
     "err.scene": "Ta podatek o sceni ne ustreza",
     "view": "3D",
     "view.loading": "Nalaganje 3D-pogleda …",

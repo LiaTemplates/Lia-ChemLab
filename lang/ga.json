@@ -336,6 +336,7 @@
     "err.size": "Níl an t-árthach ar fáil sa mhéid seo",
     "err.model": "Níl a leithéid de shamhail ríomha ann (ideal nó real)",
     "err.view": "Níl a leithéid d’amharc ann (2d nó 3d)",
+    "err.scatter": "Is é scatter true, false nó uimhir",
     "err.scene": "Ní oireann an socrú radhairc seo",
     "view": "3D",
     "view.loading": "Amharc 3D á lódáil …",

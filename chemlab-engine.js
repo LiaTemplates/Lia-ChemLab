@@ -566,28 +566,30 @@
   // Gummistopfen: verschließt das Gefäß ganz; steigt der Druck darin über POP, fliegt er heraus
   registerPart("stopper", { kind: "tool", stopper: true, plug: true });
   // Manometer: ein Stopfen mit Druckanzeige; fliegt heraus wie er
-  registerPart("manometer", { kind: "tool", stopper: true, plug: true, sense: "p", unit: "bar", lag: 0.3, fine: 0.002 });
+  registerPart("manometer", { kind: "tool", stopper: true, plug: true, sense: "p", unit: "bar", lag: 0.3, fine: 0.002, spread: [0.01, 0, 0.002, 0] });
   // Rückflusskühler: steht aufrecht im Gefäß; der Dampf wird darin wieder flüssig und läuft zurück
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
   // lag: Trägheit in s; sense: was es misst
   // range: Anfang und Ende der Skala; darüber zeigt es deren Ende
-  registerPart("thermometer", { kind: "tool", lag: 3, unit: "°C", sense: "T", range: [-10, 110] });
-  registerPart("phmeter", { kind: "tool", lag: 1, unit: "pH", sense: "pH" });
+  // spread: wie weit die Anzeige streut, wenn der Aufbau es will ("scatter"): [fest, fest relativ, Rauschen, Rauschen relativ],
+  // je als größte Abweichung; fest gilt für das Gerät die ganze Zeit, das Rauschen wechselt jede Sekunde (geschätzt nach Schulgeräten)
+  registerPart("thermometer", { kind: "tool", lag: 3, unit: "°C", sense: "T", range: [-10, 110], spread: [0.3, 0, 0.05, 0] });
+  registerPart("phmeter", { kind: "tool", lag: 1, unit: "pH", sense: "pH", spread: [0.05, 0, 0.01, 0] });
   // fine: so genau (als Anteil des Messwerts) muss die Anzeige stehen, damit das Gerät als abgelesen gilt
-  registerPart("conductometer", { kind: "tool", lag: 1, unit: "mS/cm", sense: "kappa", fine: 0.002 });
+  registerPart("conductometer", { kind: "tool", lag: 1, unit: "mS/cm", sense: "kappa", fine: 0.002, spread: [0, 0.02, 0, 0.005] });
   registerPart("dish", { kind: "vessel", cap: 50, d: 2.5, Cv: 45, loss: 0.14, heat: 0.18 });      // Abdampfschale aus Porzellan
   // under: steht unter einem Gefäß; flames: Temperatur der Flamme in °C für aus, leuchtend, rauschend
   registerPart("burner", { kind: "tool", under: true, flames: [0, 600, 1150] });
-  registerPart("syringe", { kind: "tool", lag: 0, unit: "mL", sense: "V", cap: 100, stopper: true });           // Kolbenprober
+  registerPart("syringe", { kind: "tool", lag: 0, unit: "mL", sense: "V", cap: 100, stopper: true, spread: [0, 0.02, 0, 0] });           // Kolbenprober
   // Wasserbad: steht wie der Brenner unter einem Gefäß und hält es auf der eingestellten Temperatur (range, in °C).
   // gain: so viel besser als eine Flamme überträgt das Wasser die Wärme
   // Waage: steht unter einem Gefäß und zeigt dessen Masse samt Glas; tare zieht ab, was beim Tarieren darauf stand
-  registerPart("balance", { kind: "tool", under: true, scale: true, unit: "g", sense: "m", lag: 0.5, fine: 0.01 });
+  registerPart("balance", { kind: "tool", under: true, scale: true, unit: "g", sense: "m", lag: 0.5, fine: 0.01, spread: [0, 0.0002, 0.005, 0] });      // Tara stellt sie genau auf null
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
-  registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3] });
+  registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3], spread: [0.005, 0.01, 0.002, 0] });
   // test: liegt nicht auf dem Tisch, sondern wird an ein Gefäß gehalten
   registerPart("splint", { kind: "test", probe: "flame" });        // brennender Holzspan
   registerPart("glowsplint", { kind: "test", probe: "glow" });     // Glimmspan
@@ -600,8 +602,8 @@
   // circuit: Glied eines Stromkreises. Der Stromkreis gehört zu dem Gefäß, an dem das Gerät steht, und führt über dessen zwei Elektroden.
   // max: höchste Spannung in V, limit: Strombegrenzung in A; ohm: Widerstand; watt: Leistung, bei der das Lämpchen voll leuchtet
   registerPart("supply", { kind: "tool", circuit: "supply", unit: "V", lag: 0, max: 12, limit: 3 });
-  registerPart("ammeter", { kind: "tool", circuit: "ammeter", unit: "A", lag: 0.2, fine: 0.002 });
-  registerPart("voltmeter", { kind: "tool", circuit: "voltmeter", unit: "V", lag: 0.2, fine: 0.002 });
+  registerPart("ammeter", { kind: "tool", circuit: "ammeter", unit: "A", lag: 0.2, fine: 0.002, spread: [0, 0.01, 0.0005, 0] });
+  registerPart("voltmeter", { kind: "tool", circuit: "voltmeter", unit: "V", lag: 0.2, fine: 0.002, spread: [0, 0.01, 0.002, 0] });
   registerPart("lamp", { kind: "tool", circuit: "load", lag: 0.1, fine: 0.01, ohm: 54, watt: 0.266 });      // Glühlämpchen 3,8 V / 0,07 A
   // Salzbrücke zwischen zwei Gefäßen ("in" und "to"): salt: das Kation und das Anion, die sie abgibt; ohm: ihr Widerstand
   registerPart("bridge", { kind: "tool", bridge: true, salt: ["K+(aq)", "NO3-(aq)"], ohm: 30 });
@@ -733,6 +735,7 @@
     if (d.data) register(d.data);
     if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
     if (d.view != null && d.view !== "2d" && d.view !== "3d") throw fail("view", String(d.view));
+    if (d.scatter != null && typeof d.scatter !== "boolean" && !(typeof d.scatter === "number" && isFinite(d.scatter))) throw fail("scatter", String(d.scatter));
     var scene = sceneOf(d.scene);
 
     var count = {}, ids = {}, bench = [], samples = {};
@@ -847,6 +850,8 @@
       },
       room: typeof d.room === "number" && d.room >= 0 && d.room < 100 ? d.room : 20,
       lock: !!d.lock,                                              // gesperrt: Geräte bleiben, wo sie stehen
+      // scatter: die Auslosung, nach der die Anzeigen streuen; true lost für jeden Aufbau neu aus, null: sie streuen nicht
+      scatter: d.scatter === true ? Math.floor(Math.random() * 1e9) : typeof d.scatter === "number" ? d.scatter : null,
       table: !!d.table,                                            // mit Messwerttabelle
       task: d.task == null ? null : readTask(d.task, bench),
       packs: d.packs || [],
@@ -1050,7 +1055,7 @@
   }
 
   function createLab(config) {
-    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
+    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", scatter: config.scatter == null ? null : config.scatter, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
     config.bench.forEach(function (item) {                       // unbekannte Proben: welches Gefäß, welche Füllung gezogen wurde, und die möglichen Namen
       if (item.unknown) lab.samples[item.unknown] = { vessel: item.id, pick: item.oneOf ? item.pick : null, names: item.oneOf ? item.oneOf.map(function (o) { return o.name; }) : [] };
     });
@@ -1070,7 +1075,7 @@
       settle(lab, v);
     });
     survey(lab);
-    lab.tools.forEach(function (t) { t.value = sense(lab, t); });
+    lab.tools.forEach(function (t) { prime(lab, t); });
     return lab;
   }
 
@@ -1144,7 +1149,7 @@
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
-    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.held = 0; t.value = 0; } });   // … und der Kolbenprober
+    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.held = 0; t.value = 0; if ("smooth" in t) t.smooth = 0; } });   // … und der Kolbenprober
     survey(lab);
     return true;
   }
@@ -1185,7 +1190,7 @@
       })));
       seat(lab, made);
       survey(lab);
-      made.value = sense(lab, made);
+      prime(lab, made);
     }
     return id;
   }
@@ -1224,6 +1229,7 @@
     t.tare = 0;
     t.tare = sense(lab, t);
     t.value = 0;
+    if ("smooth" in t) t.smooth = 0;
     return true;
   }
 
@@ -1256,7 +1262,7 @@
     if (v && def.duct && (t.to === vesselId || ducts(lab, t).some(function (o) { return o.in === v.id; }) || (t.to && looped(ducts(lab, t), vesselId, t.to)))) return false;
     t.in = v ? vesselId : null;
     if ((def.bridge || def.duct) && !v) t.to = null;
-    if (def.sense === "V") { t.held = 0; t.n = 0; t.full = false; t.value = 0; }      // ein Kolbenprober kommt leer an
+    if (def.sense === "V") { t.held = 0; t.n = 0; t.full = false; t.value = 0; if ("smooth" in t) t.smooth = 0; }      // ein Kolbenprober kommt leer an
     seat(lab, t);
     survey(lab);
     return true;
@@ -2728,7 +2734,7 @@
   }
 
   function notice(lab, v, gases, emit, dissolved, bathed) {
-    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, spec;
+    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, spec, th;
     // gemeldet wird Gas, sobald es die Uhr am Laufen hält (REST); dann zeigt die Fläche auch Blasen. Ein einzelner Rechenschritt mit
     // Gas zählt nicht: gemeldet wird, was eine Fünftelsekunde anhält.
     f.fizz = v.gas > 2 * REST ? (f.fizz || 0) + 1 : 0;
@@ -2770,7 +2776,12 @@
       if (v.T > f.max) f.max = v.T;
       if (v.T > f.peak + 0.01) { f.peak = v.T; f.since = lab.t; }
       // gemeldet wird, wenn es merklich abkühlt oder 20 s lang nicht mehr wärmer wird (im Kalorimeter kühlt es kaum ab)
-      if (v.T < f.max - 0.3 || lab.t - f.since > 20) { f.heat = 0; f.base = v.T; if (emit) emit({ key: "tempMax", vessel: v.id, T: f.max }); }
+      if (v.T < f.max - 0.3 || lab.t - f.since > 20) {
+        f.heat = 0; f.base = v.T;
+        // mit Streuung nennt das Protokoll, was das Thermometer im Glas dabei zeigte, nicht den wahren Wert
+        th = lab.scatter != null ? toolAt(lab, v, function (def) { return def.sense === "T"; }) : null;
+        if (emit) emit({ key: "tempMax", vessel: v.id, T: th ? readout(lab, th, f.max, false) : f.max });
+      }
     } else if (v.T > f.base + 1.5) { f.heat = 1; f.max = f.peak = v.T; f.since = lab.t; }
     else if (v.T < f.base) f.base = v.T;
   }
@@ -3475,6 +3486,45 @@
     return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null;
   }
 
+  // Streuung der Anzeige: eine Zahl in [−1, 1], fest für Auslosung, Gerät und Schlüssel
+  function jitter(seed, id, key) {
+    var text = seed + "|" + id + "|" + key, h = 2166136261, i;
+    for (i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+    h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
+    return (h >>> 0) / 4294967295 * 2 - 1;
+  }
+
+  function scattered(lab, t) { return lab.scatter != null && !!L.parts[t.type].spread; }
+
+  // Was das Gerät anzeigt: der Messwert mit seiner festen Abweichung und, wenn noisy, dem Rauschen dieser Sekunde.
+  // Am Anschlag zeigt es den Anschlag; der Kolbenprober zeigt nicht mehr, als er fasst.
+  function readout(lab, t, target, noisy) {
+    var def = L.parts[t.type], sp = def.spread, range = def.sense && def.range, out;
+    if (!scattered(lab, t) || target == null) return target;
+    if (range && target >= range[1]) return range[1];
+    if (range && target <= range[0]) return range[0];
+    out = target * (1 + sp[1] * jitter(lab.scatter, t.id, "rel")) + sp[0] * jitter(lab.scatter, t.id, "sys");
+    if (range) out = Math.min(range[1], out);
+    if (def.sense === "V") out = Math.min(def.cap, out);
+    return noisy ? wobble(lab, t, out) : out;
+  }
+
+  // das Rauschen dieser Sekunde auf einer Anzeige; es entsteht im Gerät, nach der Trägheit des Fühlers. Ohne Strom zeigt ein Strommesser 0
+  function wobble(lab, t, base) {
+    var def = L.parts[t.type], sp = def.spread, range = def.sense && def.range, sec = Math.floor(lab.t), out;
+    if (base == null || (def.circuit && base === 0) || (range && (base >= range[1] || base <= range[0]))) return base;
+    out = base + sp[2] * jitter(lab.scatter, t.id, sec) + base * sp[3] * jitter(lab.scatter, t.id, "r" + sec);
+    if (range) out = Math.min(range[1], out);
+    return def.sense === "V" ? Math.min(def.cap, out) : out;
+  }
+
+  // Anzeige eines Geräts setzen, ohne Trägheit (beim Aufbau und beim Einsetzen)
+  function prime(lab, t) {
+    var base = readout(lab, t, sense(lab, t), false);
+    if (scattered(lab, t)) { t.smooth = base; t.value = wobble(lab, t, base); }
+    else t.value = base;
+  }
+
   function tick(lab, emit) {
     lab.tick++;
     lab.t = lab.tick / TICKS;
@@ -3484,13 +3534,14 @@
     electro(lab, emit);
     lab.vessels.forEach(function (v) { advanceVessel(lab, v, emit); });
     lab.tools.forEach(function (t) {                           // Messgeräte folgen mit etwas Trägheit
-      var target = sense(lab, t);
+      var target = readout(lab, t, sense(lab, t), false), noisy = scattered(lab, t), key = noisy ? "smooth" : "value";
       if (t.tint && lab.t >= t.tint.until) t.tint = null;      // die Flammenfärbung vergeht
-      if (target == null || t.value == null) t.value = target;
+      if (target == null || t[key] == null) t[key] = target;
       else {
-        t.value += (target - t.value) * (1 - Math.exp(-DT / L.parts[t.type].lag));
-        if (Math.abs(target - t.value) < 1e-9) t.value = target;
+        t[key] += (target - t[key]) * (1 - Math.exp(-DT / L.parts[t.type].lag));
+        if (Math.abs(target - t[key]) < 1e-9) t[key] = target;
       }
+      if (noisy) t.value = wobble(lab, t, t.smooth);           // mit Streuung: die geglättete Anzeige und darauf das Rauschen
     });
   }
 
@@ -3521,9 +3572,10 @@
       for (key in v.rate) if (v.rate[key] > REST) return false;
       return true;
     }) && lab.tools.every(function (t) {
-      var target = sense(lab, t), def = L.parts[t.type];
-      if (target == null || t.value == null) return target == null && t.value == null;      // ein Gerät, das eben erst etwas zu messen bekam (oder nichts mehr), muss noch umspringen
-      return Math.abs(target - t.value) < (def.scale ? 0.005 : def.fine ? def.fine * Math.abs(target) + 1e-12 : def.sense === "pH" ? 0.01 : 0.05);
+      // mit Streuung zählt die geglättete Anzeige ohne Rauschen: das Wackeln ist keine Bewegung
+      var def = L.parts[t.type], target = readout(lab, t, sense(lab, t), false), now = scattered(lab, t) ? t.smooth : t.value;
+      if (target == null || now == null) return target == null && now == null;      // ein Gerät, das eben erst etwas zu messen bekam (oder nichts mehr), muss noch umspringen
+      return Math.abs(target - now) < (def.scale ? 0.005 : def.fine ? def.fine * Math.abs(target) + 1e-12 : def.sense === "pH" ? 0.01 : 0.05);
     });
   }
 

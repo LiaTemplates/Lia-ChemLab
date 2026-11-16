@@ -336,6 +336,7 @@
     "err.size": "Astiaa ei ole tässä koossa",
     "err.model": "Tällaista laskentamallia ei ole (ideal tai real)",
     "err.view": "Tällaista näkymää ei ole (2d tai 3d)",
+    "err.scatter": "scatter on true, false tai luku",
     "err.scene": "Tämä kohtauksen asetus ei sovi",
     "view": "3D",
     "view.loading": "3D-näkymä latautuu …",

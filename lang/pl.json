@@ -336,6 +336,7 @@
     "err.size": "Tego naczynia nie ma w takim rozmiarze",
     "err.model": "Nie ma takiego modelu obliczeń (ideal lub real)",
     "err.view": "Nie ma takiego widoku (2d lub 3d)",
+    "err.scatter": "scatter to true, false lub liczba",
     "err.scene": "To ustawienie sceny nie pasuje",
     "view": "3D",
     "view.loading": "Ładowanie widoku 3D …",
