@@ -218,7 +218,7 @@
               hotFlame.visible = true;
               hotFlame.material.uniforms.color.value.set(s.flame.color);
               hotFlame.position.set(m.position.x, m.position.y + m.userData.r * 0.6, m.position.z);
-              hotFlame.scale.set(1, 0.9 * (1 + (ctx.still ? 0 : 0.12 * Math.sin(t * 17))), 1);
+              hotFlame.scale.set(1.8, 1.6 * (1 + (ctx.still ? 0 : 0.12 * Math.sin(t * 17))), 1.8);
             }
           });
         });
