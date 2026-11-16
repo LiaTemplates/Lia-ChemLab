@@ -2778,7 +2778,12 @@ test("Erst das Wasser, dann die Säure: Wasser in konzentrierte Schwefelsäure s
   };
   const wrong = mix("H2SO4 conc", 20, "H2O"), right = mix("H2O", 50, "H2SO4 conc");
   assert.ok(wrong.spat, "Wasser in Säure: es spritzt");
-  assert.ok(L.volume(L.vessel(wrong.l, "b")) * 1000 < 24.5, `und es fliegt etwas heraus: ${L.volume(L.vessel(wrong.l, "b")) * 1000} mL übrig`);
+  assert.ok(L.vessel(wrong.l, "b").out["H2SO4(l)"] > 0.005, "und Säure fliegt heraus");
+  assert.ok(L.vessel(wrong.l, "b").n["H2O(l)"] > 0.2, "das Wasser kocht nicht ganz weg");
+  assert.equal(amount(lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2SO4 conc", ml: 10 }] }]), "H2SO4(l)") > 0, true);
+  const pure = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2SO4 conc", ml: 10 }] }]);
+  L.step(pure, 5);
+  assert.equal(amount(pure, "H+(aq)"), 0, "ohne Wasser bleibt die Säure, wie sie ist");
   near(totals(wrong.l).mass, wrong.start + 5 * 0.997, 0.05, "was herausfliegt, zählt weiter mit");
   assert.ok(!right.spat, "Säure in Wasser: es spritzt nicht");
   assert.ok(L.reading(right.l, "th").value > 35, `aber es wird heiß: ${L.reading(right.l, "th").value} °C`);

@@ -1200,7 +1200,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 |---|---|---|
 | `H2O` | destilliertes Wasser | `ml` |
 | `HCl`, `H2SO4`, `CH3COOH` | Salzsäure, Schwefelsäure, Essigsäure | `ml` |
-| `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻, soweit Wasser da ist, und setzt dabei etwa 73 kJ/mol frei | `ml` |
+| `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻ und setzt dabei etwa 73 kJ/mol frei; je Mol braucht sie dafür drei Mol Wasser, so dass sich mit wenig Wasser nur ein Teil löst | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
 | `NaCl`, `KBr`, `KI` | Natriumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
@@ -1454,6 +1454,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Kalkwasser klärt sich deshalb schneller wieder als im Versuch.
 - Die Waage rechnet ohne Auftrieb in der Luft, und Elektroden, Messfühler und Kolbenprober zählen nicht mit: Sie hängen am Stativ. Ein Gefäß auf der Waage lässt sich nicht zugleich heizen.
 - Heiße Stellen gibt es nur an Stücken aus dem Regal, nicht an einem Niederschlag. Das Flitzen eines geschmolzenen Stücks ist gezeichnet, nicht gerechnet, und in der 3D-Ansicht spritzt es nicht; brennen dort mehrere Stücke in einem Glas, zeigt sie nur eine Flamme. Der brennende Wasserstoff steht nicht in den Gleichungen, und seine Wärme geht mit der Flamme fort. Indikatorpapier wird nur über die Öffnung gehalten, nicht eingetaucht, und Chlor bleicht es nicht, weil sich Chlor hier nicht löst.
+- Konzentrierte Schwefelsäure löst sich je Mol mit drei Mol Wasser; das ist so geschätzt, dass die Wärme beim Verdünnen mit wenig Wasser ungefähr der gemessenen entspricht (Wasser in viel Säure). Gelöste Schwefelsäure nimmt wie alle Ionen keinen Platz ein: Mischt man 5 mL Wasser in 20 mL Säure, stehen danach etwa 19 mL im Glas statt fast 25.
 - Die Mischwärme beim Zugeben gilt nur für Stoffe aus dem Regal, nicht beim Umgießen von Gefäß zu Gefäß. Schlieren und Schichten, die sich dabei bilden, gibt es nicht; die Mischzone ist eine Abschätzung für den Augenblick des Zugebens.
 - Ein Glas platzt nie allein durch Überdruck, denn der Stopfen gibt vorher nach; ein Unterdruck ohne Rohr bleibt ohne Wirkung. Der Druck ist nicht als Messwert zu sehen.
 - Kalkwasser hat hier 0,011 mol/L statt der rund 0,02 mol/L einer im Labor gesättigten Lösung, denn das ideale Modell rechnet Calciumhydroxid schon bei 0,0117 mol/L als gesättigt.

@@ -351,6 +351,11 @@
           if ((next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
         });
         if (rate.surface) known(rate.surface);
+        // needs: was da sein muss, ohne verbraucht zu werden (nur bei sofortigen Reaktionen)
+        Object.keys(rate.needs || {}).forEach(function (id) {
+          known(id);
+          if (!rate.fast || typeof rate.needs[id] !== "number" || !(rate.needs[id] > 0)) throw fail("rate", id);
+        });
         // Katalysatoren: was die Geschwindigkeit bestimmt, in der Gleichung aber nicht vorkommt. Dieselbe Gleichung darf mit
         // verschiedenen Katalysatoren mehrfach eingetragen sein; jeder Weg läuft und zählt für sich.
         var cats = Object.keys(rate.order || {}).concat(rate.surface ? [rate.surface] : []).filter(function (id, index, list) {
@@ -362,7 +367,8 @@
           // ignite: Zündtemperatur in °C, danach brennt es von selbst weiter; dry: läuft nur ohne Flüssigkeit
           rate: {
             k: +rate.k || 0, Ea: +rate.Ea || 0, order: Object.assign({}, rate.order), surface: rate.surface || null,
-            ignite: typeof rate.ignite === "number" ? rate.ignite : null, dry: !!rate.dry, fast: !!rate.fast
+            ignite: typeof rate.ignite === "number" ? rate.ignite : null, dry: !!rate.dry, fast: !!rate.fast,
+            needs: rate.needs ? Object.assign({}, rate.needs) : null
           }
         }), item, eq.text);
       });
@@ -936,7 +942,7 @@
     for (id in w.n) C += w.n[id] * L.db.species[id].cp;
     T = w.T + (C > 0 ? w.q / C : 0);
     if (!(T > BOIL)) return;
-    k = Math.min(1, (T - BOIL) / 100) * 0.5 * (zone + ml) / (volume(v) * 1000);      // so viel der Flüssigkeit fliegt heraus
+    k = Math.min(1, (T - BOIL) / 100) * 0.1 * (zone + ml) / (volume(v) * 1000);      // so viel der Flüssigkeit fliegt heraus: ein Zehntel der Mischzone (geschätzt)
     for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && v.n[id] > 0) { v.out[id] = (v.out[id] || 0) + v.n[id] * k; v.n[id] *= 1 - k; } }
     v.dirty = true;
     if (!(lab.t - (v.flag.spat == null ? -9 : v.flag.spat) < 1) && emit) emit({ key: "spatter", vessel: v.id });
@@ -1977,7 +1983,11 @@
   function limit(v, r) {          // größter möglicher Umsatz in mol
     var most = Infinity, id;
     // needs: was da sein muss, ohne verbraucht zu werden (Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt)
-    if (r.rate.needs) for (id in r.rate.needs) most = Math.min(most, (v.n[id] || 0) / r.rate.needs[id]);
+    if (r.rate.needs) {                                        // was schon umgesetzt ist, hat seinen Anteil davon schon gebunden
+      var done = Infinity;
+      r.right.forEach(function (t) { done = Math.min(done, (v.n[t.id] || 0) / t.n); });
+      for (id in r.rate.needs) most = Math.min(most, Math.max(0, (v.n[id] || 0) / r.rate.needs[id] - (isFinite(done) ? done : 0)));
+    }
     r.left.forEach(function (t) {
       if (AIR[t.id] && !(v.n[t.id] > 0)) return;               // kommt aus der Luft und geht nicht aus
       most = Math.min(most, (v.n[t.id] || 0) / t.n);
