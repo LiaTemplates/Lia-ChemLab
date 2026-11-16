@@ -97,11 +97,12 @@ Der Befehl steht an einem Textblock, der den Aufbau beschreibt. Er zeigt ihn als
 
 **So geht es:**
 
-- Im **Regal** das Magnesiumband antippen, die Menge einstellen und dann das **Reagenzglas antippen**: Das Band fällt hinein, Gasblasen steigen auf, das Thermometer klettert.
-- Der Stoff bleibt in der Hand: Noch einmal antippen gibt noch einmal dieselbe Menge zu. Den Stoff im Regal erneut antippen legt ihn zurück.
-- Ein Gefäß antippen, ohne etwas in der Hand zu haben, wählt es aus. Darunter steht dann, was es enthält; von dort lässt sich umgießen, ausleeren und wegräumen.
-- Die **Bedienleiste** unter der Fläche hält die Zeit an, spielt sie rückwärts ab oder springt an Anfang und Ende. Der Schieber führt zu jedem Zeitpunkt des Versuchs.
-- Unter der Fläche stehen die **Reaktionsgleichungen** dessen, was gerade abläuft, die **Diagramme** und das **Protokoll** der Beobachtungen.
+- Das **Reagenzglas antippen**: Darunter öffnet sich seine Karte. Unter **Zugeben** stehen die Stoffe aus dem Regal, unter **Geräte** Thermometer, Brenner, Proben und alles, was an diesem Gefäß wirkt, unter **Inhalt** die Teilchen, die Teilchenlupe, Umgießen, Ausleeren und Wegräumen.
+- Das Magnesiumband wählen, die Menge einstellen und **zugeben**: Das Band fällt hinein, Gasblasen steigen auf, das Thermometer klettert.
+- Der Stoff bleibt in der Hand, oben links über der Fläche. Noch einmal zugeben oder ein Gefäß antippen gibt noch einmal dieselbe Menge zu, gestrichelt umrandet sind die Gefäße, die ihn nehmen. Das Kreuz legt ihn zurück.
+- Wer lieber vom Regal aus arbeitet, klappt es oben mit **Regal** auf: Die Fächer stehen als Reiter darüber, ein Fach als Zeile, die sich seitlich schieben lässt. Ein Stoff aus dem Regal kommt ebenso in die Hand.
+- Die **Bedienleiste** unter der Fläche hält die Zeit an, spielt sie rückwärts ab oder springt an Anfang und Ende. Über dem Schieber stehen **Marken**: eine Raute für jeden Eingriff, ein Punkt für jede Beobachtung. Eine Marke antippen springt dorthin, gleich hinter das Ereignis.
+- Darunter, in Reitern: die **Gleichungen** dessen, was gerade abläuft, die **Diagramme** und das **Protokoll** der Beobachtungen. Ton, „Aufbau kopieren“ und „Zurücksetzen“ stehen im Menü „⋯“ oben rechts.
 
 ## Neutralisation mit Indikator
 
@@ -892,7 +893,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `g` – bei einer Elektrode ihre Masse in g, falls sie von der Vorgabe abweichen soll.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
-- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
+- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell.
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.

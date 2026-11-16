@@ -1662,15 +1662,71 @@ test("Fällung an der Fläche: Trübung in der Zeichnung, Niederschlag im Protok
   assert.match(item(el, "rg").attributes["aria-label"], /trüb/);
 });
 
+// in welchem Fach (Reiter der Regalleiste) ein Stoff oder Gerät liegt, und welcher Reiter welchen Namen trägt
+const fachOf = (el, id) => +new RegExp(`data-id="${id.replace(/[()]/g, "\\$&")}"[^>]*data-g="(\\d+)"`).exec(part(el, ".cl-shelf").innerHTML)[1];
+const fach = (el, title) => { const m = new RegExp(`data-id="(\\d+)" aria-selected="\\w+">${title} <`).exec(part(el, ".cl-tabs").innerHTML); return m ? +m[1] : -1; };
+
 test("Regal: ohne Angabe nach Fächern geordnet", () => {
-  const shelf = part(mount({}), ".cl-shelf").innerHTML;
-  const order = ["Säuren und Laugen", "Salzlösungen", "Indikatoren", "Feststoffe", "Geräte"].map((title) => shelf.indexOf(">" + title + "<"));
+  const el = mount({}), shelf = part(el, ".cl-shelf").innerHTML;
+  const order = ["Säuren und Laugen", "Salzlösungen", "Indikatoren", "Feststoffe", "Geräte"].map((title) => fach(el, title));
   assert.ok(order.every((at, i) => at >= 0 && (i === 0 || at > order[i - 1])), `Fächer in Reihenfolge: ${order}`);
-  const silver = shelf.indexOf('data-id="AgNO3 0.1M"');
-  assert.ok(silver > order[1] && silver < order[2], "Salzlösungen stehen mit 0,1 mol/L im Regal");
+  assert.equal(fachOf(el, "AgNO3 0.1M"), order[1], "Salzlösungen stehen mit 0,1 mol/L im Regal");
+  assert.equal(fachOf(el, "H2O"), order[0], "das Wasser steht bei Säuren und Laugen");
   assert.match(shelf, /Silbernitrat-Lösung 0,1 mol\/L/);
   assert.match(shelf, /data-id="HCl"/, "Säuren und Laugen mit 1 mol/L");
-  assert.doesNotMatch(part(mount(tube), ".cl-shelf").innerHTML, /cl-group/, "mit eigener Auswahl ohne Fächer");
+  const own = mount(tube);
+  assert.deepEqual([fach(own, "Stoffe"), fach(own, "Geräte")], [0, 1], "mit eigener Auswahl nur Stoffe und Geräte");
+  assert.equal(fach(own, "Salzlösungen"), -1);
+});
+
+test("Regalleiste: zu, bis man sie aufklappt; offen, wenn der Kurs es will oder der Tisch leer ist", () => {
+  const el = mount(tube);
+  assert.equal(part(el, ".cl-bar").hidden, true, "die Karte am Gefäß reicht");
+  press(el, "bar");
+  assert.equal(part(el, ".cl-bar").hidden, false);
+  press(el, "group", "1");
+  assert.equal(state(el).group, 1, "ein anderes Fach");
+  assert.equal(part(mount(Object.assign({ show: { shelf: true } }, tube)), ".cl-bar").hidden, false);
+  assert.equal(part(mount({ bench: [] }), ".cl-bar").hidden, false, "ohne Gefäß auf dem Tisch");
+});
+
+test("Karte: ein Gefäß antippen, Stoff wählen, zugeben; ein Gerät wirkt gleich an diesem Gefäß", () => {
+  const el = mount(tube);
+  tap(el, "rg");
+  const card = part(el, ".cl-panel").innerHTML;
+  assert.match(card, /data-act="card" data-id="add"/);
+  assert.match(card, /data-act="use" data-id="NaOH 1M"/);
+  assert.match(card, /data-act="use" data-id="thermometer"/, "Geräte im eigenen Reiter");
+  assert.doesNotMatch(card, /data-act="use" data-id="beaker"/, "ein Gefäß kommt nicht in ein Gefäß");
+  assert.equal(part(el, ".cl-panel").attributes["data-tab"], "add");
+  press(el, "use", "NaOH 1M");
+  assert.equal(state(el).hand.id, "NaOH 1M", "der Stoff liegt in der Hand");
+  press(el, "give");
+  frames(2);
+  near(look(state(el).run.lab, "rg").ml, 13, 0.1, "5 mL dazu");
+  assert.equal(state(el).sel, "rg", "die Karte bleibt offen");
+  press(el, "use", "thermometer");
+  assert.ok(state(el).run.lab.tools.some((t) => t.type === "thermometer" && t.in === "rg"), "das Thermometer steckt im Glas");
+  assert.equal(state(el).hand, null, "und liegt nicht mehr in der Hand");
+  press(el, "card", "info");
+  assert.equal(part(el, ".cl-panel").attributes["data-tab"], "info");
+  press(el, "close");
+  assert.equal(state(el).sel, null);
+});
+
+test("Zeitleiste: Marken für Eingriffe und Beobachtungen, antippen springt dorthin", () => {
+  const el = mount(tube);
+  press(el, "hand", "Mg ribbon");
+  tap(el, "rg");
+  frames(6);
+  const pins = part(el, ".cl-time").querySelector(".cl-pins").innerHTML;
+  assert.match(pins, /class="cl-pin cl-act" data-act="jumpto" data-id="0"/, "die Zugabe als Raute");
+  assert.match(pins, /aria-label="0:00 – 5 cm Magnesiumband in Reagenzglas 1 gegeben"/);
+  assert.match(pins, /class="cl-pin" data-act="jumpto"[^>]*tabindex="-1"[^>]*Gasblasen/, "Beobachtungen als Punkt");
+  press(el, "jumpto", "0");
+  near(state(el).run.time, 0, 1e-5);
+  near(L.vessel(state(el).run.lab, "rg").n["Mg(s)"], 5 * 0.0104 / 24.305, 1e-9, "gleich nach der Zugabe: das Band liegt im Glas");
+  assert.match(part(el, ".cl-time").querySelector(".cl-pins").innerHTML, /class="cl-pin cl-later"[^>]*Gasblasen/, "was danach kommt, ist schon aufgezeichnet");
 });
 
 test("Regal: die Flasche zeigt die Farbe ihrer Lösung", () => {
@@ -3727,17 +3783,16 @@ test("Zeichnung: Elektroden mit Belag und Gasblasen, Netzgerät, Messgeräte, L�
 });
 
 test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
-  const shelf = part(mount({}), ".cl-shelf").innerHTML;
-  const gear = shelf.indexOf(">Geräte<"), electric = shelf.indexOf(">Elektrik<");
+  const el = mount({}), shelf = part(el, ".cl-shelf").innerHTML;
+  const gear = fach(el, "Geräte"), electric = fach(el, "Elektrik");
   assert.ok(gear >= 0 && electric > gear);
   for (const [id, name] of [["electrode-Cu", "Kupfer-Elektrode"], ["electrode-C", "Graphit-Elektrode"], ["supply", "Netzgerät"], ["ammeter", "Strommesser"], ["voltmeter", "Spannungsmesser"],
     ["lamp", "Lämpchen"], ["bridge", "Salzbrücke"]]) {
     const at = shelf.indexOf(`data-id="${id}"`);
-    assert.ok(at > electric, id);
+    assert.equal(fachOf(el, id), electric, id);
     assert.ok(shelf.indexOf(name, at) > at, name);
   }
-  const meter = shelf.indexOf('data-id="conductometer"');
-  assert.ok(meter > gear && meter < electric, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
+  assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
 test("Elektroden einsetzen: zwei je Becherglas, keine ins Reagenzglas; Netzgerät und Messgeräte daneben", () => {

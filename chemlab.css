@@ -14,6 +14,9 @@
   --cl-shine: #ffffff;
   --cl-mercury: #d8322c;
   --cl-s0: #c0392b; --cl-s1: #1f6fb2; --cl-s2: #2e8b57; --cl-s3: #8e44ad; --cl-s4: #b9770e; --cl-s5: #5d6d7e;
+  /* was in der Hand liegt, ist bernsteinfarben: der Stoff im Regal, die schwebende Leiste, die Ziele auf dem Tisch, die Eingriffe auf der Zeitleiste */
+  --cl-hand: #b45309; --cl-hand-bg: #fff4e5; --cl-hand-line: #e9a757; --cl-on-hand: #ffffff;
+  --cl-soft: rgba(var(--color-text, 40, 48, 60), 0.06);
   color: var(--cl-ink);
   font-size: 1em;
   line-height: 1.4;
@@ -32,21 +35,54 @@ html.lia-variant-dark .lia-chemlab {
   --cl-glass: #c3cfdb;
   --cl-shine: #e8eef5;
   --cl-s0: #ff8a80; --cl-s1: #7fc4ff; --cl-s2: #7fe0a8; --cl-s3: #d6a2f2; --cl-s4: #f5c46b; --cl-s5: #b8c4d0;
+  --cl-hand: #f5b26b; --cl-hand-bg: #3a2a17; --cl-hand-line: #b9782f; --cl-on-hand: #1d1206;
 }
 
 .lia-chemlab [hidden] { display: none !important; }
 .lia-chemlab h4 { font-size: 1em; margin: 0.8em 0 0.3em; }
 .lia-chemlab p { margin: 0.3em 0; }
 
-/* ---------- Regal und Knöpfe */
+/* ---------- Kopfzeile: Regal aufklappen, 3D, Menü */
 
-.lia-chemlab .cl-top { display: flex; gap: 0.5em; align-items: flex-start; }
-.lia-chemlab .cl-shelf { display: flex; flex-wrap: wrap; gap: 0.35em; flex: 1; }
-.lia-chemlab .cl-group { flex-basis: 100%; font-size: 0.85em; opacity: 0.75; margin-top: 0.2em; }
+.lia-chemlab .cl-top { display: flex; gap: 0.4em; align-items: center; }
+.lia-chemlab .cl-fill { flex: 1; }
+.lia-chemlab .cl-side { display: flex; align-items: center; gap: 0.35em; }
+.lia-chemlab .cl-barbtn { display: inline-flex; align-items: center; gap: 0.4em; }
+.lia-chemlab .cl-more { position: relative; overflow: visible !important; border: 0; padding: 0; margin: 0; }      /* LiaScript beschneidet details sonst */
+.lia-chemlab .cl-more > summary { list-style: none; display: inline-flex; }
+.lia-chemlab .cl-more > summary::-webkit-details-marker { display: none; }
+.lia-chemlab .cl-more > summary::before,
+.lia-chemlab .cl-more > summary::after { content: none !important; display: none !important; }      /* LiaScript setzt sonst einen eigenen Pfeil */
+.lia-chemlab .cl-more > summary svg { fill: currentColor; }
+.lia-chemlab .cl-menu {
+  position: absolute; right: 0; top: calc(100% + 0.3em); z-index: 5; min-width: 12em;
+  display: flex; flex-direction: column; gap: 0.3em; padding: 0.4em;
+  background: var(--cl-bg); border: 1px solid var(--cl-line); border-radius: 0.6em; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+.lia-chemlab .cl-menu .cl-btn { text-align: left; }
+
+/* ---------- Regalleiste: Fächer als Reiter, ein Fach als Zeile zum Schieben */
+
+.lia-chemlab .cl-bar { margin-top: 0.5em; display: flex; flex-direction: column; gap: 0.35em; }
+.lia-chemlab .cl-tabs,
+.lia-chemlab .cl-cardtabs,
+.lia-chemlab .cl-outtabs { display: flex; gap: 0.2em; padding: 0.2em; background: var(--cl-soft); border-radius: 0.6em; overflow-x: auto; scrollbar-width: thin; }
+.lia-chemlab .cl-tab {
+  font: inherit; color: inherit; border: 0; background: transparent; border-radius: 0.45em;
+  min-height: 2.4em; padding: 0.2em 0.85em; white-space: nowrap; cursor: pointer; opacity: 0.8;
+}
+.lia-chemlab .cl-tab[aria-selected="true"] { background: var(--cl-bg); opacity: 1; font-weight: bold; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18); }
+.lia-chemlab .cl-tab:focus-visible { outline: 3px solid var(--cl-accent); outline-offset: 1px; }
+.lia-chemlab .cl-n { font-size: 0.8em; font-weight: normal; opacity: 0.75; margin-left: 0.25em; }
+.lia-chemlab .cl-shelf { display: flex; flex-wrap: nowrap; gap: 0.35em; overflow-x: auto; padding-bottom: 0.25em; scroll-snap-type: x proximity; scrollbar-width: thin; }
+.lia-chemlab .cl-shelf .cl-pick { flex: none; scroll-snap-align: start; }
+.lia-chemlab .cl-pick span,
+.lia-chemlab .cl-use span { max-width: 9em; white-space: normal; line-height: 1.15; }
 .lia-chemlab .cl-tap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin: 0.3em 0; }
 .lia-chemlab .cl-read { margin-left: 0.6em; font-variant-numeric: tabular-nums; }
 
 .lia-chemlab .cl-btn,
+.lia-chemlab .cl-use,
 .lia-chemlab .cl-pick {
   font: inherit;
   color: var(--cl-ink);
@@ -57,12 +93,16 @@ html.lia-variant-dark .lia-chemlab {
   padding: 0.25em 0.7em;
   cursor: pointer;
 }
-.lia-chemlab .cl-pick { display: inline-flex; align-items: center; gap: 0.35em; padding: 0.15em 0.6em 0.15em 0.3em; text-align: left; }
-.lia-chemlab .cl-pick[aria-pressed="true"],
+.lia-chemlab .cl-pick,
+.lia-chemlab .cl-use { display: inline-flex; align-items: center; gap: 0.35em; padding: 0.15em 0.6em 0.15em 0.3em; text-align: left; }
 .lia-chemlab .cl-btn[aria-pressed="true"] { border-color: var(--cl-accent); box-shadow: inset 0 0 0 2px var(--cl-accent); }
+.lia-chemlab .cl-pick[aria-pressed="true"],
+.lia-chemlab .cl-use[aria-pressed="true"] { border-color: var(--cl-hand-line); background: var(--cl-hand-bg); box-shadow: inset 0 0 0 1px var(--cl-hand-line); }
 .lia-chemlab .cl-btn:hover,
+.lia-chemlab .cl-use:hover,
 .lia-chemlab .cl-pick:hover { border-color: var(--cl-accent); }
 .lia-chemlab .cl-btn:focus-visible,
+.lia-chemlab .cl-use:focus-visible,
 .lia-chemlab .cl-pick:focus-visible,
 .lia-chemlab .cl-svg:focus-visible,
 .lia-chemlab select:focus-visible,
@@ -70,23 +110,30 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-round { min-width: 2.4em; padding: 0.25em; display: inline-flex; align-items: center; justify-content: center; }
 .lia-chemlab .cl-round svg { fill: currentColor; }
 .lia-chemlab select,
+.lia-chemlab input[type="search"],
 .lia-chemlab input[type="text"] {
   font: inherit; color: var(--cl-ink); background: var(--cl-bg);
   border: 1px solid var(--cl-line); border-radius: 0.4em; min-height: 2.2em; padding: 0 0.4em;
 }
 
+/* Die Hand schwebt oben links über der Fläche, wo meist nur Wand ist */
 .lia-chemlab .cl-hand {
+  position: absolute; left: 0.5em; top: 0.5em; z-index: 2; max-width: calc(100% - 1em); box-sizing: border-box;
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em;
-  margin-top: 0.5em; padding: 0.35em 0.6em;
-  border: 1px dashed var(--cl-accent); border-radius: 0.45em;
+  padding: 0.3em 0.3em 0.3em 0.6em;
+  background: var(--cl-hand-bg); border: 1.5px solid var(--cl-hand-line); border-radius: 0.7em; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
-.lia-chemlab .cl-stepper { display: inline-flex; align-items: center; gap: 0.4em; white-space: nowrap; }
-.lia-chemlab .cl-amount { min-width: 5.5em; text-align: center; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-hand > svg { flex: none; }
+.lia-chemlab .cl-x { min-width: 2.4em; border-color: transparent; background: transparent; }
+.lia-chemlab .cl-x svg { display: block; }
+.lia-chemlab .cl-stepper { display: inline-flex; align-items: center; gap: 0.25em; white-space: nowrap; }
+.lia-chemlab .cl-amount,
+.lia-chemlab .cl-amount2 { min-width: 5.5em; text-align: center; font-weight: bold; font-variant-numeric: tabular-nums; }
 .lia-chemlab .cl-hint { opacity: 0.75; }
 
 /* ---------- Arbeitsfläche */
 
-.lia-chemlab .cl-stage { margin-top: 0.5em; border: 1px solid var(--cl-line); border-radius: 0.45em; overflow: hidden; }
+.lia-chemlab .cl-stage { position: relative; margin-top: 0.5em; border: 1px solid var(--cl-line); border-radius: 0.45em; overflow: hidden; }
 .lia-chemlab .cl-svg { display: block; width: 100%; height: 26em; max-height: 75vh; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
 /* 3D: die Leinwand füllt die Fläche; je Gerät ein Knopf für die Tastatur, unsichtbar bis er den Fokus hat */
 .lia-chemlab .cl-stage[data-view="3d"] .cl-svg { display: none; }
@@ -106,7 +153,10 @@ html.lia-variant-dark .lia-chemlab {
 /* Ein Gerät wird nur über seine Trefferfläche angetippt. So fängt ein Thermometer im Glas keine Klicks ab, die dem Glas gelten. */
 .lia-chemlab .cl-item > :not(.cl-hit) { pointer-events: none; }
 .lia-chemlab .cl-hit { fill: transparent; stroke: none; }
-.lia-chemlab .cl-hit.cl-sel { stroke: var(--cl-accent); stroke-width: 2; stroke-dasharray: 6 4; }
+/* mit etwas in der Hand zeigen die Gefäße, dass sie Ziel sind; das gewählte bleibt durchgezogen umrandet */
+.lia-chemlab[data-hand="stuff"] .cl-item[data-kind="vessel"] .cl-hit:not(.cl-sel),
+.lia-chemlab[data-hand="tool"] .cl-item[data-kind="vessel"] .cl-hit:not(.cl-sel) { stroke: var(--cl-hand); stroke-width: 2; stroke-dasharray: 6 4; }
+.lia-chemlab .cl-hit.cl-sel { stroke: var(--cl-accent); stroke-width: 2.5; }
 .lia-chemlab .cl-item:focus-visible .cl-hit { stroke: var(--cl-accent); stroke-width: 3; }
 
 .lia-chemlab .cl-glass { fill: none; stroke: var(--cl-glass); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
@@ -140,7 +190,6 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-cock { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 1; }
 .lia-chemlab .cl-cock-grip { stroke: #2c6fb5; stroke-width: 3.5; stroke-linecap: round; }
 
-.lia-chemlab .cl-side { display: flex; flex-direction: column; gap: 0.35em; }
 .lia-chemlab .cl-porcelain { fill: none; stroke: #f1eee6; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
 .lia-chemlab .cl-porcelain-edge { fill: none; stroke: var(--cl-glass); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.7; }
 .lia-chemlab .cl-crust { fill: #ece8dc; stroke: #bdb6a4; stroke-width: 0.5; }
@@ -224,7 +273,18 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 /* ---------- Zeitleiste */
 
 .lia-chemlab .cl-time { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; margin-top: 0.5em; }
-.lia-chemlab .cl-seek { flex: 1; min-width: 8em; accent-color: var(--cl-accent); }
+.lia-chemlab .cl-track { position: relative; flex: 1; min-width: 8em; padding-top: 1.1em; display: flex; align-items: center; }
+.lia-chemlab .cl-seek { width: 100%; margin: 0; accent-color: var(--cl-accent); }
+/* die Marken stehen über der Bahn des Schiebers, die um eine halbe Griffbreite eingerückt ist */
+.lia-chemlab .cl-pins { position: absolute; top: 0; left: 8px; right: 8px; height: 1.1em; }
+.lia-chemlab .cl-pin {
+  position: absolute; top: 0.3em; width: 0.55em; height: 0.55em; margin-left: -0.275em; padding: 0;
+  border: 0; border-radius: 50%; background: var(--cl-accent); opacity: 0.7; cursor: pointer;
+}
+.lia-chemlab .cl-pin.cl-act { top: 0.2em; width: 0.75em; height: 0.75em; margin-left: -0.375em; border-radius: 2px; transform: rotate(45deg); background: var(--cl-hand); opacity: 1; }
+.lia-chemlab .cl-pin.cl-later { opacity: 0.35; }
+.lia-chemlab .cl-pin:hover,
+.lia-chemlab .cl-pin:focus-visible { outline: 2px solid var(--cl-accent); outline-offset: 2px; opacity: 1; }
 .lia-chemlab .cl-clock { font-variant-numeric: tabular-nums; min-width: 6.5em; text-align: right; }
 .lia-chemlab .cl-speed { display: inline-flex; align-items: center; gap: 0.3em; }
 .lia-chemlab .cl-status { min-height: 1.4em; font-style: italic; }
@@ -245,9 +305,40 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 
 /* ---------- Inhalt, Gleichungen, Diagramme, Protokoll */
 
-.lia-chemlab .cl-panel,
 .lia-chemlab .cl-eq,
 .lia-chemlab .cl-log { border-top: 1px solid var(--cl-line); margin-top: 0.5em; padding-top: 0.2em; }
+
+/* Die Karte des gewählten Geräts, mit einem Pfeil zu ihm hinauf. Ohne Wahl nur eine gestrichelte Zeile mit dem Hinweis. */
+.lia-chemlab .cl-panel { position: relative; margin-top: 0.7em; padding: 0.5em 0.7em 0.6em; border: 1px solid var(--cl-line); border-radius: 0.7em; background: var(--cl-bg); }
+.lia-chemlab .cl-panel:not([data-card="open"]) { border-style: dashed; padding: 0.3em 0.7em; }
+.lia-chemlab .cl-panel[data-aim]::before {
+  content: ""; position: absolute; top: -0.5em; left: var(--cl-at); width: 0.9em; height: 0.9em; margin-left: -0.45em;
+  background: var(--cl-bg); border-left: 1px solid var(--cl-line); border-top: 1px solid var(--cl-line); transform: rotate(45deg);
+}
+.lia-chemlab .cl-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.2em 0.7em; }
+.lia-chemlab .cl-head h4 { margin: 0; }
+.lia-chemlab .cl-sum { flex: 1; opacity: 0.8; font-variant-numeric: tabular-nums; }
+.lia-chemlab .cl-cardtabs { margin: 0.5em 0; }
+.lia-chemlab .cl-panel[data-tab="add"] .cl-sec:not([data-sec="add"]),
+.lia-chemlab .cl-panel[data-tab="gear"] .cl-sec:not([data-sec="gear"]),
+.lia-chemlab .cl-panel[data-tab="info"] .cl-sec:not([data-sec="info"]) { display: none; }
+.lia-chemlab .cl-uses { display: flex; flex-wrap: wrap; gap: 0.35em; max-height: 11.5em; overflow-y: auto; padding: 0.15em; }
+.lia-chemlab .cl-find { width: 100%; box-sizing: border-box; margin-bottom: 0.4em; }
+.lia-chemlab .cl-giverow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5em; margin-top: 0.5em; padding-top: 0.5em; border-top: 1px solid var(--cl-line); }
+.lia-chemlab .cl-give { background: var(--cl-hand); border-color: var(--cl-hand); color: var(--cl-on-hand); font-weight: bold; }
+.lia-chemlab .cl-give:hover { border-color: var(--cl-ink); }
+.lia-chemlab .cl-place { margin-top: 0.2em; }
+
+/* Gleichungen, Diagramme und Protokoll als Reiter; mit Reitern ohne eigene Überschrift und Trennlinie */
+.lia-chemlab .cl-out { margin-top: 0.5em; }
+.lia-chemlab .cl-out[data-tab="eq"] > .cl-charts, .lia-chemlab .cl-out[data-tab="eq"] > .cl-log,
+.lia-chemlab .cl-out[data-tab="charts"] > .cl-eq, .lia-chemlab .cl-out[data-tab="charts"] > .cl-log,
+.lia-chemlab .cl-out[data-tab="log"] > .cl-eq, .lia-chemlab .cl-out[data-tab="log"] > .cl-charts { display: none; }
+.lia-chemlab .cl-out:not([data-tab=""]) > .cl-eq > h4:first-child,
+.lia-chemlab .cl-out:not([data-tab=""]) > .cl-log > h4:first-child { display: none; }
+.lia-chemlab .cl-out:not([data-tab=""]) > .cl-eq,
+.lia-chemlab .cl-out:not([data-tab=""]) > .cl-charts,
+.lia-chemlab .cl-out:not([data-tab=""]) > .cl-log { border-top: 0; margin-top: 0.3em; }
 .lia-chemlab .cl-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4em; margin-top: 0.5em; }
 .lia-chemlab .cl-contents { overflow-x: auto; }      /* auf schmalen Bildschirmen lässt sich die Tabelle seitlich schieben */
 .lia-chemlab .cl-table { border-collapse: collapse; margin: 0.3em 0; }

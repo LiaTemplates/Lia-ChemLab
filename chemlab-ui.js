@@ -19,6 +19,14 @@
     pause: "M5,4h3.5v12H5zM11.5,4H15v12h-3.5z", end: "M13.5,4H16v12h-2.5zM3,4l9,6l-9,6z"
   };
 
+  var SHELF_ICON = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">' +
+    '<path d="M2.5 6.5h15M2.5 13.5h15M3.5 3v15M16.5 3v15"/><path d="M6 6.5V4.5h2v2M11 6.5V3.5h2.5v3M6.5 13.5v-3h2.5v3M12 13.5v-2h2v2"/></svg>';
+  var MORE_ICON = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="4" cy="10" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="16" cy="10" r="1.7"/></svg>';
+  var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
+  // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
+  var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
+    flame: 1, flip: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
   }
@@ -94,28 +102,39 @@
     var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
     if (sound) sound.mute(st.mute);
 
+    // Oben eine schmale Leiste: das Regal zum Aufklappen, 3D und ein Menü für das Seltene.
+    // Was man mit einem Gefäß tun kann, steht in der Karte unter der Fläche, sobald man es antippt.
     el.innerHTML =
       '<div class="cl-task" hidden><p class="cl-task-text"></p><ul class="cl-goals"></ul><p class="cl-done" role="status" aria-live="polite"></p></div>' +
-      '<div class="cl-top"><div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div>' +
-      '<div class="cl-side">' + (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false">' + esc(T("view")) + "</button>" : "") + (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
+      '<div class="cl-top"><button type="button" class="cl-btn cl-barbtn" data-act="bar" aria-pressed="false">' + SHELF_ICON + "<span>" + esc(T("shelf")) + "</span></button>" +
+      '<span class="cl-fill"></span><div class="cl-side">' +
+      (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false">' + esc(T("view")) + "</button>" : "") +
+      '<details class="cl-more"><summary class="cl-btn cl-round" title="' + esc(T("menu")) + '" aria-label="' + esc(T("menu")) + '">' + MORE_ICON + "</summary>" +
+      '<div class="cl-menu">' +
+      (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
       '<button type="button" class="cl-btn" data-act="copy">' + esc(T("copy")) + "</button> " +
-      '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></div>" +
-      '<div class="cl-hand" hidden></div>' +
+      '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></details></div></div>" +
+      '<div class="cl-bar" hidden><div class="cl-tabs" role="tablist" aria-label="' + esc(T("shelf.tabs")) + '" hidden></div>' +
+      '<div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div></div>' +
       '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg>' +
-      '<div class="cl-three" role="group" aria-label="' + esc(T("stage")) + '" hidden></div></div>' +
+      '<div class="cl-three" role="group" aria-label="' + esc(T("stage")) + '" hidden></div>' +
+      '<div class="cl-hand" role="group" aria-label="' + esc(T("hand")) + '" hidden></div></div>' +
+      '<div class="cl-panel"></div>' +
       '<div class="cl-time"></div>' +
       '<p class="cl-status" role="status" aria-live="polite"></p>' +
       '<div class="cl-readings" hidden></div>' +
-      '<div class="cl-panel"></div>' +
+      '<div class="cl-out"><div class="cl-outtabs" role="tablist" aria-label="' + esc(T("out.tabs")) + '" hidden></div>' +
       '<div class="cl-eq"></div>' +
       '<div class="cl-charts"></div>' +
       '<div class="cl-log"><h4>' + esc(T("log.title")) + '</h4><p class="cl-hint cl-none">' + esc(T("log.none")) + "</p>" +
-      '<ol class="cl-events" aria-live="polite"></ol></div>';
+      '<ol class="cl-events" aria-live="polite"></ol></div></div>';
 
     var ui = {};
-    ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log"].forEach(function (name) {
+    ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log", "bar", "tabs", "out", "outtabs"].forEach(function (name) {
       ui[name] = el.querySelector(".cl-" + name);
     });
+    ui.barbtn = el.querySelector(".cl-barbtn");
+    ui.more = el.querySelector(".cl-more");
     ui.sound = sound ? el.querySelector(".cl-sound") : null;
     ui.view = L.stage3d ? el.querySelector('[data-act="view"]') : null;
     ui.events = ui.log.querySelector(".cl-events");
@@ -126,7 +145,30 @@
     ui.eq.hidden = !show.equations;
     ui.charts.hidden = !show.charts.length;
     ui.log.hidden = !show.log;
+    if (st.bar == null) st.bar = show.shelf || !st.run.lab.vessels.length;      // die Regalleiste: offen, wenn der Kurs es will oder der Tisch leer ist
 
+    // Gleichungen, Diagramme und Protokoll als Reiter; ist nur eines eingeschaltet, steht es ohne Reiter da
+    var outs = [["eq", show.equations], ["charts", show.charts.length > 0], ["log", show.log]].filter(function (k) { return k[1]; }).map(function (k) { return k[0]; });
+    if (outs.indexOf(st.out) < 0) st.out = outs[0] || "";
+    ui.out.hidden = !outs.length;
+    ui.outtabs.hidden = outs.length < 2;
+    ui.outtabs.innerHTML = outs.length < 2 ? "" : outs.map(function (k) {
+      return '<button type="button" role="tab" class="cl-tab" data-act="out" data-id="' + k + '" aria-selected="' + (st.out === k ? "true" : "false") + '">' + esc(T("out." + k)) +
+        (k === "log" ? ' <span class="cl-n cl-count"></span>' : "") + "</button>";
+    }).join("");
+    ui.count = ui.outtabs.querySelector(".cl-count");
+    ui.out.setAttribute("data-tab", outs.length < 2 ? "" : st.out);
+
+    function setOut(k) {
+      st.out = k;
+      ui.out.setAttribute("data-tab", k);
+      if (ui.outtabs.querySelectorAll) Array.prototype.forEach.call(ui.outtabs.querySelectorAll(".cl-tab"), function (b) {
+        b.setAttribute("aria-selected", b.getAttribute("data-id") === k ? "true" : "false");
+      });
+    }
+
+    var planWidth = 0;              // Breite der Fläche in ihren eigenen Einheiten: für den Pfeil der Karte
+    var pinKey = "";                // wofür die Marken auf der Zeitleiste zuletzt gezeichnet wurden
     var bench = BENCH, items = [], nodes = {}, shape = null, raf = 0, last = 0, slowAt = 0, pending = 0, playFrom = 0, stopped = false, down = null;
     var dragging = null;            // ein Schieber (Spannung, Temperatur, Wellenlänge) wird gerade bewegt: der Wert, auf dem er steht
     var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
@@ -156,11 +198,17 @@
     // Gesperrt bleiben die Geräte, wo sie stehen: Im Regal gibt es dann nur Stoffe und die Proben, die man an ein Gefäß hält
     function allowed(id) { return !st.config.lock || !L.parts[id] || L.parts[id].kind === "test"; }
 
-    // Was im Regal steht: die Auswahl des Kurses, sonst alles, nach Fächern geordnet
+    // Was im Regal steht, in Fächern: die Auswahl des Kurses (Stoffe und Geräte getrennt), sonst alles, nach Art geordnet.
+    // Ein Fach ohne Namen (Wasser, Lösungen ohne eigene Gruppe) kommt zum vorigen Fach, ganz vorn zum nächsten.
     function shelfGroups() {
-      if (st.config.shelf) return [{ title: "", ids: st.config.shelf.filter(allowed) }];
+      var list, out = [];
+      if (st.config.shelf) {
+        list = st.config.shelf.filter(allowed);
+        return [{ title: T("group.stuff"), ids: list.filter(function (id) { return !L.parts[id]; }) },
+          { title: T("group.parts"), ids: list.filter(function (id) { return !!L.parts[id]; }) }].filter(function (g) { return g.ids.length; });
+      }
       var all = Object.keys(L.db.reagents), rest = all.filter(function (id) { return GROUPS.indexOf(L.db.reagents[id].group) < 0; });
-      return GROUPS.map(function (group) {
+      GROUPS.map(function (group) {
         // Salzlösungen stehen mit 0,1 mol/L bereit, Säuren und Laugen mit 1 mol/L
         return { title: T("group." + group), ids: all.filter(function (id) { return L.db.reagents[id].group === group; })
           .map(function (id) { return group === "salt" && L.db.reagents[id].molar ? id + " 0.1M" : id; }) };
@@ -168,32 +216,63 @@
         { title: T("group.gear"), ids: Object.keys(L.parts).filter(function (id) { return !electric(L.parts[id]) && allowed(id); }) },
         // eine eigene Elektrode steht nur da, wenn ihr Stoff eingetragen ist
         { title: T("group.electric"), ids: Object.keys(L.parts).filter(function (id) { return electric(L.parts[id]) && allowed(id) && (!L.parts[id].electrode || L.db.species[L.parts[id].electrode]); }) }
-      ]).filter(function (g) { return g.ids.length; });
+      ]).filter(function (g) { return g.ids.length; }).forEach(function (g, k, groups) {
+        var next = groups.slice(k + 1).filter(function (o) { return o.title; })[0];
+        if (g.title) out.push({ title: g.title, ids: (g.lead || []).concat(g.ids) });
+        else if (out.length) out[out.length - 1].ids = out[out.length - 1].ids.concat(g.ids);
+        else if (next) next.lead = (next.lead || []).concat(g.ids);
+        else out.push({ title: T("shelf"), ids: g.ids });
+      });
+      return out;
     }
 
     function electric(def) { return !!(def.electrode || def.circuit || def.bridge); }
 
+    function shelfIds() { return shelfGroups().reduce(function (all, g) { return all.concat(g.ids); }, []); }
+
+    function nameOfPick(id) { return L.parts[id] ? L.partName(id, lang) : L.nameOf(L.reagent(id), lang); }
+
     // Das Regal entsteht einmal; welcher Stoff gewählt ist, wird danach an den Knöpfen selbst vermerkt.
     // So behält der Knopf den Fokus, und Vorleseprogramme hören nur die Änderung.
+    // Die Regalleiste zeigt ein Fach auf einmal, in einer Zeile, die sich seitlich schieben lässt.
     function renderShelf() {
-      var ids = [];
-      ui.shelf.innerHTML = shelfGroups().map(function (group) {
-        return (group.title ? '<span class="cl-group">' + esc(group.title) + "</span>" : "") + group.ids.map(function (id) {
-          var label = L.parts[id] ? L.partName(id, lang) : L.nameOf(L.reagent(id), lang);
-          ids.push(id);
-          return '<button type="button" class="cl-pick" data-act="hand" data-id="' + esc(id) + '" data-n="' + (ids.length - 1) + '" aria-pressed="false">' +
-            L.icon(id) + "<span>" + esc(label) + "</span></button>";
+      var ids = [], groups = shelfGroups();
+      ui.shelf.innerHTML = groups.map(function (group, g) {
+        return group.ids.map(function (id) {
+          ids.push({ id: id, g: g });
+          return '<button type="button" class="cl-pick" data-act="hand" data-id="' + esc(id) + '" data-n="' + (ids.length - 1) + '" aria-pressed="false" data-g="' + g + '" title="' + esc(nameOfPick(id)) + '">' +
+            L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
         }).join("");
       }).join("");
-      ui.picks = ids.map(function (id, n) { return { id: id, node: ui.shelf.querySelector('[data-n="' + n + '"]') }; });
-      ui.shelf.hidden = !ids.length;
+      ui.picks = ids.map(function (pick, n) { return { id: pick.id, g: pick.g, node: ui.shelf.querySelector('[data-n="' + n + '"]') }; });
+      ui.groups = groups;
+      if (!(st.group < groups.length)) st.group = 0;
+      ui.tabs.hidden = groups.length < 2;
+      ui.tabs.innerHTML = groups.length < 2 ? "" : groups.map(function (group, g) {
+        return '<button type="button" role="tab" class="cl-tab" data-act="group" data-id="' + g + '" aria-selected="false">' + esc(group.title) +
+          ' <span class="cl-n">' + group.ids.length + "</span></button>";
+      }).join("");
+      ui.barbtn.hidden = ui.shelf.hidden = !ids.length;
       syncShelf();
+      syncBar();
     }
 
     function syncShelf() {
+      var tabs = ui.groups && ui.groups.length > 1;
       ui.picks.forEach(function (pick) {
         pick.node.setAttribute("aria-pressed", st.hand && st.hand.id === pick.id ? "true" : "false");
+        pick.node.hidden = tabs && pick.g !== st.group;
       });
+      if (tabs && ui.tabs.querySelectorAll) Array.prototype.forEach.call(ui.tabs.querySelectorAll(".cl-tab"), function (tab) {
+        tab.setAttribute("aria-selected", +tab.getAttribute("data-id") === st.group ? "true" : "false");
+      });
+      syncCard();
+    }
+
+    // Die Regalleiste ist zu, bis man sie aufklappt; offen von Anfang an, wenn der Kurs es will oder noch kein Gefäß auf dem Tisch steht
+    function syncBar() {
+      ui.bar.hidden = !st.bar || !ui.picks.length;
+      ui.barbtn.setAttribute("aria-pressed", st.bar ? "true" : "false");
     }
 
     function unitOf(r) { return r.solid ? (r.piece ? "pieces" : "g") : r.drops ? "drops" : "ml"; }
@@ -207,38 +286,46 @@
       return { give: { ml: n }, ml: n, text: n + " mL" };
     }
 
+    // Was in der Hand liegt, schwebt oben links über der Fläche: Name, Menge und ein Knopf, der es zurücklegt
     function renderHand() {
-      var h = st.hand, name;
+      var h = st.hand, name, drop = '<button type="button" class="cl-btn cl-round cl-x" data-act="drop" title="' + esc(T("hand.drop")) + '" aria-label="' + esc(T("hand.drop")) + '">' + CLOSE_ICON + "</button>";
       ui.hand.hidden = !h;
+      if (el.setAttribute) el.setAttribute("data-hand", !h ? "" : h.tool || h.test ? "tool" : "stuff");      // die Gefäße zeigen dann, dass sie Ziel sind
       if (!h) { ui.hand.innerHTML = ""; return; }
       if (h.tool || h.test) {
         name = L.parts[h.id];
-        ui.hand.innerHTML = "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
+        ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
           esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : "hint.test") : name.dispenser ? "hint.over" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
-          (name.under ? ' <button type="button" class="cl-btn" data-act="bench">' + esc(T("hand.bench")) + "</button>" : "");
+          (name.under ? ' <button type="button" class="cl-btn" data-act="bench">' + esc(T("hand.bench")) + "</button>" : "") + drop;
         return;
       }
       name = L.nameOf(L.reagent(h.id), lang);
-      ui.hand.innerHTML = "<strong>" + esc(name) + '</strong> <span class="cl-stepper"><span>' + esc(T("amount")) + ":</span> " +
-        '<button type="button" class="cl-btn cl-round" data-act="less" aria-label="' + esc(T("less")) + '">−</button> ' +
-        '<output class="cl-amount">' + esc(portion().text) + "</output> " +
-        '<button type="button" class="cl-btn cl-round" data-act="more" aria-label="' + esc(T("more")) + '">+</button></span> ' +
-        '<span class="cl-hint">' + esc(T("hint.hand")) + "</span>";
+      ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(name) + "</strong> " + stepper("cl-amount") +
+        ' <span class="cl-hint">' + esc(T("hint.hand")) + "</span>" + drop;
       syncAmount();
+    }
+
+    function stepper(cls) {
+      return '<span class="cl-stepper"><span class="cl-sr">' + esc(T("amount")) + ":</span>" +
+        '<button type="button" class="cl-btn cl-round" data-act="less" aria-label="' + esc(T("less")) + '">−</button>' +
+        '<output class="' + cls + '">' + esc(portion().text) + "</output>" +
+        '<button type="button" class="cl-btn cl-round" data-act="more" aria-label="' + esc(T("more")) + '">+</button></span>';
     }
 
     function syncAmount() {         // nach „weniger“ oder „mehr“ ändert sich nur die Zahl, die Knöpfe bleiben stehen
       if (!st.hand || st.hand.tool || st.hand.test) return;
       ui.hand.querySelector(".cl-amount").textContent = portion().text;
+      syncGive();
     }
 
     function setHand(hand) {
       st.hand = hand;
       syncShelf();
       renderHand();
+      renderGive();
     }
 
     function pick(id) {
@@ -251,6 +338,18 @@
         return;
       }
       setHand(st.hand && st.hand.id === id ? null : def ? (def.kind === "test" ? { id: id, test: true } : { id: id, tool: true }) : { id: id, i: 2 });
+    }
+
+    // Aus der Karte eines Gefäßes: ein Stoff kommt in die Hand (zugegeben wird mit dem Knopf darunter oder durch Antippen des Gefäßes),
+    // ein Gerät oder eine Probe wirkt gleich an diesem Gefäß. Salzbrücke und Kühler warten danach auf das zweite Gefäß.
+    function use(id) {
+      var def = L.parts[id], target = st.sel;
+      if (!def) { pick(id); return; }
+      if (!L.vessel(st.run.lab, target) || !allowed(id)) return;
+      status("");
+      setHand(def.kind === "test" ? { id: id, test: true } : { id: id, tool: true });
+      give(target);
+      if (st.hand && st.hand.tool && !st.hand.from) setHand(null);      // ging es nicht, bleibt das Gerät nicht in der Hand liegen
     }
 
     // ---------------------------------------------------------------- Eingriffe
@@ -313,6 +412,7 @@
 
     function select(id) {
       if (st.sel === id && st.copyText == null) return;
+      if (st.sel !== id) st.tab = null;         // ein anderes Gefäß beginnt wieder beim ersten Reiter seiner Karte
       st.sel = id;
       st.copyText = null;
       renderPanel();
@@ -450,6 +550,7 @@
     function renderStage() {
       var plan = layout();
       items = plan.list;
+      planWidth = plan.width;
       ui.svg.setAttribute("viewBox", "0 0 " + plan.width + " " + (bench + FRONT));
       ui.svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
       ui.svg.innerHTML =
@@ -457,7 +558,7 @@
         '<rect class="cl-bench" x="0" y="' + bench + '" width="' + plan.width + '" height="' + FRONT + '"/>' +
         '<line class="cl-edge" x1="0" x2="' + plan.width + '" y1="' + bench + '" y2="' + bench + '"/>' +
         items.map(function (item) {
-          return '<g class="cl-item" data-id="' + esc(item.id) + '" transform="translate(' + item.x + "," + (bench - (item.lift || 0)) + ')" tabindex="0" role="button"></g>';
+          return '<g class="cl-item" data-id="' + esc(item.id) + '"' + (item.vessel && !item.host ? ' data-kind="vessel"' : "") + ' transform="translate(' + item.x + "," + (bench - (item.lift || 0)) + ')" tabindex="0" role="button"></g>';
         }).join("") + '<g class="cl-wires"></g>';
       nodes = {};
       items.forEach(function (item) { nodes[item.id] = ui.svg.querySelector('[data-id="' + item.id + '"]'); });
@@ -651,8 +752,12 @@
         '<label class="cl-speed">' + esc(T("time.speed")) + ' <select data-act="speed">' + SPEEDS.map(function (s) {
           return '<option value="' + s + '"' + (s === st.speed ? " selected" : "") + ">" + L.trim(s, lang) + "×</option>";
         }).join("") + "</select></label>" +
-        '<input class="cl-seek" type="range" role="slider" data-act="seek" min="0" max="0" step="0.05" value="0" aria-label="' + esc(T("time.slider")) + '">' +
+        // über dem Schieber die Marken: jeder Eingriff und jede Beobachtung, antippen springt dorthin
+        '<div class="cl-track"><div class="cl-pins"></div>' +
+        '<input class="cl-seek" type="range" role="slider" data-act="seek" min="0" max="0" step="0.05" value="0" aria-label="' + esc(T("time.slider")) + '"></div>' +
         '<span class="cl-clock"></span>';
+      ui.pins = ui.time.querySelector(".cl-pins");
+      pinKey = "";
       ui.play = ui.time.querySelector('[data-act="play"]');
       ui.back = ui.time.querySelector('[data-act="back"]');
       ui.seek = ui.time.querySelector(".cl-seek");
@@ -671,6 +776,23 @@
       ui.seek.value = String(run.time);
       ui.seek.setAttribute("aria-valuetext", L.clock(run.time));
       ui.clock.textContent = L.clock(run.time) + " / " + L.clock(run.end);
+    }
+
+    // Marken auf der Zeitleiste: Eingriffe als Raute (mit der Tastatur erreichbar), Beobachtungen als Punkt.
+    // Was hinter dem Zeiger liegt, ist schon aufgezeichnet und erscheint blasser.
+    function renderPins() {
+      var run = st.run, end = run.end, n = run.frames[run.cursor].n, key = run.log.length + "|" + end + "|" + n, ctx, list;
+      if (key === pinKey) return;
+      pinKey = key;
+      if (!(end > 0)) { ui.pins.innerHTML = ""; return; }
+      ctx = { lang: lang, numbers: show.numbers, names: names() };
+      list = run.log.map(function (event, i) { return { event: event, i: i }; }).filter(function (x) { return x.event.t != null; }).slice(-80);
+      ui.pins.innerHTML = list.map(function (x) {
+        var act = !!ACTS[x.event.key], text = L.clock(x.event.t) + " – " + L.say(x.event, ctx);
+        return '<button type="button" class="cl-pin' + (act ? " cl-act" : "") + (x.i >= n ? " cl-later" : "") + '" data-act="jumpto" data-id="' + x.event.t +
+          '" style="left:' + (100 * Math.min(1, x.event.t / end)).toFixed(2) + '%"' + (act ? "" : ' tabindex="-1"') +
+          ' title="' + esc(text) + '" aria-label="' + esc(text) + '"></button>';
+      }).join("");
     }
 
     function setPlay(direction) {
@@ -702,13 +824,34 @@
 
     // ---------------------------------------------------------------- Inhalt des gewählten Geräts
 
+    // Die Karte des gewählten Geräts. Bei einem Gefäß in Reitern: Zugeben (Stoffe aus dem Regal), Geräte (Messgeräte, Brenner,
+    // Proben …, die an diesem Gefäß wirken) und Inhalt. Ein kleiner Pfeil zeigt auf das Gerät.
     function renderPanel() {
-      var lab = st.run.lab, v = L.vessel(lab, st.sel), t = L.tool(lab, st.sel), label = names(), others, html;
+      var lab = st.run.lab, v = L.vessel(lab, st.sel), t = L.tool(lab, st.sel), label = names(), others, html, tabs = "", stuff, gear;
+      ui.panel.setAttribute("data-tab", "");
       if (v && v.broken) {
-        html = "<h4>" + esc(label[v.id]) + "</h4><p>" + esc(T("brokenGlass")) + '</p><div class="cl-actions">' + removal() + "</div>";
+        html = head(v.id) + "<p>" + esc(T("brokenGlass")) + '</p><div class="cl-actions">' + removal() + "</div>";
       } else if (v) {
         others = lab.vessels.filter(function (o) { return o.id !== v.id && !o.broken; });
-        html = "<h4>" + esc(label[v.id]) + "</h4>" +
+        stuff = shelfIds().filter(function (id) { return !L.parts[id]; });
+        // was an einem Gefäß wirken kann: alle Geräte außer den Gefäßen, die für sich auf den Tisch kommen
+        gear = shelfIds().filter(function (id) { return L.parts[id] && !(L.parts[id].kind === "vessel" && !L.parts[id].dispenser); });
+        if (st.tab === "add" && !stuff.length || st.tab === "gear" && !gear.length) st.tab = null;
+        if (!st.tab) st.tab = stuff.length && !L.parts[v.type].dispenser ? "add" : "info";
+        if (stuff.length || gear.length) {
+          tabs = '<div class="cl-cardtabs" role="tablist" aria-label="' + esc(label[v.id]) + '">' +
+            [["add", stuff.length], ["gear", gear.length], ["info", 1]].filter(function (k) { return k[1]; }).map(function (k) {
+              return '<button type="button" role="tab" class="cl-tab" data-act="card" data-id="' + k[0] + '" aria-selected="' + (st.tab === k[0] ? "true" : "false") + '">' + esc(T("card." + k[0])) + "</button>";
+            }).join("") + "</div>";
+          ui.panel.setAttribute("data-tab", st.tab);
+        }
+        html = head(v.id) + tabs +
+          (stuff.length ? '<div class="cl-sec" data-sec="add">' + (stuff.length > 12 ? '<input class="cl-find" type="search" data-act="find" placeholder="' + esc(T("card.find")) +
+            '" aria-label="' + esc(T("card.find")) + '" value="' + esc(st.find || "") + '">' : "") +
+            '<div class="cl-uses">' + stuff.map(useButton).join("") + '</div><p class="cl-hint cl-nomatch" hidden>' + esc(T("card.none")) + "</p>" +
+            '<div class="cl-giverow"></div></div>' : "") +
+          (gear.length ? '<div class="cl-sec" data-sec="gear"><div class="cl-uses">' + gear.map(useButton).join("") + "</div></div>" : "") +
+          '<div class="cl-sec" data-sec="info">' +
           (L.parts[v.type].dispenser ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
             L.TAPS.map(function (rate) {
               return '<button type="button" class="cl-btn" data-act="tap" data-id="' + rate + '" aria-pressed="false">' + esc(T("tap." + L.tapKey(rate))) + "</button>";
@@ -719,9 +862,9 @@
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
           }).join("") + '</select></label> <input class="cl-pour-ml" type="text" inputmode="decimal" size="4" value="5" aria-label="mL"> mL ' +
             '<button type="button" class="cl-btn" data-act="pour">' + esc(T("panel.pourGo")) + "</button> " : "") +
-          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " + removal() + "</div>";
+          '<button type="button" class="cl-btn" data-act="empty">' + esc(T("panel.emptyOut")) + "</button> " + removal() + "</div></div>";
       } else if (t) {
-        html = "<h4>" + esc(label[t.id]) + "</h4>" +
+        html = head(t.id) +
           (L.parts[t.type].flames ? '<div class="cl-tap" role="group" aria-label="' + esc(T("flame")) + '"><span>' + esc(T("flame")) + ":</span> " +
             [0, 1, 2].map(function (level) {
               return '<button type="button" class="cl-btn" data-act="flame" data-id="' + level + '" aria-pressed="false">' + esc(T("flame." + level)) + "</button>";
@@ -736,10 +879,88 @@
           '<div class="cl-contents"></div><div class="cl-actions">' + removal() + "</div>";
       } else if (st.copyText != null) {
         html = '<p class="cl-hint">' + esc(T(st.copyHint)) + '</p><textarea class="cl-copy" readonly rows="8" aria-label="' + esc(T(st.copyHint)) + '">' + esc(st.copyText) + "</textarea>";
-      } else html = '<p class="cl-hint">' + esc(T("panel.none")) + "</p>";
+      } else {
+        // nichts gewählt: der Hinweis, und die Gefäße aus dem Regal, die man gleich hinstellen kann
+        others = st.config.lock ? [] : shelfIds().filter(function (id) { return L.parts[id] && L.parts[id].kind === "vessel" && !L.parts[id].dispenser; });
+        html = '<p class="cl-hint">' + esc(T("panel.none")) + "</p>" + (others.length ? '<div class="cl-actions cl-place"><span>' + esc(T("card.place")) + "</span>" + others.map(function (id) {
+          return '<button type="button" class="cl-btn cl-use" data-act="hand" data-id="' + esc(id) + '">' + L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
+        }).join("") + "</div>" : "");
+      }
       ui.panel.innerHTML = html;
+      ui.panel.setAttribute("data-card", v || t ? "open" : "");
       lensKey = null;
+      renderGive();
+      syncCard();
+      filterCard();
       renderContents();
+      aim();
+    }
+
+    // Kopf der Karte: Name, eine Zeile mit dem Wichtigsten (wird laufend nachgeführt) und Schließen
+    function head(id) {
+      return '<div class="cl-head"><h4>' + esc(names()[id]) + '</h4><span class="cl-sum"></span>' +
+        '<button type="button" class="cl-btn cl-round cl-x" data-act="close" title="' + esc(T("card.close")) + '" aria-label="' + esc(T("card.close")) + '">' + CLOSE_ICON + "</button></div>";
+    }
+
+    function useButton(id) {
+      return '<button type="button" class="cl-use" data-act="use" data-id="' + esc(id) + '" aria-pressed="false" title="' + esc(nameOfPick(id)) + '">' +
+        L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
+    }
+
+    // Unter den Stoffen: die Menge und der Knopf, der sie in dieses Gefäß gibt
+    function renderGive() {
+      var row = ui.panel.querySelector && ui.panel.querySelector(".cl-giverow"), h = st.hand;
+      if (!row || !L.vessel(st.run.lab, st.sel)) return;
+      row.innerHTML = h && !h.tool && !h.test
+        ? stepper("cl-amount2") + ' <button type="button" class="cl-btn cl-give" data-act="give"></button> <span class="cl-hint">' + esc(T("card.again")) + "</span>"
+        : '<span class="cl-hint">' + esc(T("card.pick")) + "</span>";
+      syncGive();
+    }
+
+    function syncGive() {
+      var row = ui.panel.querySelector && ui.panel.querySelector(".cl-giverow"), h = st.hand, b;
+      if (!row || !h || h.tool || h.test) return;
+      b = row.querySelector(".cl-give");
+      if (b) b.textContent = T("card.give", { amount: portion().text });
+      b = row.querySelector(".cl-amount2");
+      if (b) b.textContent = portion().text;
+    }
+
+    // welcher Stoff der Karte gerade in der Hand liegt
+    function syncCard() {
+      if (!ui.panel.querySelectorAll) return;
+      Array.prototype.forEach.call(ui.panel.querySelectorAll('.cl-use[data-act="use"]'), function (b) {
+        b.setAttribute("aria-pressed", st.hand && st.hand.id === b.getAttribute("data-id") ? "true" : "false");
+      });
+      Array.prototype.forEach.call(ui.panel.querySelectorAll('.cl-cardtabs .cl-tab'), function (b) {
+        b.setAttribute("aria-selected", b.getAttribute("data-id") === st.tab ? "true" : "false");
+      });
+    }
+
+    // Suche unter den Stoffen der Karte: nach Name und Kürzel, Groß- und Kleinschreibung gleich
+    function filterCard() {
+      var q = String(st.find || "").trim().toLowerCase(), seen = 0, none;
+      if (!ui.panel.querySelectorAll) return;
+      Array.prototype.forEach.call(ui.panel.querySelectorAll('[data-sec="add"] .cl-use'), function (b) {
+        var hit = !q || (b.getAttribute("title") + " " + b.getAttribute("data-id")).toLowerCase().indexOf(q) >= 0;
+        b.hidden = !hit;
+        if (hit) seen++;
+      });
+      none = ui.panel.querySelector(".cl-nomatch");
+      if (none) none.hidden = seen > 0;
+    }
+
+    // Der Pfeil der Karte zeigt auf das gewählte Gerät (in 3D gibt es keinen festen Ort, dann ohne Pfeil)
+    function aim() {
+      var item = st.sel && at(st.sel), style = ui.panel.style, box, card, scale, h;
+      if (!style || !style.setProperty) return;
+      box = ui.svg.getBoundingClientRect ? ui.svg.getBoundingClientRect() : null;
+      card = ui.panel.getBoundingClientRect ? ui.panel.getBoundingClientRect() : null;
+      if (!item || three || !box || !card || !(box.width > 0) || !(planWidth > 0)) { style.removeProperty("--cl-at"); ui.panel.removeAttribute("data-aim"); return; }
+      h = bench + FRONT;
+      scale = Math.min(box.width / planWidth, box.height / h);
+      style.setProperty("--cl-at", Math.round(box.left - card.left + (box.width - planWidth * scale) / 2 + item.x * scale) + "px");
+      ui.panel.setAttribute("data-aim", "");
     }
 
     function removal() { return st.config.lock ? "" : '<button type="button" class="cl-btn" data-act="remove">' + esc(T("panel.remove")) + "</button>"; }
@@ -774,6 +995,19 @@
           (show.numbers ? esc(T("lens.scale", { c: L.trim(Math.round(data.per * 10000) / 10, lang) })) + " " : "") + esc(T("lens.water"))) + "</p>";
       }
       lensView();
+    }
+
+    // „40 mL · pH 9,80 · hellblau, trüb“: im Kopf der Karte, damit man das Wichtigste auch im Reiter „Zugeben“ sieht
+    function summary(w) {
+      var box = ui.panel.querySelector(".cl-sum"), parts = [], text;
+      if (!box) return;
+      if (w.ml > 0.005) {
+        if (show.numbers) parts.push(L.num(w.ml, 1, lang) + " mL");
+        if (show.numbers && w.pH != null) parts.push("pH " + L.num(w.pH, 2, lang));
+        parts.push(L.colorWord(w.color.name, w.color.pale, lang) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : ""));
+      } else parts.push(T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty"));
+      text = parts.join(" · ");
+      if (box.textContent !== text) box.textContent = text;
     }
 
     function renderContents() {
@@ -829,6 +1063,7 @@
         return;
       }
       w = L.view(lab, v);
+      summary(w);
       if (L.parts[v.type].dispenser) {                          // Hahnstellung und Ablesung an Ort und Stelle nachführen
         L.TAPS.forEach(function (rate) {
           ui.panel.querySelector('[data-act="tap"][data-id="' + rate + '"]').setAttribute("aria-pressed", L.tapKey(rate) === L.tapKey(w.tap) ? "true" : "false");
@@ -1158,6 +1393,7 @@
       }
       shown = seen;
       ui.none.hidden = seen.length > 0;
+      if (ui.count) ui.count.textContent = seen.length ? String(st.run.frames[st.run.cursor].n) : "";
     }
 
     // ---------------------------------------------------------------- Schleife
@@ -1183,6 +1419,7 @@
         status(T("failed"));
       }
       syncTime();
+      renderPins();
       renderContents();
       renderEq();
       renderCharts();
@@ -1276,10 +1513,26 @@
 
     function onClick(ev) {
       var b = ev.target && ev.target.closest && ev.target.closest("[data-act]"), act, id, r, lab = st.run.lab;
+      // ein Tipp irgendwo sonst in der Fläche schließt das Menü
+      if (ui.more && ui.more.open && ev.target && ev.target.closest && !ev.target.closest(".cl-more")) ui.more.removeAttribute("open");
       if (!b) return;
       act = b.getAttribute("data-act"); id = b.getAttribute("data-id");
       if (sound) sound.wake();                                  // Ton gibt der Browser erst nach einer Bedienung frei
+      if (ui.more && ui.more.removeAttribute && b.closest(".cl-menu")) ui.more.removeAttribute("open");      // das Menü schließt nach der Wahl
       if (act === "hand") pick(id);
+      else if (act === "use") use(id);
+      else if (act === "give") { if (st.hand && !st.hand.tool && !st.hand.test && L.vessel(lab, st.sel)) give(st.sel); }
+      else if (act === "drop") { setHand(null); status(""); }
+      else if (act === "close") select(null);
+      else if (act === "bar") { st.bar = !st.bar; syncBar(); }
+      else if (act === "group") { st.group = parseInt(id, 10) || 0; syncShelf(); }
+      else if (act === "card") {                               // Reiter der Karte: nur umschalten, die Karte bleibt stehen
+        st.tab = id;
+        ui.panel.setAttribute("data-tab", id);
+        syncCard();
+      }
+      else if (act === "out") setOut(id);
+      else if (act === "jumpto") jump(Math.max(parseFloat(id) || 0, 1e-6));      // gleich nach dem Ereignis; t = 0 allein wäre der Aufbau davor
       else if (act === "bench") { if (st.hand && st.hand.tool) alone(); }
       else if (act === "lens") {                               // Teilchenlupe auf und zu
         st.lens = !st.lens;
@@ -1307,6 +1560,7 @@
         r = STEPS[unitOf(L.reagent(st.hand.id))];
         st.hand.i = Math.max(0, Math.min(r.length - 1, st.hand.i + (act === "more" ? 1 : -1)));
         syncAmount();
+        syncGive();
       } else if (act === "play") setPlay(st.play > 0 ? 0 : 1);
       else if (act === "back") setPlay(st.play < 0 ? 0 : -1);
       else if (act === "start") jump(0);
@@ -1335,6 +1589,7 @@
     function onInput(ev) {
       var t = ev.target, act = t && t.getAttribute && t.getAttribute("data-act");
       if (act === "seek") jump(parseFloat(t.value) || 0);
+      else if (act === "find") { st.find = t.value; filterCard(); }
       else if (act === "speed") { st.speed = parseFloat(t.value) || 1; pending = 0; }
       else if ((act === "volts" || act === "temp" || act === "wave") && L.tool(st.run.lab, st.sel)) {
         // beim Ziehen folgt nur die Anzeige; erst beim Loslassen wird eingestellt (ein Eingriff, eine Zeile im Protokoll)
@@ -1352,7 +1607,8 @@
     }
 
     function onTouch(ev) {          // Wischen auf der Fläche soll nicht die Folie wechseln
-      if (ev.target && ev.target.closest && ev.target.closest(".cl-stage")) ev.stopPropagation();
+      // auch nicht das Schieben der Regalleiste, der Stoffe in der Karte und der Zeitleiste
+      if (ev.target && ev.target.closest && [".cl-stage", ".cl-bar", ".cl-uses", ".cl-track"].some(function (sel) { return ev.target.closest(sel); })) ev.stopPropagation();
     }
 
     // Ändert sich der Platz auf der Seite, wird die Fläche neu eingeteilt
