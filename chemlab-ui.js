@@ -24,7 +24,7 @@
   var MORE_ICON = '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="4" cy="10" r="1.7"/><circle cx="10" cy="10" r="1.7"/><circle cx="16" cy="10" r="1.7"/></svg>';
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
-  var ACTS = { placed: 1, added: 1, poured: 1, emptied: 1, disposed: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
+  var ACTS = { placed: 1, added: 1, poured: 1, pipetted: 1, emptied: 1, disposed: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
     flame: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
@@ -346,7 +346,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.filter ? "hint.funnel" : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "pipette" ? (h.from ? "hint.pipette2" : "hint.pipette1") : name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.filter ? "hint.funnel" : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -421,6 +421,24 @@
     function give(id) {
       var lab = st.run.lab, h = st.hand, p, def, over, kind;
       if (L.vessel(lab, id).broken) { status(T("brokenGlass")); return; }
+      if (h.test && L.parts[h.id].probe === "pipette") {       // Vollpipette: erst aufziehen, dann abgeben
+        p = L.parts[h.id].ml;
+        if (L.parts[L.vessel(lab, id).type].dispenser && !h.from) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
+        if (!h.from) {
+          if (L.pourable(lab, id) < p - 1e-9) { status(T("pipetteShort")); return; }
+          st.hand = { id: h.id, test: true, from: id };
+          status("");
+          renderHand();
+          return;
+        }
+        if (h.from === id) { status(T("pipetteSame")); return; }
+        if (L.pourable(lab, h.from) < p - 1e-9 || L.free(lab, L.vessel(lab, id)) < p - 1e-9) { status(T("pipetteShort")); return; }
+        kind = h.from;
+        st.hand = { id: h.id, test: true };
+        renderHand();
+        change(function (l) { return L.pipette(l, kind, id, p); }, { key: "pipetted", from: kind, vessel: id, ml: p, part: h.id });
+        return;
+      }
       if (h.test) {                                             // Span an die Öffnung, Stäbchen in die Lösung und dann in die Flamme
         kind = L.parts[h.id].probe;
         if (L.parts[L.vessel(lab, id).type].dispenser) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
@@ -437,6 +455,7 @@
           if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
         } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
         else if ((def.flames || def.bath) && L.parts[L.vessel(lab, id).type].insulated) { status(T("insulated")); return; }
+        else if ((def.flames || def.bath) && L.parts[L.vessel(lab, id).type].noHeat) { status(T("noHeat")); return; }
         else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
         // Kühler und Rohr: aus jedem Gefäß führt einer, in jedes zweite Gefäß einer; in einem Stopfen steckt nur ein Gerät
         else if (def.duct && lab.tools.some(function (t) { return L.parts[t.type].duct && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }

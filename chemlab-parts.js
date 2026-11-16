@@ -18,7 +18,10 @@
       "card.give": "Add {amount}", "card.pick": "Choose a substance, then add it.", "card.again": "Or tap the vessel once more.",
       "card.place": "Put on the bench:", "card.none": "No substance matches the search.", "hand.drop": "Back to the shelf", "hand": "In hand",
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.cylinder": "measuring cylinder", "part.pipette": "volumetric pipette {ml} mL",
+      "hint.pipette1": "Now tap the vessel the pipette should draw from.", "hint.pipette2": "Now tap the vessel it should deliver into.",
+      "say.pipetted": "{ml} mL transferred with the pipette from {from} into {vessel}", "pipetteShort": "There is not enough in it for the pipette, or no room in the target.",
+      "noHeat": "A measuring cylinder is not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
@@ -280,7 +283,8 @@
   // Name eines Geräts: aus der Texttabelle; bei einem eigenen Gerät seine Angabe name, bei einer eigenen Elektrode sonst der Name ihres Stoffs
   function partName(type, lang) {
     var key = "part." + type, def = L.parts[type] || {}, sp = def.electrode && L.db.species[def.electrode];
-    if (key in L.strings.en) return text(key, lang);
+    if (def.label) key = "part." + def.label;                 // eine Reihe gleicher Geräte in mehreren Größen (Vollpipetten)
+    if (key in L.strings.en) return text(key, lang, { ml: def.ml });
     if (def.name) return def.name[lang] || def.name.en || def.name.de;
     return sp ? text("electrodeOf", lang, { name: nameOf(sp, lang) }) : type;
   }
@@ -385,6 +389,7 @@
         vars.reagent = nameOf(L.reagent(event.reagent), lang);
         break;
       case "poured": vars.amount = trim(event.ml, lang) + " " + text("unit.ml", lang); break;
+      case "pipetted": vars.ml = trim(event.ml, lang); break;
       case "gone": vars.name = nameOf(L.species(event.species), lang); break;
       case "solid":
         if (event.colloid) { vars.name = nameOf(L.species(event.species), lang); return text("say.haze", lang, vars); }
@@ -1300,6 +1305,48 @@
     }
   });
 
+  // ------------------------------------------------------------------ Messzylinder
+
+  // Breite und Höhe der Röhre in Bildpunkten, Teilung (klein, mit Zahl) in mL
+  var CYL = { 10: [16, 150, 0.5, 2], 25: [22, 165, 1, 5], 50: [28, 180, 1, 10], 100: [36, 200, 2, 20] }, CYL_FOOT = 8;
+
+  function cylSize(w) { return CYL[w.size || w.cap] || CYL[100]; }
+  // die Skala reicht vom Boden der Röhre bis 12 Bildpunkte unter den Rand
+  function cylSurface(w) { var s = cylSize(w); return -CYL_FOOT - 2 - Math.min(1.05, w.ml / w.cap) * (s[1] - 14); }
+
+  L.registerPart("cylinder", {
+    width: function (v) { return cylSize(v)[0] + 60; },
+    bounds: function (v) { var s = cylSize(v); return { x0: -s[0] / 2 - 14, x1: s[0] / 2 + 14, top: -s[1] - CYL_FOOT - 6 }; },
+    surface: cylSurface,
+    probe: function (v, type) {
+      var s = cylSize(v), rim = -s[1] - CYL_FOOT;
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: rim, w: s[0] + 2 };
+      if (type === "tube") return { x: 0, rim: rim, w: s[0] + 2, top: rim - PIPE_RISE };
+      if (type === "bridge" || type === "condenser") return { x: 0, rim: rim };
+      if (type === "reflux") return { x: 0, rim: rim, top: rim - REFLUX };
+      return { x: 0, bottom: -CYL_FOOT - 6, top: rim - 70, tag: 10, box: 10 };
+    },
+    mount: function (w) { var s = cylSize(w); return { x: 0, rim: -s[1] - CYL_FOOT, surface: w.ml > 0.005 ? cylSurface(w) : -CYL_FOOT - 2, edge: s[0] / 2 + 14 }; },
+    draw: function (w, ctx) {
+      var s = cylSize(w), a = s[0] / 2, h = s[1], rim = -h - CYL_FOOT, y = cylSurface(w), ml, my, marks = "", major;
+      var fill = function (level) { return "M" + (-a + 2) + "," + f(level) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level) + "Z"; };
+      if (w.broken) return shards(a + 4, ctx);
+      for (ml = s[2]; ml <= w.cap + 1e-9; ml += s[2]) {
+        major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
+        my = -CYL_FOOT - 2 - ml / w.cap * (h - 14);
+        marks += '<line class="cl-mark" x1="' + (a - (major ? 9 : 5)) + '" x2="' + a + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
+        if (ctx.numbers && major) marks += '<text class="cl-mark-text" x="' + (a + 3) + '" y="' + f(my + 2.5) + '">' + trim(ml, ctx.lang) + "</text>";
+      }
+      return contents(w, ctx, { path: fill(y), fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -CYL_FOOT - 2, rim: rim, tall: true }) +
+        // der Meniskus: Wasser steigt am Rand hoch, abgelesen wird der tiefste Punkt
+        (w.ml > 0.005 ? '<path class="cl-surface" d="M' + (-a + 2) + "," + f(y - 2.5) + "Q0," + f(y + 2) + " " + (a - 2) + "," + f(y - 2.5) + '" fill="none"/>' : "") +
+        marks +
+        '<path class="cl-glass" d="M' + (-a - 4) + "," + (rim - 3) + "L" + (-a) + "," + rim + "L" + (-a) + "," + (-CYL_FOOT) + "M" + a + "," + (-CYL_FOOT) + "L" + a + "," + rim + "L" + (a + 1) + "," + (rim - 1) + '"/>' +
+        '<path class="cl-glass" d="M' + (-a - 10) + ",0L" + (-a) + "," + (-CYL_FOOT) + "L" + a + "," + (-CYL_FOOT) + "L" + (a + 10) + ',0Z"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
   // ------------------------------------------------------------------ Trichter mit Filterpapier
 
   var FUNNEL = { a: 28, h: 40, stem: 34, cap: 60 };     // halbe Weite oben, Höhe des Kegels, Länge des Rohrs, Fassungsvermögen in mL
@@ -1417,6 +1464,8 @@
     if (def) {
       body = id === "testtube" ? '<path class="cl-glass" d="M9,3L9,22A5,5 0 0 0 19,22L19,3"/>'
         : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
+        : id === "cylinder" ? '<path class="cl-glass" d="M10,3L10,24M18,24L18,3M6,27L10,24L18,24L22,27Z"/><line class="cl-mark" x1="14" x2="18" y1="9" y2="9"/><line class="cl-mark" x1="14" x2="18" y1="15" y2="15"/>'
+        : L.parts[id] && L.parts[id].probe === "pipette" ? '<path class="cl-glass" d="M14,2L14,9M12,9Q8,14 12,19L14,19L14,27M14,19L16,19Q20,14 16,9Z"/><line class="cl-mark" x1="12" x2="16" y1="5" y2="5"/>'
         : id === "funnel" ? '<path class="cl-filter" d="M7,7L21,7L14,16Z"/><path class="cl-glass" d="M3,5L12,17L12,27M16,27L16,17L25,5"/>'
         : id === "beaker" ? '<path class="cl-glass" d="M5,6L5,24Q5,27 8,27L20,27Q23,27 23,24L23,6"/>'
         : id === "dish" ? '<path class="cl-porcelain-edge" d="M3,11Q5,25 11,25L17,25Q23,25 25,11"/>'
@@ -1486,5 +1535,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

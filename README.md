@@ -253,6 +253,29 @@ Oder statt Ammoniak Kaliumiodid zum weißen Silberchlorid geben: Der Niederschla
  "show":{"charts":false}}
 ```
 
+## Genau abmessen
+
+Dreimal sollen 20 mL Wasser aus dem Vorrat in ein Becherglas, jedes Mal auf anderem Weg:
+
+- **Becherglas A:** einfach umgießen (in der Karte des Vorrats „Umgießen in“, 20 mL).
+- **Becherglas B:** erst bis zur Marke in den **Messzylinder** gießen, dann den Zylinder ganz in B ausleeren.
+- **Becherglas C:** mit der **Vollpipette** 20 mL: aus dem Vorrat aufziehen, in C abgeben.
+
+Vergleiche die Mengen unter den Gläsern. Hier streuen die Geräte wie echte (`"scatter": true`): Umgießen nach Augenmaß trifft auf etwa 5 % genau, der Messzylinder auf 1 %, die Vollpipette auf 0,2 %. Lies am Messzylinder den tiefsten Punkt des Meniskus ab.
+
+```json @ChemLab.sim
+{"scatter":true,
+ "bench":[
+  {"type":"beaker","id":"vorrat","ml":250,"contains":[{"reagent":"H2O","ml":150}]},
+  {"type":"cylinder","id":"zylinder","ml":25},
+  {"type":"beaker","id":"a"},
+  {"type":"beaker","id":"b"},
+  {"type":"beaker","id":"c"}
+ ],
+ "shelf":["pipette20","pipette5","pipette10","pipette25","cylinder"],
+ "show":{"charts":false}}
+```
+
 ## Filtrieren
 
 Ein **Trichter mit Filterpapier** hängt im Stativring über dem rechten Becherglas. Gib 10 mL Natronlauge (zweimal 5 mL) zur Kupfersulfat-Lösung: Blaues Kupferhydroxid fällt aus. Gieß dann alles in den Trichter; wer das ganze Glas ausgießt, schwenkt auf und spült auch den Bodensatz mit hinein. Das Filtrat tropft von selbst ins Becherglas darunter, etwa ein halber Milliliter je Sekunde: Es ist klar und farblos, der blaue Niederschlag bleibt auf dem Papier. Den Rückstand kannst du dir in der Karte des Trichters ansehen und dort entsorgen.
@@ -1287,6 +1310,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `testtube` | Reagenzglas, 20 mL | `contains` |
 | `beaker` | Becherglas | `ml` Größe: 50, 100 (Vorgabe), 250 oder 600; `contains` |
 | `calorimeter` | Kalorimeter: zwei Styroporbecher mit Deckel, 250 mL, 7 g; hält die Wärme. Es kommt nicht auf Brenner oder Wasserbad, und Elektroden passen nicht hinein | `contains` |
+| `cylinder` | Messzylinder mit feiner Skala und Fuß | `ml` Größe: 10, 25, 50 oder 100 (Vorgabe); `contains` |
+| `pipette5`, `pipette10`, `pipette20`, `pipette25` | Vollpipette mit 5, 10, 20 oder 25 mL; im Regal: erst das Gefäß antippen, aus dem sie aufzieht, dann das Ziel | – |
 | `funnel` | Trichter mit Filterpapier im Stativring, 60 mL; hängt über einem Gefäß (`over`) und läuft von selbst ab. Feststoffe und Niederschläge bleiben im Filter, Kolloide laufen durch | `over`, `contains` |
 | `burette` | Bürette, 50 mL, mit Hahn | `over`, `contains` |
 | `dish` | Abdampfschale aus Porzellan, 50 mL | `contains` |
@@ -1539,6 +1564,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Streuung** (mit `scatter`): Jedes Messgerät weicht fest um einen ausgelosten Betrag ab und rauscht dazu; das Rauschen wechselt jede Sekunde, und die Trägheit des Geräts glättet es. Die größten Abweichungen (fest / Rauschen, geschätzt nach Schulgeräten): Thermometer 0,3 / 0,05 °C, pH-Meter 0,05 / 0,01, Leitfähigkeit 2 % / 0,5 %, Fotometer 0,005 + 1 % / 0,002, Manometer 0,01 / 0,002 bar, Strom- und Spannungsmesser 1 % / 0,5 mA bzw. 2 mV (ohne Strom zeigt der Strommesser 0), Kolbenprober 2 % ohne Rauschen und höchstens 100 mL, Waage 0,02 % / 0,005 g (Tara stellt sie genau auf null). Das Rauschen liegt auf der Anzeige, nach der Trägheit des Fühlers. Am Ende seiner Skala zeigt ein Gerät das Ende. Die Chemie rechnet weiter mit den wahren Werten; Aufgaben, Diagramme, Tabelle und die höchste Temperatur im Protokoll sehen die Anzeige. Die Auslosung bleibt beim Zurückspulen und Zurücksetzen dieselbe. Im Ruhezustand steht die Uhr und mit ihr das Rauschen.
 - **Gefahrstoffkennzeichnung:** Aus der Einstufung des reinen Stoffs folgt die der Lösung nach den Gemisch-Regeln der CLP-Verordnung (Anhang I): spezifische Konzentrationsgrenzen, wo es sie gibt, sonst die allgemeinen; die akute Toxizität beim Verschlucken und beim Einatmen über den Schätzwert des Gemischs (Schätzwert durch Massenanteil); die Umweltgefahren über die M-Faktoren (chronisch 2 allein: Piktogramm ohne Signalwort). Danach die Vorrangregeln für Piktogramme und Signalwort. Der Massenanteil folgt aus der Zusammensetzung der Flasche. Grundlage sind die harmonisierten Einstufungen (CLP Anhang VI, bis zur 22. Anpassung), sonst die üblichen der Lieferanten.
 - **Entsorgen:** Der passende Behälter folgt aus dem Inhalt, in dieser Rangfolge: Reste von Alkalimetallen gehören in keinen Behälter, sondern zurück zur Lehrkraft; Ionen oder Verbindungen von Schwermetallen (Kupfer, Zink, Silber, Barium, Chrom, Cobalt, Mangan, Nickel, Blei, Cadmium, Quecksilber, Zinn, Arsen, Antimon, Thallium, Selen, Vanadium, Molybdän, Bismut, Uran), gelöst oder als Niederschlag, zu den Schwermetallsalzen; Bleichlauge, Chlor und Iod (ab 10 µmol) erst mit Natriumthiosulfat reduzieren; organische Lösungsmittel ab 15 % des Volumens zu den organischen Lösungsmitteln; eine Flüssigkeit mit pH unter 6 oder über 9 zu den Säuren und Laugen (oder vorher neutralisieren), auch wenn noch Feststoffreste darin liegen; Stücke aus dem Regal (ab 10 mg) und ein trockener Rückstand zu den Feststoffen; alles andere darf in den Ausguss. Lässt sich kein pH-Wert rechnen (konzentrierte Säure, Brei), entscheidet der Überschuss an Säure oder Lauge. Eine harmlose Lösung in einem Sammelbehälter gilt als richtig, mit dem Hinweis, dass der Ausguss genügt hätte. Bei unbekannten Proben sagt das Protokoll nur, ob der Behälter passte. Angelehnt an die Regeln der Schulen (DGUV Regel 113-018).
+- **Abmessen:** Ohne Streuung gießt das Labor genau die eingestellte Menge um. Mit `scatter` trifft Umgießen nur ungefähr: auf 5 % genau, auf 1 %, wenn ein Messzylinder Quelle oder Ziel ist (bis zur Marke füllen oder ablesen), auf 0,2 % mit der Vollpipette; ausgelost je Gefäß und Zeitpunkt. Alles auszugießen gelingt immer. Ein Messzylinder wird nicht erhitzt.
 - **Filtrieren:** Der Trichter läuft von selbst mit 0,5 mL/s ins Gefäß darunter (geschätzt für einen Rundfilter), solange darin Flüssigkeit ist und darunter Platz. Durch das Filter geht nur die Lösung und, was kolloid verteilt ist (Schwefel); alles andere bleibt als Rückstand im Filter. Wird ein Glas ganz in den Trichter ausgegossen, kommen auch der Bodensatz und die Stücke aus dem Regal mit (aufgeschwemmt); wer nur einen Teil abgießt, lässt den Bodensatz im Glas.
 - **Thermometer:** Es folgt der Temperatur mit einer Verzögerung von etwa drei Sekunden und reicht bis 110 °C; darüber zeigt es das Ende seiner Skala. Die Temperaturkurve im Diagramm ist das, was das Thermometer zeigt; ohne Thermometer gibt es keine Kurve.
 - **Zugießen** dauert je nach Menge eine halbe bis vier Sekunden, ein Tropfen eine Viertelsekunde. Deshalb schlägt der Indikator mitten im Zugießen um.

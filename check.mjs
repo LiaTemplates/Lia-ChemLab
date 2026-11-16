@@ -4340,6 +4340,53 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
+test("Messzylinder und Pipette: genau abmessen; mit Streuung ist Umgießen ungenauer als der Messzylinder, die Pipette am genauesten", () => {
+  // Messzylinder in vier Größen; er wird nicht erhitzt
+  for (const ml of [10, 25, 50, 100]) {
+    const l = lab([{ type: "cylinder", id: "m", ml, contains: [{ reagent: "H2O", ml: ml / 2 }] }]);
+    near(L.volume(L.vessel(l, "m")) * 1000, ml / 2, 1e-6, `${ml} mL`);
+    near(L.free(l, L.vessel(l, "m")), ml / 2, 1e-6, `Platz im ${ml}-mL-Zylinder`);
+  }
+  for (const type of ["burner", "bath"]) assert.throws(() => lab([{ type: "cylinder", id: "m" }, { type, under: "m" }]), (e) => e.code === "place", type);
+  // die Vollpipette überträgt genau ihr Volumen, wenn genug darin ist
+  const l = lab([{ type: "beaker", id: "a", contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "beaker", id: "b" }], { room: 20 });
+  assert.equal(L.pipette(l, "a", "b", 10), true);
+  L.step(l, 20);
+  near(L.volume(L.vessel(l, "b")) * 1000, 10, 1e-9, "genau 10 mL");
+  assert.equal(L.pipette(l, "b", "a", 25), false, "zu wenig darin");
+  // Streuung: Abweichung des Übertragenen vom eingestellten Volumen, über viele Auslosungen
+  const spread = (how) => {
+    const out = [];
+    for (let seed = 1; seed <= 30; seed++) {
+      const k = lab([{ type: how === "cylinder" ? "cylinder" : "beaker", id: "a", ml: 100, contains: [{ reagent: "H2O", ml: 80 }] }, { type: "beaker", id: "b", ml: 250 }], { room: 20, scatter: seed });
+      if (how === "pipette") L.pipette(k, "a", "b", 20); else L.pour(k, "a", "b", 20);
+      L.step(k, 30);
+      out.push(L.volume(L.vessel(k, "b")) * 1000 / 20 - 1);
+    }
+    return { max: Math.max(...out.map(Math.abs)), range: Math.max(...out) - Math.min(...out) };
+  };
+  const beaker = spread("beaker"), cylinder = spread("cylinder"), pipette = spread("pipette");
+  assert.ok(beaker.max <= 0.05 + 1e-9 && beaker.range > 0.03, `Becherglas: ${JSON.stringify(beaker)}`);
+  assert.ok(cylinder.max <= 0.01 + 1e-9 && cylinder.range > 0.006, `Messzylinder: ${JSON.stringify(cylinder)}`);
+  assert.ok(pipette.max <= 0.002 + 1e-9 && pipette.range > 0.001, `Pipette: ${JSON.stringify(pipette)}`);
+  // in einen Messzylinder bis zur Marke gießen ist so genau wie aus ihm abmessen
+  let into = 0;
+  for (let seed = 1; seed <= 30; seed++) {
+    const k = lab([{ type: "beaker", id: "a", ml: 250, contains: [{ reagent: "H2O", ml: 80 }] }, { type: "cylinder", id: "m", ml: 25 }], { room: 20, scatter: seed });
+    L.pour(k, "a", "m", 20);
+    L.step(k, 30);
+    into = Math.max(into, Math.abs(L.volume(L.vessel(k, "m")) * 1000 / 20 - 1));
+  }
+  assert.ok(into <= 0.01 + 1e-9, `in den Messzylinder: ${into}`);
+  // alles ausgießen bleibt alles, auch mit Streuung
+  const all = lab([{ type: "beaker", id: "a", contains: [{ reagent: "H2O", ml: 30 }] }, { type: "beaker", id: "b", ml: 250 }], { room: 20, scatter: 3 });
+  L.pour(all, "a", "b", 30);
+  L.step(all, 30);
+  near(L.volume(L.vessel(all, "b")) * 1000, 30, 1e-6, "alles ausgegossen");
+  assert.match(L.icon("cylinder"), /<svg/);
+  assert.match(L.icon("pipette10"), /<svg/);
+});
+
 test("Filtrieren: der Trichter hält den Niederschlag zurück, das Filtrat läuft klar und von selbst ins Glas darunter; Kolloide laufen durch", () => {
   const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
   L.add(l, "b", "NaOH 1M", { ml: 10 });                       // gefällt wird im Versuch (was schon im Aufbau ausfällt, liegt längst am Boden)
@@ -4618,6 +4665,23 @@ test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten a
   assert.equal(h("glacial acetic acid"), "GHS02 GHS05 danger");
   assert.equal(h("sulfuric acid conc"), "GHS05 danger");
   assert.equal(h("wine"), "", "Wein trägt kein Etikett");
+});
+
+test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Ziel; Messzylinder mit Skala", () => {
+  const el = mount({ bench: [{ type: "beaker", id: "a", contains: [{ reagent: "HCl 1M", ml: 50 }] }, { type: "beaker", id: "b" }, { type: "cylinder", id: "m", ml: 50 }], shelf: ["pipette10"] });
+  press(el, "hand", "pipette10");
+  assert.match(part(el, ".cl-hand").innerHTML, /Vollpipette 10 mL[\s\S]*aufziehen/);
+  tap(el, "a");
+  assert.match(part(el, ".cl-hand").innerHTML, /abgeben/, "jetzt das Ziel");
+  tap(el, "b");
+  frames(30);
+  near(L.volume(L.vessel(state(el).run.lab, "b")) * 1000, 10, 1e-9);
+  assert.match(logOf(el), /10 mL mit der Pipette aus Becherglas 1 in Becherglas 2 gegeben/);
+  assert.match(item(el, "m").innerHTML, /cl-mark-text[^>]*>50</, "Skala bis 50 mL");
+  // die Pipette bleibt in der Hand: aus Becherglas 2 aufziehen und wieder dorthin abgeben geht nicht
+  tap(el, "b");
+  tap(el, "b");
+  assert.match(part(el, ".cl-status").textContent, /anderes Gefäß/);
 });
 
 test("Filtrieren in der Fläche: den Trichter über ein Becherglas hängen, hineingießen; kein Hahn", () => {
@@ -8697,6 +8761,25 @@ test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
   assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
   assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
   for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
+});
+
+test("README: die Folie zum genauen Abmessen hält, was ihr Text verspricht", () => {
+  const raw = JSON.parse(slide("Genau abmessen")[0]);
+  assert.equal(raw.scatter, true, "die Geräte streuen wie echte");
+  for (const id of ["pipette20", "cylinder"]) assert.ok(raw.shelf.includes(id), id);
+  let worst = { a: 0, b: 0, c: 0 };
+  for (let seed = 1; seed <= 20; seed++) {
+    const l = L.createLab(L.normalize(Object.assign({}, raw, { scatter: seed })));
+    L.pour(l, "vorrat", "a", 20);
+    L.pour(l, "vorrat", "zylinder", 20);
+    L.pipette(l, "vorrat", "c", 20);
+    L.step(l, 30);
+    L.pour(l, "zylinder", "b", 50);
+    L.step(l, 30);
+    for (const id of ["a", "b", "c"]) worst[id] = Math.max(worst[id], Math.abs(L.volume(L.vessel(l, id)) * 1000 / 20 - 1));
+  }
+  assert.ok(worst.c < worst.b && worst.b < worst.a, JSON.stringify(worst));
+  assert.ok(worst.a <= 0.05 && worst.b <= 0.01 && worst.c <= 0.002, JSON.stringify(worst));
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {
