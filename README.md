@@ -960,7 +960,7 @@ Für Jüngere lassen sich alle Zahlen ausblenden. Es bleiben die Beobachtungen: 
 
 ## Sprachen
 
-ChemLab spricht die Sprache des Kurses (`language:` im Kopf) und kennt alle Sprachen von [lia-localization](https://github.com/LiaScript/lia-localization). Deutsch und Englisch stehen in `chemlab-parts.js`, die übrigen liegen als `lang/<code>.json` daneben. Geladen wird nur die Sprache, die gebraucht wird. Für eine Sprache ohne Tabelle zeigt ChemLab Englisch.
+ChemLab spricht die Sprache des Kurses (`language:` im Kopf) und kennt alle Sprachen von [lia-localization](https://github.com/LiaScript/lia-localization). Englisch steht in `chemlab-parts.js` und `chemlab-data.js` und ist immer da. Alle anderen Sprachen, auch Deutsch, liegen als `lang/<code>.json` daneben. Geladen wird nur die Sprache, die gebraucht wird. Für eine Sprache ohne Tabelle zeigt ChemLab Englisch.
 
 Schaltet jemand Google Translate ein, über das Menü von LiaScript oder im Browser, setzt der Übersetzer `<html lang>` auf die Zielsprache. ChemLab baut sich dann in dieser Sprache neu auf, mit den eigenen Fachbegriffen und dem passenden Dezimalzeichen. Der Versuch läuft dabei weiter. Für Google ist die Fläche gesperrt (`translate="no"`), nur die Texte des Autors (Aufgabe, eigene Ziele) übersetzt Google weiter mit. Nur wenn es keine Tabelle gibt, darf Google auch die englischen Texte übersetzen. Arabisch, Persisch und Urdu laufen von rechts nach links. Arbeitsfläche, Zeitleiste und Diagramme bleiben dabei, wie sie sind.
 
@@ -1104,7 +1104,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 
 | Angabe | Bedeutung |
 |---|---|
-| `name` | Name, `de` und `en` |
+| `name` | Name je Sprache, etwa `de` und `en`; mindestens einer |
 | `Hf` | Standard-Bildungsenthalpie in kJ/mol; `null`, wenn unbekannt (dann rechnet der Stoff ohne Wärme) |
 | `S` | Standard-Entropie in J/(mol K) |
 | `cp`, `rho` | molare Wärmekapazität in J/(mol K) und Dichte in g/cm³; ohne Angabe übliche Näherungen |

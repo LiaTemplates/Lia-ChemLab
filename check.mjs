@@ -137,7 +137,7 @@ test("Daten: ein eigener Stoff mit Reaktion lässt sich nachtragen", () => {
 test("Daten: Konzentration steht im Namen der Vorratsflasche", () => {
   const half = L.reagent("HCl 0.5M");
   assert.equal(half.solution["H+(aq)"], 0.5);
-  assert.match(half.name.de, /0,5 mol\/L/);
+  assert.match(half.name.en, /0\.5 mol\/L/);
   assert.equal(L.reagent("HCl").solution["H+(aq)"], 1);
   assert.throws(() => L.reagent("Xyz 1M"), (e) => e.code === "reagent");
 });
@@ -482,6 +482,8 @@ test("Gleichungen: was im Gefäß abgelaufen ist, mit Umsatz und Enthalpie", () 
 // ================================================================ Geräte, Effekte, Texte
 
 await import("./chemlab-parts.js");
+// Deutsch liegt wie jede Sprache außer Englisch in lang/; im Browser lädt es chemlab-ui.js nach
+{ const de = JSON.parse(fs.readFileSync(new URL("lang/de.json", here), "utf8")); L.strings.de = de.strings; L.names.de = de.names; }
 await import("./chemlab-fx.js");
 
 const ctx = (more) => Object.assign({ lang: "de", numbers: true, uid: "t", t: 0, still: false, no: 1 }, more);
@@ -4524,7 +4526,7 @@ test("Laden: die fünf Dateien dürfen in jeder Reihenfolge ankommen", () => {
     assert.ok(C.db.reagents.HCl && C.parts.beaker.draw && C.parts["electrode-Cu"].draw && C.fx.flame && C.mount, label);
     const l = C.createLab(C.normalize({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }] }));
     assert.ok(Math.abs(C.view(l, C.vessel(l, "b")).pH) < 0.01, label + ": gerechnet wird wie sonst");
-    assert.equal(C.text("part.beaker", "de"), "Becherglas", label);
+    assert.equal(C.text("part.beaker", "en"), "beaker", label);
   }
   const part = vm.createContext({});
   vm.runInContext(code[4], part);
@@ -7590,7 +7592,7 @@ const langFile = (code) => JSON.parse(fs.readFileSync(new URL(`lang/${code}.json
 
 test("Sprachen: jede Sprache aus lia-localization hat alle Texte und alle Namen", () => {
   assert.deepEqual(fs.readdirSync(new URL("lang/", here)).sort(), L.LANGS.map((code) => code + ".json").sort());
-  const holes = (s) => (s.match(/\{\w+\}/g) || []).sort().join();
+  const holes = (s) => (s.toLowerCase().match(/\{\w+\}/g) || []).sort().join();       // {Name}: derselbe Name, groß am Satzanfang
   const ids = [L.core.species, L.core.reagents, organic.species, organic.reagents || {}].flatMap((t) => Object.keys(t).filter((id) => t[id].name));
   for (const code of L.LANGS) {
     const t = langFile(code);

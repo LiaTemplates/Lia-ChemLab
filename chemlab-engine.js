@@ -461,13 +461,13 @@
 
   function gcd(a, b) { return b ? gcd(b, a % b) : a; }
 
-  // Was an einem Paket fehlt: Quelle, Name, Bildungsenthalpie. Für check.mjs.
+  // Was an einem Paket fehlt: Quelle, Name (in irgendeiner Sprache), Bildungsenthalpie. Für check.mjs.
   function lint(pack) {
     var out = [];
     Object.keys(pack.species || {}).forEach(function (id) {
       var d = pack.species[id];
       if (!d.src) out.push(id + ": src");
-      if (!d.name || !d.name.de) out.push(id + ": name.de");
+      if (!d.name || !Object.keys(d.name).length) out.push(id + ": name");
       if (!("Hf" in d)) out.push(id + ": Hf");
     });
     (pack.equilibria || []).concat(pack.reactions || []).forEach(function (item) {
@@ -478,7 +478,7 @@
     });
     (pack.couples || []).forEach(function (item) { if (!item.src) out.push(item.eq + ": src"); });
     Object.keys(pack.reagents || {}).forEach(function (id) {
-      if (!pack.reagents[id].name || !pack.reagents[id].name.de) out.push(id + ": name.de");
+      if (!pack.reagents[id].name || !Object.keys(pack.reagents[id].name).length) out.push(id + ": name");
     });
     return out;
   }
