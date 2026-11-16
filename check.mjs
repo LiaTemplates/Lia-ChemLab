@@ -7184,6 +7184,59 @@ test("Gasableitungsrohr: Beschreibung, Platz und Fehler", () => {
   assert.equal(L.tool(placed, L.place(placed, { type: "syringe", in: "a" })).in, null, "der Stopfen sitzt schon");
 });
 
+// Gas aus Reagenzglas a durch das Rohr r in Reagenzglas z
+const gasline = (src, dst, more) => lab([{ type: "testtube", id: "a", contains: src }, { type: "tube", id: "r", in: "a", to: "z" },
+  { type: "testtube", id: "z", contains: dst }], Object.assign({ room: 20 }, more));
+const carbon = (store) => Object.entries(store || {}).reduce((sum, [id, n]) => sum + n * (L.species(id).atoms.C || 0), 0);
+const marbleAcid = [{ reagent: "HCl 2M", ml: 10 }, { reagent: "marble", g: 1 }];
+
+for (const model of ["ideal", "real"]) test(`Gasableitungsrohr: Marmor und Salzsäure trüben Kalkwasser – erst kommt Luft (${model})`, () => {
+  const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }], { model }), start = totals(l).mass, a = L.vessel(l, "a"), z = L.vessel(l, "z");
+  L.step(l, 2);
+  const made = carbon(a.air) + carbon(z.n) + carbon(z.air) + carbon(a.out) + carbon(z.out);
+  assert.ok(carbon(a.air) > 0, "der Gasraum des ersten Glases füllt sich");
+  assert.ok(carbon(z.n) < 0.5 * made, `erst kommt vor allem Luft: ${carbon(z.n)} von ${made} mol`);
+  const t = until(l, () => amount(l, "CaCO3(s)", "z") > 2e-5, 120);
+  assert.ok(t < 120, "das Kalkwasser trübt sich");
+  near(totals(l).mass, start, 1e-9, "Masse");
+  assert.equal(carbon(a.out), 0, "aus dem verschlossenen Glas entweicht nichts ins Freie");
+});
+
+test("Gasableitungsrohr: verschließt – kein Span am ersten Glas", () => {
+  const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
+  L.step(l, 2);
+  assert.equal(L.probe(l, "a", "flame"), null);
+});
+
+test("Gasableitungsrohr: Wasserstoff perlt durch Wasser und steht im Gasraum", () => {
+  const l = gasline([{ reagent: "HCl 2M", ml: 10 }, { reagent: "Zn powder", g: 0.3 }], [{ reagent: "H2O", ml: 10 }]);
+  let bubbles = false;
+  until(l, () => { bubbles = bubbles || L.vessel(l, "z").gas > 0; return (L.vessel(l, "z").air["H2(g)"] || 0) > 1e-5; }, 120);
+  assert.ok(bubbles, "im zweiten Glas steigen Blasen auf");
+  assert.ok(L.vessel(l, "z").air["H2(g)"] > 1e-5);
+  assert.equal(amount(l, "H2(g)", "z"), 0, "Wasserstoff löst sich nicht");
+});
+
+test("Gasableitungsrohr: CO₂ im leeren Glas auffangen – der Span erlischt", () => {
+  const l = gasline(marbleAcid, []), seen = [];
+  L.step(l, 60);
+  assert.equal(L.probe(l, "z", "flame", (e) => seen.push(e)).result, "out");
+});
+
+test("Gasableitungsrohr: Dampf aus dem siedenden Glas schlägt sich im zweiten nieder", () => {
+  const l = lab([{ type: "testtube", id: "a", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "burner", under: "a", flame: 2 }, { type: "tube", id: "r", in: "a", to: "z" },
+    { type: "testtube", id: "z", contains: [{ reagent: "H2O", ml: 5 }] }], { room: 20 });
+  until(l, () => L.volume(L.vessel(l, "z")) * 1000 > 6, 900);
+  assert.ok(L.volume(L.vessel(l, "z")) * 1000 > 6, "im zweiten Glas kommt Wasser an");
+});
+
+test("Gasableitungsrohr: ohne zweites Glas geht das Gas ins Freie", () => {
+  const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
+  L.remove(l, "z");
+  L.step(l, 20);
+  assert.ok(carbon(L.vessel(l, "a").out) > 0);
+});
+
 // wie im Messbericht: je 10 mL Ethanol und Eisessig mit 5 Tropfen Schwefelsäure; im Reagenzglas die Hälfte mit 3 Tropfen
 const esterMix = (acid, more, bath) => {
   L.register(organic);

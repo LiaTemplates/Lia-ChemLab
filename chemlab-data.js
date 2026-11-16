@@ -523,6 +523,8 @@
       "CH3COOH": { name: name("acetic acid"), solution: { "CH3COOH(aq)": 1 }, molar: true, group: "acid" },
       "NaOH": { name: name("sodium hydroxide solution"), solution: { "Na+(aq)": 1, "OH-(aq)": 1 }, molar: true, group: "acid" },
       "NH3": { name: name("ammonia solution"), solution: { "NH3(aq)": 1 }, molar: true, group: "acid" },
+      // Kalkwasser: gesättigt wären 0,0117 mol/L im idealen Modell (lg K −5,196) und rund 0,02 mol/L im Labor; knapp darunter, damit nichts ausfällt
+      "limewater": { name: name("limewater (calcium hydroxide solution)"), solution: { "Ca^2+(aq)": 0.011, "OH-(aq)": 0.022 }, group: "acid" },
 
       "NaCl": { name: name("sodium chloride solution"), solution: { "Na+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "salt" },
       "KBr": { name: name("potassium bromide solution"), solution: { "K+(aq)": 1, "Br-(aq)": 1 }, molar: true, group: "salt" },

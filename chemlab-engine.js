@@ -2767,8 +2767,11 @@
   // Gasraum: was keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest, leichte Gase schnell, schwere langsam.
   // Steht eine Flamme darunter, zündet ein brennbares Gemisch: einmal mit einer Verpuffung, danach brennt an der Öffnung ruhig ab,
   // was nachkommt.
-  function vent(lab, v, emit) {
-    var cap = headroom(lab, v), sum = 0, id, part, M, hit, steady, closed = stoppered(lab, v);
+  // made: so viel Gas (mol) ist in diesem Schritt in den Gasraum gekommen. Steckt ein Rohr im Gefäß, schiebt es ebenso viel
+  // vor sich her ins zweite Gefäß: erst vor allem Luft, die nicht gerechnet wird, dann zunehmend das Gas selbst.
+  function vent(lab, v, emit, made) {
+    var cap = headroom(lab, v), sum = 0, id, part, M, hit, steady, closed = stoppered(lab, v), pipe = toolAt(lab, v, function (def) { return def.pipe; }), into, flow = 0;
+    if (pipe) pipe.flow = 0;
     for (id in v.air) sum += v.air[id];
     if (!(sum > 0)) return;
     if (toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; })) {
@@ -2782,14 +2785,32 @@
       sum = 0;
       for (id in v.air) sum += v.air[id];
     } else v.flag.torch = null;
+    into = pipe && pipe.to ? vessel(lab, pipe.to) : null;
+    if (into && into.broken) into = null;
     for (id in v.air) {
       part = sum > cap ? v.air[id] * (1 - cap / sum) : 0;
+      if (pipe) part = Math.max(part, (made || 0) * v.air[id] / Math.max(sum, cap));
       M = L.db.species[id].M;
-      if (!closed) part += (v.air[id] - part) * (1 - Math.exp(-DT / (M < 20 ? 8 : M < 36 ? 40 : 90)));      // ein Kolbenprober verschließt das Gefäß
+      if (!closed) part += (v.air[id] - part) * (1 - Math.exp(-DT / (M < 20 ? 8 : M < 36 ? 40 : 90)));      // ein Stopfen verschließt das Gefäß
       if (v.air[id] - part < 1e-12) part = v.air[id];
-      v.out[id] = (v.out[id] || 0) + part;
+      if (into && part > 0) { bubbleInto(lab, into, id, part); flow += part; }
+      else v.out[id] = (v.out[id] || 0) + part;
       if ((v.air[id] -= part) <= 0) delete v.air[id];
     }
+    if (pipe) pipe.flow = flow / DT;
+  }
+
+  // Gas aus einem Rohr kommt ins Gefäß v. Steht Flüssigkeit darin, perlt es hindurch: Was ein Lösungsgleichgewicht hat (CO₂, NH₃, HCl),
+  // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
+  function bubbleInto(lab, v, id, x) {
+    var e, key;
+    if (!(volume(v) > 0)) { v.air[id] = (v.air[id] || 0) + x; return; }
+    v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
+    e = L.db.equilibria.filter(function (q) { return q.gas === id; })[0];
+    if (!e) { v.air[id] = (v.air[id] || 0) + x; return; }      // steigt durch und steht im Gasraum
+    for (key in e.d) v.n[key] = (v.n[key] || 0) + e.d[key] * x;
+    tally(v, e, x * e.f);
+    v.dirty = true;
   }
 
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
@@ -2859,7 +2880,7 @@
       if (share > 1e-6) release(v, g, Math.min(g.most, boil * share / (1 - share)));       // Spuren bleiben in der Lösung
     });
     if (back) list = [];                                       // unter Rückfluss bleibt alles im Gefäß: es siedet, ohne dass etwas fortgeht
-    cool = toolAt(lab, v, function (def) { return def.condenser; });
+    cool = toolAt(lab, v, function (def) { return def.duct; });      // auch durch ein Rohr: der Dampf schlägt sich im zweiten Gefäß nieder
     if (cool) into = vessel(lab, cool.to);
     if (into && (into.broken || L.parts[into.type].dispenser || free(lab, into) < 1)) into = null;      // die Vorlage läuft nicht über
     list.forEach(function (c) {
@@ -2913,8 +2934,9 @@
       }
       delete v.n[id];
     }
-    v.gas = vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0;      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
-    vent(lab, v, emit);
+    v.gas = (vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0) + (v.pipe || 0);      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
+    v.pipe = 0;
+    vent(lab, v, emit, gas);
     if (v.broken) return;
 
     // Wärmeabgabe an den Raum; im Wasserbad an das Bad, und das viel schneller
