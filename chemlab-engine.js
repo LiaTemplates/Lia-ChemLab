@@ -415,6 +415,7 @@
         if (r.solution) ids.forEach(function (sp) { charge += r.solution[sp] * next.species[sp].charge; size += Math.abs(r.solution[sp] * next.species[sp].charge); });
         if (Math.abs(charge) > 1e-9 * Math.max(1, size)) throw fail("charge", id);    // eine Lösung ist elektrisch neutral
         if (r.solution && taken(r.solution, next.species) > 1.0001) throw fail("reagent", id + " Vm");         // die gelösten Stoffe passen in die Flasche
+        if (r.ghs != null && !ghsValid(r.ghs)) throw fail("reagent", id + " ghs");
         put(next.reagents, id, Object.assign({ id: id }, r), r, id);
       });
     });
@@ -528,7 +529,7 @@
     copy = Object.assign({}, r, { id: id, of: r.id, solution: {}, name: {}, c: c });
     for (key in r.solution) copy.solution[key] = r.solution[key] * c;
     for (key in r.name) copy.name[key] = r.name[key] + " " + String(c).replace(".", key === "de" ? "," : ".") + " mol/L";
-    if (taken(copy.solution, L.db.species) > 1.0001) throw fail("reagent", String(id));            // konzentrierter, als der reine Stoff ist
+    if (room(copy) > 1.0001) throw fail("reagent", String(id));            // konzentrierter, als der reine Stoff ist
     return copy;
   }
 
@@ -541,15 +542,43 @@
     if (!r.solution) return 100;
     for (key in r.solution) if (key !== WATER) solute += r.solution[key] * L.db.species[key].M;
     if (!(solute > 0)) return 0;
-    return 100 * (per ? (r.solution[per.species] || 0) * per.M : solute) / (solute + (1 - taken(r.solution, L.db.species)) * 997);
+    return 100 * (per ? (r.solution[per.species] || 0) * per.M : solute) / (solute + (1 - room(r)) * 997);
+  }
+
+  // Ob die Gefahrstoffangaben eines Reagenzes die Form haben, die hazards() erwartet
+  function ghsValid(g) {
+    var code = /^GHS0[1-9]$/, num = function (x) { return typeof x === "number" && isFinite(x) && x >= 0; };
+    var opt = function (x) { return x == null || num(x); }, codes = function (x) { return Array.isArray(x) && x.every(function (c) { return code.test(c); }); };
+    var stot = function (x) { return Array.isArray(x) && [1, 2, 3].indexOf(x[0]) >= 0 && opt(x[1]); };
+    if (!g || typeof g !== "object" || Array.isArray(g)) return false;
+    if (g.src != null && typeof g.src !== "string") return false;
+    if (g.signal != null && g.signal !== "danger" && g.signal !== "warning") return false;
+    if (g.fixed != null) return codes(g.fixed);
+    return opt(g.irrit) && opt(g.ate) && opt(g.inh) && opt(g.sens) && opt(g.resp) && opt(g.met) && opt(g.vm) &&
+      (g.corr == null || (Array.isArray(g.corr) && g.corr.length === 4 && g.corr.every(function (x, i) { return i < 2 ? x === null || num(x) : num(x); }))) &&
+      (g.cmr == null || (Array.isArray(g.cmr) && (g.cmr[0] === 1 || g.cmr[0] === 2) && num(g.cmr[1]))) &&
+      (g.stot == null || (Array.isArray(g.stot[0]) ? g.stot.every(stot) : stot(g.stot))) &&
+      (g.aq == null || (typeof g.aq === "object" && opt(g.aq.acute) && (g.aq.chronic == null || (Array.isArray(g.aq.chronic) && [1, 2, 3].indexOf(g.aq.chronic[0]) >= 0 && opt(g.aq.chronic[1]))))) &&
+      (g.pure == null || codes(g.pure)) &&
+      (g.high == null || (Array.isArray(g.high) && g.high.every(function (h) { return Array.isArray(h) && num(h[0]) && code.test(h[1]); }))) &&
+      (g.per == null || (typeof g.per === "object" && typeof g.per.species === "string" && num(g.per.M)));
+  }
+
+  // Anteil am Volumen, den die gelösten Stoffe einer Flasche einnehmen: mit ihrem Eigenvolumen Vm und, für die Kennzeichnung
+  // konzentrierter Lösungen, dem scheinbaren Molvolumen ghs.vm des eingestuften Stoffs (mL/mol; ohne es wäre Salzsäure mit
+  // 12 mol/L nur 30 % statt 37 % stark)
+  function room(r) {
+    return taken(r.solution, L.db.species) + (r.ghs && r.ghs.vm && r.c ? r.c * r.ghs.vm / 1000 : 0);
   }
 
   // Kennzeichnung eines Stoffs aus dem Regal, gerechnet aus der Einstufung des reinen Stoffs (ghs) nach den Gemisch-Regeln der
   // CLP-Verordnung (EG 1272/2008, Anhang I). ghs, Konzentrationen in Massenprozent:
   //   corr: [hautätzend ab, hautreizend ab, augenschädigend ab, augenreizend ab]   (allgemein 5, 1, 3, 1; sonst die spezifischen Grenzen)
   //   irrit: haut- oder augenreizend (Kat. 2) ab (allgemein 10)
-  //   ate: Schätzwert der akuten Toxizität oral in mg/kg; das Gemisch hat ate / Anteil
-  //   cmr: [Kategorie 1 oder 2, ab]   stot: [Kategorie 1, 2 oder 3, ab]   sens: hautsensibilisierend ab   resp: atemwegssensibilisierend ab
+  //   ate: Schätzwert der akuten Toxizität oral in mg/kg; das Gemisch hat ate / Anteil. inh: dasselbe beim Einatmen als Nebel in mg/L
+  //   high: [[ab, Piktogramm, Gefahr?]]: was erst eine konzentrierte Lösung ist (brandfördernd, entzündbar)
+  //   vm: scheinbares Molvolumen in mL/mol, für den Massenanteil konzentrierter Lösungen
+  //   cmr: [Kategorie 1 oder 2, ab]   stot: [Kategorie 1, 2 oder 3, ab] oder eine Liste davon   sens: hautsensibilisierend ab   resp: atemwegssensibilisierend ab
   //   aq: { acute: M-Faktor (akut 1), chronic: [Kategorie, M] }
   //   met: korrosiv gegenüber Metallen ab (H290; dafür gibt es keine Gemisch-Regel, die Grenze folgt der Praxis der Lieferanten): Ätzsymbol mit „Achtung“
   //   pure: Piktogramme nur des reinen Stoffs (entzündbar, brandfördernd …), pureDanger: mit Signalwort „Gefahr“
@@ -575,22 +604,27 @@
       limit = g.ate / (pct / 100);
       if (limit <= 300) mark("GHS06", true); else if (limit <= 2000) mark("GHS07", false, "tox");
     }
-    if (g.cmr && pct >= g.cmr[1]) mark("GHS08", g.cmr[0] === 1);
-    if (g.stot) {
-      cat = g.stot[0];
-      limit = g.stot[1] != null ? g.stot[1] : cat === 3 ? 20 : 10;
-      if (cat === 3) { if (pct >= limit) mark("GHS07", false, "stot"); }
-      else if (pct >= limit) mark("GHS08", cat === 1);
-      else if (cat === 1 && pct >= 1) mark("GHS08", false);                // STOT 1 zwischen 1 und 10 %: Kategorie 2
+    if (g.inh != null && pct > 0) {                              // Nebel: Kategorie 1 bis 3 bis 1 mg/L, Kategorie 4 bis 5 mg/L
+      limit = g.inh / (pct / 100);
+      if (limit <= 1) mark("GHS06", true); else if (limit <= 5) mark("GHS07", false, "tox");
     }
+    (g.high || []).forEach(function (h) { if (pct >= h[0]) mark(h[1], !!h[2]); });
+    if (g.cmr && pct >= g.cmr[1]) mark("GHS08", g.cmr[0] === 1);
+    (g.stot ? (Array.isArray(g.stot[0]) ? g.stot : [g.stot]) : []).forEach(function (st) {
+      var c = st[0], at = st[1] != null ? st[1] : c === 3 ? 20 : 10;
+      if (c === 3) { if (pct >= at) mark("GHS07", false, "stot"); }
+      else if (pct >= at) mark("GHS08", c === 1);
+      else if (c === 1 && pct >= 1) mark("GHS08", false);                 // STOT 1 zwischen 1 und 10 %: Kategorie 2
+    });
     if (g.sens != null && pct >= g.sens) mark("GHS07", false, "sens");
     if (g.resp != null && pct >= g.resp) { mark("GHS08", true); why.resp = true; }
     if (g.aq) {
       if (g.aq.acute && g.aq.acute * pct >= 25) mark("GHS09", false);
       if (g.aq.chronic) {
         cat = g.aq.chronic[0]; limit = g.aq.chronic[1] || 1;
-        if (cat === 1 && (limit * pct >= 25 || 10 * limit * pct >= 25)) mark("GHS09", false);
-        if (cat === 2 && pct >= 25) mark("GHS09", false);
+        // chronisch 1; chronisch 2 hat das Piktogramm, aber kein Signalwort (Anhang I, Tabelle 4.1.4)
+        if (cat === 1 && limit * pct >= 25) mark("GHS09", false);
+        else if ((cat === 1 && 10 * limit * pct >= 25) || (cat === 2 && pct >= 25)) pics.GHS09 = true;
       }
     }
     if (g.pure && !r.solution) g.pure.forEach(function (code) { mark(code, !!g.pureDanger); });

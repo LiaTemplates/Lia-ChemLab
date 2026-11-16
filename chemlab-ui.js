@@ -978,7 +978,7 @@
 
     function useButton(id) {
       return '<button type="button" class="cl-use" data-act="use" data-id="' + esc(id) + '" aria-pressed="false" title="' + esc(nameOfPick(id)) + '">' +
-        L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
+        L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span>" + (L.parts[id] ? "" : L.ghsLabel(id, lang)) + "</button>";
     }
 
     // Unter den Stoffen: die Menge und der Knopf, der sie in dieses Gefäß gibt

@@ -4361,7 +4361,7 @@ test("GHS: die Kennzeichnung einer Lösung folgt aus dem reinen Stoff nach den G
   // Umwelt: M · Anteil ab 25 %
   assert.equal(h("ghs fish 1M"), "GHS09 warning");
   assert.equal(h("ghs fish 0.01M"), "", "0,06 % · 10 · 10 = 5,5 %: chronisch 3 ohne Piktogramm");
-  assert.equal(h("ghs fish 0.05M"), "GHS09 warning", "chronisch 2: 10 · M · Anteil ab 25 %");
+  assert.equal(h("ghs fish 0.05M"), "GHS09", "chronisch 2: 10 · M · Anteil ab 25 %; Piktogramm ohne Signalwort");
   assert.equal(h("ghs fix"), "GHS02 GHS07 danger", "Fertiglösung: wie auf ihrem Etikett");
   assert.equal(h("ghs pure"), "GHS03 GHS07 danger", "der reine Feststoff");
   assert.equal(h("H2O"), "", "Wasser");
@@ -4469,10 +4469,23 @@ test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten a
     ["H2SO4 1M", "GHS05 warning"], ["H2SO4 conc", "GHS05 danger"], ["NaOH 0.01M", ""], ["NaOH 1M", "GHS05 danger"],
     ["NH3 1M", "GHS07 warning"], ["NH3 2M", "GHS05 danger"], ["CH3COOH 1M", ""], ["CH3COOH 2M", "GHS07 warning"],
     ["AgNO3 0.1M", "GHS07 GHS09 warning"], ["BaCl2 1M", "GHS07 warning"], ["CuSO4 1M", "GHS07 GHS09 warning"],
-    ["K2Cr2O7 0.1M", "GHS08 GHS09 danger"], ["CoCl2 0.1M", "GHS08 GHS09 danger"], ["NaOCl 1M", "GHS05 GHS09 danger"],
+    ["CoCl2 0.1M", "GHS08 GHS09 danger"], ["NaOCl 1M", "GHS05 GHS09 danger"],
     ["H2O2 1M", ""], ["NaCl 1M", ""], ["PP", "GHS02 GHS07 danger"], ["Mg ribbon", "GHS02 danger"], ["NaOH pellets", "GHS05 danger"],
-    ["NH4NO3 salt", "GHS03 GHS07 warning"], ["marble", ""]
+    ["NH4NO3 salt", "GHS03 GHS07 warning"], ["marble", ""],
+    // chronisch 2 allein: Piktogramm ohne Signalwort
+    ["KMnO4 0.02M", "GHS09"],
+    // Einatmen zählt mit: Kaliumdichromat ist als Nebel giftig, Wasserstoffperoxid gesundheitsschädlich
+    ["K2Cr2O7 0.2M", "GHS05 GHS06 GHS08 GHS09 danger"], ["H2O2 10M", "GHS05 GHS07 danger"],      // 30 %; bei 29,9 % liegt der Schätzwert knapp über 5 mg/L
+    // konzentriert: Ammoniak 25 % ist umweltgefährlich, Wasserstoffperoxid ab 50 % brandfördernd
+    ["NH3 13.3M", "GHS05 GHS07 GHS09 danger"], ["H2O2 18.5M", "GHS03 GHS05 GHS07 danger"]
   ]) assert.equal(h(id), want, id);
+  assert.equal(h("K2Cr2O7 0.1M"), "GHS07 GHS08 GHS09 danger", "2,9 %: gesundheitsschädlich beim Einatmen");
+  near(L.massPercent(L.reagent("HCl 12M")), 37, 1, "konzentrierte Salzsäure: 37 %");
+  near(L.massPercent(L.reagent("NH3 13.3M")), 25, 1, "Ammoniak 25 %");
+  assert.throws(() => L.reagent("NH3 45M"), (e) => e.code === "reagent", "mehr als reines Ammoniak (etwa 42 mol/L)");
+  // fehlerhafte Angaben eines Autors fallen beim Laden auf, wie eine falsche Gleichung
+  for (const ghs of [{ fixed: ["GHS2"] }, { fixed: "GHS02" }, { fixed: ["GHS02"], signal: "Danger" }, { corr: 5 }, { ate: "viel" }])
+    assert.throws(() => L.register({ reagents: { ["ghs bad " + JSON.stringify(ghs)]: { name: { de: "x", en: "x" }, solution: { "Na+(aq)": 1, "Cl-(aq)": 1 }, group: "salt", ghs } } }), (e) => e.code === "data", JSON.stringify(ghs));
   // nicht harmonisierte Stoffe und Fertiglösungen nennen ihre Quelle; Bleichlauge zählt nur das Hypochlorit
   for (const id of Object.keys(L.core.reagents)) if (L.core.reagents[id].ghs) assert.ok(L.core.reagents[id].ghs.src, id + ": Quelle");
   assert.ok(L.massPercent(L.reagent("NaOCl 1M")) < 7, "Bleichlauge: 7 % Natriumhypochlorit, das Kochsalz zählt nicht");
@@ -4495,6 +4508,9 @@ test("GHS in der Fläche: Piktogramme im Regal, an der Flasche in der Hand mit S
   assert.doesNotMatch(of("thermometer"), /cl-ghs/, "Geräte ohne");
   press(el, "hand", "NaOH 1M");
   assert.match(part(el, ".cl-hand").innerHTML, /cl-ghs[\s\S]*cl-signal[^>]*>Gefahr</, "in der Hand mit Signalwort");
+  press(el, "drop");
+  tap(el, "b");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="use" data-id="NaOH 1M"[\s\S]*?cl-ghs-row[\s\S]*?<\/button>/, "auch in der Karte „Zugeben“ des Gefäßes");
   assert.match(L.ghsIcon("GHS05"), /<svg[\s\S]*fill="#f00"/, "rot umrandet, nach der amtlichen Vorlage");
   for (const code of ["GHS01", "GHS02", "GHS03", "GHS04", "GHS06", "GHS07", "GHS08", "GHS09"]) assert.match(L.ghsIcon(code), /^<svg class="cl-ghs" viewBox="[\d. ]+"[\s\S]*<path/, code);
 });
