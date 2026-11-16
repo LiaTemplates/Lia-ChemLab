@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer und Kolbenprober; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Abdampfschale, Bürette, Brenner, Wasserbad, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Kolbenprober und Gasableitungsrohr; Elektroden aus sechs Materialien, Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und zehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe, darunter ein Paket zur Organik mit Veresterung und Destillation (Rundkolben und Liebigkühler). Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -323,6 +323,32 @@ Der Kolbenprober fängt das Gas auf und zeigt sein Volumen. Aus 5 cm Magnesiumba
  ],
  "shelf":["Mg ribbon","syringe"],
  "show":{"charts":["V","n"]}}
+```
+
+## Kalkwasserprobe
+
+Das **Gasableitungsrohr** steckt mit einem Stopfen im linken Reagenzglas und führt in das Kalkwasser im rechten. Marmor in die Salzsäure geben: Zuerst perlt die Luft aus dem Glas hindurch, dann das Kohlenstoffdioxid, und das Kalkwasser wird milchig trüb. Es fällt Calciumcarbonat aus. Mit noch mehr Gas löst sich ein Teil davon wieder, als Calciumhydrogencarbonat.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"entwickler","contains":[{"reagent":"HCl 0.5M","ml":5}]},
+  {"type":"tube","in":"entwickler","to":"kalkwasser"},
+  {"type":"testtube","id":"kalkwasser","contains":[{"reagent":"limewater","ml":10}]}
+ ],
+ "shelf":["marble","Na2CO3 1M","limewater","tube","testtube"],
+ "show":{"charts":false}}
+```
+
+Kohlenstoffdioxid ist schwerer als Luft und lässt sich in einem leeren Glas auffangen. Marmor in die Salzsäure geben und nach einer halben Minute den brennenden Span in das rechte Glas halten: Er erlischt. Ein Gas, das sich nicht in Wasser löst, wie Wasserstoff aus Zink und Salzsäure, perlt durch Wasser einfach hindurch und sammelt sich darüber.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"entwickler","contains":[{"reagent":"HCl 1M","ml":8}]},
+  {"type":"tube","in":"entwickler","to":"auffangglas"},
+  {"type":"testtube","id":"auffangglas"}
+ ],
+ "shelf":["marble","Zn granules","H2O","splint","glowsplint","tube","testtube"],
+ "show":{"charts":false}}
 ```
 
 ## Verbrennung
@@ -1025,6 +1051,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `burner` | Brenner; unter Becherglas und Schale mit Dreifuß, unter dem Reagenzglas mit Stativklemme | `under`, `flame` |
 | `bath` | Wasserbad mit Thermostat, 0 °C (Eiswasser) bis 95 °C; das Gefäß darin nimmt seine Temperatur an | `under`, `temp` |
 | `syringe` | Kolbenprober, 100 mL; verschließt das Gefäß und misst das Gasvolumen | `in` |
+| `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
 | `conductometer` | Leitfähigkeitsmessgerät, zeigt mS/cm oder µS/cm | `in` |
 | `electrode-C`, `electrode-Pt` | Elektrode aus Graphit (5 g) oder Platin (10 g); sie lösen sich nicht auf. Elektroden stehen nur in Bechergläsern | `in`, `g` |
@@ -1053,6 +1080,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `H2O` | destilliertes Wasser | `ml` |
 | `HCl`, `H2SO4`, `CH3COOH` | Salzsäure, Schwefelsäure, Essigsäure | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
+| `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
 | `NaCl`, `KBr`, `KI` | Natriumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
 | `Na2SO4`, `CH3COONa`, `NH4Cl`, `KSCN` | Natriumsulfat, Natriumacetat, Ammoniumchlorid, Kaliumthiocyanat | `ml` |
 | `AgNO3`, `BaCl2`, `CuSO4`, `FeCl3` | Silbernitrat, Bariumchlorid, Kupfersulfat, Eisen(III)-chlorid | `ml` |
@@ -1260,6 +1288,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Gasraum:** Entstandenes Gas steht zuerst über der Flüssigkeit. Was dort keinen Platz hat, wird verdrängt; aus dem offenen Gefäß verfliegt der Rest: Wasserstoff in etwa 8 s, Sauerstoff in 40 s, Kohlenstoffdioxid in 90 s. Im Diagramm der Stoffmengen zählt das entwichene Gas weiter mit.
 - **Span und Glimmspan** prüfen den Gasraum. Zwischen 4 und 75 Volumenprozent Wasserstoff verpufft das Gemisch, sofern genug Luft dabei ist; aus der freigesetzten Energie folgt, ob es „plopp“ macht, pfeifend knallt oder laut. Über 800 J zerspringt das Gefäß. Fast reiner Wasserstoff brennt ruhig an der Öffnung ab. Eine Brennerflamme unter dem Gefäß zündet ein solches Gemisch ebenfalls: einmal mit einer Verpuffung, danach brennt an der Öffnung ab, was nachkommt. Über 30 % Sauerstoff flammt der Glimmspan auf, unter 15 % erlischt der brennende Span. An ein Gefäß mit Stopfen lässt sich kein Span halten.
 - **Kolbenprober:** Er verschließt das Gefäß und zählt alles Gas, das entsteht, als Volumen bei Raumtemperatur und Luftdruck, bis 100 mL. Wird das Gefäß ausgeleert, zählt er von vorn.
+- **Gasableitungsrohr:** Es verschließt das Gefäß wie der Kolbenprober. So viel Gas, wie dort entsteht, schiebt es aus dem Gasraum in das zweite Gefäß, im Verhältnis seiner Zusammensetzung: zuerst vor allem Luft, die nicht gerechnet wird, dann zunehmend das Gas selbst. Steht im zweiten Gefäß Flüssigkeit, perlt das Gas hindurch. Ein Gas mit Lösungsgleichgewicht (Kohlenstoffdioxid, Ammoniak, Chlorwasserstoff, Schwefeldioxid) geht in Lösung und reagiert dort; was über die Sättigung bei Luftdruck hinausgeht, perlt wieder aus. Andere Gase steigen durch und stehen im Gasraum darüber. Ein leeres Gefäß fängt das Gas auf. Dampf aus einem siedenden Gefäß schlägt sich im zweiten nieder wie in der Vorlage eines Kühlers. Fehlt das zweite Gefäß, geht das Gas ins Freie.
 - **Verbrennung:** Ein Feststoff entzündet sich bei seiner Zündtemperatur und brennt dann von selbst weiter, mit Sauerstoff aus der Luft. Seine Oberfläche bestimmt, wie schnell. Der größte Teil der Wärme geht mit Licht und heißen Gasen fort; das Gefäß erwärmt die Flamme wie ein Brenner, es wird also nie heißer als sie. Unter Wasser und im verschlossenen Gefäß brennt nichts.
 - **Flammenfärbung:** Jedes Teilchen mit einer Flammenfarbe trägt nach Konzentration und Leuchtkraft bei; die Farben mischen sich. Zu sehen ist sie nur in der rauschenden Flamme und vergeht nach vier Sekunden.
 - **Leitfähigkeit:** Jedes Ion trägt mit seiner Konzentration, dem Quadrat seiner Ladung und seinem Diffusionskoeffizienten bei (Nernst-Einstein); je Grad wärmer leitet die Lösung 2 % besser. Reines Wasser kommt so auf 0,055 µS/cm, Salzsäure mit 0,01 mol/L auf 4,3 mS/cm.
@@ -1292,6 +1321,8 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Die Leitfähigkeit gilt für unendliche Verdünnung. In konzentrierten Lösungen ist sie zu hoch; mehrwertige Salze wie Kupfersulfat leiten im idealen Modell dagegen schlechter als im Labor, weil die ideale Rechnung zu viele Ionenpaare bildet. Im realen Modell zerfallen die Ionenpaare weiter: Kupfersulfat mit 0,5 mol/L leitet dann gut viermal so gut wie im idealen Modell und etwa doppelt so gut wie im Labor, und bei der Elektrolyse fließt entsprechend mehr Strom.
 - Überspannungen und der Stoffübergang an Oberflächen sind geschätzt. Das Zink ist als technisches Zink eingestellt, das in Salzsäure sichtbar Wasserstoff entwickelt; reines Zink reagiert viel träger. Im Volta-Element entsteht deshalb der größere Teil des Wasserstoffs am Zink selbst und nur der Teil am Kupfer, der dem Strom entspricht. Die Hemmung von Magnesium und Eisen steht für ihre Oxidschichten.
 - Elektroden passen nur in Bechergläser, zwei je Glas; nur dort lassen sich Netzgerät, Messgeräte und Lämpchen anschließen. Zu einem Glas (oder einem Paar mit Salzbrücke) gehört ein Stromkreis; frei verdrahten lässt sich nichts. An jedem Glas hängt höchstens eine Salzbrücke, und sie erschöpft sich nicht.
+- Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Kalkwasser klärt sich deshalb schneller wieder als im Versuch. Beim Abkühlen steigt keine Flüssigkeit zurück, und Überdruck entsteht nicht.
+- Kalkwasser hat hier 0,011 mol/L statt der rund 0,02 mol/L einer im Labor gesättigten Lösung, denn das ideale Modell rechnet Calciumhydroxid schon bei 0,0117 mol/L als gesättigt.
 - Wasser verdunstet nur beim Sieden; unterhalb von 100 °C verliert ein Gefäß nichts. Gelöste Gase entweichen nur, wenn sie ausperlen oder mit dem Dampf fortgehen.
 - Die Löslichkeit von Kupfersulfat ist auf den gemessenen Wert von 1,4 mol/L eingestellt, weil die ideale Rechnung mit der Konstante der Datenbank zu wenig ergäbe. Solche Werte sind in den Daten als „adjusted“ (angepasst) gekennzeichnet.
 - Das Geschwindigkeitsgesetz für Marmor gilt für eine bewegte Lösung. Ruhende Körner, an denen Gasblasen haften, reagieren im Labor langsamer. Andere Feststoffe aus dem Regal (Kupfersulfat, Iod) lösen sich weiter mit einer festen Zeitkonstante.

@@ -1,4 +1,4 @@
-/* ChemLab – Looks für das Labor: Liebigkühler und Rückflusskühler. Klassisches Skript, geladen von chemlab-3d.js nach effects.js.
+/* ChemLab – Looks für das Labor: Liebigkühler, Gasableitungsrohr und Rückflusskühler. Klassisches Skript, geladen von chemlab-3d.js nach effects.js.
    Die Lage kommt wie in 2D aus place (Bildpunkte, y nach unten); hier cm, y nach oben. */
 (function (global) {
   "use strict";
@@ -75,6 +75,30 @@
         u.drops.setMatrixAt(k, new THREE.Matrix4().makeTranslation(e.x, e.y - q * q * Math.max(0, e.y - s2), 0));
       }
       u.drops.instanceMatrix.needsUpdate = true;
+    }
+  });
+
+  // ------------------------------------------------------------------ Gasableitungsrohr
+
+  // place: { x1, y1, w } Stopfen im ersten Gefäß, { x2, y2 } Öffnung des zweiten, end: Ende des Rohrs dort, up: Hub wie beim Kühler.
+  // Die Blasen zeichnet das zweite Gefäß selbst.
+  L.registerLook("tube", "lab", {
+    build: function () { var group = new THREE.Group(); group.userData = {}; return group; },
+    update: function (group, d, kit) {
+      var p = d.place, up = p ? p.up || 0 : 0, drop = p ? cm(up) - kit.up(up) : 0;
+      var x1 = p ? cm(p.x1) : -1.5, y1 = p ? cm(-p.y1) : 0.6, x2 = p ? cm(p.x2) : 1.5, end = p ? cm(-p.end) + drop : 0.4;
+      var top = p ? Math.max(cm(-p.y1), cm(-p.y2) + drop) + cm(L.shapes.pipeRise) : 2.4;
+      group.userData.body = fx.rebuild(group, "pipe", [x1, y1, x2, end, top, !!p].map(String).join("|"), function (sub) {
+        var r = 0.11, a = V(x1, y1 - cm(4), 0), b = V(x1, top, 0), c = V(x2, top, 0), e = V(x2, end, 0);
+        sub.add(pipe(a, b, r, fx.glass()), pipe(b, c, r, fx.glass()), pipe(c, e, r, fx.glass()));
+        [b, c].forEach(function (k) { sub.add(new THREE.Mesh(new THREE.SphereGeometry(r, 12, 8), fx.glass()).translateX(k.x).translateY(k.y)); });      // Knie
+        if (p) {
+          var stopper = new THREE.Mesh(new THREE.CylinderGeometry(cm(p.w / 2), cm(p.w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8));
+          stopper.position.set(x1, cm(-(p.y1 + 1.5)), 0);
+          stopper.castShadow = true;
+          sub.add(stopper);
+        } else sub.add(new THREE.Mesh(new THREE.BoxGeometry(4, 0.4, 1.6), fx.wood()).translateY(0.2));
+      });
     }
   });
 

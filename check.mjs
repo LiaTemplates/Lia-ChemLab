@@ -7357,6 +7357,26 @@ test("Zeichnung: Gasableitungsrohr für sich, zwischen zwei Gläsern und mit Bla
   assert.equal(L.reading(l, "r").to, "z");
 });
 
+test("README: die Folie zur Kalkwasserprobe hält, was ihr Text verspricht", () => {
+  const [lime, catcher] = slide("Kalkwasserprobe").map((b) => L.normalize(b));
+  // Marmor in die Salzsäure: erst Luft, dann wird das Kalkwasser trüb, mit mehr Gas wieder klarer
+  let l = L.createLab(lime);
+  const from = lime.bench.find((p) => p.type === "tube").in, into = lime.bench.find((p) => p.type === "tube").to;
+  L.add(l, from, "marble", { g: 0.5 });
+  L.step(l, 2);
+  assert.equal(amount(l, "CaCO3(s)", into), 0, "noch kein Niederschlag: erst kommt Luft");
+  let most = 0;
+  for (let t = 0; t < 120; t++) { L.step(l, 1); most = Math.max(most, amount(l, "CaCO3(s)", into)); }
+  assert.ok(most > 5e-5, "das Kalkwasser wird trüb");
+  assert.ok(amount(l, "CaCO3(s)", into) < 0.8 * most, "mit mehr Gas löst sich ein Teil wieder");
+  // im leeren Glas aufgefangen: der Span erlischt nach einer halben Minute
+  l = L.createLab(catcher);
+  const pipe = catcher.bench.find((p) => p.type === "tube");
+  L.add(l, pipe.in, "marble", { g: 0.5 });
+  L.step(l, 30);
+  assert.equal(L.probe(l, pipe.to, "flame").result, "out");
+});
+
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {
   L.register(organic);
   const [ester, boiled] = slide("Veresterung").map((b) => L.normalize(b)), [wine] = slide("Destillation").map((b) => L.normalize(b));
