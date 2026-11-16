@@ -1355,7 +1355,7 @@
 
     // Was die Messgeräte gerade anzeigen, als Zahl ohne Einheit; die Einheit steht im Kopf der Spalte.
     // Dazu, was jede Bürette abgegeben hat, und die eingestellte Spannung eines Netzgeräts.
-    var COLUMN = { "°C": ["°C", 1, 1], pH: ["pH", 2, 1], "mS/cm": ["mS/cm", 0, 1], E: ["E", 3, 1], mL: ["mL", 1, 1], A: ["mA", 1, 1000], V: ["V", 2, 1], g: ["g", 3, 1] };
+    var COLUMN = { "°C": ["°C", 1, 1], pH: ["pH", 2, 1], "mS/cm": ["mS/cm", 0, 1], E: ["E", 3, 1], mL: ["mL", 1, 1], A: ["mA", 1, 1000], V: ["V", 2, 1], g: ["g", 3, 1], bar: ["bar", 2, 1] };
     function readings() {
       var lab = st.run.lab, label = names(), out = [];
       lab.tools.forEach(function (t) {

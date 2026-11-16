@@ -280,6 +280,29 @@
     }
   });
 
+  // Manometer: Stopfen, Steigrohr und rundes Zifferblatt mit Anzeige
+  L.registerLook("manometer", "lab", {
+    build: function () {
+      var group = new THREE.Group(), screen = fx.screen(1.6, 0.7), needle = new THREE.Mesh(new THREE.BoxGeometry(cm(1.2), cm(12), cm(0.6)).translate(0, cm(6), 0), fx.matte(0xc0392b, 0.6));
+      group.add(screen, needle); group.userData = { screen: screen, needle: needle }; return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, p = d.place, floor = -kit.up(d.lift), x = p ? cm(p.x) : 0, y0 = p ? cm(-(p.rim + 1.5)) : floor + cm(5.5), dial = y0 + cm(46);
+      u.body = fx.rebuild(group, "gauge", p ? [p.x, p.rim, p.w, d.lift].join("|") : "alone", function (sub) {
+        var w = p ? p.w : 20;
+        sub.add(mesh(new THREE.CylinderGeometry(cm(w / 2), cm(w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8), x, y0));
+        sub.add(mesh(new THREE.CylinderGeometry(cm(1.5), cm(1.5), cm(30), 10), fx.steel(), x, y0 + cm(20)));
+        sub.add(mesh(new THREE.CylinderGeometry(cm(16), cm(16), cm(6), 32).rotateX(Math.PI / 2), fx.matte(fx.style.device, 0.45), x, dial));
+        sub.add(mesh(new THREE.TorusGeometry(cm(16), cm(1.4), 8, 40), fx.matte(0x3a3d42, 0.5), x, dial));      // dunkler Rand: das helle Gehäuse vor heller Wand
+      });
+      // Zeiger wie in 2D: 0 bar links unten, 2 bar rechts unten, 1 bar senkrecht
+      u.needle.position.set(x, dial, cm(3.4));
+      u.needle.rotation.z = -(-135 + 135 * Math.max(0, Math.min(2, d.data.value == null ? 1 : d.data.value))) * Math.PI / 180;
+      u.screen.position.set(x + cm(16) + 0.9, dial, cm(4));
+      u.screen.userData.write(d.ctx.numbers && d.data.value != null ? L.shown(d.data, d.ctx.lang) : "");
+    }
+  });
+
   L.registerLook("syringe", "lab", {
     build: function (kit) {
       var group = new THREE.Group(), tag = kit.label(0.75);

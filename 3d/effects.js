@@ -94,7 +94,15 @@
     var pieces = [];                  // je Feststoff seine Teile, damit Glühen und Schwimmen sie in jedem Bild nachführen
     var hotFlame = fx.cone(0.12, 0xa9c2ff);           // Wasserstoff, der über einem heißen Stück brennt
     hotFlame.visible = false;
-    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group, hotFlame);
+    // Spritzer: Tropfen über geschmolzenem Metall und beim Verdünnen; ein Stopfen, der herausfliegt
+    var drops3 = new THREE.InstancedMesh(new THREE.SphereGeometry(0.05, 8, 6), new THREE.MeshStandardMaterial({ color: 0xdfe6ee, roughness: 0.2, metalness: 0.3 }), 16);
+    var flyer = new THREE.Group(), gauge = new THREE.Group();
+    flyer.add(new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.4, 0.7, 20), fx.matte(0x4a4d52, 0.8)), gauge);
+    gauge.add(new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.2, 8).translate(0, 0.9, 0), fx.steel()),
+      new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
+    drops3.count = 0; flyer.visible = false;
+    drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
+    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -213,8 +221,25 @@
         if (crust.visible) fill(crust, shape, shape.floor, shape.floor + Math.min(14, 2.5 + 30 * Math.sqrt(w.residue)) / 16, "crust");
         layer = layer || 0;
         laySolids(w.solids || [], shape, tall, wet);
+        drops3.count = 0;
         // heiße Stellen: glühen in ihrer Glühfarbe; was schwimmt, treibt an der Oberfläche, und darüber brennt Wasserstoff
         hotFlame.visible = false;
+        var nd = 0, place = function (x, y, z) { if (nd < 16) { dummy.position.set(x, y, z); dummy.scale.setScalar(1); dummy.updateMatrix(); drops3.setMatrixAt(nd++, dummy.matrix); } };
+        (ctx.marks || []).forEach(function (mark) {
+          var k, q;
+          if (mark.key === "spatter" && mark.age < 1) for (k = 0; k < 8; k++) {      // beim Verdünnen: Tropfen fliegen über den Rand
+            q = (ctx.still ? 0.4 : mark.age) + 0.12 * pseudo(9, k);
+            if (q < 1) place((pseudo(11, k) - 0.5) * 3 * q, (wet ? level : shape.floor) + (shape.rim - shape.floor + 1.5) * 4 * q * (1 - q), (pseudo(12, k) - 0.5) * 2 * q);
+          }
+          if (mark.key === "popped" && mark.age < 0.8) {     // der Stopfen fliegt heraus: hinauf, zur Seite, sich drehend
+            q = ctx.still ? 0.3 : mark.age;
+            gauge.visible = mark.type === "manometer";
+            flyer.scale.setScalar(shape.inner(shape.rim) / 0.5);    // so breit wie die Öffnung, die er verschlossen hat
+            flyer.position.set(q * 3, shape.rim + q * 8 - q * q * 6, 0);
+            flyer.rotation.set(q * 6, 0, q * 7);
+          }
+        });
+        flyer.visible = (ctx.marks || []).some(function (mark) { return mark.key === "popped" && mark.age < 0.8; });
         (w.solids || []).forEach(function (s, index) {
           (pieces[index] || []).forEach(function (m) {
             if (s.glow && s.glow.level > 0) m.material.emissive.setRGB(s.glow.rgb[0] / 255, s.glow.rgb[1] / 255, s.glow.rgb[2] / 255, THREE.SRGBColorSpace).multiplyScalar(0.4 + 1.2 * s.glow.level);
@@ -223,6 +248,10 @@
             var span = Math.max(0, r - m.userData.r) * 0.85, moving = s.molten && (s.spatter || s.flame);
             m.position.set(moving ? (Math.sin(t * 2.3 + index) * 0.55 + Math.sin(t * 3.7 + 2 * index) * 0.35) * span : 0.15 * span, level + (s.molten ? 0.3 : 0.6) * m.userData.r,
               moving ? Math.cos(t * 1.9 + index) * 0.5 * span : 0);
+            if (s.spatter) for (var k = 0; k < 4; k++) {        // geschmolzenes Metall spritzt: Tropfen steigen auf und fallen zurück
+              var q = ((ctx.still ? 0.3 : t) * 1.7 + pseudo(index + 3, k)) % 1;
+              place(m.position.x + (pseudo(index + 5, k) - 0.5) * q, m.position.y + 0.9 * Math.sin(Math.PI * q), m.position.z + (pseudo(index + 6, k) - 0.5) * q);
+            }
             if (s.flame) {
               hotFlame.visible = true;
               hotFlame.material.uniforms.color.value.set(s.flame.color);
@@ -231,6 +260,8 @@
             }
           });
         });
+        drops3.count = nd;
+        drops3.instanceMatrix.needsUpdate = true;
 
         // Blasen: Gas, das entsteht, und beim Sieden der Dampf. Zahl wie in 2D, beim Sieden mehr und größer.
         n = wet ? Math.min(48, (L.fx && L.fx.count ? L.fx.count(rate) : 0) * 2 + (boil ? 20 : 0)) : 0;
