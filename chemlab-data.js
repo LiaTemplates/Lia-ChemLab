@@ -448,7 +448,7 @@
       // Redoxreaktionen zwischen gelösten Teilchen: sie laufen sofort ab (fast), in der Schreibweise für saure Lösung.
       // Mit logK nur bis zum Gleichgewicht: Wo Iodid nur in Spuren vorliegt (neben Silberiodid), bleibt die Reaktion aus.
       {
-        eq: "H2SO4(l) -> H+(aq) + HSO4-(aq)", rate: { fast: true, needs: { "H2O(l)": 3 } },
+        eq: "H2SO4(l) -> H+(aq) + HSO4-(aq)", rate: { fast: true, needs: { "H2O(l)": 3 }, bound: ["HSO4-(aq)", "SO4^2-(aq)"] },
         src: "dissolving of sulfuric acid in water; the heat follows from the enthalpies of formation (about −73 kJ/mol). needs 3 H2O per H2SO4 is estimated: with little water only part of the acid dissolves, which matches the integral heat of dilution at low water content (about −22 kJ per mol of acid at 0.75 mol water per mol acid)"
       },
       {

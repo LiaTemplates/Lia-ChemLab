@@ -556,10 +556,11 @@
       (ctx.marks || []).forEach(function (mark) {              // Proben an der Öffnung: der Span, und der Blitz einer Verpuffung
         if (mark.key === "splint" && mark.age < 2) out += L.fx.splint(shape.tall ? 4 : shape.x1 * 0.5, shape.rim - 4, mark, ctx.t, ctx.still);
         if ((mark.key === "pop" || (mark.key === "splint" && mark.result === "pop")) && mark.level > 0) out += L.fx.flash(0, shape.rim - 6, mark.age, mark.level);
-        if (mark.key === "spatter" && mark.age < 1) {         // es spritzt: Tropfen fliegen aus der Mischzone über den Rand
+        if (mark.key === "spatter" && mark.age < 1) {         // es spritzt: Tropfen fliegen aus der Mischzone über den Rand hinaus
+          var rise = (w.ml > 0.005 ? shape.top : shape.bottom) - shape.rim + 30;
           for (var k = 0; k < 7; k++) {
-            var q = mark.age + 0.12 * pseudo(9, k), dx = (pseudo(11, k) - 0.5) * 70;
-            if (q < 1) out += '<circle class="cl-spatter" cx="' + f(dx * q) + '" cy="' + f(shape.top - 90 * q + 110 * q * q) + '" r="' + f(1.3 + pseudo(13, k)) + '"/>';
+            var q = (ctx.still ? 0.4 : mark.age) + 0.12 * pseudo(9, k), dx = (pseudo(11, k) - 0.5) * 70;
+            if (q < 1) out += '<circle class="cl-spatter" cx="' + f(dx * q) + '" cy="' + f((w.ml > 0.005 ? shape.top : shape.bottom) - rise * 4 * q * (1 - q) - 10 * q) + '" r="' + f(1.3 + pseudo(13, k)) + '"/>';
           }
         }
         if (mark.key === "popped" && mark.age < 0.8) {        // der Stopfen fliegt heraus: hinauf und zur Seite, sich drehend

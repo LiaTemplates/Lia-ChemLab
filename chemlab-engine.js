@@ -29,8 +29,9 @@
   var SPATTER = 30;               // W/cm²: so viel Reaktionswärme an geschmolzenem Metall, dass es spritzt (geschätzt)
   var POP = 1.5;                  // bar: so viel hält ein Gummistopfen (geschätzt)
   var CRACK = 200;                // °C: trifft kalte Flüssigkeit auf ein heißeres Glas, zerspringt es (geschätzt)
-  var HOT_MAX = 1500;
-  var SINK = 10;                  // eine schwerere Zugabe sinkt durch und mischt sich mit zehnmal so viel vom Inhalt wie eine leichtere (geschätzt)             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
+  var HOT_MAX = 1500;             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
+  var ZONE_SINK = 10;             // eine schwerere Zugabe sinkt durch und mischt sich mit zehnmal so viel vom Inhalt wie eine leichtere (geschätzt)
+  var SPLASH_OVER = 5;            // K: so weit über dem Siedepunkt muss die Mischzone sein, damit es spritzt
   var FIZZ = 1.5;             // s: so schnell perlt aus, was über dem Luftdruck gelöst ist
   var CRUST = 25;             // mol/L: dichter wird eine Lösung nicht, dann ist sie eingedampft
   var SMELL = 0.005;          // bar: ab diesem Druck riecht man ein Gas
@@ -354,8 +355,10 @@
         // needs: was da sein muss, ohne verbraucht zu werden (nur bei sofortigen Reaktionen)
         Object.keys(rate.needs || {}).forEach(function (id) {
           known(id);
-          if (!rate.fast || typeof rate.needs[id] !== "number" || !(rate.needs[id] > 0)) throw fail("rate", id);
+          if (!rate.fast || typeof rate.needs[id] !== "number" || !(rate.needs[id] > 0) || id in eq.nu) throw fail("rate", id);
         });
+        if (rate.bound != null && (!rate.needs || !Array.isArray(rate.bound))) throw fail("rate", "bound");
+        (rate.bound || []).forEach(known);
         // Katalysatoren: was die Geschwindigkeit bestimmt, in der Gleichung aber nicht vorkommt. Dieselbe Gleichung darf mit
         // verschiedenen Katalysatoren mehrfach eingetragen sein; jeder Weg läuft und zählt für sich.
         var cats = Object.keys(rate.order || {}).concat(rate.surface ? [rate.surface] : []).filter(function (id, index, list) {
@@ -368,7 +371,7 @@
           rate: {
             k: +rate.k || 0, Ea: +rate.Ea || 0, order: Object.assign({}, rate.order), surface: rate.surface || null,
             ignite: typeof rate.ignite === "number" ? rate.ignite : null, dry: !!rate.dry, fast: !!rate.fast,
-            needs: rate.needs ? Object.assign({}, rate.needs) : null
+            needs: rate.needs ? Object.assign({}, rate.needs) : null, bound: rate.bound ? rate.bound.slice() : null
           }
         }), item, eq.text);
       });
@@ -924,29 +927,40 @@
   // Zugeben mit örtlicher Mischwärme: Die Portion mischt sich zuerst nur mit einem Teil des Inhalts, so viel wie sie selbst, oder,
   // ist sie schwerer und sinkt durch, mit SINK-mal so viel. Gerechnet wird diese Mischzone für sich: Wird sie heißer als der Siedepunkt,
   // spritzt es, und ein Teil der Flüssigkeit fliegt aus dem Gefäß (nach out). Die Wärme selbst bucht wie immer das ganze Gefäß.
-  function splash(lab, v, r, ml, emit) {
-    var amounts = portion(r, { ml: ml }), vol = volume(v) * 1000, mass = 0, own = 0, id, s, zone, share, tmp, w, C = 0, T, k;
-    putReagent(lab, v, r, { ml: ml });
-    if (!(vol > 0.05)) return;
+  // Wie groß die Mischzone im Verhältnis zur Portion ist: 1, wenn sie leichter ist und oben bleibt, ZONE_SINK, wenn sie schwerer ist
+  function zoneFactor(v, amounts, ml) {
+    var vol = volume(v) * 1000, mass = 0, own = 0, id, s;
     for (id in amounts) mass += amounts[id] * L.db.species[id].M;
-    for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && !amounts[id]) own += v.n[id] * s.M; }
-    zone = Math.min(vol, ml * (mass / ml > own / vol ? SINK : 1));
-    share = zone / (vol + ml);
-    tmp = createLab({ room: lab.room, model: lab.model, bench: [{ type: "beaker", id: "z", size: 600, contains: [] }] });
-    w = vessel(tmp, "z");
-    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") w.n[id] = v.n[id] * share; }
-    for (id in amounts) w.n[id] = (w.n[id] || 0) + amounts[id] * (1 - share);      // die Portion selbst ganz in der Zone
-    w.T = v.T; w.dirty = true;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") own += v.n[id] * s.M; }
+    return vol > 0 && mass / ml > own / vol ? ZONE_SINK : 1;
+  }
+
+  function splash(lab, v, r, ml, emit) {
+    var amounts = portion(r, { ml: ml }), vol = volume(v) * 1000, id, s, zone, share, tmp, w, C = 0, T, k;
+    // Mischzone aus dem Inhalt, wie er vor dem Zugeben war
+    if (vol > 0.05) {
+      zone = Math.min(vol, ml * zoneFactor(v, amounts, ml));
+      share = zone / vol;
+      tmp = createLab({ room: lab.room, model: lab.model, bench: [{ type: "beaker", id: "z", size: 600, contains: [] }] });
+      w = vessel(tmp, "z");
+      for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") w.n[id] = v.n[id] * share; }
+      for (id in amounts) w.n[id] = (w.n[id] || 0) + amounts[id];
+      w.T = v.T; w.dirty = true;
+    }
+    putReagent(lab, v, r, { ml: ml });
+    if (!w) return;
     equilibrate(tmp, w);
     kinetics(w, null, false);
     for (id in w.n) C += w.n[id] * L.db.species[id].cp;
     T = w.T + (C > 0 ? w.q / C : 0);
-    if (!(T > BOIL)) return;
+    if (!(T > BOIL + SPLASH_OVER)) return;
     k = Math.min(1, (T - BOIL) / 100) * 0.1 * (zone + ml) / (volume(v) * 1000);      // so viel der Flüssigkeit fliegt heraus: ein Zehntel der Mischzone (geschätzt)
     for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && v.n[id] > 0) { v.out[id] = (v.out[id] || 0) + v.n[id] * k; v.n[id] *= 1 - k; } }
     v.dirty = true;
-    if (!(lab.t - (v.flag.spat == null ? -9 : v.flag.spat) < 1) && emit) emit({ key: "spatter", vessel: v.id });
-    v.flag.spat = lab.t;
+    if (!(lab.t - (v.flag.spat == null ? -9 : v.flag.spat) < 1)) {                 // höchstens einmal je Sekunde gemeldet
+      v.flag.spat = lab.t;
+      if (emit) emit({ key: "spatter", vessel: v.id });
+    }
   }
 
   function putReagent(lab, v, r, a) {
@@ -1041,6 +1055,14 @@
   // Ausgangszustand: Gleichgewicht eingestellt, auf Raumtemperatur, ohne Vorgeschichte
   function settle(lab, v) {
     var i;
+    L.db.reactions.forEach(function (r) {                       // was sofort reagiert (Schwefelsäure in Wasser), steht schon fertig da
+      var x = r.rate.fast ? burst(v, r, volume(v)) : 0, id;
+      if (!(x > 0)) return;
+      for (id in r.nu) {
+        if (L.db.species[id].phase === "s") { if (r.nu[id] > 0) growSolid(v, id, r.nu[id] * x); else takeSolid(v, id, -r.nu[id] * x); }
+        else if ((v.n[id] = (v.n[id] || 0) + r.nu[id] * x) < TRACE) delete v.n[id];
+      }
+    });
     for (i = 0; i < 4000 && equilibrate(lab, v, null, "still"); i++);          // auch Niederschläge sind schon fertig ausgefallen …
     var vol = volume(v);
     v.lumps.forEach(function (l) {                              // … und haben sich abgesetzt
@@ -1985,7 +2007,8 @@
     // needs: was da sein muss, ohne verbraucht zu werden (Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt)
     if (r.rate.needs) {                                        // was schon umgesetzt ist, hat seinen Anteil davon schon gebunden
       var done = Infinity;
-      r.right.forEach(function (t) { done = Math.min(done, (v.n[t.id] || 0) / t.n); });
+      if (r.rate.bound) { done = 0; r.rate.bound.forEach(function (b) { done += v.n[b] || 0; }); }      // woran das schon Umgesetzte zu erkennen ist
+      else r.right.forEach(function (t) { done = Math.min(done, (v.n[t.id] || 0) / t.n); });
       for (id in r.rate.needs) most = Math.min(most, Math.max(0, (v.n[id] || 0) / r.rate.needs[id] - (isFinite(done) ? done : 0)));
     }
     r.left.forEach(function (t) {
@@ -4060,6 +4083,7 @@
   L.glassMass = glassMass;
   L.guess = guess;
   L.glowColor = glowColor;
+  L.zoneFactor = function (lab, id, reagentId, ml) { return zoneFactor(vessel(lab, id), portion(reagent(reagentId), { ml: ml }), ml); };
   L.tare = tare;
   L.curve = curve;
   L.changed = changed;

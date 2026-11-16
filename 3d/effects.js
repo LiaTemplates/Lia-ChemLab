@@ -382,7 +382,7 @@
               ember.position.copy(at);
             } else if (mark.result === "out") puffs(at, 3, 0x9a9a9a, t, 5, 2);
           }
-          if (mark.key === "spatter" && mark.age < 1.5) puffs(new THREE.Vector3(0, rim - 0.6, 0), 5, 0xf2f2f2, t, 9, 2.5);      // es spritzt: Dampf und Tropfen über der Mischzone
+          if (mark.key === "spatter" && mark.age < 1.5) puffs(new THREE.Vector3(0, rim - 0.6, 0), 5, 0xf2f2f2, t, 9, 2.5);      // es spritzt: Dampf steigt über dem Rand auf
           if ((mark.key === "pop" || mark.key === "popped" || (mark.key === "splint" && mark.result === "pop")) && (mark.level > 0 || mark.key === "popped") && mark.age >= 0 && mark.age < 0.5) {
             part = mark.age / 0.5;
             flash.visible = true;

@@ -1977,9 +1977,7 @@ const stress = (model, seeds) => {
         near(charge, 0, 1e-9, `Ladung in ${v.id} (${where})`);
         for (const piece of v.lumps) lumps[piece.id] = (lumps[piece.id] || 0) + piece.n;
         for (const [id, n] of Object.entries(lumps)) near(n, v.n[id] || 0, 1e-12 + 1e-9 * n, `Feststoff ${id} in ${v.id} (${where})`);
-        // Wasser begrenzt auf 100 °C; konzentrierte Schwefelsäure mit wenig Wasser darf heißer werden (sie siedet erst bei 337 °C)
-        const acid = v.n["H2SO4(l)"] > 0 || !(v.n["H2O(l)"] > 1e-3);
-        assert.ok(v.T >= 0 && v.T <= (acid ? 337 : 100.001), `Temperatur ${v.T} (${where})`);
+        assert.ok(v.T >= 0 && v.T <= 100.001, `Temperatur ${v.T} (${where})`);
         const pH = L.view(l, v).pH;
         assert.ok(pH == null || (pH > -1.5 && pH < 15.5), `pH ${pH} in ${v.id} (${where})`);
       }
@@ -8103,6 +8101,29 @@ test("README: die Folie zu Überdruck und Zurücksteigen hält, was ihr Text ver
   L.setFlame(l, burner.id, 0);
   L.step(l, 120, (e) => seen.push(e));
   assert.ok(seen.some((e) => e.key === "suckBack"), "Brenner aus: das Kalkwasser steigt zurück");
+});
+
+test("Mischwärme: konzentrierte Säure und Lauge spritzen; Lauge löst nicht mehr Schwefelsäure, als das Wasser aufnimmt; kein Spritzen beim Sieden ohne Grund", () => {
+  const into = (first, ml, then, ml2, more) => {
+    const seen = [], l = lab([{ type: "beaker", id: "b", ml: 100, contains: [{ reagent: first, ml }] }].concat(more || []), { room: 20 });
+    if (more) until(l, () => L.vessel(l, "b").boil > 0, 900);
+    L.add(l, "b", then, { ml: ml2 });
+    L.step(l, 15, (e) => seen.push(e));
+    return { l, n: seen.filter((e) => e.key === "spatter").length };
+  };
+  const zone = (first, then) => L.zoneFactor(lab([{ type: "beaker", id: "b", contains: [{ reagent: first, ml: 20 }] }]), "b", then, 1);
+  assert.deepEqual([zone("NaCl 1M", "H2O"), zone("H2O", "H2SO4 conc"), zone("NaOH 10M", "HCl 10M"), zone("HCl 10M", "NaOH 10M"), zone("H2SO4 conc", "H2O")], [1, 10, 1, 10, 1],
+    "leichter bleibt oben, schwerer sinkt durch – auch wenn beide Wasser enthalten");
+  assert.equal(into("HCl 1M", 40, "NaOH 1M", 5, [{ type: "burner", under: "b", flame: 2 }]).n, 0, "verdünnte Lauge in siedende verdünnte Säure: kein Spritzen");
+  const base = into("H2SO4 conc", 20, "NaOH 10M", 3).l, v = L.vessel(base, "b");
+  const water = v.n["H2O(l)"] + (v.out["H2O(l)"] || 0) + (v.out["H2O(g)"] || 0), dissolved = 0.02 * 1.8302 / 98.079 - (v.n["H2SO4(l)"] || 0) - (v.out["H2SO4(l)"] || 0);
+  assert.ok(dissolved <= water / 3 * 1.05, `gelöst ${dissolved} mol, das Wasser nimmt ${water / 3} mol auf`);
+  assert.ok(into("H2SO4 conc", 20, "H2O", 20).n >= 2, "langes Spritzen wird mehr als einmal gemeldet");
+  const ready = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 40 }, { reagent: "H2SO4 conc", ml: 2 }] }], { room: 20 });
+  assert.ok(amount(ready, "H2SO4(l)") < 1e-6, "ein beschriebenes Glas steht schon gelöst da");
+  L.step(ready, 1);
+  assert.ok(L.vessel(ready, "b").T < 21, `und bei Raumtemperatur: ${L.vessel(ready, "b").T} °C`);
+  assert.throws(() => L.register({ reactions: [{ eq: "2 H2O2(aq) -> 2 H2O(l) + O2(g)", rate: { fast: true, needs: { "H2O2(aq)": 1 } }, src: "x" }] }), (e) => e.code === "data" && /rate: H2O2/.test(e.message), "needs nicht in der Gleichung");
 });
 
 test("README: die Folie „Erst das Wasser, dann die Säure“ hält, was ihr Text verspricht", () => {

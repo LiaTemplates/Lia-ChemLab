@@ -28,7 +28,7 @@
     "ethanol": { "name": { "de": "Ethanol 96 %", "en": "ethanol 96 %" }, "solution": { "C2H5OH(aq)": 16.45 }, "group": "other" },
     "glacial acetic acid": { "name": { "de": "Eisessig (Essigsäure 99,8 %)", "en": "glacial acetic acid (99.8 %)" }, "solution": { "CH3COOH(aq)": 17.43 }, "group": "acid" },
     "ethyl acetate": { "name": { "de": "Ethylacetat", "en": "ethyl acetate" }, "solution": { "CH3COOC2H5(aq)": 10.2 }, "group": "other" },
-    "sulfuric acid conc": { "name": { "de": "Schwefelsäure, konzentriert", "en": "sulfuric acid, concentrated" }, "solution": { "H+(aq)": 18, "HSO4-(aq)": 18 }, "drops": true, "group": "acid" },
+    "sulfuric acid conc": { "name": { "de": "Schwefelsäure, konzentriert (als Katalysator, ohne Verdünnungswärme)", "en": "sulfuric acid, concentrated (as catalyst, no heat of dilution)" }, "solution": { "H+(aq)": 18, "HSO4-(aq)": 18 }, "drops": true, "group": "acid" },
     "wine": { "name": { "de": "Weißwein (12 % Alkohol)", "en": "white wine (12 % alcohol)" }, "solution": { "C2H5OH(aq)": 2.056 }, "group": "other" }
   }
 }
