@@ -289,7 +289,7 @@
         return group.ids.map(function (id) {
           ids.push({ id: id, g: g });
           return '<button type="button" class="cl-pick" data-act="hand" data-id="' + esc(id) + '" data-n="' + (ids.length - 1) + '" aria-pressed="false" data-g="' + g + '" title="' + esc(nameOfPick(id)) + '">' +
-            L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
+            L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span>" + (L.parts[id] ? "" : L.ghsLabel(id, lang)) + "</button>";
         }).join("");
       }).join("");
       ui.picks = ids.map(function (pick, n) { return { id: pick.id, g: pick.g, node: ui.shelf.querySelector('[data-n="' + n + '"]') }; });
@@ -353,7 +353,7 @@
         return;
       }
       name = L.nameOf(L.reagent(h.id), lang);
-      ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(name) + "</strong> " + stepper("cl-amount") +
+      ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(name) + "</strong> " + L.ghsLabel(h.id, lang, true) + stepper("cl-amount") +
         ' <span class="cl-hint">' + esc(T("hint.hand")) + "</span>" + drop;
       syncAmount();
     }
@@ -978,7 +978,7 @@
 
     function useButton(id) {
       return '<button type="button" class="cl-use" data-act="use" data-id="' + esc(id) + '" aria-pressed="false" title="' + esc(nameOfPick(id)) + '">' +
-        L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span></button>";
+        L.icon(id) + "<span>" + esc(nameOfPick(id)) + "</span>" + (L.parts[id] ? "" : L.ghsLabel(id, lang)) + "</button>";
     }
 
     // Unter den Stoffen: die Menge und der Knopf, der sie in dieses Gefäß gibt

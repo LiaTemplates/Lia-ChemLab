@@ -25,10 +25,10 @@
     }
   ],
   "reagents": {
-    "ethanol": { "name": { "de": "Ethanol 96 %", "en": "ethanol 96 %" }, "solution": { "C2H5OH(aq)": 16.45 }, "group": "other" },
-    "glacial acetic acid": { "name": { "de": "Eisessig (Essigsäure 99,8 %)", "en": "glacial acetic acid (99.8 %)" }, "solution": { "CH3COOH(aq)": 17.43 }, "group": "acid" },
-    "ethyl acetate": { "name": { "de": "Ethylacetat", "en": "ethyl acetate" }, "solution": { "CH3COOC2H5(aq)": 10.2 }, "group": "other" },
-    "sulfuric acid conc": { "name": { "de": "Schwefelsäure, konzentriert (als Katalysator, ohne Verdünnungswärme)", "en": "sulfuric acid, concentrated (as catalyst, no heat of dilution)" }, "solution": { "H+(aq)": 18, "HSO4-(aq)": 18 }, "drops": true, "group": "acid" },
+    "ethanol": { "ghs": {"fixed": ["GHS02", "GHS07"], "signal": "danger", "src": "CLP Annex VI 603-002-00-5: Flam. Liq. 2; Eye Irrit. 2 of the registrants"}, "name": { "de": "Ethanol 96 %", "en": "ethanol 96 %" }, "solution": { "C2H5OH(aq)": 16.45 }, "group": "other" },
+    "glacial acetic acid": { "ghs": {"fixed": ["GHS02", "GHS05"], "signal": "danger", "src": "CLP Annex VI 607-002-00-6: Flam. Liq. 3, Skin Corr. 1A"}, "name": { "de": "Eisessig (Essigsäure 99,8 %)", "en": "glacial acetic acid (99.8 %)" }, "solution": { "CH3COOH(aq)": 17.43 }, "group": "acid" },
+    "ethyl acetate": { "ghs": {"fixed": ["GHS02", "GHS07"], "signal": "danger", "src": "CLP Annex VI 607-022-00-5: Flam. Liq. 2, Eye Irrit. 2, STOT SE 3"}, "name": { "de": "Ethylacetat", "en": "ethyl acetate" }, "solution": { "CH3COOC2H5(aq)": 10.2 }, "group": "other" },
+    "sulfuric acid conc": { "ghs": {"corr": [15, 5, 15, 5], "src": "CLP Annex VI 016-020-00-8"}, "name": { "de": "Schwefelsäure, konzentriert (als Katalysator, ohne Verdünnungswärme)", "en": "sulfuric acid, concentrated (as catalyst, no heat of dilution)" }, "solution": { "H+(aq)": 18, "HSO4-(aq)": 18 }, "drops": true, "group": "acid" },
     "wine": { "name": { "de": "Weißwein (12 % Alkohol)", "en": "white wine (12 % alcohol)" }, "solution": { "C2H5OH(aq)": 2.056 }, "group": "other" }
   }
 }

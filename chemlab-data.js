@@ -665,5 +665,56 @@
       { eq: dye + " + Cl2(aq) + H2O(l) -> " + done + " + 2 H+(aq) + 2 Cl-(aq)", rate: { k: 1000, order: (function (o) { o[dye] = 1; o["Cl2(aq)"] = 1; return o; })({}) }, src: "estimated: bleaching by dissolved chlorine, faster than by hypochlorous acid" });
   });
 
+  // GHS-Einstufung der reinen Stoffe für die Kennzeichnung (L.hazards; Felder dort). Grundlage ist die harmonisierte Einstufung
+  // der CLP-Verordnung, Anhang VI Tabelle 3 (konsolidiert bis zur 22. Anpassung); wo sie fehlt oder keine M-Faktoren und
+  // Schätzwerte nennt, die übliche Einstufung der Lieferanten (ECHA-C&L-Verzeichnis, Sicherheitsdatenblätter). Nicht aufgenommen:
+  // Entwürfe (Kaliumbromid und Lithiumchlorid als fortpflanzungsgefährdend, 24. Anpassung) und Angaben einzelner Lieferanten.
+  // Fertiglösungen (Indikatoren) tragen das Etikett der üblichen Schulprodukte, auch wo das Labor nur ihren Farbstoff rechnet.
+  var GHS_DATA = {
+    "HCl": { corr: [25, 10, 25, 10], stot: [3, 10], met: 0.3, vm: 20, src: "CLP Annex VI 017-002-01-X (SCL); H290 from 0.1 mol/L as suppliers label it (ITW, Neofroxx)" },
+    "H2SO4": { corr: [15, 5, 15, 5], met: 0.5, src: "CLP Annex VI 016-020-00-8 (SCL); H290 as suppliers label it" },
+    "H2SO4 conc": { corr: [15, 5, 15, 5], src: "CLP Annex VI 016-020-00-8" },
+    "CH3COOH": { corr: [25, 10, 25, 10], high: [[90, "GHS02"]], src: "CLP Annex VI 607-002-00-6 (SCL); Flam. Liq. 3 of the concentrated acid from 90 % (estimated from the flash point)" },
+    "NaOH": { corr: [2, 0.5, 2, 0.5], met: 0.2, src: "CLP Annex VI 011-002-00-6 (SCL); H290 as suppliers label it" },
+    "NH3": { corr: [5, 1, 3, 1], stot: [3, 5], aq: { acute: 1 }, vm: 24, src: "CLP Annex VI 007-001-01-2 (SCL STOT SE 3)" },
+    "limewater": { corr: [null, null, 3, 1], irrit: 10, stot: [3], src: "self-classification of calcium hydroxide (ECHA C&L)" },
+    "KBr": { irrit: 10, src: "self-classification (ECHA C&L): Eye Irrit. 2" },
+    "KI": { stot: [1], src: "self-classification (Neofroxx SDS): STOT RE 1" },
+    "NH4Cl": { ate: 1410, irrit: 10, src: "CLP Annex VI 017-014-00-8; LD50 rat oral 1410 mg/kg" },
+    "KSCN": { ate: 854, inh: 1.5, src: "CLP Annex VI 615-030-00-5; LD50 rat oral 854 mg/kg; inhalation: conversion value of Acute Tox. 4" },
+    "AgNO3": { corr: [5, 1, 3, 1], aq: { acute: 1000, chronic: [1, 100] }, src: "CLP Annex VI 047-001-00-2; M factors of the suppliers (Sigma, Merck)" },
+    "BaCl2": { ate: 118, inh: 1.5, irrit: 10, src: "CLP Annex VI 056-004-00-8; LD50 rat oral 118 mg/kg; inhalation: conversion value of Acute Tox. 4; Eye Irrit. 2 (ECHA C&L)" },
+    "CuSO4": { ate: 482, irrit: 10, aq: { acute: 10, chronic: [1, 1] }, src: "CLP Annex VI 029-004-00-0; M factors and ATE of the suppliers" },
+    "FeCl3": { ate: 500, irrit: 10, corr: [null, null, 3, 1], src: "self-classification (Morphisto SDS)" },
+    "Na2CO3": { irrit: 10, src: "CLP Annex VI 011-005-00-2" },
+    "CaCl2": { irrit: 10, src: "CLP Annex VI 017-013-00-2" },
+    "SrCl2": { corr: [null, null, 3, 1], src: "self-classification (ECHA C&L): Eye Dam. 1" },
+    "LiCl": { ate: 526, irrit: 10, src: "self-classification (Neofroxx SDS)" },
+    "ZnSO4": { ate: 500, corr: [null, null, 3, 1], aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 030-006-00-9; M factors of the suppliers" },
+    "ZnI2": { corr: [5, 1, 3, 1], src: "self-classification (ECHA C&L): Skin Corr. 1B" },
+    "CuCl2": { ate: 500, irrit: 10, corr: [null, null, 3, 1], aq: { acute: 10, chronic: [1, 1] }, src: "self-classification (ECHA C&L), M factors as for copper sulfate" },
+    "FeSO4": { ate: 500, irrit: 10, src: "CLP Annex VI 026-003-00-7" },
+    "K2CrO4": { cmr: [1, 0.1], irrit: 10, stot: [3], sens: 0.5, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 024-006-00-8 (SCL Skin Sens.); M factor of the suppliers (Merck)" },
+    "K2Cr2O7": { cmr: [1, 0.1], ate: 90.5, inh: 0.05, stot: [[1], [3, 5]], corr: [5, 1, 3, 1], resp: 1, sens: 1, aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 024-002-00-6 (SCL STOT SE 3); ATE oral of the supplier (Morphisto SDS), inhalation: conversion value of Acute Tox. 2" },
+    "CoCl2": { cmr: [1, 0.01], ate: 500, resp: 1, sens: 1, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 027-004-00-5 (SCL Carc. 0.01 %, M = 10)" },
+    "KMnO4": { cmr: [2, 3], ate: 1090, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 025-002-00-9; M factors and ATE of the suppliers" },
+    "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },
+    "NaOCl": { corr: [5, 1, 3, 1], aq: { acute: 10, chronic: [1, 1] }, per: { species: "OCl-(aq)", M: 74.44 }, src: "CLP Annex VI 017-011-00-1 (M = 10 acute, 1 chronic)" },
+    "H2O2": { corr: [50, 35, 8, 5], ate: 1026, inh: 1.5, stot: [3, 35], high: [[50, "GHS03", true]], vm: 22,
+      src: "CLP Annex VI 008-003-00-9 (SCL, Ox. Liq. from 50 %); ATE oral of the supplier (Neofroxx SDS), inhalation: conversion value of Acute Tox. 4" },
+    "crystal violet": { cmr: [2, 1], ate: 500, corr: [null, null, 3, 1], aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 612-204-00-2; M factor of the supplier (Neofroxx SDS)" },
+    "BTB": { fixed: ["GHS02"], signal: "warning", src: "school product: 0.04 % in aqueous ethanol (H226)" },
+    "PP": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: 0.1 % in ethanol (H225, H319); carcinogenic only from 1 % (SCL)" },
+    "UI": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: in ethanol (H225, H319)" },
+    "Mg ribbon": { pure: ["GHS02"], pureDanger: true, src: "self-classification of magnesium ribbon (H228)" },
+    "MnO2": { ate: 500, inh: 1.5, src: "CLP Annex VI 025-001-00-3" },
+    "sulfur": { irrit: 10, pure: ["GHS02"], src: "CLP Annex VI 016-094-00-1; Flam. Sol. 2 of the suppliers" },
+    "Zn powder": { aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 030-001-01-9 (stabilised zinc powder)" },
+    "NH4NO3 salt": { pure: ["GHS03"], irrit: 10, src: "self-classification (ECHA C&L): Ox. Sol. 3, Eye Irrit. 2" },
+    "NaOH pellets": { corr: [2, 0.5, 2, 0.5], src: "CLP Annex VI 011-002-00-6" },
+    "CaCl2 anhydrous": { irrit: 10, src: "CLP Annex VI 017-013-00-2" }
+  };
+  Object.keys(GHS_DATA).forEach(function (id) { L.core.reagents[id].ghs = GHS_DATA[id]; });
+
   L.register(L.core);
 })(typeof globalThis !== "undefined" ? globalThis : this);

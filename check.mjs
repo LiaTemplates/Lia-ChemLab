@@ -4335,6 +4335,38 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
+test("GHS: die Kennzeichnung einer Lösung folgt aus dem reinen Stoff nach den Gemisch-Regeln der CLP-Verordnung", () => {
+  const salt = { "Na+(aq)": 1, "Cl-(aq)": 1 };      // Kochsalz als Träger: 1 mol/L sind 5,5 % (58,44 g in 997 g Wasser)
+  L.register({ reagents: {
+    "ghs corr": { name: { de: "ätzend", en: "corrosive" }, solution: salt, molar: true, group: "salt", ghs: { corr: [5, 1, 3, 1] } },
+    "ghs tox": { name: { de: "giftig", en: "toxic" }, solution: salt, molar: true, group: "salt", ghs: { ate: 50, corr: [5, 1, 3, 1] } },
+    "ghs cmr": { name: { de: "krebserzeugend", en: "carcinogenic" }, solution: salt, molar: true, group: "salt", ghs: { cmr: [1, 0.1], stot: [3] } },
+    "ghs fish": { name: { de: "umweltgefährlich", en: "aquatic" }, solution: salt, molar: true, group: "salt", ghs: { aq: { acute: 10, chronic: [1, 10] } } },
+    "ghs fix": { name: { de: "fertig", en: "ready-made" }, solution: salt, group: "salt", ghs: { fixed: ["GHS02", "GHS07"], signal: "danger" } },
+    "ghs pure": { name: { de: "rein", en: "pure" }, solid: "NaCl(s)", group: "solid", ghs: { pure: ["GHS03"], pureDanger: true, irrit: 10 } }
+  } });
+  const h = (id) => { const x = L.hazards(id); return x.pictograms.join(" ") + (x.signal ? " " + x.signal : ""); };
+  near(L.massPercent(L.reagent("ghs corr 1M")), 5.54, 0.02, "Massenanteil in %");
+  assert.equal(h("ghs corr 1M"), "GHS05 danger", "ab 5 % hautätzend");
+  assert.equal(h("ghs corr 0.5M"), "GHS07 warning", "1 bis 5 %: reizend");
+  assert.equal(h("ghs corr 0.1M"), "", "unter 1 %: ohne Kennzeichnung");
+  // akute Toxizität: ATE des Gemischs = ATE / Anteil; bis 300 mg/kg giftig, bis 2000 gesundheitsschädlich. Das Ausrufezeichen für
+  // Reizung entfällt neben dem Ätzsymbol, das für Toxizität bleibt; neben dem Totenkopf entfällt es ganz
+  assert.equal(h("ghs tox 1M"), "GHS05 GHS07 danger");
+  assert.equal(h("ghs tox 5M"), "GHS05 GHS06 danger");
+  assert.equal(h("ghs tox 0.5M"), "GHS07 warning");
+  assert.equal(h("ghs cmr 0.02M"), "GHS08 danger", "krebserzeugend 1 ab 0,1 % (0,12 %)");
+  assert.equal(h("ghs cmr 0.01M"), "", "darunter nicht (0,06 %)");
+  assert.equal(h("ghs cmr 5M"), "GHS07 GHS08 danger", "dazu STOT SE 3 ab 20 %");
+  // Umwelt: M · Anteil ab 25 %
+  assert.equal(h("ghs fish 1M"), "GHS09 warning");
+  assert.equal(h("ghs fish 0.01M"), "", "0,06 % · 10 · 10 = 5,5 %: chronisch 3 ohne Piktogramm");
+  assert.equal(h("ghs fish 0.05M"), "GHS09", "chronisch 2: 10 · M · Anteil ab 25 %; Piktogramm ohne Signalwort");
+  assert.equal(h("ghs fix"), "GHS02 GHS07 danger", "Fertiglösung: wie auf ihrem Etikett");
+  assert.equal(h("ghs pure"), "GHS03 GHS07 danger", "der reine Feststoff");
+  assert.equal(h("H2O"), "", "Wasser");
+});
+
 test("Streuung: ohne Angabe zeigt jedes Gerät den Rechenwert; mit scatter streut nur die Anzeige, je Auslosung anders", () => {
   const bench = () => [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "thermometer", id: "th", in: "b" }, { type: "phmeter", id: "ph", in: "b" },
     { type: "beaker", id: "w", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "balance", id: "bal", in: "w" }];
@@ -4428,6 +4460,59 @@ test("Kalorimeter in der Fläche: kein Brenner darunter, Hinweis statt dessen", 
   assert.deepEqual(state(el).run.lab.tools.map((t) => t.type + ">" + t.in), ["thermometer>k"]);
   assert.match(L.icon("calorimeter"), /<svg/);
   assert.equal(L.text("part.calorimeter", "de"), "Kalorimeter");
+});
+
+test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten angeben", () => {
+  const h = (id) => { const x = L.hazards(id); return x.pictograms.join(" ") + (x.signal ? " " + x.signal : ""); };
+  for (const [id, want] of [
+    ["HCl 0.01M", ""], ["HCl 0.1M", "GHS05 warning"], ["HCl 2M", "GHS05 warning"], ["HCl 12M", "GHS05 GHS07 danger"],
+    ["H2SO4 1M", "GHS05 warning"], ["H2SO4 conc", "GHS05 danger"], ["NaOH 0.01M", ""], ["NaOH 1M", "GHS05 danger"],
+    ["NH3 1M", "GHS07 warning"], ["NH3 2M", "GHS05 danger"], ["CH3COOH 1M", ""], ["CH3COOH 2M", "GHS07 warning"],
+    ["AgNO3 0.1M", "GHS07 GHS09 warning"], ["BaCl2 1M", "GHS07 warning"], ["CuSO4 1M", "GHS07 GHS09 warning"],
+    ["CoCl2 0.1M", "GHS08 GHS09 danger"], ["NaOCl 1M", "GHS05 GHS09 danger"],
+    ["H2O2 1M", ""], ["NaCl 1M", ""], ["PP", "GHS02 GHS07 danger"], ["Mg ribbon", "GHS02 danger"], ["NaOH pellets", "GHS05 danger"],
+    ["NH4NO3 salt", "GHS03 GHS07 warning"], ["marble", ""],
+    // chronisch 2 allein: Piktogramm ohne Signalwort
+    ["KMnO4 0.02M", "GHS09"],
+    // Einatmen zählt mit: Kaliumdichromat ist als Nebel giftig, Wasserstoffperoxid gesundheitsschädlich
+    ["K2Cr2O7 0.2M", "GHS05 GHS06 GHS08 GHS09 danger"], ["H2O2 10M", "GHS05 GHS07 danger"],      // 30 %; bei 29,9 % liegt der Schätzwert knapp über 5 mg/L
+    // konzentriert: Ammoniak 25 % ist umweltgefährlich, Wasserstoffperoxid ab 50 % brandfördernd
+    ["NH3 13.3M", "GHS05 GHS07 GHS09 danger"], ["H2O2 18.5M", "GHS03 GHS05 GHS07 danger"]
+  ]) assert.equal(h(id), want, id);
+  assert.equal(h("K2Cr2O7 0.1M"), "GHS07 GHS08 GHS09 danger", "2,9 %: gesundheitsschädlich beim Einatmen");
+  near(L.massPercent(L.reagent("HCl 12M")), 37, 1, "konzentrierte Salzsäure: 37 %");
+  near(L.massPercent(L.reagent("NH3 13.3M")), 25, 1, "Ammoniak 25 %");
+  assert.throws(() => L.reagent("NH3 45M"), (e) => e.code === "reagent", "mehr als reines Ammoniak (etwa 42 mol/L)");
+  // fehlerhafte Angaben eines Autors fallen beim Laden auf, wie eine falsche Gleichung
+  for (const ghs of [{ fixed: ["GHS2"] }, { fixed: "GHS02" }, { fixed: ["GHS02"], signal: "Danger" }, { corr: 5 }, { ate: "viel" }])
+    assert.throws(() => L.register({ reagents: { ["ghs bad " + JSON.stringify(ghs)]: { name: { de: "x", en: "x" }, solution: { "Na+(aq)": 1, "Cl-(aq)": 1 }, group: "salt", ghs } } }), (e) => e.code === "data", JSON.stringify(ghs));
+  // nicht harmonisierte Stoffe und Fertiglösungen nennen ihre Quelle; Bleichlauge zählt nur das Hypochlorit
+  for (const id of Object.keys(L.core.reagents)) if (L.core.reagents[id].ghs) assert.ok(L.core.reagents[id].ghs.src, id + ": Quelle");
+  assert.ok(L.massPercent(L.reagent("NaOCl 1M")) < 7, "Bleichlauge: 7 % Natriumhypochlorit, das Kochsalz zählt nicht");
+  // Pakete: Alkalimetalle reagieren mit Wasser und ätzen; Organik: entzündbare Flüssigkeiten
+  L.register(alkali());
+  for (const id of ["Li piece", "Na piece", "K piece"]) assert.equal(h(id), "GHS02 GHS05 danger", id);
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  assert.equal(h("ethanol"), "GHS02 GHS07 danger");
+  assert.equal(h("glacial acetic acid"), "GHS02 GHS05 danger");
+  assert.equal(h("sulfuric acid conc"), "GHS05 danger");
+  assert.equal(h("wine"), "", "Wein trägt kein Etikett");
+});
+
+test("GHS in der Fläche: Piktogramme im Regal, an der Flasche in der Hand mit Signalwort; Wasser ohne", () => {
+  const el = mount({ bench: [{ type: "beaker", id: "b" }], shelf: ["NaOH 1M", "H2O", "thermometer"] });
+  const shelf = part(el, ".cl-shelf").innerHTML;
+  const of = (id) => shelf.slice(shelf.indexOf(`data-id="${id}"`), shelf.indexOf("</button>", shelf.indexOf(`data-id="${id}"`)));
+  assert.match(of("NaOH 1M"), /cl-ghs-row[^>]*aria-label="Gefahr: ätzend"/, "Natronlauge 1 mol/L: ätzend");
+  assert.doesNotMatch(of("H2O"), /cl-ghs/, "Wasser ohne Piktogramm");
+  assert.doesNotMatch(of("thermometer"), /cl-ghs/, "Geräte ohne");
+  press(el, "hand", "NaOH 1M");
+  assert.match(part(el, ".cl-hand").innerHTML, /cl-ghs[\s\S]*cl-signal[^>]*>Gefahr</, "in der Hand mit Signalwort");
+  press(el, "drop");
+  tap(el, "b");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="use" data-id="NaOH 1M"[\s\S]*?cl-ghs-row[\s\S]*?<\/button>/, "auch in der Karte „Zugeben“ des Gefäßes");
+  assert.match(L.ghsIcon("GHS05"), /<svg[\s\S]*fill="#f00"/, "rot umrandet, nach der amtlichen Vorlage");
+  for (const code of ["GHS01", "GHS02", "GHS03", "GHS04", "GHS06", "GHS07", "GHS08", "GHS09"]) assert.match(L.ghsIcon(code), /^<svg class="cl-ghs" viewBox="[\d. ]+"[\s\S]*<path/, code);
 });
 
 test("Elektroden einsetzen: zwei je Becherglas, keine ins Reagenzglas; Netzgerät und Messgeräte daneben", () => {
@@ -8384,6 +8469,18 @@ test("README: die Folie zur Streuung der Messwerte hält, was ihr Text versprich
   L.add(l, config.bench.find((p) => p.type === "beaker" && p.id !== "wasser").id, "NaOH 0.1M", { ml: 2 });
   for (let i = 0; i < 8; i++) { L.step(l, 1); seen.add(L.reading(l, ph).value.toFixed(3)); }
   assert.ok(seen.size > 3, "die Anzeige bewegt sich");
+});
+
+test("README: die Folie zu den Gefahrstoffen hält, was ihr Text verspricht", () => {
+  const config = L.normalize(JSON.parse(slide("Gefahrstoffe kennzeichnen")[0]));
+  const h = (id) => { assert.ok(config.shelf.includes(id), id + " im Regal"); const x = L.hazards(id); return x.pictograms.join(" ") + (x.signal ? " " + x.signal : ""); };
+  assert.equal(h("HCl 0.01M"), "");
+  assert.equal(h("HCl 2M"), "GHS05 warning");
+  assert.match(h("HCl 12M"), /GHS05.*danger/);
+  assert.equal(h("NaOH 1M"), "GHS05 danger");
+  assert.equal(h("NaOH 0.1M"), "GHS05 warning");
+  assert.equal(h("CuSO4 1M"), "GHS07 GHS09 warning");
+  assert.match(h("K2Cr2O7 0.1M"), /GHS08.*danger/);
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {
