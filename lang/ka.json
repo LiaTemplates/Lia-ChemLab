@@ -27,6 +27,8 @@
     "part.beaker": "ქიმიური ჭიქა",
     "part.calorimeter": "კალორიმეტრი",
     "part.funnel": "ძაბრი ფილტრის ქაღალდით",
+    "hint.funnel": "ახლა შეეხე ჭურჭელს, რომლის ზემოთაც ძაბრი უნდა ეკიდოს.",
+    "notHere.funnel": "ძაბრზე ეს არ გამოდის.",
     "part.thermometer": "თერმომეტრი",
     "part.flask": "მრგვალძირა კოლბა",
     "part.condenser": "ლიბიხის მაცივარი",

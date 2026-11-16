@@ -27,6 +27,8 @@
     "part.beaker": "beher",
     "part.calorimeter": "kalorimetre",
     "part.funnel": "filtre kâğıtlı huni",
+    "hint.funnel": "Şimdi hunin üstünde duracağı kaba dokun.",
+    "notHere.funnel": "Hunide bu olmaz.",
     "part.thermometer": "termometre",
     "part.flask": "dibi yuvarlak balon",
     "part.condenser": "Liebig soğutucusu",

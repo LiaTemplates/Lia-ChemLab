@@ -27,6 +27,8 @@
     "part.beaker": "begerglass",
     "part.calorimeter": "kalorimeter",
     "part.funnel": "trakt med filterpapir",
+    "hint.funnel": "Trykk nå på karet trakten skal henge over.",
+    "notHere.funnel": "Det går ikke ved en trakt.",
     "part.thermometer": "termometer",
     "part.flask": "rundkolbe",
     "part.condenser": "liebigkjøler",

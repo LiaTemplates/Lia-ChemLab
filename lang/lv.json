@@ -27,6 +27,8 @@
     "part.beaker": "vārglāze",
     "part.calorimeter": "kalorimetrs",
     "part.funnel": "piltuve ar filtrpapīru",
+    "hint.funnel": "Tagad pieskaries traukam, virs kura jākarājas piltuvei.",
+    "notHere.funnel": "Pie piltuves tas nedarbojas.",
     "part.thermometer": "termometrs",
     "part.flask": "apaļkolba",
     "part.condenser": "Lībiha dzesinātājs",

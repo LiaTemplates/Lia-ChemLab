@@ -795,7 +795,7 @@
       if (g.disposed) {                                          // mindestens einmal entsorgt, jedes Mal richtig, und nichts mehr übrig
         var mine = (events || []).filter(function (e) { return e.key === "disposed" && (g.in == null || e.vessel === g.in); });
         return mine.length > 0 && mine.every(function (e) { return e.right; }) && lab.vessels.every(function (v) {
-          var w = (g.in == null || v.id === g.in) && !L.parts[v.type].dispenser ? waste(lab, v.id) : null;
+          var w = (g.in == null || v.id === g.in) && (!L.parts[v.type].dispenser || L.parts[v.type].filter) ? waste(lab, v.id) : null;      // auch der Rückstand im Trichter
           return !w || w.bin == null;
         });
       }
@@ -1390,7 +1390,7 @@
   // Hahn einer Bürette: Durchfluss in mL/s, 0 ist zu
   function setTap(lab, id, rate) {
     var v = vessel(lab, id);
-    if (!v || !L.parts[v.type].dispenser) return false;
+    if (!v || !L.parts[v.type].dispenser || L.parts[v.type].filter) return false;      // ein Trichter hat keinen Hahn
     v.tap = rate > 0 ? +rate : 0;
     return true;
   }
@@ -2869,6 +2869,16 @@
       if ((from.n[id] -= moved[id]) < 1e-300) delete from.n[id];
     }
     var sieve = L.parts[from.type].filter;                    // durch ein Filter geht nur, was kolloid verteilt ist
+    // alles in einen Trichter gegossen: Man schwenkt auf und spült den Bodensatz und die Stücke mit hinein
+    var whole = L.parts[to.type].filter && share >= 1 - 1e-9;
+    if (whole) from.lumps.forEach(function (l) {
+      if (!(l.n > 0)) return;
+      to.lumps.push(Object.assign({}, l, { settled: 1 }));
+      to.n[l.id] = (to.n[l.id] || 0) + l.n;
+      from.n[l.id] -= l.n;
+      to.flag.solid[l.id] = true;
+      l.n = 0;
+    });
     from.lumps.forEach(function (l) {
       var part = l.made && (!sieve || L.db.species[l.id].colloid) ? l.n * (1 - l.settled) * share : 0;
       if (!(part > 0)) return;
@@ -3905,6 +3915,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
+      // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
+      blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab
       // fire: was brennt, mit Geschwindigkeit und Aussehen der Flamme
       fire: L.db.reactions.filter(function (r) { return v.lit[r.key]; }).map(function (r) {

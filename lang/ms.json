@@ -27,6 +27,8 @@
     "part.beaker": "bikar",
     "part.calorimeter": "kalorimeter",
     "part.funnel": "corong dengan kertas turas",
+    "hint.funnel": "Sekarang ketik bekas yang corong akan digantung di atasnya.",
+    "notHere.funnel": "Itu tidak boleh pada corong.",
     "part.thermometer": "termometer",
     "part.flask": "kelalang dasar bulat",
     "part.condenser": "kondenser Liebig",

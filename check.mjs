@@ -609,7 +609,12 @@ function node() {
     removeAttribute(k) { delete this.attributes[k]; },
     addEventListener(type, fn) { this.listeners[type] = fn; },
     removeEventListener(type) { delete this.listeners[type]; },
-    querySelector(sel) { return (this.kids[sel] ||= node()); },
+    // ein Knopf, der im gesetzten HTML nicht vorkommt, ist nicht da (wie im Browser); sonst ein stellvertretender Knoten
+    querySelector(sel) {
+      const act = /^\[data-act="(\w+)"\]/.exec(sel);
+      if (act && this.innerHTML && !this.innerHTML.includes(`data-act="${act[1]}"`)) return null;
+      return (this.kids[sel] ||= node());
+    },
     insertAdjacentHTML(where, html) { this.added = (this.added || 0) + 1; this.innerHTML += html; },
     setPointerCapture() {}, releasePointerCapture() {}, focus() {}, closest() { return null; }
   };
@@ -4361,6 +4366,28 @@ test("Filtrieren: der Trichter hält den Niederschlag zurück, das Filtrat läuf
   L.pour(s, "b", "t", 20);
   L.step(s, 120);
   assert.ok(L.vessel(s, "f").n["S(s)"] > 0, "Schwefel im Filtrat: es bleibt trüb");
+  // alles ausgegossen: Man schwenkt auf, der Bodensatz kommt mit ins Filter, auch nach langem Warten; ebenso Pulver aus dem Regal
+  const late = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.add(late, "b", "NaOH 1M", { ml: 10 });
+  L.step(late, 60);
+  const settled = L.vessel(late, "b").n["Cu(OH)2(s)"];
+  L.pour(late, "b", "t", 50);
+  L.step(late, 120);
+  near(L.vessel(late, "t").n["Cu(OH)2(s)"] || 0, settled, 1e-9, "der ganze Niederschlag im Filter");
+  assert.ok(!(L.vessel(late, "b").n["Cu(OH)2(s)"] > 0), "das Becherglas ist leer");
+  const slurry = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 1M", ml: 10 }, { reagent: "marble powder", g: 1 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.step(slurry, 5);
+  L.pour(slurry, "b", "t", 50);
+  L.step(slurry, 60);
+  near(L.vessel(slurry, "t").n["CaCO3(s)"] * 100.09, 1, 0.01, "der Marmor liegt im Filter");
+  assert.ok(L.vessel(slurry, "f").n["Na+(aq)"] > 0.009, "das Salz ist im Filtrat");
+  // der Trichter hat keinen Hahn; ein Rückstand darin muss mit entsorgt werden
+  assert.equal(L.setTap(slurry, "t", 2), false);
+  const task = L.normalize({ bench: [{ type: "beaker", id: "f" }], task: { goals: [{ disposed: true }] } }).task;
+  const events = [Object.assign({ key: "disposed" }, L.dispose(slurry, "f", "sink"))];
+  assert.equal(L.checkTask(task, slurry, events).done, false, "der Marmor im Trichter ist noch nicht entsorgt");
+  events.push(Object.assign({ key: "disposed" }, L.dispose(slurry, "t", "solid")));
+  assert.equal(L.checkTask(task, slurry, events).done, true);
   // Platzierung: über einem Gefäß, nicht frei; über einem Glas hängt nur eins (Trichter oder Bürette)
   assert.throws(() => lab([{ type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }, { type: "burette", id: "bu", over: "f" }]), (e) => e.code === "place");
   assert.match(L.icon("funnel"), /<svg/);
@@ -4602,6 +4629,8 @@ test("Filtrieren in der Fläche: den Trichter über ein Becherglas hängen, hine
   const id = lab0.vessels.find((v) => v.type === "funnel").id;
   tap(el, id);
   assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /cl-tap/, "kein Hahn");
+  frames(3);                                                   // die Karte des Trichters wird nachgeführt, ohne Hahn
+  assert.doesNotMatch(item(el, id).attributes["aria-label"], /Hahn|abgegeben/, "die Ansage nennt keinen Hahn");
   assert.match(L.parts.funnel.draw({ ml: 20, color: { rgb: [255, 255, 255] }, sediment: { ml: 0.5, rgb: [80, 140, 220] } }, ctx(), { x: 0, rim: -100, surface: -20 }), /cl-filter[\s\S]*cl-sediment[\s\S]*cl-glass/);
   assert.equal(L.text("part.funnel", "de"), "Trichter mit Filterpapier");
 });

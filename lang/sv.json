@@ -27,6 +27,8 @@
     "part.beaker": "bägare",
     "part.calorimeter": "kalorimeter",
     "part.funnel": "tratt med filterpapper",
+    "hint.funnel": "Tryck nu på kärlet som tratten ska hänga över.",
+    "notHere.funnel": "Det går inte vid en tratt.",
     "part.thermometer": "termometer",
     "part.flask": "rundkolv",
     "part.condenser": "liebigkylare",

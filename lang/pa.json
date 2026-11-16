@@ -27,6 +27,8 @@
     "part.beaker": "ਬੀਕਰ",
     "part.calorimeter": "ਕੈਲੋਰੀਮੀਟਰ",
     "part.funnel": "ਫਿਲਟਰ ਪੇਪਰ ਵਾਲੀ ਕੀਪ",
+    "hint.funnel": "ਹੁਣ ਉਸ ਭਾਂਡੇ ਨੂੰ ਛੂਹੋ ਜਿਸ ਉੱਤੇ ਕੀਪ ਲਟਕਣੀ ਹੈ।",
+    "notHere.funnel": "ਕੀਪ ਨਾਲ ਇਹ ਨਹੀਂ ਹੁੰਦਾ।",
     "part.thermometer": "ਥਰਮਾਮੀਟਰ",
     "part.flask": "ਗੋਲ ਤਲੇ ਵਾਲੀ ਫਲਾਸਕ",
     "part.condenser": "ਲੀਬਿਗ ਕੰਡੈਂਸਰ",

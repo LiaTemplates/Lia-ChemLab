@@ -27,6 +27,8 @@
     "part.beaker": "pahar Berzelius",
     "part.calorimeter": "calorimetru",
     "part.funnel": "pâlnie cu hârtie de filtru",
+    "hint.funnel": "Atinge acum vasul deasupra căruia trebuie să stea pâlnia.",
+    "notHere.funnel": "La o pâlnie nu merge.",
     "part.thermometer": "termometru",
     "part.flask": "balon cu fund rotund",
     "part.condenser": "refrigerent Liebig",

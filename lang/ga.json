@@ -27,6 +27,8 @@
     "part.beaker": "eascra",
     "part.calorimeter": "calraiméadar",
     "part.funnel": "tonnadóir le páipéar scagaire",
+    "hint.funnel": "Tapáil anois an soitheach ar cheart don tonnadóir a bheith os a chionn.",
+    "notHere.funnel": "Ní oibríonn sé sin ar thonnadóir.",
     "part.thermometer": "teirmiméadar",
     "part.flask": "fleascán bonnchruinn",
     "part.condenser": "comhdhlúthadán Liebig",

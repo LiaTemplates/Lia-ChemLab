@@ -27,6 +27,8 @@
     "part.beaker": "비커",
     "part.calorimeter": "열량계",
     "part.funnel": "거름종이를 끼운 깔때기",
+    "hint.funnel": "이제 깔때기를 걸 용기를 누르세요.",
+    "notHere.funnel": "깔때기에서는 그렇게 할 수 없다.",
     "part.thermometer": "온도계",
     "part.flask": "둥근바닥 플라스크",
     "part.condenser": "리비히 냉각기",

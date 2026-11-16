@@ -27,6 +27,8 @@
     "part.beaker": "Becherglas",
     "part.calorimeter": "Kalorimeter",
     "part.funnel": "Trichter mit Filterpapier",
+    "hint.funnel": "Jetzt das Gefäß antippen, über dem der Trichter hängen soll.",
+    "notHere.funnel": "Am Trichter geht das nicht.",
     "part.thermometer": "Thermometer",
     "part.flask": "Rundkolben",
     "part.condenser": "Liebigkühler",

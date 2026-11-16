@@ -27,6 +27,8 @@
     "part.beaker": "kádinka",
     "part.calorimeter": "kalorimetr",
     "part.funnel": "nálevka s filtračním papírem",
+    "hint.funnel": "Teď klepni na nádobu, nad kterou má nálevka viset.",
+    "notHere.funnel": "U nálevky to nejde.",
     "part.thermometer": "teploměr",
     "part.flask": "baňka s kulatým dnem",
     "part.condenser": "Liebigův chladič",

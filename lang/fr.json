@@ -27,6 +27,8 @@
     "part.beaker": "bécher",
     "part.calorimeter": "calorimètre",
     "part.funnel": "entonnoir avec papier filtre",
+    "hint.funnel": "Touche maintenant le récipient au-dessus duquel l'entonnoir doit être placé.",
+    "notHere.funnel": "Ce n'est pas possible sur un entonnoir.",
     "part.thermometer": "thermomètre",
     "part.flask": "ballon à fond rond",
     "part.condenser": "réfrigérant de Liebig",

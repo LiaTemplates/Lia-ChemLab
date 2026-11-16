@@ -27,6 +27,8 @@
     "part.beaker": "vaso de precipitados",
     "part.calorimeter": "calorímetro",
     "part.funnel": "embudo con papel de filtro",
+    "hint.funnel": "Toca ahora el recipiente sobre el que debe colgar el embudo.",
+    "notHere.funnel": "Eso no se puede en un embudo.",
     "part.thermometer": "termómetro",
     "part.flask": "matraz de fondo redondo",
     "part.condenser": "refrigerante de Liebig",

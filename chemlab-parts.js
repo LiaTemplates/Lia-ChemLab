@@ -18,7 +18,7 @@
       "card.give": "Add {amount}", "card.pick": "Choose a substance, then add it.", "card.again": "Or tap the vessel once more.",
       "card.place": "Put on the bench:", "card.none": "No substance matches the search.", "hand.drop": "Back to the shelf", "hand": "In hand",
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
@@ -1336,7 +1336,7 @@
       }
       out += '<path class="cl-glass" d="M' + (x - a - 3) + "," + (g.top - 2) + "L" + (x - 3) + "," + (g.apex + 2) + "L" + (x - 3) + "," + g.tip +
         "M" + (x + 3) + "," + g.tip + "L" + (x + 3) + "," + (g.apex + 2) + "L" + (x + a + 3) + "," + (g.top - 2) + '"/>';
-      if (w.ml > 0.001 && mount && L.fx) out += L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);      // das Filtrat tropft
+      if (w.ml > 0.001 && mount && !w.blocked && L.fx) out += L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);      // das Filtrat tropft
       return out + (mount ? "" : badge(0, 14, ctx.no));
     }
   });

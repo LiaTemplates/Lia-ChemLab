@@ -27,6 +27,8 @@
     "part.beaker": "ビーカー",
     "part.calorimeter": "熱量計",
     "part.funnel": "ろ紙付き漏斗",
+    "hint.funnel": "漏斗をのせる容器をタップしてください。",
+    "notHere.funnel": "漏斗ではそれはできない。",
     "part.thermometer": "温度計",
     "part.flask": "丸底フラスコ",
     "part.condenser": "リービッヒ冷却器",

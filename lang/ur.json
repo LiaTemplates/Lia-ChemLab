@@ -27,6 +27,8 @@
     "part.beaker": "بیکر",
     "part.calorimeter": "حرارت پیما",
     "part.funnel": "فلٹر پیپر والی قیف",
+    "hint.funnel": "اب اس برتن کو چھوئیں جس کے اوپر قیف لٹکنی ہے۔",
+    "notHere.funnel": "قیف کے ساتھ یہ نہیں ہو سکتا۔",
     "part.thermometer": "تھرمامیٹر",
     "part.flask": "گول پیندے والا فلاسک",
     "part.condenser": "لیبگ کنڈینسر",

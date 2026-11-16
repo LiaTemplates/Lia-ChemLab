@@ -27,6 +27,8 @@
     "part.beaker": "bekerglas",
     "part.calorimeter": "calorimeter",
     "part.funnel": "trechter met filtreerpapier",
+    "hint.funnel": "Tik nu op het vat waarboven de trechter moet hangen.",
+    "notHere.funnel": "Bij een trechter kan dat niet.",
     "part.thermometer": "thermometer",
     "part.flask": "rondbodemkolf",
     "part.condenser": "liebigkoeler",

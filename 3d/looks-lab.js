@@ -299,7 +299,7 @@
       u.arm.scale.set(len, 1, 1); u.arm.position.set((ex + rod) / 2, top - cm(8), (ez + Z) / 2); u.arm.rotation.y = Math.atan2(-dz, dx);
       // das Filtrat tropft ins Gefäß darunter
       y = d.hang ? cm(-g.surface) : 0;
-      u.drops.count = w.ml > 0.001 && d.hang ? 3 : 0;
+      u.drops.count = w.ml > 0.001 && d.hang && !w.blocked ? 3 : 0;
       for (k = 0; k < u.drops.count; k++) {
         p = (t * 1.6 + k / 3) % 1;
         u.drops.setMatrixAt(k, new THREE.Matrix4().makeTranslation(x, tipY - p * p * (tipY - y), 0));

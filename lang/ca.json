@@ -27,6 +27,8 @@
     "part.beaker": "vas de precipitats",
     "part.calorimeter": "calorímetre",
     "part.funnel": "embut amb paper de filtre",
+    "hint.funnel": "Toca ara el recipient sobre el qual ha de penjar l'embut.",
+    "notHere.funnel": "En un embut això no es pot fer.",
     "part.thermometer": "termòmetre",
     "part.flask": "matràs de fons rodó",
     "part.condenser": "refrigerant de Liebig",
