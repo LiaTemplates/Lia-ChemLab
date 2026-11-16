@@ -7902,6 +7902,14 @@ test("Gasableitungsrohr: Kohlenstoffdioxid perlt zum Teil ungelöst durch, Ammon
   assert.ok(((w.air["NH3(g)"] || 0) + (w.out["NH3(g)"] || 0)) < 0.02 * (amount(n, "NH3(aq)", "z") + amount(n, "NH4+(aq)", "z")), "Ammoniak bleibt fast ganz im Wasser");
 });
 
+test("Gasableitungsrohr: Natronlauge schluckt das Kohlenstoffdioxid fast ganz", () => {
+  const l = gasline([{ reagent: "HCl 2M", ml: 10 }, { reagent: "marble", g: 0.1 }], [{ reagent: "NaOH 1M", ml: 10 }]);
+  L.step(l, 60);
+  const z = L.vessel(l, "z"), escaped = (z.air["CO2(g)"] || 0) + (z.out["CO2(g)"] || 0);
+  const kept = ["CO2(aq)", "HCO3-(aq)", "CO3^2-(aq)", "NaCO3-(aq)", "NaHCO3(aq)"].reduce((sum, id) => sum + amount(l, id, "z"), 0);
+  assert.ok(escaped < 0.05 * (escaped + kept), `entwichen ${escaped}, gebunden ${kept} mol`);
+});
+
 test("Gasableitungsrohr: ohne zweites Glas geht das Gas ins Freie", () => {
   const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
   L.remove(l, "z");
@@ -8166,6 +8174,15 @@ test("Mischwärme: konzentrierte Säure und Lauge spritzen; Lauge löst nicht me
   L.step(ready, 1);
   assert.ok(L.vessel(ready, "b").T < 21, `und bei Raumtemperatur: ${L.vessel(ready, "b").T} °C`);
   assert.throws(() => L.register({ reactions: [{ eq: "2 H2O2(aq) -> 2 H2O(l) + O2(g)", rate: { fast: true, needs: { "H2O2(aq)": 1 } }, src: "x" }] }), (e) => e.code === "data" && /rate: H2O2/.test(e.message), "needs nicht in der Gleichung");
+});
+
+test("Mischwärme beim Umgießen: kalte Säure in heiße Lauge rechnet mit der Mischtemperatur", () => {
+  const seen = [], l = lab([{ type: "beaker", id: "x", contains: [{ reagent: "HCl 4M", ml: 30 }] }, { type: "beaker", id: "y", ml: 100, contains: [{ reagent: "NaOH 4M", ml: 30 }] },
+    { type: "bath", under: "y", temp: 95 }], { room: 20 });
+  L.step(l, 300);
+  L.pour(l, "x", "y", 30);
+  L.step(l, 15, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "spatter"), `kein Spritzen bei ${L.vessel(l, "y").T} °C`);
 });
 
 test("README: die Folie „Erst das Wasser, dann die Säure“ hält, was ihr Text verspricht", () => {

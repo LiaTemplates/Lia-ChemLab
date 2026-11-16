@@ -507,7 +507,7 @@
         fire: { color: "#5a7dff", glare: 0.25, T: 700 }, src: BURN
       },
       {
-        eq: "3 Fe(s) + 2 O2(g) -> Fe3O4(s)", rate: { k: 5e-6, surface: "Fe(s)", ignite: 400 },
+        eq: "3 Fe(s) + 2 O2(g) -> Fe3O4(s)", rate: { k: 1.5e-5, surface: "Fe(s)", ignite: 400 },
         fire: { color: "#ff8a2a", glare: 0.5, glow: true, T: 1000 }, src: BURN + "; 1 g of iron wool glows through in about 20 s and gets heavier"
       },
       {

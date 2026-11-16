@@ -32,6 +32,7 @@
   var HOT_MAX = 1500;             // °C: heißer wird ein Stück im Wasser hier nicht (das Metall verdampft oder zerspritzt vorher)
   var ZONE_SINK = 10;             // eine schwerere Zugabe sinkt durch und mischt sich mit zehnmal so viel vom Inhalt wie eine leichtere (geschätzt)
   var SPLASH_OVER = 5;            // K: so weit über dem Siedepunkt muss die Mischzone sein, damit es spritzt
+  var LYE = 50;                   // L/mol: wie stark Lauge (OH⁻) das Aufnehmen eines Gases aus einer Blase beschleunigt (geschätzt)
   var FIZZ = 1.5;             // s: so schnell perlt aus, was über dem Luftdruck gelöst ist
   var CRUST = 25;             // mol/L: dichter wird eine Lösung nicht, dann ist sie eingedampft
   var SMELL = 0.005;          // bar: ab diesem Druck riecht man ein Gas
@@ -938,12 +939,14 @@
   // Umgießen oder Tropfen aus der Bürette, mit derselben örtlichen Mischwärme: die Portion hat die Zusammensetzung der Flüssigkeit in from
   function pourInto(lab, from, to, ml, emit) {
     var vol = volume(from) * 1000, amounts = {}, id, s;
-    for (id in from.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && vol > 0) amounts[id] = from.n[id] * Math.min(1, ml / vol); }
-    return splash(lab, to, amounts, ml, function () { return transfer(from, to, ml); }, emit);
+    ml = Math.min(ml, vol);                                    // vom letzten Rest zählt nur, was noch da ist
+    for (id in from.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && vol > 0) amounts[id] = from.n[id] * ml / vol; }
+    return splash(lab, to, amounts, ml, function () { return transfer(from, to, ml); }, emit, from.T);
   }
 
   // amounts: was hinzukommt (mol), ml sein Volumen; put gibt es wirklich hinein und sagt, wie viel (mL)
-  function splash(lab, v, amounts, ml, put, emit) {
+  // T0: die Temperatur der Portion (Vorratsflasche: Raumtemperatur)
+  function splash(lab, v, amounts, ml, put, emit, T0) {
     var vol = volume(v) * 1000, id, s, zone, share, tmp, w, C = 0, T, k, done;
     // Mischzone aus dem Inhalt, wie er vor dem Zugeben war
     if (vol > 0.05) {
@@ -952,8 +955,12 @@
       tmp = createLab({ room: lab.room, model: lab.model, bench: [{ type: "beaker", id: "z", size: 600, contains: [] }] });
       w = vessel(tmp, "z");
       for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") w.n[id] = v.n[id] * share; }
-      for (id in amounts) w.n[id] = (w.n[id] || 0) + amounts[id];
-      w.T = v.T; w.dirty = true;
+      // die Zone beginnt bei der Mischtemperatur aus Inhalt und Portion
+      var Cz = 0, Cp = 0;
+      for (id in w.n) Cz += w.n[id] * L.db.species[id].cp;
+      for (id in amounts) { w.n[id] = (w.n[id] || 0) + amounts[id]; Cp += amounts[id] * L.db.species[id].cp; }
+      w.T = Cz + Cp > 0 ? (Cz * v.T + Cp * (T0 == null ? lab.room : T0)) / (Cz + Cp) : v.T;
+      w.dirty = true;
     }
     done = put();
     if (!w || !(done > 0)) return done;
@@ -3044,9 +3051,10 @@
     // Eine Blase gibt auf ihrem Weg nur einen Teil ab, je nach Löslichkeit (Henry: c/p = K): 1 − e^(−K·R·T).
     // Kohlenstoffdioxid gut die Hälfte, Ammoniak und Chlorwasserstoff praktisch alles.
     keys = Object.keys(e.d);
-    if (keys.length === 1) {
+    if (keys.length === 1) {                                   // Lauge bindet ein saures Gas schon unterwegs: Faktor 1 + LYE·[OH⁻]
       h = heatOf(e);
-      part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) / e.d[keys[0]] * R / 100 * (v.T + KELVIN));
+      part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
+        (1 + LYE * (v.n["OH-(aq)"] || 0) / volume(v)));
     }
     if (part < 1) v.n[id] = (v.n[id] || 0) + x * (1 - part);
     x *= part;
