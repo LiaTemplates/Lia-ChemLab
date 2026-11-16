@@ -346,7 +346,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.filter ? "hint.funnel" : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -423,7 +423,7 @@
       if (L.vessel(lab, id).broken) { status(T("brokenGlass")); return; }
       if (h.test) {                                             // Span an die Öffnung, Stäbchen in die Lösung und dann in die Flamme
         kind = L.parts[h.id].probe;
-        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T("notHere")); return; }
+        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
         if (kind === "rod" && !lab.tools.some(function (t) { return t.flame === 2; })) { status(T("noFlame")); return; }
         if (kind !== "rod" && lab.tools.some(function (t) { return t.in === id && L.parts[t.type].stopper; })) { status(T("closed")); return; }
         change(function (l, emit) { return kind === "rod" ? L.flameTest(l, id, emit) : L.probe(l, id, kind, emit); });
@@ -431,7 +431,7 @@
       }
       if (h.tool) {                                             // Messgerät hinein, Bürette darüber, Brenner darunter
         def = L.parts[h.id]; over = !!def.dispenser;
-        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T("notHere")); return; }
+        if (L.parts[L.vessel(lab, id).type].dispenser) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
         if (def.electrode) {                                    // zwei Elektroden je Becherglas
           if (!L.parts[L.vessel(lab, id).type].electrodes) { status(T("tooNarrow")); return; }
           if (lab.tools.filter(function (t) { return t.in === id && L.parts[t.type].electrode; }).length >= 2) { status(T("twoOnly")); return; }
@@ -767,7 +767,7 @@
               : L.colorWord(w.color.name, w.color.pale, lang)) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : "") + (w.steam > 0 ? ", " + T("aria.boiling") : "")
             : T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty");
           if (w.fire.length || w.torch) content += ", " + T("aria.burning");
-          if (def.dispenser) {
+          if (def.dispenser && !def.filter) {
             content += ", " + T("aria.tap", { state: T("tap." + L.tapKey(w.tap)) }) +
               (show.numbers && show.volumes && w.given > 0 ? ", " + T("aria.given", { ml: L.num(w.given, 1, lang) }) : "");
           }
@@ -784,7 +784,9 @@
           if (def.sense === "V" && place && lab.vessels.some(function (o) { return o.over === host.id; })) {
             // hängt über dem Gefäß eine Bürette, beginnt der Zylinder des Kolbenprobers erst rechts von ihr und ihrem Stativ
             w = L.parts[host.type].mount(L.view(lab, host));
-            place.off = Math.max(20, Math.max(w.x + 26, (w.edge || 0) + 14) + 10 - place.x);
+            // das Stativ der Bürette oder des Trichters
+            place.off = Math.max(20, (lab.vessels.some(function (o) { return o.over === host.id && L.parts[o.type].filter; }) ? L.shapes.funnelAt(w).rod
+              : Math.max(w.x + 26, (w.edge || 0) + 14)) + 10 - place.x);
           }
           if (def.electrode && place) {                          // wie hoch die Flüssigkeit steht, in der sie taucht
             w = L.view(lab, host);
@@ -925,7 +927,7 @@
             '<div class="cl-giverow"></div></div>' : "") +
           (gear.length ? '<div class="cl-sec" data-sec="gear"><div class="cl-uses">' + gear.map(useButton).join("") + "</div></div>" : "") +
           '<div class="cl-sec" data-sec="info">' +
-          (L.parts[v.type].dispenser ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
+          (L.parts[v.type].dispenser && !L.parts[v.type].filter ? '<div class="cl-tap" role="group" aria-label="' + esc(T("tap")) + '"><span>' + esc(T("tap")) + ":</span> " +
             L.TAPS.map(function (rate) {
               return '<button type="button" class="cl-btn" data-act="tap" data-id="' + rate + '" aria-pressed="false">' + esc(T("tap." + L.tapKey(rate))) + "</button>";
             }).join(" ") + (show.numbers && show.volumes ? ' <span class="cl-read">' + esc(T("panel.given")) + ' <output class="cl-given"></output></span>' : "") + "</div>" : "") +
@@ -1142,7 +1144,7 @@
       }
       w = L.view(lab, v);
       summary(w);
-      if (L.parts[v.type].dispenser) {                          // Hahnstellung und Ablesung an Ort und Stelle nachführen
+      if (L.parts[v.type].dispenser && !L.parts[v.type].filter) {      // Hahnstellung und Ablesung an Ort und Stelle nachführen (ein Trichter hat keinen Hahn)
         L.TAPS.forEach(function (rate) {
           ui.panel.querySelector('[data-act="tap"][data-id="' + rate + '"]').setAttribute("aria-pressed", L.tapKey(rate) === L.tapKey(w.tap) ? "true" : "false");
         });
@@ -1176,9 +1178,10 @@
     }
 
     // Auf welches Gefäß sich Gleichungen und Stoffmengen beziehen: das gewählte; bei einer Bürette das, in das sie tropft
+    // (in einem Trichter laufen eigene Reaktionen: dort bleibt es der Trichter)
     function focus() {
       var lab = st.run.lab, v = L.vessel(lab, st.sel);
-      return v ? (L.vessel(lab, v.over) ? v.over : v.id) : null;
+      return v ? (L.vessel(lab, v.over) && !L.parts[v.type].filter ? v.over : v.id) : null;
     }
 
     function renderEq() {
@@ -1295,7 +1298,7 @@
         [["pH", "chart.titration"], ["mS/cm", "chart.conduct"], ["E", "chart.photo"]].forEach(function (kind) {      // mit dem pH-Meter, dem Leitfähigkeitsmessgerät oder dem Fotometer
           lines = []; most = 0;
           lab.vessels.forEach(function (v) {
-            if (!L.vessel(lab, v.over)) return;
+            if (!L.vessel(lab, v.over) || L.parts[v.type].filter) return;      // eine Titrationskurve nur über eine Bürette
             probes(kind[0]).forEach(function (t) {
               var points;
               if (t.in !== v.over) return;
@@ -1372,7 +1375,7 @@
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });
       });
       lab.vessels.forEach(function (v) {
-        if (L.parts[v.type].dispenser && show.volumes) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
+        if (L.parts[v.type].dispenser && !L.parts[v.type].filter && show.volumes) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
       });
       return out;
     }

@@ -677,6 +677,9 @@
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
+  // Trichter mit Filterpapier: hängt wie die Bürette über einem Gefäß und läuft von selbst ab (drain, mL/s, geschätzt für einen
+  // Rundfilter); Feststoffe bleiben im Filter, nur Kolloide laufen mit durch
+  registerPart("funnel", { kind: "vessel", dispenser: true, filter: true, cap: 60, d: 4, Cv: 30, loss: 0.08, drain: 0.5 });
   // lag: Trägheit in s; sense: was es misst
   // range: Anfang und Ende der Skala; darüber zeigt es deren Ende
   // spread: wie weit die Anzeige streut, wenn der Aufbau es will ("scatter"): [fest, fest relativ, Rauschen, Rauschen relativ],
@@ -792,7 +795,7 @@
       if (g.disposed) {                                          // mindestens einmal entsorgt, jedes Mal richtig, und nichts mehr übrig
         var mine = (events || []).filter(function (e) { return e.key === "disposed" && (g.in == null || e.vessel === g.in); });
         return mine.length > 0 && mine.every(function (e) { return e.right; }) && lab.vessels.every(function (v) {
-          var w = (g.in == null || v.id === g.in) && !L.parts[v.type].dispenser ? waste(lab, v.id) : null;
+          var w = (g.in == null || v.id === g.in) && (!L.parts[v.type].dispenser || L.parts[v.type].filter) ? waste(lab, v.id) : null;      // auch der Rückstand im Trichter
           return !w || w.bin == null;
         });
       }
@@ -1387,7 +1390,7 @@
   // Hahn einer Bürette: Durchfluss in mL/s, 0 ist zu
   function setTap(lab, id, rate) {
     var v = vessel(lab, id);
-    if (!v || !L.parts[v.type].dispenser) return false;
+    if (!v || !L.parts[v.type].dispenser || L.parts[v.type].filter) return false;      // ein Trichter hat keinen Hahn
     v.tap = rate > 0 ? +rate : 0;
     return true;
   }
@@ -2865,8 +2868,19 @@
       moved[id] = from.n[id] * share;
       if ((from.n[id] -= moved[id]) < 1e-300) delete from.n[id];
     }
+    var sieve = L.parts[from.type].filter;                    // durch ein Filter geht nur, was kolloid verteilt ist
+    // alles in einen Trichter gegossen: Man schwenkt auf und spült den Bodensatz und die Stücke mit hinein
+    var whole = L.parts[to.type].filter && share >= 1 - 1e-9;
+    if (whole) from.lumps.forEach(function (l) {
+      if (!(l.n > 0)) return;
+      to.lumps.push(Object.assign({}, l, { settled: 1 }));
+      to.n[l.id] = (to.n[l.id] || 0) + l.n;
+      from.n[l.id] -= l.n;
+      to.flag.solid[l.id] = true;
+      l.n = 0;
+    });
     from.lumps.forEach(function (l) {
-      var part = l.made ? l.n * (1 - l.settled) * share : 0;
+      var part = l.made && (!sieve || L.db.species[l.id].colloid) ? l.n * (1 - l.settled) * share : 0;
       if (!(part > 0)) return;
       l.settled = l.n - part > 0 ? Math.min(1, l.settled * l.n / (l.n - part)) : 1;
       l.n -= part;
@@ -2899,17 +2913,18 @@
     });
   }
 
-  function drip(lab, emit) {      // Büretten: bei offenem Hahn läuft es in das Gefäß darunter
+  function drip(lab, emit) {      // Büretten: bei offenem Hahn läuft es in das Gefäß darunter; ein Filter läuft von selbst
     lab.vessels.forEach(function (v) {
-      var to = v.tap > 0 ? vessel(lab, v.over) : null, room;
-      if (!to) return;
+      var def = L.parts[v.type], rate = def.filter ? (volume(v) > 0 ? def.drain : 0) : v.tap, to = rate > 0 ? vessel(lab, v.over) : null, room;
+      if (!to || to.broken) return;
       room = free(lab, to);
-      if (room <= 1e-6) {                                      // das Gefäß darunter ist voll: der Hahn schließt
+      if (room <= 1e-6) {                                      // das Gefäß darunter ist voll: der Hahn schließt, ein Filter wartet
+        if (def.filter) return;
         v.tap = 0;
         if (emit) emit({ key: "tapFull", vessel: v.id });
         return;
       }
-      v.given += pourInto(lab, v, to, Math.min(v.tap * DT, room), emit);
+      v.given += pourInto(lab, v, to, Math.min(rate * DT, room), emit);
     });
   }
 
@@ -3746,7 +3761,7 @@
       if (lab.t - v.flag.tinted < FADE) return false;            // die Farbe hat sich eben noch geändert
       for (key in v.lit) return false;
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
-      if (v.tap > 0 && vessel(lab, v.over) && volume(v) > 0) return false;                  // die Bürette läuft
+      if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && volume(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte
       if (v.lumps.some(function (l) { return l.made && !L.db.species[l.id].colloid && l.settled < 0.97 && l.n * (1 - l.settled) > SEEN / 5 * volume(v); })) return false;
       for (key in v.rate) if (v.rate[key] > REST) return false;
@@ -3900,6 +3915,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
+      // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
+      blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab
       // fire: was brennt, mit Geschwindigkeit und Aussehen der Flamme
       fire: L.db.reactions.filter(function (r) { return v.lit[r.key]; }).map(function (r) {

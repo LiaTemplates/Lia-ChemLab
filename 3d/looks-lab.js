@@ -244,6 +244,73 @@
     }
   });
 
+  // ------------------------------------------------------------------ Trichter mit Filterpapier
+
+  // Kegel mit der Spitze unten im Ursprung, Höhe 1 und oberer Radius r: so lassen sich Papier, Füllung und Rückstand gleich skalieren
+  function cone(r, open) { return new THREE.CylinderGeometry(r, 0.002, 1, 32, 1, !!open).translate(0, 0.5, 0); }
+
+  L.registerLook("funnel", "lab", {
+    build: function (kit, d) {
+      var group = new THREE.Group(), U = S.funnel, H = cm(U.h), R = cm(U.a);
+      var glass = new THREE.Mesh(cone(R, true), fx.glass()), stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(2.5), 1, 12, 1, true), fx.glass());
+      var paper = new THREE.Mesh(cone(R * 0.92, true), fx.matte(0xfbfbf6, 0.95));
+      var liquid = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transmission: 1, thickness: 0.5, ior: 1.33, attenuationColor: new THREE.Color(0xffffff), attenuationDistance: 2 });
+      var fill = new THREE.Mesh(cone(R * 0.9), liquid), rest = new THREE.Mesh(cone(R * 0.9), fx.matte(0x888888, 0.9));
+      var m = steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(cm(46), cm(5), 9), fx.matte(0x3a3f45, 0.5, 0.3));
+      var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(R + 0.12, 0.08, 8, 32).rotateX(Math.PI / 2), m);
+      var drops = new THREE.InstancedMesh(new THREE.SphereGeometry(cm(1.6), 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }), 3);
+      var tag = kit.label(0.75);
+      paper.material.side = THREE.DoubleSide;
+      glass.renderOrder = stem.renderOrder = 2;
+      [foot, rod, arm, ring].forEach(function (o) { o.castShadow = true; });
+      glass.scale.y = paper.scale.y = H;
+      group.add(paper, fill, rest, glass, stem, foot, rod, arm, ring, drops, tag);
+      group.userData = { body: glass, glass: glass, stem: stem, fill: fill, rest: rest, paper: paper, liquid: liquid, foot: foot, rod: rod, arm: arm, ring: ring, drops: drops, tag: tag };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, w = d.data, U = S.funnel, g = S.funnelAt(d.hang), x = cm(g.x), apex = cm(-g.apex), top = cm(-g.top), tipY = cm(-g.tip), H = cm(U.h);
+      var level = cm(-L.parts.funnel.surface(w, d.hang)), rod = cm(g.rod), Z = -5, t = d.ctx.still ? 0 : d.ctx.t, floor = -kit.up(d.lift), k, p, y, sed = w.sediment, h;
+      u.glass.position.set(x, apex, 0); u.paper.position.set(x, apex + 0.04, 0);
+      u.stem.scale.y = apex - tipY; u.stem.position.set(x, (apex + tipY) / 2, 0);
+      u.fill.visible = w.ml > 0.005;
+      if (u.fill.visible) {
+        h = Math.max(0.001, level - apex);
+        u.fill.scale.set(h / H, h, h / H); u.fill.position.set(x, apex + 0.05, 0);
+        u.liquid.color.copy(fx.color(w.color.rgb)); u.liquid.attenuationColor.copy(fx.color(w.color.rgb));
+      }
+      // der Rückstand im Filter, in seiner Farbe
+      u.rest.visible = !!(sed && sed.ml > 0.002);
+      if (u.rest.visible) {
+        h = Math.max(cm(10), H * 0.7 * Math.pow(Math.min(1, sed.ml / U.cap * 8), 1 / 3));
+        u.rest.scale.set(h / H, h, h / H); u.rest.position.set(x, apex + 0.06, 0);
+        u.rest.material.color.copy(fx.color(sed.rgb));
+      }
+      // das Papier nimmt die Farbe des Rückstands an
+      u.paper.material.color.copy(fx.color(u.rest.visible ? sed.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.55); }) : [251, 251, 246]));
+      // Stativ hinter der Reihe der Geräte, ein Ring hält den Trichter
+      u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
+      u.rod.scale.y = top + cm(16) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
+      u.ring.position.set(x, top - cm(8), 0);
+      // der Arm endet am Ring, nicht in der Mitte des Trichters
+      var R = cm(U.a) + 0.12, ex = x + R * (rod - x) / Math.sqrt((rod - x) * (rod - x) + Z * Z), ez = R * Z / Math.sqrt((rod - x) * (rod - x) + Z * Z);
+      var dx = ex - rod, dz = ez - Z, len = Math.sqrt(dx * dx + dz * dz);
+      u.arm.scale.set(len, 1, 1); u.arm.position.set((ex + rod) / 2, top - cm(8), (ez + Z) / 2); u.arm.rotation.y = Math.atan2(-dz, dx);
+      // das Filtrat tropft ins Gefäß darunter
+      y = d.hang ? cm(-g.surface) : 0;
+      u.drops.count = w.ml > 0.001 && d.hang && !w.blocked ? 3 : 0;
+      for (k = 0; k < u.drops.count; k++) {
+        p = (t * 1.6 + k / 3) % 1;
+        u.drops.setMatrixAt(k, new THREE.Matrix4().makeTranslation(x, tipY - p * p * (tipY - y), 0));
+      }
+      u.drops.instanceMatrix.needsUpdate = true;
+      u.tag.userData.write(d.hang ? " " : String(d.ctx.no || " "));
+      u.tag.visible = !d.hang;
+      u.tag.position.set(x, floor + 0.15, 1.6);
+    }
+  });
+
   // ------------------------------------------------------------------ Rundkolben
 
   // Kugel mit Hals, rechts am Hals das Ansatzrohr für den Kühler (wie in 2D immer rechts); ohne Dreifuß auf einem Korkring

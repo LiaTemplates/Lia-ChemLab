@@ -609,7 +609,12 @@ function node() {
     removeAttribute(k) { delete this.attributes[k]; },
     addEventListener(type, fn) { this.listeners[type] = fn; },
     removeEventListener(type) { delete this.listeners[type]; },
-    querySelector(sel) { return (this.kids[sel] ||= node()); },
+    // ein Knopf, der im gesetzten HTML nicht vorkommt, ist nicht da (wie im Browser); sonst ein stellvertretender Knoten
+    querySelector(sel) {
+      const act = /^\[data-act="(\w+)"\]/.exec(sel);
+      if (act && this.innerHTML && !this.innerHTML.includes(`data-act="${act[1]}"`)) return null;
+      return (this.kids[sel] ||= node());
+    },
     insertAdjacentHTML(where, html) { this.added = (this.added || 0) + 1; this.innerHTML += html; },
     setPointerCapture() {}, releasePointerCapture() {}, focus() {}, closest() { return null; }
   };
@@ -4335,6 +4340,59 @@ test("Regal: Elektroden und Stromkreis stehen in einem eigenen Fach", () => {
   assert.equal(fachOf(el, "conductometer"), gear, "das Leitfähigkeitsmessgerät steht bei den Messgeräten");
 });
 
+test("Filtrieren: der Trichter hält den Niederschlag zurück, das Filtrat läuft klar und von selbst ins Glas darunter; Kolloide laufen durch", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.add(l, "b", "NaOH 1M", { ml: 10 });                       // gefällt wird im Versuch (was schon im Aufbau ausfällt, liegt längst am Boden)
+  L.step(l, 10);
+  const cu = L.vessel(l, "b").n["Cu(OH)2(s)"];
+  assert.ok(cu > 0.004, `Kupferhydroxid gefällt: ${cu}`);
+  assert.equal(L.pour(l, "b", "t", 20), true, "in den Trichter gießen");
+  L.step(l, 10);
+  assert.ok(L.volume(L.vessel(l, "t")) > 0.005, "es läuft langsam ab, etwa 0,5 mL je Sekunde");
+  assert.equal(L.atRest(l), false, "solange es abläuft, ruht der Versuch nicht");
+  L.step(l, 120);
+  const f = L.vessel(l, "f"), t = L.vessel(l, "t"), b = L.vessel(l, "b");
+  assert.ok(!(L.volume(t) > 1e-6), "der Trichter ist leer gelaufen");
+  assert.ok(L.volume(f) * 1000 > 15, `Filtrat: ${L.volume(f) * 1000} mL`);
+  assert.ok(!(f.n["Cu(OH)2(s)"] > 1e-9), "im Filtrat kein Niederschlag");
+  near((t.n["Cu(OH)2(s)"] || 0) + (b.n["Cu(OH)2(s)"] || 0), cu, 1e-6, "der Niederschlag liegt im Filter (oder noch im Becherglas)");
+  assert.ok(t.n["Cu(OH)2(s)"] > 0.5 * cu, "das meiste liegt im Filter");
+  assert.equal(L.view(l, f).color.name === "blue", false, "das Filtrat ist nicht blau");
+  L.step(l, 4000);                                             // abgekühlt: dann ruht alles, auch der leere Trichter
+  assert.equal(L.atRest(l), true);
+  // ein Kolloid (fein verteilter Schwefel) läuft durch
+  const s = lab([{ type: "beaker", id: "b", contains: [{ reagent: "Na2S2O3 1M", ml: 10 }, { reagent: "HCl 2M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.step(s, 120);
+  L.pour(s, "b", "t", 20);
+  L.step(s, 120);
+  assert.ok(L.vessel(s, "f").n["S(s)"] > 0, "Schwefel im Filtrat: es bleibt trüb");
+  // alles ausgegossen: Man schwenkt auf, der Bodensatz kommt mit ins Filter, auch nach langem Warten; ebenso Pulver aus dem Regal
+  const late = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.add(late, "b", "NaOH 1M", { ml: 10 });
+  L.step(late, 60);
+  const settled = L.vessel(late, "b").n["Cu(OH)2(s)"];
+  L.pour(late, "b", "t", 50);
+  L.step(late, 120);
+  near(L.vessel(late, "t").n["Cu(OH)2(s)"] || 0, settled, 1e-9, "der ganze Niederschlag im Filter");
+  assert.ok(!(L.vessel(late, "b").n["Cu(OH)2(s)"] > 0), "das Becherglas ist leer");
+  const slurry = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 1M", ml: 10 }, { reagent: "marble powder", g: 1 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
+  L.step(slurry, 5);
+  L.pour(slurry, "b", "t", 50);
+  L.step(slurry, 60);
+  near(L.vessel(slurry, "t").n["CaCO3(s)"] * 100.09, 1, 0.01, "der Marmor liegt im Filter");
+  assert.ok(L.vessel(slurry, "f").n["Na+(aq)"] > 0.009, "das Salz ist im Filtrat");
+  // der Trichter hat keinen Hahn; ein Rückstand darin muss mit entsorgt werden
+  assert.equal(L.setTap(slurry, "t", 2), false);
+  const task = L.normalize({ bench: [{ type: "beaker", id: "f" }], task: { goals: [{ disposed: true }] } }).task;
+  const events = [Object.assign({ key: "disposed" }, L.dispose(slurry, "f", "sink"))];
+  assert.equal(L.checkTask(task, slurry, events).done, false, "der Marmor im Trichter ist noch nicht entsorgt");
+  events.push(Object.assign({ key: "disposed" }, L.dispose(slurry, "t", "solid")));
+  assert.equal(L.checkTask(task, slurry, events).done, true);
+  // Platzierung: über einem Gefäß, nicht frei; über einem Glas hängt nur eins (Trichter oder Bürette)
+  assert.throws(() => lab([{ type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }, { type: "burette", id: "bu", over: "f" }]), (e) => e.code === "place");
+  assert.match(L.icon("funnel"), /<svg/);
+});
+
 test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und meldet, ob der gewählte passt", () => {
   const want = (contains, more) => { const l = lab([{ type: "beaker", id: "b", contains }], Object.assign({ room: 20 }, more)); L.step(l, 30); return L.waste(l, "b").bin; };
   assert.equal(want([{ reagent: "NaCl 0.1M", ml: 20 }]), "sink", "Kochsalzlösung: Ausguss");
@@ -4560,6 +4618,21 @@ test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten a
   assert.equal(h("glacial acetic acid"), "GHS02 GHS05 danger");
   assert.equal(h("sulfuric acid conc"), "GHS05 danger");
   assert.equal(h("wine"), "", "Wein trägt kein Etikett");
+});
+
+test("Filtrieren in der Fläche: den Trichter über ein Becherglas hängen, hineingießen; kein Hahn", () => {
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }], shelf: ["funnel", "NaOH 1M"] });
+  press(el, "hand", "funnel");
+  tap(el, "f");
+  const lab0 = state(el).run.lab;
+  assert.equal(lab0.vessels.find((v) => v.type === "funnel").over, "f", "hängt über dem Becherglas");
+  const id = lab0.vessels.find((v) => v.type === "funnel").id;
+  tap(el, id);
+  assert.doesNotMatch(part(el, ".cl-panel").innerHTML, /cl-tap/, "kein Hahn");
+  frames(3);                                                   // die Karte des Trichters wird nachgeführt, ohne Hahn
+  assert.doesNotMatch(item(el, id).attributes["aria-label"], /Hahn|abgegeben/, "die Ansage nennt keinen Hahn");
+  assert.match(L.parts.funnel.draw({ ml: 20, color: { rgb: [255, 255, 255] }, sediment: { ml: 0.5, rgb: [80, 140, 220] } }, ctx(), { x: 0, rim: -100, surface: -20 }), /cl-filter[\s\S]*cl-sediment[\s\S]*cl-glass/);
+  assert.equal(L.text("part.funnel", "de"), "Trichter mit Filterpapier");
 });
 
 test("Entsorgen in der Fläche: fünf Behälter in der Karte des Gefäßes; das Protokoll sagt, ob es richtig war", () => {
@@ -8610,6 +8683,20 @@ test("README: die Folie zum Entsorgen hält, was ihr Text verspricht", () => {
   assert.equal(L.waste(l, "saeure").bin, "sink", "neutralisiert darf sie in den Ausguss");
   const events = ["kupfer", "saeure", "salz", "marmor"].map((id) => Object.assign({ key: "disposed" }, L.dispose(l, id, L.waste(l, id).bin)));
   assert.equal(L.checkTask(config.task, l, events).done, true, "alles richtig entsorgt");
+});
+
+test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
+  const config = L.normalize(JSON.parse(slide("Filtrieren")[0]));
+  const l = L.createLab(config), funnel = config.bench.find((p) => p.type === "funnel");
+  L.add(l, "loesung", "NaOH 1M", { ml: 10 });
+  L.step(l, 5);
+  L.pour(l, "loesung", funnel.id, 20);
+  L.step(l, 120);
+  const f = L.vessel(l, funnel.over), t = L.vessel(l, funnel.id);
+  assert.ok(L.volume(f) * 1000 > 15, "das Filtrat ist durchgelaufen");
+  assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
+  assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
+  for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {

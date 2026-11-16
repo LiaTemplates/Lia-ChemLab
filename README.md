@@ -253,6 +253,22 @@ Oder statt Ammoniak Kaliumiodid zum weißen Silberchlorid geben: Der Niederschla
  "show":{"charts":false}}
 ```
 
+## Filtrieren
+
+Ein **Trichter mit Filterpapier** hängt im Stativring über dem rechten Becherglas. Gib 10 mL Natronlauge (zweimal 5 mL) zur Kupfersulfat-Lösung: Blaues Kupferhydroxid fällt aus. Gieß dann alles in den Trichter; wer das ganze Glas ausgießt, schwenkt auf und spült auch den Bodensatz mit hinein. Das Filtrat tropft von selbst ins Becherglas darunter, etwa ein halber Milliliter je Sekunde: Es ist klar und farblos, der blaue Niederschlag bleibt auf dem Papier. Den Rückstand kannst du dir in der Karte des Trichters ansehen und dort entsorgen.
+
+Fein verteilter Schwefel (aus Natriumthiosulfat und Salzsäure) läuft dagegen durch das Filter: Das Filtrat bleibt trüb. Für diesen zweiten Versuch stehen ein weiterer Trichter und ein Becherglas im Regal.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"loesung","contains":[{"reagent":"CuSO4 0.5M","ml":10}]},
+  {"type":"beaker","id":"filtrat"},
+  {"type":"funnel","id":"trichter","over":"filtrat"}
+ ],
+ "shelf":["NaOH 1M","Na2S2O3 1M","HCl 2M","beaker","funnel"],
+ "show":{"charts":false}}
+```
+
 ## Kupfer und Ammoniak
 
 Zur hellblauen Kupfersulfat-Lösung wenig Ammoniaklösung geben: Es fällt hellblaues Kupferhydroxid. Mit viel Ammoniak löst sich der Niederschlag, und die Lösung wird tiefblau – das Tetraamminkupfer-Ion. Salzsäure macht alles rückgängig.
@@ -963,7 +979,7 @@ Gib dann Natronlauge in kleinen Portionen zur Säure. Solange sich etwas tut, wa
 
 „Aufbau kopieren“ schreibt den Aufbau als Text in die Zwischenablage, im selben Format wie die Beschreibung unter jeder Fläche; falls der Browser das nicht erlaubt, steht der Text zum Markieren unter der Fläche. In einen Kurs eingefügt, ergibt er denselben Tisch. So lässt sich ein Versuch durch Antippen aufbauen statt von Hand beschreiben.
 
-Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gegeben wurde. Beim Umgießen geht der entsprechende Anteil der Flüssigkeiten mit, Feststoffe bleiben zurück. Was aus einer Bürette getropft ist, steht weiter in der Bürette, und Reaktionen laufen nach dem Einfügen von vorn: Es ist der Aufbau, nicht der Zwischenstand eines Versuchs. Regal, Aufgabe, eigene Daten und alle anderen Angaben bleiben, wie sie in der Beschreibung standen.
+Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gegeben wurde. Beim Umgießen geht der entsprechende Anteil der Flüssigkeiten mit, Feststoffe bleiben zurück. Was aus einer Bürette getropft oder durch einen Trichter gelaufen ist, steht weiter in der Bürette oder im Trichter, und Reaktionen laufen nach dem Einfügen von vorn: Es ist der Aufbau, nicht der Zwischenstand eines Versuchs. Regal, Aufgabe, eigene Daten und alle anderen Angaben bleiben, wie sie in der Beschreibung standen.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1271,6 +1287,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `testtube` | Reagenzglas, 20 mL | `contains` |
 | `beaker` | Becherglas | `ml` Größe: 50, 100 (Vorgabe), 250 oder 600; `contains` |
 | `calorimeter` | Kalorimeter: zwei Styroporbecher mit Deckel, 250 mL, 7 g; hält die Wärme. Es kommt nicht auf Brenner oder Wasserbad, und Elektroden passen nicht hinein | `contains` |
+| `funnel` | Trichter mit Filterpapier im Stativring, 60 mL; hängt über einem Gefäß (`over`) und läuft von selbst ab. Feststoffe und Niederschläge bleiben im Filter, Kolloide laufen durch | `over`, `contains` |
 | `burette` | Bürette, 50 mL, mit Hahn | `over`, `contains` |
 | `dish` | Abdampfschale aus Porzellan, 50 mL | `contains` |
 | `thermometer` | Thermometer, −10 °C bis 110 °C; ist es heißer, zeigt es „> 110 °C“ | `in` |
@@ -1522,6 +1539,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - **Streuung** (mit `scatter`): Jedes Messgerät weicht fest um einen ausgelosten Betrag ab und rauscht dazu; das Rauschen wechselt jede Sekunde, und die Trägheit des Geräts glättet es. Die größten Abweichungen (fest / Rauschen, geschätzt nach Schulgeräten): Thermometer 0,3 / 0,05 °C, pH-Meter 0,05 / 0,01, Leitfähigkeit 2 % / 0,5 %, Fotometer 0,005 + 1 % / 0,002, Manometer 0,01 / 0,002 bar, Strom- und Spannungsmesser 1 % / 0,5 mA bzw. 2 mV (ohne Strom zeigt der Strommesser 0), Kolbenprober 2 % ohne Rauschen und höchstens 100 mL, Waage 0,02 % / 0,005 g (Tara stellt sie genau auf null). Das Rauschen liegt auf der Anzeige, nach der Trägheit des Fühlers. Am Ende seiner Skala zeigt ein Gerät das Ende. Die Chemie rechnet weiter mit den wahren Werten; Aufgaben, Diagramme, Tabelle und die höchste Temperatur im Protokoll sehen die Anzeige. Die Auslosung bleibt beim Zurückspulen und Zurücksetzen dieselbe. Im Ruhezustand steht die Uhr und mit ihr das Rauschen.
 - **Gefahrstoffkennzeichnung:** Aus der Einstufung des reinen Stoffs folgt die der Lösung nach den Gemisch-Regeln der CLP-Verordnung (Anhang I): spezifische Konzentrationsgrenzen, wo es sie gibt, sonst die allgemeinen; die akute Toxizität beim Verschlucken und beim Einatmen über den Schätzwert des Gemischs (Schätzwert durch Massenanteil); die Umweltgefahren über die M-Faktoren (chronisch 2 allein: Piktogramm ohne Signalwort). Danach die Vorrangregeln für Piktogramme und Signalwort. Der Massenanteil folgt aus der Zusammensetzung der Flasche. Grundlage sind die harmonisierten Einstufungen (CLP Anhang VI, bis zur 22. Anpassung), sonst die üblichen der Lieferanten.
 - **Entsorgen:** Der passende Behälter folgt aus dem Inhalt, in dieser Rangfolge: Reste von Alkalimetallen gehören in keinen Behälter, sondern zurück zur Lehrkraft; Ionen oder Verbindungen von Schwermetallen (Kupfer, Zink, Silber, Barium, Chrom, Cobalt, Mangan, Nickel, Blei, Cadmium, Quecksilber, Zinn, Arsen, Antimon, Thallium, Selen, Vanadium, Molybdän, Bismut, Uran), gelöst oder als Niederschlag, zu den Schwermetallsalzen; Bleichlauge, Chlor und Iod (ab 10 µmol) erst mit Natriumthiosulfat reduzieren; organische Lösungsmittel ab 15 % des Volumens zu den organischen Lösungsmitteln; eine Flüssigkeit mit pH unter 6 oder über 9 zu den Säuren und Laugen (oder vorher neutralisieren), auch wenn noch Feststoffreste darin liegen; Stücke aus dem Regal (ab 10 mg) und ein trockener Rückstand zu den Feststoffen; alles andere darf in den Ausguss. Lässt sich kein pH-Wert rechnen (konzentrierte Säure, Brei), entscheidet der Überschuss an Säure oder Lauge. Eine harmlose Lösung in einem Sammelbehälter gilt als richtig, mit dem Hinweis, dass der Ausguss genügt hätte. Bei unbekannten Proben sagt das Protokoll nur, ob der Behälter passte. Angelehnt an die Regeln der Schulen (DGUV Regel 113-018).
+- **Filtrieren:** Der Trichter läuft von selbst mit 0,5 mL/s ins Gefäß darunter (geschätzt für einen Rundfilter), solange darin Flüssigkeit ist und darunter Platz. Durch das Filter geht nur die Lösung und, was kolloid verteilt ist (Schwefel); alles andere bleibt als Rückstand im Filter. Wird ein Glas ganz in den Trichter ausgegossen, kommen auch der Bodensatz und die Stücke aus dem Regal mit (aufgeschwemmt); wer nur einen Teil abgießt, lässt den Bodensatz im Glas.
 - **Thermometer:** Es folgt der Temperatur mit einer Verzögerung von etwa drei Sekunden und reicht bis 110 °C; darüber zeigt es das Ende seiner Skala. Die Temperaturkurve im Diagramm ist das, was das Thermometer zeigt; ohne Thermometer gibt es keine Kurve.
 - **Zugießen** dauert je nach Menge eine halbe bis vier Sekunden, ein Tropfen eine Viertelsekunde. Deshalb schlägt der Indikator mitten im Zugießen um.
 - **Farbe:** Lambert-Beer für jede Wellenlänge des sichtbaren Lichts, danach Umrechnung in eine Bildschirmfarbe. Die Schichtdicke ist die Weite des Gefäßes: 1,4 cm im Reagenzglas, 5 cm im Becherglas für 100 mL.
@@ -1594,6 +1612,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Im idealen Modell ist Ammoniumnitrat schon bei 3,6 mol/L gesättigt; im Labor lösen sich in 100 g Wasser fast 200 g. Kaliumnitrat gibt es aus demselben Grund nicht als Feststoff: Die ideale Rechnung sättigte es schon bei 0,75 mol/L statt gut 3 mol/L. Ammoniumnitrat zersetzt sich beim Erhitzen nicht, auch trocken nicht. Natriumhydroxid löst sich nur in Wasser: In konzentrierter Schwefelsäure oder in Ethanol bleiben die Plätzchen liegen, und es wird nicht warm. Gerührt wird nicht eigens, jedes Gefäß gilt als durchmischt; Calciumchlorid ist das wasserfreie Salz, nicht das Hexahydrat, das sich unter Abkühlung löst.
 - Gekennzeichnet werden nur die Flaschen aus dem Regal, nicht die Gemische, die in einem Glas entstehen. H- und P-Sätze fehlen. „Korrosiv gegenüber Metallen“ hat keine Gemisch-Regel; die Grenzen (Salzsäure, Schwefelsäure, Natronlauge ab etwa 0,05 bis 0,1 mol/L) folgen den Etiketten der Lieferanten. Indikatorlösungen tragen das Etikett der üblichen Schulprodukte in Ethanol, obwohl das Labor sie als wässrige Lösung rechnet. Entwürfe späterer Anpassungen (Kaliumbromid und Lithiumchlorid als fortpflanzungsgefährdend) und abweichende Angaben einzelner Lieferanten (Silbernitrat, Kaliumiodid) sind nicht oder nur in einer Fassung berücksichtigt; maßgeblich ist das Sicherheitsdatenblatt der echten Flasche. Die akute Toxizität bei Hautkontakt fehlt. Die Regel für starke Säuren und Basen (pH unter 2 oder über 11,5 ab 1 % ätzend) ist nicht gerechnet: Ammoniak mit 1 mol/L gilt hier als reizend. Unsicher, weil Lieferanten sie verschieden einstufen: Zinkiodid (umweltgefährlich?), Eisen(III)-chlorid (korrosiv gegenüber Metallen, sensibilisierend?), Kupfer(II)-chlorid (giftig?), Kaliumiodid (Organschäden, nur bei einem Teil der Lieferanten) und der Schätzwert für Kaliumdichromat (oral 90,5 mg/kg; in der Literatur auch um 25).
 - Beim Entsorgen gibt es je Inhalt genau einen richtigen Behälter; das pH-Fenster für den Ausguss (6 bis 9) ist streng. Sulfit (mit Säuren entsteht Schwefeldioxid) wird nicht eigens behandelt, und beim Reduzieren von Bleichlauge entsteht Säure, die man danach neutralisiert. Viele Schulen sammeln anders (eigene Kanister für Chromate, Silber oder halogenhaltige Lösungsmittel, Neutralisieren statt Sammeln von Säuren und Laugen); Spuren unter 0,1 µmol zählen nicht, und ein Metallstück ist Feststoff, kein Schwermetallsalz.
+- Das Filter hält jeden Niederschlag ganz zurück und lässt jedes Kolloid ganz durch; es läuft immer gleich schnell, auch wenn ein dicker Rückstand darin liegt. Auswaschen und Trocknen des Rückstands, Falten- und Rundfilter und das Absaugen fehlen. Hängt der Trichter über keinem Gefäß, hält er seine Flüssigkeit, wie eine Bürette mit geschlossenem Hahn.
 - Das Wasserbad hat seine Temperatur sofort; aufheizen und abkühlen muss nur das Gefäß darin. Über 95 °C und unter 0 °C geht es nicht.
 - Die Teilchenlupe zeigt Mengenverhältnisse, keine Größen, Formen oder Abstände der Teilchen, und ihre Wege sind erfunden. Stöße und Reaktionen einzelner Teilchen sieht man nicht.
 - Der Gasraum ist ein einziger durchmischter Raum mit festen Zeiten für das Verfliegen. Gase lassen sich noch nicht in ein anderes Gefäß leiten. Im verschlossenen Gefäß brennt gar nichts, auch nicht mit dem Sauerstoff, der noch darin wäre.
