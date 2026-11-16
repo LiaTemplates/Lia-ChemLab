@@ -336,6 +336,7 @@
     "err.size": "Posuda ne postoji u toj veličini",
     "err.model": "Takav računski model ne postoji (ideal ili real)",
     "err.view": "Takav prikaz ne postoji (2d ili 3d)",
+    "err.scatter": "scatter je true, false ili broj",
     "err.scene": "Ovaj podatak o sceni ne odgovara",
     "view": "3D",
     "view.loading": "Učitava se 3D prikaz …",

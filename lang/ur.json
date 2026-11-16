@@ -336,6 +336,7 @@
     "err.size": "یہ برتن اس سائز میں دستیاب نہیں",
     "err.model": "ایسا کوئی حسابی ماڈل نہیں (ideal یا real)",
     "err.view": "ایسا کوئی منظر نہیں (2d یا 3d)",
+    "err.scatter": "scatter یا تو true، false یا کوئی عدد ہوتا ہے",
     "err.scene": "سین کی یہ ترتیب درست نہیں",
     "view": "3D",
     "view.loading": "3D منظر لوڈ ہو رہا ہے …",

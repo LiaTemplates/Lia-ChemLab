@@ -336,6 +336,7 @@
     "err.size": "Šāda izmēra trauka nav",
     "err.model": "Šāda aprēķina modeļa nav (ideal vai real)",
     "err.view": "Šāda skata nav (2d vai 3d)",
+    "err.scatter": "scatter ir true, false vai skaitlis",
     "err.scene": "Šis ainas iestatījums neder",
     "view": "3D",
     "view.loading": "Ielādē 3D skatu …",

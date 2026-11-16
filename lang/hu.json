@@ -336,6 +336,7 @@
     "err.size": "Az edény ebben a méretben nem létezik",
     "err.model": "Nincs ilyen számítási modell (ideal vagy real)",
     "err.view": "Nincs ilyen nézet (2d vagy 3d)",
+    "err.scatter": "A scatter értéke true, false vagy egy szám",
     "err.scene": "Ez a jelenetbeállítás nem megfelelő",
     "view": "3D",
     "view.loading": "A 3D nézet betöltése …",

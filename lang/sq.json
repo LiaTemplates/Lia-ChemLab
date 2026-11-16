@@ -336,6 +336,7 @@
     "err.size": "Kjo enë nuk ekziston në këtë madhësi",
     "err.model": "Ky model llogaritjeje nuk ekziston (ideal ose real)",
     "err.view": "Kjo pamje nuk ekziston (2d ose 3d)",
+    "err.scatter": "scatter është true, false ose një numër",
     "err.scene": "Ky parametër i skenës nuk përshtatet",
     "view": "3D",
     "view.loading": "Pamja 3D po ngarkohet …",

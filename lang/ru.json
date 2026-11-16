@@ -336,6 +336,7 @@
     "err.size": "Сосуда такого размера нет",
     "err.model": "Такой расчётной модели нет (ideal или real)",
     "err.view": "Такого вида нет (2d или 3d)",
+    "err.scatter": "scatter — это true, false или число",
     "err.scene": "Это указание к сцене не подходит",
     "view": "3D",
     "view.loading": "Загружается 3D-вид …",

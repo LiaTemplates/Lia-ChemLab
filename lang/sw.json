@@ -336,6 +336,7 @@
     "err.size": "Chombo hiki hakipatikani kwa ukubwa huu",
     "err.model": "Hakuna modeli ya kukokotoa kama hiyo (ideal au real)",
     "err.view": "Hakuna mwonekano kama huo (2d au 3d)",
+    "err.scatter": "scatter ni true, false au namba",
     "err.scene": "Mpangilio huu wa mandhari haufai",
     "view": "3D",
     "view.loading": "Mwonekano wa 3D unapakiwa …",

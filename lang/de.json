@@ -336,6 +336,7 @@
     "err.size": "Diese Größe gibt es für das Gefäß nicht",
     "err.model": "Dieses Rechenmodell gibt es nicht (ideal oder real)",
     "err.view": "Diese Ansicht gibt es nicht (2d oder 3d)",
+    "err.scatter": "scatter ist true, false oder eine Zahl",
     "err.scene": "Diese Angabe zur Szene passt nicht",
     "view": "3D",
     "view.loading": "Die 3D-Ansicht lädt …",

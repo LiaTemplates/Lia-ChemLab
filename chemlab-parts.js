@@ -161,7 +161,7 @@
       "err.amount": "The amount is missing, does not fit the substance (solid in g, liquid in ml or drops) or is too large for the vessel",
       "err.size": "The vessel does not come in this size",
       "err.model": "There is no such calculation model (ideal or real)",
-      "err.view": "There is no such view (2d or 3d)", "err.scene": "This scene setting does not fit",
+      "err.view": "There is no such view (2d or 3d)", "err.scatter": "scatter is true, false or a number", "err.scene": "This scene setting does not fit",
       "view": "3D", "view.loading": "Loading the 3D view …", "view.failed": "The 3D view could not be shown, the bench stays 2D",
       "view.scene": "There is no such scene",
       "err.data": "Error in the custom substance data",

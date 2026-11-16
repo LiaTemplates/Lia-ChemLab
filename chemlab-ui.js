@@ -105,7 +105,7 @@
     }
     if (st.error) {
       var key = { json: "err.json", part: "err.part", reagent: "err.reagent", place: "err.place", sample: "err.sample", data: "err.data",
-        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene" }[st.error.code] || "err.other";
+        amount: "err.amount", size: "err.size", model: "err.model", task: "err.task", pack: "err.pack", view: "err.view", scene: "err.scene", scatter: "err.scatter" }[st.error.code] || "err.other";
       el.innerHTML = '<p class="cl-error" role="alert">' + esc(T(key)) + (st.error.detail ? ": " + esc(L.explain(st.error.detail, lang)) : "") + "</p>";
       stranded = stranded.filter(function (w) { return w.el !== el && w.el.isConnected !== false; }).concat([{ el: el, source: source, text: text }]);
       return;

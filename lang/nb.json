@@ -336,6 +336,7 @@
     "err.size": "Beholderen finnes ikke i denne størrelsen",
     "err.model": "Denne beregningsmodellen finnes ikke (ideal eller real)",
     "err.view": "Denne visningen finnes ikke (2d eller 3d)",
+    "err.scatter": "scatter er true, false eller et tall",
     "err.scene": "Denne angivelsen for scenen passer ikke",
     "view": "3D",
     "view.loading": "3D-visningen lastes …",

@@ -336,6 +336,7 @@
     "err.size": "この容器にはそのサイズがありません",
     "err.model": "そのような計算モデルはありません（ideal または real）",
     "err.view": "そのような表示はありません（2d または 3d）",
+    "err.scatter": "scatter は true、false または数値です",
     "err.scene": "シーンの設定が合っていません",
     "view": "3D",
     "view.loading": "3D表示を読み込んでいます…",

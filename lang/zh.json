@@ -336,6 +336,7 @@
     "err.size": "这种容器没有这个规格",
     "err.model": "没有这种计算模型（ideal 或 real）",
     "err.view": "没有这种视图（2d 或 3d）",
+    "err.scatter": "scatter 为 true、false 或一个数字",
     "err.scene": "场景设置不正确",
     "view": "3D",
     "view.loading": "正在加载 3D 视图……",
