@@ -424,15 +424,17 @@
       if (h.test && L.parts[h.id].probe === "pipette") {       // Vollpipette: erst aufziehen, dann abgeben
         p = L.parts[h.id].ml;
         if (L.parts[L.vessel(lab, id).type].dispenser && !h.from) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
+        if (lab.tools.some(function (t) { return t.in === id && L.parts[t.type].stopper; })) { status(T("closed")); return; }
         if (!h.from) {
           if (L.pourable(lab, id) < p - 1e-9) { status(T("pipetteShort")); return; }
           st.hand = { id: h.id, test: true, from: id };
-          status("");
           renderHand();
+          status(T("pipetteDrawn", { vessel: names()[id] || id }));      // die Hand ist keine Live-Region: die Statuszeile sagt es an
           return;
         }
         if (h.from === id) { status(T("pipetteSame")); return; }
-        if (L.pourable(lab, h.from) < p - 1e-9 || L.free(lab, L.vessel(lab, id)) < p - 1e-9) { status(T("pipetteShort")); return; }
+        if (L.pourable(lab, h.from) < p - 1e-9) { status(T("pipetteShort")); return; }
+        if (L.free(lab, L.vessel(lab, id)) < p - 1e-9) { status(T("pipetteFull")); return; }
         kind = h.from;
         st.hand = { id: h.id, test: true };
         renderHand();

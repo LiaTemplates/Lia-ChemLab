@@ -20,7 +20,7 @@
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
       "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.cylinder": "measuring cylinder", "part.pipette": "volumetric pipette {ml} mL",
       "hint.pipette1": "Now tap the vessel the pipette should draw from.", "hint.pipette2": "Now tap the vessel it should deliver into.",
-      "say.pipetted": "{ml} mL transferred with the pipette from {from} into {vessel}", "pipetteShort": "There is not enough in it for the pipette, or no room in the target.",
+      "say.pipetted": "{ml} mL transferred with the pipette from {from} into {vessel}", "pipetteShort": "There is not enough in it for the pipette.", "pipetteFull": "There is no room for it in that vessel.", "pipetteDrawn": "Drawn up from {vessel}.",
       "noHeat": "A measuring cylinder is not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
@@ -1318,18 +1318,23 @@
     width: function (v) { return cylSize(v)[0] + 60; },
     bounds: function (v) { var s = cylSize(v); return { x0: -s[0] / 2 - 14, x1: s[0] / 2 + 14, top: -s[1] - CYL_FOOT - 6 }; },
     surface: cylSurface,
-    probe: function (v, type) {
+    probe: function (v, type, slot) {
       var s = cylSize(v), rim = -s[1] - CYL_FOOT;
       if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: rim, w: s[0] + 2 };
       if (type === "tube") return { x: 0, rim: rim, w: s[0] + 2, top: rim - PIPE_RISE };
-      if (type === "bridge" || type === "condenser") return { x: 0, rim: rim };
+      if (type === "bridge" || type === "condenser") return { x: (slot || 0) * (s[0] / 2 - 2), rim: rim };
       if (type === "reflux") return { x: 0, rim: rim, top: rim - REFLUX };
-      return { x: 0, bottom: -CYL_FOOT - 6, top: rim - 70, tag: 10, box: 10 };
+      // nebeneinander, mit der Anzeige links: rechts stehen die Zahlen der Skala
+      if (type === "phmeter") return { x: s[0] / 4, bottom: -CYL_FOOT - 6, top: rim - 50, box: -40 };
+      if (type === "conductometer") return { x: -1, bottom: -CYL_FOOT - 6, top: rim - 76, box: -40 };
+      if (type === "photometer") return { x: 1, bottom: -CYL_FOOT - 6, top: rim - 92, box: -68 };
+      return { x: -s[0] / 4, bottom: -CYL_FOOT - 6, top: rim - 70, tag: -62 };
     },
     mount: function (w) { var s = cylSize(w); return { x: 0, rim: -s[1] - CYL_FOOT, surface: w.ml > 0.005 ? cylSurface(w) : -CYL_FOOT - 2, edge: s[0] / 2 + 14 }; },
     draw: function (w, ctx) {
       var s = cylSize(w), a = s[0] / 2, h = s[1], rim = -h - CYL_FOOT, y = cylSurface(w), ml, my, marks = "", major;
-      var fill = function (level) { return "M" + (-a + 2) + "," + f(level) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level) + "Z"; };
+      // oben der Meniskus: am Rand hochgezogen, abgelesen wird der tiefste Punkt (level)
+      var fill = function (level) { return "M" + (-a + 2) + "," + f(level - 2.5) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level - 2.5) + "Q0," + f(level + 2.5) + " " + (-a + 2) + "," + f(level - 2.5) + "Z"; };
       if (w.broken) return shards(a + 4, ctx);
       for (ml = s[2]; ml <= w.cap + 1e-9; ml += s[2]) {
         major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;

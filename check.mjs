@@ -4358,7 +4358,8 @@ test("Messzylinder und Pipette: genau abmessen; mit Streuung ist Umgießen ungen
   const spread = (how) => {
     const out = [];
     for (let seed = 1; seed <= 30; seed++) {
-      const k = lab([{ type: how === "cylinder" ? "cylinder" : "beaker", id: "a", ml: 100, contains: [{ reagent: "H2O", ml: 80 }] }, { type: "beaker", id: "b", ml: 250 }], { room: 20, scatter: seed });
+      const k = lab([how === "cylinder" ? { type: "cylinder", id: "a", ml: 25, contains: [{ reagent: "H2O", ml: 25 }] } : { type: "beaker", id: "a", ml: 100, contains: [{ reagent: "H2O", ml: 80 }] },
+        { type: "beaker", id: "b", ml: 250 }], { room: 20, scatter: seed });
       if (how === "pipette") L.pipette(k, "a", "b", 20); else L.pour(k, "a", "b", 20);
       L.step(k, 30);
       out.push(L.volume(L.vessel(k, "b")) * 1000 / 20 - 1);
@@ -4367,7 +4368,7 @@ test("Messzylinder und Pipette: genau abmessen; mit Streuung ist Umgießen ungen
   };
   const beaker = spread("beaker"), cylinder = spread("cylinder"), pipette = spread("pipette");
   assert.ok(beaker.max <= 0.05 + 1e-9 && beaker.range > 0.03, `Becherglas: ${JSON.stringify(beaker)}`);
-  assert.ok(cylinder.max <= 0.01 + 1e-9 && cylinder.range > 0.006, `Messzylinder: ${JSON.stringify(cylinder)}`);
+  assert.ok(cylinder.max <= 0.5 / 20 + 1e-9 && cylinder.range > 0.01, `Messzylinder 25 mL, ±0,5 mL: ${JSON.stringify(cylinder)}`);
   assert.ok(pipette.max <= 0.002 + 1e-9 && pipette.range > 0.001, `Pipette: ${JSON.stringify(pipette)}`);
   // in einen Messzylinder bis zur Marke gießen ist so genau wie aus ihm abmessen
   let into = 0;
@@ -4377,7 +4378,41 @@ test("Messzylinder und Pipette: genau abmessen; mit Streuung ist Umgießen ungen
     L.step(k, 30);
     into = Math.max(into, Math.abs(L.volume(L.vessel(k, "m")) * 1000 / 20 - 1));
   }
-  assert.ok(into <= 0.01 + 1e-9, `in den Messzylinder: ${into}`);
+  assert.ok(into <= 0.5 / 20 + 1e-9, `in den Messzylinder (25 mL, ±0,5 mL): ${into}`);
+  // die Fehlergrenze eines Messzylinders ist eine Menge (DIN ISO 4788, Klasse B): 5 mL im 10-mL-Zylinder genau, im 100-mL-Zylinder kaum
+  const five = (size) => {
+    const dev = [];
+    for (let seed = 1; seed <= 30; seed++) {
+      const k = lab([{ type: "beaker", id: "a", ml: 250, contains: [{ reagent: "H2O", ml: 80 }] }, { type: "cylinder", id: "m", ml: size }], { room: 20, scatter: seed });
+      L.pour(k, "a", "m", 5);
+      L.step(k, 30);
+      dev.push(L.volume(L.vessel(k, "m")) * 1000 - 5);
+    }
+    return { max: Math.max(...dev.map(Math.abs)), range: Math.max(...dev) - Math.min(...dev) };
+  };
+  const small = five(10), big = five(100);
+  assert.ok(small.max <= 0.2 + 1e-9, `10 mL: ±0,2 mL: ${JSON.stringify(small)}`);
+  assert.ok(big.max <= 1 + 1e-9 && big.range > 1, `100 mL: ±1 mL: ${JSON.stringify(big)}`);
+  // nicht ganz abgegossen bleibt nicht ganz: auch mit Streuung bleibt der Bodensatz im Glas, wenn ein Rest Flüssigkeit bleibt
+  for (let seed = 1; seed <= 20; seed++) {
+    const k = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20, scatter: seed });
+    L.add(k, "b", "NaOH 1M", { ml: 10 });
+    L.step(k, 60);
+    L.pour(k, "b", "t", 19.7);
+    L.step(k, 60);
+    assert.ok(L.vessel(k, "b").n["Cu(OH)2(s)"] > 0, `Auslosung ${seed}: der Bodensatz bleibt beim Abgießen im Glas`);
+  }
+  // zwei Güsse aus derselben Quelle im selben Augenblick weichen verschieden ab
+  const twin = lab([{ type: "beaker", id: "a", ml: 250, contains: [{ reagent: "H2O", ml: 100 }] }, { type: "beaker", id: "b" }, { type: "beaker", id: "c" }], { room: 20, scatter: 4 });
+  L.pour(twin, "a", "b", 20); L.pour(twin, "a", "c", 20);
+  L.step(twin, 30);
+  assert.notEqual(L.volume(L.vessel(twin, "b")), L.volume(L.vessel(twin, "c")));
+  // die Pipette zieht nicht aus einer Bürette und nicht durch einen Stopfen
+  const odd = lab([{ type: "beaker", id: "a", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burette", id: "bu", over: "a", contains: [{ reagent: "H2O", ml: 40 }] },
+    { type: "beaker", id: "s", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "stopper", in: "s" }, { type: "beaker", id: "b" }], { room: 20 });
+  assert.equal(L.pipette(odd, "bu", "b", 10), false, "nicht aus der Bürette");
+  assert.equal(L.pipette(odd, "s", "b", 10), false, "nicht aus einem verschlossenen Glas");
+  assert.equal(L.pipette(odd, "a", "s", 10), false, "nicht in ein verschlossenes Glas");
   // alles ausgießen bleibt alles, auch mit Streuung
   const all = lab([{ type: "beaker", id: "a", contains: [{ reagent: "H2O", ml: 30 }] }, { type: "beaker", id: "b", ml: 250 }], { room: 20, scatter: 3 });
   L.pour(all, "a", "b", 30);
@@ -4673,6 +4708,7 @@ test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Z
   assert.match(part(el, ".cl-hand").innerHTML, /Vollpipette 10 mL[\s\S]*aufziehen/);
   tap(el, "a");
   assert.match(part(el, ".cl-hand").innerHTML, /abgeben/, "jetzt das Ziel");
+  assert.equal(part(el, ".cl-status").textContent, "Aus Becherglas 1 aufgezogen.", "die Statuszeile sagt es an");
   tap(el, "b");
   frames(30);
   near(L.volume(L.vessel(state(el).run.lab, "b")) * 1000, 10, 1e-9);
@@ -8779,7 +8815,7 @@ test("README: die Folie zum genauen Abmessen hält, was ihr Text verspricht", ()
     for (const id of ["a", "b", "c"]) worst[id] = Math.max(worst[id], Math.abs(L.volume(L.vessel(l, id)) * 1000 / 20 - 1));
   }
   assert.ok(worst.c < worst.b && worst.b < worst.a, JSON.stringify(worst));
-  assert.ok(worst.a <= 0.05 && worst.b <= 0.01 && worst.c <= 0.002, JSON.stringify(worst));
+  assert.ok(worst.a <= 0.05 && worst.b <= 0.025 && worst.c <= 0.002, JSON.stringify(worst));
 });
 
 test("README: die Folie zur Kalorimetrie hält, was ihr Text verspricht", () => {

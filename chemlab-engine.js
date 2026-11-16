@@ -663,19 +663,20 @@
   // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
   // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
   registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
-  // Messzylinder: hoch und schmal, mit feiner Skala; er wird nicht erhitzt (noHeat). pour: wie genau sich daraus eine eingestellte
-  // Menge abgießen lässt, wenn die Anzeigen streuen (Vorgabe für andere Gefäße 0,05)
+  // Messzylinder: hoch und schmal, mit feiner Skala; er wird nicht erhitzt (noHeat). tol: Fehlergrenze in mL, mit der sich eine Menge
+  // bis zur Marke einfüllen oder abmessen lässt, wenn die Anzeigen streuen (DIN ISO 4788, Klasse B)
   registerPart("cylinder", {
-    kind: "vessel", size: 100, noHeat: true, pour: 0.01,
+    kind: "vessel", size: 100, noHeat: true,
     sizes: {
-      10: { cap: 10, d: 1.3, Cv: 10, loss: 0.04, heat: 0.06 },
-      25: { cap: 25, d: 1.9, Cv: 16, loss: 0.06, heat: 0.08 },
-      50: { cap: 50, d: 2.4, Cv: 24, loss: 0.08, heat: 0.10 },
-      100: { cap: 100, d: 3.0, Cv: 36, loss: 0.11, heat: 0.12 }
+      10: { cap: 10, d: 1.3, Cv: 10, loss: 0.04, heat: 0.06, tol: 0.2 },
+      25: { cap: 25, d: 1.9, Cv: 16, loss: 0.06, heat: 0.08, tol: 0.5 },
+      50: { cap: 50, d: 2.4, Cv: 24, loss: 0.08, heat: 0.10, tol: 1 },
+      100: { cap: 100, d: 3.0, Cv: 36, loss: 0.11, heat: 0.12, tol: 1 }
     }
   });
-  // Vollpipetten: eine Probe in der Hand; sie zieht aus einem Gefäß genau ihr Volumen auf und gibt es in ein anderes (±0,2 %)
-  [5, 10, 20, 25].forEach(function (ml) { registerPart("pipette" + ml, { kind: "test", probe: "pipette", ml: ml, label: "pipette", pour: 0.002 }); });
+  // Vollpipetten: eine Probe in der Hand; sie zieht aus einem Gefäß genau ihr Volumen auf und gibt es in ein anderes
+  var PIPETTE = 0.002;                                            // Fehlergrenze als Anteil (Klasse AS: 5 mL ±0,3 %, 25 mL ±0,12 %)
+  [5, 10, 20, 25].forEach(function (ml) { registerPart("pipette" + ml, { kind: "test", probe: "pipette", ml: ml, label: "pipette" }); });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
@@ -1263,15 +1264,27 @@
     return Math.max(0, ml);
   }
 
-  // Umgießen. Streuen die Anzeigen (scatter), trifft man eine eingestellte Menge nur so genau, wie die Gefäße es erlauben
-  // (accuracy: größte Abweichung als Anteil; sonst die genauere Skala von Quelle und Ziel, Vorgabe 0,05: in einen Messzylinder
-  // gießt man bis zur Marke, aus ihm liest man ab); alles auszugießen gelingt immer
+  // Fehlergrenze in mL, mit der sich ml umgießen lassen: Ist ein Messzylinder beteiligt, misst man an ihm (bis zur Marke füllen
+  // oder ablesen) und es gilt seine Grenze, bei zweien die kleinere; sonst nach Augenmaß 5 % (pour: eigener Anteil eines Gefäßes)
+  function tolerance(from, to, ml) {
+    var a = spec(from).tol, b = spec(to).tol, share = L.parts[from.type].pour;
+    if (a != null || b != null) return Math.min(a != null ? a : Infinity, b != null ? b : Infinity);
+    return (share != null ? share : 0.05) * ml;
+  }
+
+  // Umgießen. Streuen die Anzeigen (scatter), trifft man eine eingestellte Menge nur so genau, wie die Gefäße es erlauben:
+  // am Messzylinder misst man ab (siehe tolerance); accuracy: Anteil, der das ersetzt
+  // (Pipette). Alles auszugießen gelingt immer; wer nur einen Teil abgießt, lässt immer einen Rest (so bleibt der Bodensatz im Glas)
   function pour(lab, fromId, toId, ml, accuracy) {
-    var from = vessel(lab, fromId), to = vessel(lab, toId), most;
+    var from = vessel(lab, fromId), to = vessel(lab, toId), most, whole;
     if (!from || !to || from === to || from.broken || to.broken) return false;
     most = pourable(lab, fromId);
     ml = +ml || 0;
-    if (lab.scatter != null && ml < most - 1e-6) ml *= 1 + (accuracy != null ? accuracy : Math.min(L.parts[from.type].pour || 0.05, L.parts[to.type].pour || 0.05)) * jitter(lab.scatter, fromId, "pour" + lab.tick);
+    whole = ml >= most - 1e-6;
+    if (lab.scatter != null && !whole) {
+      ml += (accuracy != null ? accuracy * ml : tolerance(from, to, ml)) * jitter(lab.scatter, fromId + ">" + toId, "pour" + lab.tick);
+      ml = Math.min(ml, most - 0.01);
+    }
     ml = Math.min(ml, most, free(lab, to));
     if (!(ml > 1e-6)) return false;
     lab.flows.push({ from: fromId, to: toId, left: ml, rate: ml / duration(ml) });
@@ -1279,11 +1292,13 @@
   }
 
   // Mit einer Vollpipette genau ml aus einem Gefäß in ein anderes: nur, wenn so viel darin ist und im Ziel Platz hat
+  // nicht aus einer Bürette oder einem Trichter (die hängen) und nicht durch einen Stopfen
   function pipette(lab, fromId, toId, ml) {
     var from = vessel(lab, fromId), to = vessel(lab, toId);
-    if (!from || !to || from === to || from.broken || to.broken) return false;
+    if (!from || !to || from === to || from.broken || to.broken || L.parts[from.type].dispenser) return false;
+    if (stoppered(lab, from) || stoppered(lab, to)) return false;
     if (pourable(lab, fromId) < ml - 1e-9 || free(lab, to) < ml - 1e-9) return false;
-    return pour(lab, fromId, toId, ml, 0.002);
+    return pour(lab, fromId, toId, ml, PIPETTE);
   }
 
   function empty(lab, vesselId) {
