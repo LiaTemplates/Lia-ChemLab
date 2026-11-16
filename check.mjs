@@ -7892,6 +7892,11 @@ test("README: die Folien zu Ammonium-Nachweis und Alkalimetallen halten, was ihr
   ["Li piece", "Na piece", "K piece"].forEach((id, k) => L.add(m, glass[k], id, { g: L.reagent(id).piece.g }));
   L.step(m, 120);
   glass.forEach((id) => assert.ok(["pink", "violet", "red"].includes(look(m, id).color.name), id + ": Phenolphthalein färbt sich"));
+  const early = L.createLab(metals), states = {};
+  ["Li piece", "Na piece", "K piece"].forEach((id, k) => L.add(early, glass[k], id, { g: L.reagent(id).piece.g }));
+  L.step(early, 1);
+  glass.forEach((id, k) => { const s = look(early, id).solids[0]; states[["Li", "Na", "K"][k]] = [s.float, s.molten, !!s.flame]; });
+  assert.deepEqual(states, { Li: [true, false, false], Na: [true, true, false], K: [true, true, true] }, "schwimmen; Natrium und Kalium schmelzen; Kalium brennt");
 });
 
 test("README: die Folien zu Veresterung und Destillation halten, was ihr Text verspricht", () => {

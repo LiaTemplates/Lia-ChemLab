@@ -91,7 +91,10 @@
     bubbles.count = 0;
     body.renderOrder = surface.renderOrder = 1;
     var burn = fx.burning();
-    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group);
+    var pieces = [];                  // je Feststoff seine Teile, damit Glühen und Schwimmen sie in jedem Bild nachführen
+    var hotFlame = fx.cone(0.12, 0xa9c2ff);           // Wasserstoff, der über einem heißen Stück brennt
+    hotFlame.visible = false;
+    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group, hotFlame);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -130,13 +133,23 @@
       surface.geometry.computeVertexNormals();
     }
 
-    function laySolids(list, shape, tall) {
-      var key = list.map(function (s) { return s.id + s.form + s.g0.toFixed(4) + Math.round(s.part * 30); }).join("|") + shape.id;
+    function laySolids(list, shape, tall, wet) {
+      var key = list.map(function (s) { return s.id + s.form + s.g0.toFixed(4) + Math.round(s.part * 30) + (s.float && wet ? "~" : "") + (s.molten ? "*" : ""); }).join("|") + shape.id;
       if (keys.solids === key) return;
       keys.solids = key;
       solids.children.slice().forEach(function (o) { solids.remove(o); o.geometry.dispose(); o.material.dispose(); });
+      pieces = [];
       list.forEach(function (s, index) {
-        var color = new THREE.Color((L.species(s.id) || {}).color || "#9aa0a8"), path, count, r, k, y, x;
+        var color = new THREE.Color((L.species(s.id) || {}).color || "#9aa0a8"), path, count, r, k, y, x, ball;
+        pieces[index] = [];
+        if (s.float && wet) {            // schwimmt: ein Stück an der Oberfläche, geschmolzen eine glänzende Kugel; die Lage folgt in update
+          r = (2.4 + 3 * Math.pow(s.part, 1 / 3)) / 16;
+          ball = new THREE.Mesh(s.molten ? new THREE.SphereGeometry(r, 20, 14) : new THREE.IcosahedronGeometry(r, 0), fx.matte(color, s.molten ? 0.15 : 0.6, s.molten ? 0.9 : 0.4));
+          ball.userData.r = r;
+          solids.add(ball);
+          pieces[index].push(ball);
+          return;
+        }
         if (s.form === "strip") {        // Band im Zickzack, wird dünner, nicht kürzer
           count = Math.max(2, Math.min(14, Math.round(s.g0 / 0.0104)));
           path = new THREE.CurvePath();
@@ -147,6 +160,7 @@
           };
           for (k = 0; k < count; k++) path.add(new THREE.LineCurve3(at(k), at(k + 1)));
           solids.add(new THREE.Mesh(new THREE.TubeGeometry(path, count * 4, 0.02 + 0.08 * s.part, 6, false), fx.matte(color, 0.35, 0.7)));
+          pieces[index].push(solids.children[solids.children.length - 1]);
         } else {
           count = s.form === "powder" ? 12 : Math.max(3, Math.min(9, Math.round(3 + s.g0 * 4)));
           r = s.form === "powder" ? 0.08 : (2 + 2.5 * Math.pow(s.part, 1 / 3)) / 16;
@@ -158,6 +172,7 @@
             m.rotation.set(k, k * 2, 0);
             m.castShadow = true;
             solids.add(m);
+            pieces[index].push(m);
           }
         }
       });
@@ -188,7 +203,25 @@
         crust.visible = w.residue > 1e-7;
         if (crust.visible) fill(crust, shape, shape.floor, shape.floor + Math.min(14, 2.5 + 30 * Math.sqrt(w.residue)) / 16, "crust");
         layer = layer || 0;
-        laySolids(w.solids || [], shape, tall);
+        laySolids(w.solids || [], shape, tall, wet);
+        // heiße Stellen: glühen in ihrer Glühfarbe; was schwimmt, treibt an der Oberfläche, und darüber brennt Wasserstoff
+        hotFlame.visible = false;
+        (w.solids || []).forEach(function (s, index) {
+          (pieces[index] || []).forEach(function (m) {
+            if (s.glow && s.glow.level > 0) m.material.emissive.setRGB(s.glow.rgb[0] / 255, s.glow.rgb[1] / 255, s.glow.rgb[2] / 255, THREE.SRGBColorSpace).multiplyScalar(0.4 + 1.2 * s.glow.level);
+            else m.material.emissive.setRGB(0, 0, 0);
+            if (!(s.float && wet) || m.userData.r == null) return;
+            var span = Math.max(0, r - m.userData.r) * 0.85, moving = s.molten && (s.spatter || s.flame);
+            m.position.set(moving ? (Math.sin(t * 2.3 + index) * 0.55 + Math.sin(t * 3.7 + 2 * index) * 0.35) * span : 0.15 * span, level + (s.molten ? 0.3 : 0.6) * m.userData.r,
+              moving ? Math.cos(t * 1.9 + index) * 0.5 * span : 0);
+            if (s.flame) {
+              hotFlame.visible = true;
+              hotFlame.material.uniforms.color.value.set(s.flame.color);
+              hotFlame.position.set(m.position.x, m.position.y + m.userData.r * 0.6, m.position.z);
+              hotFlame.scale.set(1, 0.9 * (1 + (ctx.still ? 0 : 0.12 * Math.sin(t * 17))), 1);
+            }
+          });
+        });
 
         // Blasen: Gas, das entsteht, und beim Sieden der Dampf. Zahl wie in 2D, beim Sieden mehr und größer.
         n = wet ? Math.min(48, (L.fx && L.fx.count ? L.fx.count(rate) : 0) * 2 + (boil ? 20 : 0)) : 0;
