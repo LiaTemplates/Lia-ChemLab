@@ -640,6 +640,7 @@
     "wine": "vi blanc (12 % d'alcohol)",
     "limewater": "aigua de calç (solució d'hidròxid de calci)",
     "H2SO4(l)": "àcid sulfúric (pur)",
-    "H2SO4 conc": "àcid sulfúric concentrat"
+    "H2SO4 conc": "àcid sulfúric concentrat",
+    "Fe3O4(s)": "òxid de ferro(II,III)"
   }
 }

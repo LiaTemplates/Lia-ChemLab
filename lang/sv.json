@@ -640,6 +640,7 @@
     "wine": "vitt vin (12 % alkohol)",
     "limewater": "kalkvatten (kalciumhydroxidlösning)",
     "H2SO4(l)": "svavelsyra (ren)",
-    "H2SO4 conc": "koncentrerad svavelsyra"
+    "H2SO4 conc": "koncentrerad svavelsyra",
+    "Fe3O4(s)": "järn(II,III)oxid"
   }
 }

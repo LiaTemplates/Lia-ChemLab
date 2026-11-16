@@ -640,6 +640,7 @@
     "wine": "bijelo vino (12 % alkohola)",
     "limewater": "vapnena voda (otopina kalcijeva hidroksida)",
     "H2SO4(l)": "sumporna kiselina (čista)",
-    "H2SO4 conc": "koncentrirana sumporna kiselina"
+    "H2SO4 conc": "koncentrirana sumporna kiselina",
+    "Fe3O4(s)": "željezov(II,III) oksid"
   }
 }

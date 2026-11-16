@@ -640,6 +640,7 @@
     "wine": "belo vino (12 % alkohola)",
     "limewater": "apnenica (raztopina kalcijevega hidroksida)",
     "H2SO4(l)": "žveplova kislina (čista)",
-    "H2SO4 conc": "koncentrirana žveplova kislina"
+    "H2SO4 conc": "koncentrirana žveplova kislina",
+    "Fe3O4(s)": "železov(II,III) oksid"
   }
 }

@@ -640,6 +640,7 @@
     "wine": "white wine (12 % alcohol)",
     "limewater": "limewater (calcium hydroxide solution)",
     "H2SO4(l)": "sulfuric acid (pure)",
-    "H2SO4 conc": "sulfuric acid, concentrated"
+    "H2SO4 conc": "sulfuric acid, concentrated",
+    "Fe3O4(s)": "iron(II,III) oxide"
   }
 }

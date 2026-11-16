@@ -640,6 +640,7 @@
     "wine": "hvidvin (12 % alkohol)",
     "limewater": "kalkvand (calciumhydroxidopløsning)",
     "H2SO4(l)": "svovlsyre (ren)",
-    "H2SO4 conc": "svovlsyre, koncentreret"
+    "H2SO4 conc": "svovlsyre, koncentreret",
+    "Fe3O4(s)": "jern(II,III)oxid"
   }
 }

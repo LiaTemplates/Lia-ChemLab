@@ -640,6 +640,7 @@
     "wine": "fehérbor (12 % alkohol)",
     "limewater": "meszes víz (kalcium-hidroxid-oldat)",
     "H2SO4(l)": "kénsav (tiszta)",
-    "H2SO4 conc": "tömény kénsav"
+    "H2SO4 conc": "tömény kénsav",
+    "Fe3O4(s)": "vas(II,III)-oxid"
   }
 }

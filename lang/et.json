@@ -640,6 +640,7 @@
     "wine": "valge vein (12 % alkoholi)",
     "limewater": "lubjavesi (kaltsiumhüdroksiidi lahus)",
     "H2SO4(l)": "väävelhape (puhas)",
-    "H2SO4 conc": "väävelhape, kontsentreeritud"
+    "H2SO4 conc": "väävelhape, kontsentreeritud",
+    "Fe3O4(s)": "raud(II,III)oksiid"
   }
 }

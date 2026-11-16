@@ -640,6 +640,7 @@
     "wine": "witte wijn (12 % alcohol)",
     "limewater": "kalkwater (calciumhydroxide-oplossing)",
     "H2SO4(l)": "zwavelzuur (zuiver)",
-    "H2SO4 conc": "geconcentreerd zwavelzuur"
+    "H2SO4 conc": "geconcentreerd zwavelzuur",
+    "Fe3O4(s)": "ijzer(II,III)oxide"
   }
 }

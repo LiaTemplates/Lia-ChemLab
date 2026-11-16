@@ -2791,6 +2791,28 @@ test("Erst das Wasser, dann die Säure: Wasser in konzentrierte Schwefelsäure s
   assert.equal(L.goalText({ seen: "spatter" }, "de"), "Es spritzt");
 });
 
+test("Eisenwolle: der Span zündet sie, sie glüht und wird schwerer", () => {
+  const seen = [], l = lab([{ type: "dish", id: "s", contains: [{ reagent: "Fe wool", g: 1 }] }, { type: "balance", id: "w", under: "s" }], { room: 20 });
+  L.step(l, 2);
+  const m0 = L.reading(l, "w").value;
+  L.probe(l, "s", "flame", (e) => seen.push(e));
+  L.step(l, 60, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "ignite" && e.species === "Fe(s)"), "sie fängt Feuer");
+  assert.ok(amount(l, "Fe3O4(s)", "s") > 1e-3, "es entsteht Eisenoxid");
+  assert.ok(L.reading(l, "w").value - m0 > 0.05, `sie wird schwerer: +${L.reading(l, "w").value - m0} g`);
+});
+
+test("Umgießen mit Mischwärme: Wasser in konzentrierte Säure gießen spritzt, Säure in Wasser nicht", () => {
+  const pour = (a, am, b, bm) => {
+    const seen = [], l = lab([{ type: "beaker", id: "x", contains: [{ reagent: a, ml: am }] }, { type: "beaker", id: "y", ml: 100, contains: [{ reagent: b, ml: bm }] }], { room: 20 });
+    L.pour(l, "x", "y", am);
+    L.step(l, 15, (e) => seen.push(e));
+    return seen.some((e) => e.key === "spatter" && e.vessel === "y");
+  };
+  assert.equal(pour("H2O", 5, "H2SO4 conc", 20), true, "Wasser in Säure gegossen");
+  assert.equal(pour("H2SO4 conc", 5, "H2O", 50), false, "Säure in Wasser gegossen");
+});
+
 test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL", () => {
   const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "b", contains: [{ reagent: "HCl 1M", ml: 8 }, { reagent: "Mg ribbon", g: 0.0243 }] }, { type: "syringe", id: "kp", in: "b" }] });
   const run = L.createRun(config);
@@ -7867,6 +7889,19 @@ test("Gasableitungsrohr: Dampf aus dem siedenden Glas schlägt sich im zweiten n
   assert.ok(L.volume(L.vessel(l, "z")) * 1000 > 6, "im zweiten Glas kommt Wasser an");
 });
 
+test("Gasableitungsrohr: Kohlenstoffdioxid perlt zum Teil ungelöst durch, Ammoniak löst sich ganz", () => {
+  const l = gasline([{ reagent: "HCl 0.5M", ml: 5 }, { reagent: "marble", g: 0.5 }], [{ reagent: "limewater", ml: 10 }]);
+  for (let t = 0; t < 400 && !(amount(l, "CaCO3(s)", "z") > 2e-5); t++) L.step(l, 0.25);
+  const z = L.vessel(l, "z"), escaped = (z.air["CO2(g)"] || 0) + (z.out["CO2(g)"] || 0);
+  assert.ok(escaped > 0, "über dem noch alkalischen Kalkwasser steht schon Kohlenstoffdioxid");
+  assert.ok(look(l, "z").pH > 9, "das Kalkwasser ist noch alkalisch");
+  const n = gasline([{ reagent: "NH4Cl 1M", ml: 5 }, { reagent: "NaOH 1M", ml: 5 }], [{ reagent: "H2O", ml: 10 }], { room: 20 });
+  L.place(n, { type: "burner", under: "a", flame: 2 });
+  L.step(n, 60);
+  const w = L.vessel(n, "z");
+  assert.ok(((w.air["NH3(g)"] || 0) + (w.out["NH3(g)"] || 0)) < 0.02 * (amount(n, "NH3(aq)", "z") + amount(n, "NH4+(aq)", "z")), "Ammoniak bleibt fast ganz im Wasser");
+});
+
 test("Gasableitungsrohr: ohne zweites Glas geht das Gas ins Freie", () => {
   const l = gasline(marbleAcid, [{ reagent: "limewater", ml: 10 }]);
   L.remove(l, "z");
@@ -8028,7 +8063,14 @@ test("README: die Folie zur Kalkwasserprobe hält, was ihr Text verspricht", () 
 });
 
 test("README: die Folie zur Massenerhaltung hält, was ihr Text verspricht", () => {
-  const [both] = slide("Massenerhaltung").map((b) => L.normalize(b));
+  const blocks = slide("Massenerhaltung").map((b) => L.normalize(b));
+  const iron = blocks.find((b) => b.bench.some((p) => p.type === "dish")), both = blocks.find((b) => b !== iron);
+  const fe = L.createLab(iron), dish = iron.bench.find((p) => p.type === "dish").id, scale = iron.bench.find((p) => p.type === "balance").id;
+  L.step(fe, 2);
+  const before = L.reading(fe, scale).value;
+  L.probe(fe, dish, "flame");
+  L.step(fe, 60);
+  assert.ok(L.reading(fe, scale).value > before + 0.05, "Eisenwolle: schwerer nach dem Verbrennen");
   const l = L.createLab(both), scales = both.bench.filter((p) => p.type === "balance");
   const closed = (s) => both.bench.some((p) => p.type === "syringe" && p.in === s.in);
   const open = scales.find((s) => !closed(s)), shut = scales.find(closed);

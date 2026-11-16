@@ -640,6 +640,7 @@
     "wine": "vino blanco (12 % de alcohol)",
     "limewater": "agua de cal (disolución de hidróxido de calcio)",
     "H2SO4(l)": "ácido sulfúrico (puro)",
-    "H2SO4 conc": "ácido sulfúrico concentrado"
+    "H2SO4 conc": "ácido sulfúrico concentrado",
+    "Fe3O4(s)": "óxido de hierro(II,III)"
   }
 }

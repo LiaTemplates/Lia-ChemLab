@@ -640,6 +640,7 @@
     "wine": "białe wino (12 % alkoholu)",
     "limewater": "woda wapienna (roztwór wodorotlenku wapnia)",
     "H2SO4(l)": "kwas siarkowy (czysty)",
-    "H2SO4 conc": "stężony kwas siarkowy"
+    "H2SO4 conc": "stężony kwas siarkowy",
+    "Fe3O4(s)": "tlenek żelaza(II,III)"
   }
 }

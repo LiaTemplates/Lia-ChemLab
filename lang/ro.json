@@ -640,6 +640,7 @@
     "wine": "vin alb (12 % alcool)",
     "limewater": "apă de var (soluție de hidroxid de calciu)",
     "H2SO4(l)": "acid sulfuric (pur)",
-    "H2SO4 conc": "acid sulfuric concentrat"
+    "H2SO4 conc": "acid sulfuric concentrat",
+    "Fe3O4(s)": "oxid de fier(II,III)"
   }
 }

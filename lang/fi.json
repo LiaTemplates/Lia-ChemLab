@@ -640,6 +640,7 @@
     "wine": "valkoviini (12 % alkoholia)",
     "limewater": "kalkkivesi (kalsiumhydroksidiliuos)",
     "H2SO4(l)": "rikkihappo (puhdas)",
-    "H2SO4 conc": "väkevä rikkihappo"
+    "H2SO4 conc": "väkevä rikkihappo",
+    "Fe3O4(s)": "rauta(II,III)oksidi"
   }
 }

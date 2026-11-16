@@ -640,6 +640,7 @@
     "wine": "vino bianco (12 % di alcol)",
     "limewater": "acqua di calce (soluzione di idrossido di calcio)",
     "H2SO4(l)": "acido solforico (puro)",
-    "H2SO4 conc": "acido solforico concentrato"
+    "H2SO4 conc": "acido solforico concentrato",
+    "Fe3O4(s)": "ossido di ferro(II,III)"
   }
 }

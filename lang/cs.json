@@ -640,6 +640,7 @@
     "wine": "bílé víno (12 % alkoholu)",
     "limewater": "vápenná voda (roztok hydroxidu vápenatého)",
     "H2SO4(l)": "kyselina sírová (čistá)",
-    "H2SO4 conc": "kyselina sírová, koncentrovaná"
+    "H2SO4 conc": "kyselina sírová, koncentrovaná",
+    "Fe3O4(s)": "oxid železnato-železitý"
   }
 }

@@ -935,8 +935,16 @@
     return vol > 0 && mass / ml > own / vol ? ZONE_SINK : 1;
   }
 
-  function splash(lab, v, r, ml, emit) {
-    var amounts = portion(r, { ml: ml }), vol = volume(v) * 1000, id, s, zone, share, tmp, w, C = 0, T, k;
+  // Umgießen oder Tropfen aus der Bürette, mit derselben örtlichen Mischwärme: die Portion hat die Zusammensetzung der Flüssigkeit in from
+  function pourInto(lab, from, to, ml, emit) {
+    var vol = volume(from) * 1000, amounts = {}, id, s;
+    for (id in from.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && vol > 0) amounts[id] = from.n[id] * Math.min(1, ml / vol); }
+    return splash(lab, to, amounts, ml, function () { return transfer(from, to, ml); }, emit);
+  }
+
+  // amounts: was hinzukommt (mol), ml sein Volumen; put gibt es wirklich hinein und sagt, wie viel (mL)
+  function splash(lab, v, amounts, ml, put, emit) {
+    var vol = volume(v) * 1000, id, s, zone, share, tmp, w, C = 0, T, k, done;
     // Mischzone aus dem Inhalt, wie er vor dem Zugeben war
     if (vol > 0.05) {
       zone = Math.min(vol, ml * zoneFactor(v, amounts, ml));
@@ -947,13 +955,13 @@
       for (id in amounts) w.n[id] = (w.n[id] || 0) + amounts[id];
       w.T = v.T; w.dirty = true;
     }
-    putReagent(lab, v, r, { ml: ml });
-    if (!w) return;
+    done = put();
+    if (!w || !(done > 0)) return done;
     equilibrate(tmp, w);
     kinetics(w, null, false);
     for (id in w.n) C += w.n[id] * L.db.species[id].cp;
     T = w.T + (C > 0 ? w.q / C : 0);
-    if (!(T > BOIL + SPLASH_OVER)) return;
+    if (!(T > BOIL + SPLASH_OVER)) return done;
     k = Math.min(1, (T - BOIL) / 100) * 0.1 * (zone + ml) / (volume(v) * 1000);      // so viel der Flüssigkeit fliegt heraus: ein Zehntel der Mischzone (geschätzt)
     for (id in v.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && v.n[id] > 0) { v.out[id] = (v.out[id] || 0) + v.n[id] * k; v.n[id] *= 1 - k; } }
     v.dirty = true;
@@ -961,6 +969,7 @@
       v.flag.spat = lab.t;
       if (emit) emit({ key: "spatter", vessel: v.id });
     }
+    return done;
   }
 
   function putReagent(lab, v, r, a) {
@@ -2675,9 +2684,9 @@
       if (!to) return false;
       if (f.from) {
         from = vessel(lab, f.from);
-        dv = from ? transfer(from, to, dv) : 0;
+        dv = from ? pourInto(lab, from, to, dv, emit) : 0;
         if (!(dv > 0)) return false;
-      } else splash(lab, to, reagent(f.reagent), dv, emit);
+      } else splash(lab, to, portion(reagent(f.reagent), { ml: dv }), dv, function () { putReagent(lab, to, reagent(f.reagent), { ml: dv }); return dv; }, emit);
       f.left -= dv;
       return f.left > 1e-9;
     });
@@ -2693,7 +2702,7 @@
         if (emit) emit({ key: "tapFull", vessel: v.id });
         return;
       }
-      v.given += transfer(v, to, Math.min(v.tap * DT, room));
+      v.given += pourInto(lab, v, to, Math.min(v.tap * DT, room), emit);
     });
   }
 
@@ -3029,9 +3038,18 @@
   // Gas aus einem Rohr kommt ins Gefäß v. Steht Flüssigkeit darin, perlt es hindurch: Was ein Lösungsgleichgewicht hat (CO₂, NH₃, HCl),
   // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
   function bubbleInto(lab, v, id, x) {
-    var e = volume(v) > 0 ? L.db.equilibria.filter(function (q) { return q.gas === id; })[0] : null, key;
+    var e = volume(v) > 0 ? L.db.equilibria.filter(function (q) { return q.gas === id; })[0] : null, key, h, part = 1, keys;
     // steigt durch: als Gas in der Flüssigkeit, so zählt es wie selbst entstandenes (Blasen, Kolbenprober, nächstes Rohr)
     if (!e) { v.n[id] = (v.n[id] || 0) + x; return; }
+    // Eine Blase gibt auf ihrem Weg nur einen Teil ab, je nach Löslichkeit (Henry: c/p = K): 1 − e^(−K·R·T).
+    // Kohlenstoffdioxid gut die Hälfte, Ammoniak und Chlorwasserstoff praktisch alles.
+    keys = Object.keys(e.d);
+    if (keys.length === 1) {
+      h = heatOf(e);
+      part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) / e.d[keys[0]] * R / 100 * (v.T + KELVIN));
+    }
+    if (part < 1) v.n[id] = (v.n[id] || 0) + x * (1 - part);
+    x *= part;
     v.pipe = (v.pipe || 0) + x / DT;                           // Blasen am Ende des Rohrs
     for (key in e.d) v.n[key] = (v.n[key] || 0) + e.d[key] * x;
     tally(v, e, x * e.f);

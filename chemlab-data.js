@@ -214,6 +214,7 @@
       "Zn(OH)2(s)": { name: name("zinc hydroxide"), Hf: null, color: WHITE, settle: 60, src: LOOK },
       "Fe(OH)2(s)": { name: name("iron(II) hydroxide"), Hf: null, color: "#b9c8ae", settle: 60, src: LOOK },
       "MgO(s)": { name: name("magnesium oxide"), Hf: -601.60, S: 26.95, color: WHITE, src: CODATA + "; " + LOOK },
+      "Fe3O4(s)": { name: name("iron(II,III) oxide"), Hf: -1118.4, S: 146.4, color: "#2b2b2e", src: "NBS Tables of Chemical Thermodynamic Properties (Wagman et al. 1982); " + LOOK },
       // colloid: entsteht er in einer Lösung, ist er so fein verteilt, dass er in der Schwebe bleibt und sich nicht absetzt
       "S(s)": { name: name("sulfur"), Hf: 0, S: 32.054, color: "#e8d44a", colloid: true, src: CODATA + "; " + LOOK },
       "C(s)": { name: name("carbon (charcoal, graphite)"), Hf: 0, S: 5.74, color: "#2a2a2a", src: CODATA + " (graphite); " + LOOK },
@@ -504,6 +505,10 @@
       {
         eq: "S(s) + O2(g) -> SO2(g)", rate: { k: 1e-4, surface: "S(s)", ignite: 250 },
         fire: { color: "#5a7dff", glare: 0.25, T: 700 }, src: BURN
+      },
+      {
+        eq: "3 Fe(s) + 2 O2(g) -> Fe3O4(s)", rate: { k: 5e-6, surface: "Fe(s)", ignite: 400 },
+        fire: { color: "#ff8a2a", glare: 0.5, glow: true, T: 1000 }, src: BURN + "; 1 g of iron wool glows through in about 20 s and gets heavier"
       },
       {
         eq: "C(s) + O2(g) -> CO2(g)", rate: { k: 1.7e-4, surface: "C(s)", ignite: 400 },

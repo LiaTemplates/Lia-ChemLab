@@ -640,6 +640,7 @@
     "wine": "Weißwein (12 % Alkohol)",
     "limewater": "Kalkwasser (Calciumhydroxid-Lösung)",
     "H2SO4(l)": "Schwefelsäure (rein)",
-    "H2SO4 conc": "Schwefelsäure, konzentriert"
+    "H2SO4 conc": "Schwefelsäure, konzentriert",
+    "Fe3O4(s)": "Eisen(II,III)-oxid"
   }
 }

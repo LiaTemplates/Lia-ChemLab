@@ -640,6 +640,7 @@
     "wine": "beyaz şarap (%12 alkol)",
     "limewater": "kireç suyu (kalsiyum hidroksit çözeltisi)",
     "H2SO4(l)": "sülfürik asit (saf)",
-    "H2SO4 conc": "derişik sülfürik asit"
+    "H2SO4 conc": "derişik sülfürik asit",
+    "Fe3O4(s)": "demir(II,III) oksit"
   }
 }
