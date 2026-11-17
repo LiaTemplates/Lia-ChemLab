@@ -42,8 +42,10 @@
   L.registerLook("burner", "lab", {
     build: function (kit) {
       var group = new THREE.Group(), body = new THREE.Group(), steel = fx.steel(), iron = fx.iron();
-      var hose = new THREE.CatmullRomCurve3([V(2.4, 1.6, 0), V(3.6, 0.9, 0), V(4.2, 0.35, -3), V(4.5, 0.35, -25)]);
+      // der Gasschlauch läuft nach hinten und durch eine Tülle in die Tischplatte, wo die Gasleitung liegt
+      var hose = new THREE.CatmullRomCurve3([V(2.4, 1.6, 0), V(3.6, 0.9, 0), V(4.2, 0.4, -2.5), V(4.5, 0.4, -6), V(4.6, -0.3, -8), V(4.6, -2.5, -8.4)]);
       body.add(mesh(new THREE.CylinderGeometry(3.0, 3.4, 0.9, 40), iron, 0, 0.45),
+        mesh(new THREE.CylinderGeometry(0.8, 0.95, 0.16, 24), steel, 4.6, 0.08, -8.2),     // Tülle im Tisch
         mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.3, 24), steel, 0, 2.2),            // Luftregler
         mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.2, 12).rotateZ(Math.PI / 2), steel, 1.4, 1.6),
         mesh(new THREE.TubeGeometry(hose, 40, 0.45, 10), fx.matte(fx.style.hose, 0.6), 0, 0, 0));

@@ -826,7 +826,7 @@
       out += '<rect class="cl-burner" x="-16" y="-6" width="32" height="6" rx="2"/>' +
         '<rect class="cl-burner" x="-4.5" y="' + NOZZLE + '" width="9" height="' + (-NOZZLE - 6) + '"/>' +
         '<rect class="cl-burner" x="-6.5" y="-20" width="13" height="6" rx="1"/>' +
-        '<path class="cl-hose" d="M4.5,-10L13,-10Q22,-10 22,0"/>';
+        '<path class="cl-hose" d="M4.5,-10L13,-10Q22,-10 22,1"/><rect class="cl-grommet" x="17.5" y="-1.2" width="9" height="2.4" rx="1"/>';      // durch eine Tülle in den Tisch
       if (L.fx) out += L.fx.flame(0, NOZZLE, w.flame, ctx.t || 0, ctx.seed || 1, ctx.still, w.tint && w.tint.rgb);
       return out + badge(place ? (place.clamp ? -30 : 30) : 0, 14, ctx.no);      // unter einem Gefäß steht die Nummer neben dessen Nummer
     }
