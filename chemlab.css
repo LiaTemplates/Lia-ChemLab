@@ -222,6 +222,7 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-scale-pan { fill: #b9c2cb; stroke: #55677a; stroke-width: 1; }
 .lia-chemlab .cl-burner { fill: #8b949e; stroke: #4f5760; stroke-width: 0.8; }
 .lia-chemlab .cl-hose { fill: none; stroke: #b5533c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.lia-chemlab .cl-grommet { fill: #8d96a0; stroke: #55677a; stroke-width: 0.8; }
 .lia-chemlab .cl-tripod { fill: none; stroke: #4f5760; stroke-width: 3; stroke-linecap: round; }
 .lia-chemlab .cl-gauze { fill: #9aa3ad; stroke: #4f5760; stroke-width: 0.5; }
 .lia-chemlab .cl-clamp { fill: none; stroke: #6f7780; stroke-width: 3; stroke-linecap: round; }
