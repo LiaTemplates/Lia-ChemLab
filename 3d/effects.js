@@ -216,7 +216,8 @@
           liquid.attenuationColor.copy(fx.color(w.color.rgb));
           liquid.transmission = 1 - 0.9 * cloud;           // trüb: das Licht kommt nicht mehr hindurch
           liquid.roughness = 0.04 + 0.4 * cloud;
-          liquid.thickness = Math.min(3, 1.4 * r);
+          // dünn gerechnet: bei der vollen Dicke des Glases verschiebt die Brechung, was in der Flüssigkeit steht (Elektroden, Fühler), aus dem Bild
+          liquid.thickness = Math.min(0.4, 0.5 * r);
         }
         // Bodensatz und eingedampfter Rückstand: Schichten in der Form des Bodens
         layer = w.sediment && w.sediment.ml > 0.002 ? Math.min((wet ? level - shape.floor : 2) * 0.45, (3 + 9 * Math.sqrt(w.sediment.ml) * (tall ? 1 : 0.5)) / 16) : 0;
