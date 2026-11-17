@@ -110,7 +110,8 @@
   // Anders als die übrigen Effekte hat es einen Zustand je Gefäß. Der wird nicht gespeichert und nach einem Sprung der Uhr neu eingeschwungen.
   // shortcut: rückwärts abgespielt zeigt es eine neu gerechnete Strömung, nicht die damalige; aufrüsten, wenn das im Unterricht stört.
   // shortcut: ein rechteckiges Gitter, schräge Wände (Erlenmeyer, Kolben) schneidet nur das Bild ab; eine Zellmaske, wenn es dort falsch aussieht.
-  var ROWS = 24, STEP = 0.05, GRAV = 9.81, MIX = 0.3, fields = {};      // MIX: Ausgleich in Zellen²/s, verstärkt durch Wirbel, die das grobe Gitter nicht auflöst
+  var ROWS = 24, STEP = 0.05, GRAV = 9.81, MIX = 0.3, fields = {};
+  var SUPER = 3;                  // so viel K über dem Siedepunkt wird es am heißen Boden höchstens; was darüber geht, verdampft      // MIX: Ausgleich in Zellen²/s, verstärkt durch Wirbel, die das grobe Gitter nicht auflöst
   fx.fields = fields;
 
   // Dichte von Wasser in kg/m³ nach Thiesen; mit ihrem Höchstwert bei 4 °C.
@@ -167,6 +168,7 @@
   function advance(s, heat, T, cell, size, dt, still) {
     var W = s.cols + 2, x = s.T, rho = fx.density(T), lo = Math.round(s.cols * 0.2), hi = s.cols + 1 - lo, rim = 2 * ROWS + s.cols, sum = 0, i, j, k, nu, nv;
     for (i = lo; i <= hi; i++) x[i + ROWS * W] += heat.q * dt / ((hi - lo + 1) * cell);      // die Flamme heizt die Mitte des Bodens
+    if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });
     for (j = 1; j <= ROWS; j++) for (i = 1; i <= s.cols; i++) if (i === 1 || i === s.cols || j === 1) {      // Wände und Oberfläche geben ab
       k = i + j * W;
       x[k] -= heat.k / rim * (x[k] - heat.room) * dt / cell;
@@ -181,6 +183,7 @@
     each(s, function (k) { sum += x[k]; });
     sum = T - sum / (s.cols * ROWS);
     each(s, function (k) { x[k] += sum; });                     // das Mittel bleibt die Temperatur des Rechenkerns
+    if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });      // beim Sieden liegt das Mittel damit knapp darunter
     bound(s, 0, x);
     if (!still) s.dots.forEach(function (d) {
       var a = sample(s, s.u, d[0], d[1]), b = sample(s, s.v, d[0], d[1]);

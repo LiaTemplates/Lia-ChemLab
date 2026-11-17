@@ -4099,7 +4099,7 @@
     }
     list.sort(function (a, b) { return b.n - a.n; });
     var cloud = [0, 0, 0], ground = [0, 0, 0], hanging = 0, lying = 0, loose = 0, residue = 0, air = {}, cap = headroom(lab, v);
-    var paste = thick(v, vol);
+    var paste = thick(v, vol), boils = volatiles(v);
     if (!(vol > 0) || paste) list.forEach(function (x) { if (x.phase === "aq") residue += x.n; });
     for (id in v.air) air[id] = cap > 0 ? Math.min(1, v.air[id] / cap) : 0;
     var mirror = null, share;
@@ -4135,7 +4135,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
-      heat: warmth(lab, v),                                    // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser
+      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser und Siedetemperatur (null: nichts, was siedet)
+      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null }),
       // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
       blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab

@@ -607,6 +607,15 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   assert.notDeepEqual(colors(L.fx.flow(box, Object.assign({}, w, { T: 25 }), 6, "farbe", "temp")), colors(L.fx.flow(box, Object.assign({}, w, { T: 90 }), 6, "heiss", "temp")),
     "die Farbe zeigt die Temperatur selbst, nicht nur die Unterschiede");
 
+  const boiling = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", under: "b", flame: 2 }], { room: 20 });
+  L.step(boiling, 300);
+  const hot = L.view(boiling, L.vessel(boiling, "b"));
+  assert.ok(hot.steam > 0 && hot.heat.boil === 100, "es siedet, bei 100 °C");
+  L.fx.flow(box, hot, 0, "boil", "temp"); L.fx.flow(box, hot, 5, "boil", "temp");
+  assert.ok(Math.max(...L.fx.fields.boil.T) <= 103 + 1e-9, "höchstens wenige Kelvin über dem Siedepunkt");
+  assert.ok(Math.max(...L.fx.fields.boil.v.map(Math.abs)) > 0.5, "es strömt weiter");
+  assert.equal(L.view(lab([{ type: "beaker", id: "b" }]), L.vessel(lab([{ type: "beaker", id: "b" }]), "b")).heat.boil, null, "leer: nichts, was siedet");
+
   const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
   const c = L.view(cold, L.vessel(cold, "b"));
   L.fx.flow(box, c, 0, "cold", "temp"); L.fx.flow(box, c, 5, "cold", "temp");
