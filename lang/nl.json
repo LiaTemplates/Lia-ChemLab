@@ -481,7 +481,7 @@
     "seen.smell": "Geur",
     "seen.ignite": "Er brandt iets",
     "seen.flame": "Vlamkleur",
-    "seen.plated": "Er slaat een metaal neer",
+    "seen.plated": "Er slaat een laagje neer",
     "seen.lamp": "Het lampje gaat branden",
     "seen.broken": "Het glas barst",
     "err.other": "De opstelling kan niet worden getoond",
@@ -496,7 +496,8 @@
     "spinFree": "Haal eerst alles uit de reageerbuis; er mag niets boven hangen of in leiden, alleen een stop mag blijven.",
     "spinFlow": "Er stroomt nog iets – wacht eerst.",
     "spinEmpty": "Zet eerst een reageerbuis erin.",
-    "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel."
+    "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel.",
+    "part.electrode-Pb": "loodelektrode"
   },
   "names": {
     "H2O(l)": "water",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "gebleekte kleurstof (kleurloos)",
     "C15H15N3O3(aq)": "gebleekte kleurstof (kleurloos)",
     "C15H14N3O3-(aq)": "gebleekte kleurstof (kleurloos)",
-    "C25H30N3O+(aq)": "gebleekte kleurstof (kleurloos)"
+    "C25H30N3O+(aq)": "gebleekte kleurstof (kleurloos)",
+    "Pb(s)": "lood",
+    "Pb^2+(aq)": "lood(II)-ion",
+    "PbSO4(s)": "lood(II)sulfaat",
+    "PbO2(s)": "lood(IV)oxide"
   }
 }

@@ -481,7 +481,7 @@
     "seen.smell": "Usaina",
     "seen.ignite": "Zerbait erretzen ari da",
     "seen.flame": "Garraren kolorea",
-    "seen.plated": "Metal bat metatzen da",
+    "seen.plated": "Estaldura bat metatzen da",
     "seen.lamp": "Bonbilla pizten da",
     "seen.broken": "Beira apurtu egiten da",
     "err.other": "Ezin da muntaia erakutsi",
@@ -496,7 +496,8 @@
     "spinFree": "Atera lehenik dena saiakuntza-hoditik; ezer ezin da gainean zintzilik egon edo barrura sartu, tapoi bat bakarrik gera daiteke.",
     "spinFlow": "Oraindik zerbait isurtzen ari da: itxaron lehenik.",
     "spinEmpty": "Jarri lehenik saiakuntza-hodi bat.",
-    "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia."
+    "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia.",
+    "part.electrode-Pb": "berunezko elektrodoa"
   },
   "names": {
     "H2O(l)": "ura",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "kolore zuritua (kolorgabea)",
     "C15H15N3O3(aq)": "kolore zuritua (kolorgabea)",
     "C15H14N3O3-(aq)": "kolore zuritua (kolorgabea)",
-    "C25H30N3O+(aq)": "kolore zuritua (kolorgabea)"
+    "C25H30N3O+(aq)": "kolore zuritua (kolorgabea)",
+    "Pb(s)": "beruna",
+    "Pb^2+(aq)": "berun(II) ioia",
+    "PbSO4(s)": "berun(II) sulfatoa",
+    "PbO2(s)": "berun(IV) oxidoa"
   }
 }

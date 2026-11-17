@@ -481,7 +481,7 @@
     "seen.smell": "Zapach",
     "seen.ignite": "Coś się pali",
     "seen.flame": "Barwa płomienia",
-    "seen.plated": "Wydziela się metal",
+    "seen.plated": "Wydziela się powłoka",
     "seen.lamp": "Żarówka świeci",
     "seen.broken": "Szkło pęka",
     "err.other": "Nie można wyświetlić układu",
@@ -496,7 +496,8 @@
     "spinFree": "Najpierw wyjmij wszystko z probówki; nic nie może nad nią wisieć ani do niej prowadzić, może zostać tylko korek.",
     "spinFlow": "Coś jeszcze płynie – najpierw zaczekaj.",
     "spinEmpty": "Najpierw wstaw probówkę.",
-    "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół."
+    "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół.",
+    "part.electrode-Pb": "elektroda ołowiana"
   },
   "names": {
     "H2O(l)": "woda",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "odbarwiony barwnik (bezbarwny)",
     "C15H15N3O3(aq)": "odbarwiony barwnik (bezbarwny)",
     "C15H14N3O3-(aq)": "odbarwiony barwnik (bezbarwny)",
-    "C25H30N3O+(aq)": "odbarwiony barwnik (bezbarwny)"
+    "C25H30N3O+(aq)": "odbarwiony barwnik (bezbarwny)",
+    "Pb(s)": "ołów",
+    "Pb^2+(aq)": "jon ołowiu(II)",
+    "PbSO4(s)": "siarczan(VI) ołowiu(II)",
+    "PbO2(s)": "tlenek ołowiu(IV)"
   }
 }

@@ -481,7 +481,7 @@
     "seen.smell": "Lõhn",
     "seen.ignite": "Midagi põleb",
     "seen.flame": "Leegi värvus",
-    "seen.plated": "Metall ladestub",
+    "seen.plated": "Ladestub kate",
     "seen.lamp": "Lambike süttib",
     "seen.broken": "Klaas puruneb",
     "err.other": "Katseseadet ei saa kuvada",
@@ -496,7 +496,8 @@
     "spinFree": "Võta enne katseklaasist kõik välja; selle kohal ei tohi midagi rippuda ega sinna midagi viia, jääda võib ainult kork.",
     "spinFlow": "Midagi voolab veel – oota enne.",
     "spinEmpty": "Pane enne katseklaas sisse.",
-    "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda."
+    "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda.",
+    "part.electrode-Pb": "pliielektrood"
   },
   "names": {
     "H2O(l)": "vesi",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "pleegitatud värvaine (värvitu)",
     "C15H15N3O3(aq)": "pleegitatud värvaine (värvitu)",
     "C15H14N3O3-(aq)": "pleegitatud värvaine (värvitu)",
-    "C25H30N3O+(aq)": "pleegitatud värvaine (värvitu)"
+    "C25H30N3O+(aq)": "pleegitatud värvaine (värvitu)",
+    "Pb(s)": "plii",
+    "Pb^2+(aq)": "plii(II)ioon",
+    "PbSO4(s)": "plii(II)sulfaat",
+    "PbO2(s)": "plii(IV)oksiid"
   }
 }

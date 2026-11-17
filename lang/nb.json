@@ -481,7 +481,7 @@
     "seen.smell": "Lukt",
     "seen.ignite": "Noe brenner",
     "seen.flame": "Flammefarge",
-    "seen.plated": "Et metall felles ut",
+    "seen.plated": "Et belegg felles ut",
     "seen.lamp": "Lyspæren lyser",
     "seen.broken": "Glasset sprekker",
     "err.other": "Oppsettet kan ikke vises",
@@ -496,7 +496,8 @@
     "spinFree": "Ta først alt ut av reagensrøret; ingenting må henge over det eller føre inn i det, bare en kork kan bli sittende.",
     "spinFlow": "Det renner fortsatt noe – vent først.",
     "spinEmpty": "Sett først inn et reagensrør.",
-    "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken."
+    "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken.",
+    "part.electrode-Pb": "blyelektrode"
   },
   "names": {
     "H2O(l)": "vann",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "bleket fargestoff (fargeløst)",
     "C15H15N3O3(aq)": "bleket fargestoff (fargeløst)",
     "C15H14N3O3-(aq)": "bleket fargestoff (fargeløst)",
-    "C25H30N3O+(aq)": "bleket fargestoff (fargeløst)"
+    "C25H30N3O+(aq)": "bleket fargestoff (fargeløst)",
+    "Pb(s)": "bly",
+    "Pb^2+(aq)": "bly(II)-ion",
+    "PbSO4(s)": "bly(II)sulfat",
+    "PbO2(s)": "bly(IV)oksid"
   }
 }

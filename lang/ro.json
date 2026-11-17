@@ -481,7 +481,7 @@
     "seen.smell": "Miros",
     "seen.ignite": "Ceva arde",
     "seen.flame": "Colorarea flăcării",
-    "seen.plated": "Se depune un metal",
+    "seen.plated": "Se depune un strat",
     "seen.lamp": "Becul se aprinde",
     "seen.broken": "Sticla se sparge",
     "err.other": "Montajul nu poate fi afișat",
@@ -496,7 +496,8 @@
     "spinFree": "Scoateți mai întâi totul din eprubetă; nimic nu trebuie să atârne deasupra sau să ducă în ea, poate rămâne doar un dop.",
     "spinFlow": "Încă mai curge ceva – așteptați mai întâi.",
     "spinEmpty": "Puneți mai întâi o eprubetă.",
-    "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa."
+    "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa.",
+    "part.electrode-Pb": "electrod de plumb"
   },
   "names": {
     "H2O(l)": "apă",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "colorant decolorat (incolor)",
     "C15H15N3O3(aq)": "colorant decolorat (incolor)",
     "C15H14N3O3-(aq)": "colorant decolorat (incolor)",
-    "C25H30N3O+(aq)": "colorant decolorat (incolor)"
+    "C25H30N3O+(aq)": "colorant decolorat (incolor)",
+    "Pb(s)": "plumb",
+    "Pb^2+(aq)": "ion de plumb(II)",
+    "PbSO4(s)": "sulfat de plumb(II)",
+    "PbO2(s)": "oxid de plumb(IV)"
   }
 }

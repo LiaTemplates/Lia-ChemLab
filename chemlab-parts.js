@@ -50,7 +50,7 @@
       "part.conductometer": "conductivity meter", "part.supply": "power supply", "part.ammeter": "ammeter",
       "part.voltmeter": "voltmeter", "part.lamp": "lamp", "part.bridge": "salt bridge",
       "part.electrode-C": "graphite electrode", "part.electrode-Pt": "platinum electrode", "part.electrode-Cu": "copper electrode",
-      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode",
+      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode", "part.electrode-Pb": "lead electrode",
       "group.water": "", "group.acid": "Acids and bases", "group.salt": "Salt solutions", "group.indicator": "Indicators",
       "group.solid": "Solids", "group.gear": "Equipment", "group.other": "Other solutions", "group.electric": "Electricity",
       "hint.electrode": "Now tap the beaker it should dip into.",
@@ -214,7 +214,7 @@
       "say.popped": "{vessel}: The stopper pops out!", "say.plungerOut": "{part}: The plunger pops out.", "say.suckBack": "{vessel}: Liquid is sucked back through the tube.", "say.spatter": "{vessel}: It spatters!", "seen.spatter": "It spatters",
       "seen.popped": "The stopper pops out", "seen.suckBack": "Liquid is sucked back", "seen.plungerOut": "The plunger pops out",
       "seen.boil": "The liquid boils", "seen.smell": "Smell", "seen.ignite": "Something burns", "seen.flame": "Flame colour",
-      "seen.plated": "A metal is deposited", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
+      "seen.plated": "A coating forms on an electrode", "seen.lamp": "The lamp lights up", "seen.broken": "The glass breaks",
       "err.other": "The setup cannot be shown"
     }
   };
@@ -1080,7 +1080,7 @@
     }
   };
   Object.keys(L.parts).forEach(function (type) { if (L.parts[type].electrode) L.registerPart(type, electrode); });
-  L.electrodeLook = electrode;          // für eigene Elektroden: L.registerPart("electrode-Pb", Object.assign({ kind: "tool", electrode: "Pb(s)", g: 10, unit: "g", lag: 0 }, L.electrodeLook))
+  L.electrodeLook = electrode;          // für eigene Elektroden: L.registerPart("electrode-Sn", Object.assign({ kind: "tool", electrode: "Sn(s)", g: 10, unit: "g", lag: 0 }, L.electrodeLook))
 
   // ------------------------------------------------------------------ Netzgerät, Strommesser, Spannungsmesser, Lämpchen
 

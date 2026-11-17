@@ -481,7 +481,7 @@
     "seen.smell": "Harufu",
     "seen.ignite": "Kitu kinaungua",
     "seen.flame": "Rangi ya mwali",
-    "seen.plated": "Metali inajiweka",
+    "seen.plated": "Tabaka linajiweka",
     "seen.lamp": "Taa inawaka",
     "seen.broken": "Kioo kinavunjika",
     "err.other": "Mpangilio hauwezi kuonyeshwa",
@@ -496,7 +496,8 @@
     "spinFree": "Kwanza toa kila kitu kwenye neli ya majaribio; hakuna kitu kinachopaswa kuning'inia juu yake au kuingia ndani yake, kizibo pekee kinaweza kubaki.",
     "spinFlow": "Bado kuna kinachotiririka – subiri kwanza.",
     "spinEmpty": "Kwanza weka neli ya majaribio.",
-    "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi."
+    "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi.",
+    "part.electrode-Pb": "elektrodi ya risasi"
   },
   "names": {
     "H2O(l)": "maji",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "rangi iliyopauka (isiyo na rangi)",
     "C15H15N3O3(aq)": "rangi iliyopauka (isiyo na rangi)",
     "C15H14N3O3-(aq)": "rangi iliyopauka (isiyo na rangi)",
-    "C25H30N3O+(aq)": "rangi iliyopauka (isiyo na rangi)"
+    "C25H30N3O+(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "Pb(s)": "risasi",
+    "Pb^2+(aq)": "ioni ya risasi(II)",
+    "PbSO4(s)": "risasi(II) salfeti",
+    "PbO2(s)": "risasi(IV) oksidi"
   }
 }

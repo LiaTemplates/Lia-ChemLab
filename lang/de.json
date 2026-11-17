@@ -481,7 +481,7 @@
     "seen.smell": "Geruch",
     "seen.ignite": "Es brennt",
     "seen.flame": "Flammenfärbung",
-    "seen.plated": "Metall scheidet sich ab",
+    "seen.plated": "Ein Belag scheidet sich ab",
     "seen.lamp": "Das Lämpchen leuchtet",
     "seen.broken": "Das Glas zerspringt",
     "err.other": "Der Aufbau lässt sich nicht anzeigen",
@@ -496,7 +496,8 @@
     "spinFree": "Erst alles aus dem Reagenzglas nehmen; nichts darf darüber hängen oder hineinführen, nur ein Stopfen darf bleiben.",
     "spinFlow": "Es fließt noch – erst abwarten.",
     "spinEmpty": "Erst ein Reagenzglas hineinstellen.",
-    "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch."
+    "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch.",
+    "part.electrode-Pb": "Blei-Elektrode"
   },
   "names": {
     "H2O(l)": "Wasser",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "gebleichter Farbstoff (farblos)",
     "C15H15N3O3(aq)": "gebleichter Farbstoff (farblos)",
     "C15H14N3O3-(aq)": "gebleichter Farbstoff (farblos)",
-    "C25H30N3O+(aq)": "gebleichter Farbstoff (farblos)"
+    "C25H30N3O+(aq)": "gebleichter Farbstoff (farblos)",
+    "Pb(s)": "Blei",
+    "Pb^2+(aq)": "Blei(II)-Ion",
+    "PbSO4(s)": "Blei(II)-sulfat",
+    "PbO2(s)": "Blei(IV)-oxid"
   }
 }

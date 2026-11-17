@@ -481,7 +481,7 @@
     "seen.smell": "Haju",
     "seen.ignite": "Jokin palaa",
     "seen.flame": "Liekin väri",
-    "seen.plated": "Metallia saostuu",
+    "seen.plated": "Pinnoite saostuu",
     "seen.lamp": "Lamppu syttyy",
     "seen.broken": "Lasi halkeaa",
     "err.other": "Kokoonpanoa ei voi näyttää",
@@ -496,7 +496,8 @@
     "spinFree": "Ota ensin kaikki pois koeputkesta; sen yllä ei saa roikkua eikä siihen johtaa mitään, vain tulppa saa jäädä.",
     "spinFlow": "Jotain virtaa vielä – odota ensin.",
     "spinEmpty": "Laita ensin koeputki paikalleen.",
-    "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää."
+    "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää.",
+    "part.electrode-Pb": "lyijyelektrodi"
   },
   "names": {
     "H2O(l)": "vesi",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "valkaistu väriaine (väritön)",
     "C15H15N3O3(aq)": "valkaistu väriaine (väritön)",
     "C15H14N3O3-(aq)": "valkaistu väriaine (väritön)",
-    "C25H30N3O+(aq)": "valkaistu väriaine (väritön)"
+    "C25H30N3O+(aq)": "valkaistu väriaine (väritön)",
+    "Pb(s)": "lyijy",
+    "Pb^2+(aq)": "lyijy(II)-ioni",
+    "PbSO4(s)": "lyijy(II)sulfaatti",
+    "PbO2(s)": "lyijy(IV)oksidi"
   }
 }

@@ -3702,14 +3702,14 @@ test("Redoxpaare: die Spannungsreihe der Metalle steht in der bekannten Reihenfo
 
 test("Redoxpaare: Fehler in eigenen Daten werden genannt, und nichts davon wird übernommen", () => {
   const bad = (pack, pattern, label) => assert.throws(() => L.register(pack), (e) => e.code === "data" && pattern.test(e.detail), label);
-  const lead = { "Pb(s)": { name: { de: "Blei" }, Hf: 0, src: "Test" }, "Pb^2+(aq)": { name: { de: "Blei(II)-Ion" }, Hf: 0.92, src: "Test" } };
-  bad({ species: lead, couples: [{ eq: "Pb^2+(aq) + 2 e- <=> Pb(s)", src: "x" }] }, /E0/, "ohne Standardpotential");
-  bad({ species: lead, couples: [{ eq: "Pb^2+(aq) + e- <=> Pb(s)", E0: -0.126, src: "x" }] }, /balance/, "die Ladung geht nicht auf");
-  bad({ species: lead, couples: [{ eq: "Pb^2+(aq) + 2 OH-(aq) <=> Pb(s) + H2O(l) + O2(g)", E0: -0.126, src: "x" }] }, /balance|couple/, "ohne Elektronen");
-  bad({ couples: [{ eq: "Pb^2+(aq) + 2 e- <=> Pb(s)", E0: -0.126, src: "x" }] }, /species/, "unbekannte Stoffe");
-  bad({ species: lead, couples: [{ eq: "Pb^2+(aq) + 2 e- <=> Pb(s)", E0: -0.126, over: "viel", src: "x" }] }, /over/, "Überspannung als Text");
-  assert.equal(L.db.species["Pb(s)"], undefined);
-  assert.ok(L.lint({ couples: [{ eq: "Pb^2+(aq) + 2 e- <=> Pb(s)", E0: -0.126 }] }).some((x) => /src/.test(x)), "ohne Quelle");
+  const metal = { "Cd(s)": { name: { de: "Cadmium" }, Hf: 0, src: "Test" }, "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" } };      // wie im Test der Bodenkörper weiter unten
+  bad({ species: metal, couples: [{ eq: "Cd^2+(aq) + 2 e- <=> Cd(s)", src: "x" }] }, /E0/, "ohne Standardpotential");
+  bad({ species: metal, couples: [{ eq: "Cd^2+(aq) + e- <=> Cd(s)", E0: -0.403, src: "x" }] }, /balance/, "die Ladung geht nicht auf");
+  bad({ species: metal, couples: [{ eq: "Cd^2+(aq) + 2 OH-(aq) <=> Cd(s) + H2O(l) + O2(g)", E0: -0.403, src: "x" }] }, /balance|couple/, "ohne Elektronen");
+  bad({ couples: [{ eq: "Cd^2+(aq) + 2 e- <=> Cd(s)", E0: -0.403, src: "x" }] }, /species/, "unbekannte Stoffe");
+  bad({ species: metal, couples: [{ eq: "Cd^2+(aq) + 2 e- <=> Cd(s)", E0: -0.403, over: "viel", src: "x" }] }, /over/, "Überspannung als Text");
+  assert.equal(L.db.species["Cd(s)"], undefined);
+  assert.ok(L.lint({ couples: [{ eq: "Cd^2+(aq) + 2 e- <=> Cd(s)", E0: -0.403 }] }).some((x) => /src/.test(x)), "ohne Quelle");
 });
 
 test("Redoxpaare: als Oxidation geschrieben ist es dasselbe Paar", () => {
@@ -4025,6 +4025,80 @@ test("Zersetzungsspannung: darunter fließt fast kein Strom, darüber wächst er
   assert.ok(L.circuit(l, "b").I < -1e-4, `abgeschaltet liefert das Gas an den Elektroden Strom in der Gegenrichtung: ${L.circuit(l, "b").I} A`);
   L.step(l, 1200);
   assert.ok(L.atRest(l), "ist es verbraucht, kommt alles zur Ruhe");
+});
+
+test("Bleiakku: zwei Bleiplatten in Schwefelsäure laden; am Pluspol braunes Bleidioxid, danach gut 2 V, und das Lämpchen glimmt, bis er entladen ist", () => {
+  const l = cell([{ reagent: "H2SO4 2M", ml: 80 }], "Pb", "Pb", 3), before = totalsE(l);
+  const seen = collect(l, 300);                               // fünf Minuten laden
+  const coat = (id, sp) => (L.reading(l, id).coat.find((c) => c.id === sp) || { n: 0 }).n;
+  const oxide = coat("e1", "PbO2(s)");
+  assert.ok(oxide > 1e-5, `Bleidioxid am Pluspol: ${oxide} mol`);
+  assert.equal(coat("e2", "PbO2(s)"), 0, "am Minuspol keines");
+  assert.ok(seen.some((e) => e.key === "plated" && e.part === "e1" && e.species === "PbO2(s)"), "das Protokoll meldet den Belag");
+  L.setVolts(l, "n", 0);
+  L.remove(l, "a");                                           // ohne Strommesser ist der Kreis offen
+  L.step(l, 2);
+  const open = L.reading(l, "u").value;
+  assert.ok(open > 1.9 && open < 2.2, `geladen: ${open} V`);
+  // entladen über das Lämpchen
+  L.place(l, { type: "lamp", id: "lp", in: "b" });
+  let q = 0;
+  const lit = [];
+  for (let i = 0; i < 20 * 600; i++) { L.step(l, 0.05, (e) => lit.push(e)); q -= L.circuit(l, "b").I * 0.05; }
+  assert.ok(lit.some((e) => e.key === "lampOn"), "das Lämpchen glimmt");
+  assert.ok(lit.some((e) => e.key === "lampOff"), "und erlischt, wenn er entladen ist");
+  assert.ok(q > 0.8 * 2 * L.FARADAY * oxide && q < 1.05 * 2 * L.FARADAY * oxide, `geliefert ${q} C aus ${oxide} mol Bleidioxid`);
+  assert.ok(coat("e1", "PbO2(s)") < 0.1 * oxide && coat("e1", "PbSO4(s)") > 0.5 * oxide, "entladen: Bleisulfat statt Bleidioxid");
+  assert.ok(coat("e2", "PbSO4(s)") > 0.5 * oxide, "auch am Minuspol Bleisulfat");
+  near(totalsE(l).mass, before.mass, 1e-9, "Masse");
+  near(totalsE(l).charge, before.charge, 1e-12, "Ladung");
+});
+
+test("Ein dichter Belag deckt das Metall ab: Blei am Pluspol bildet Bleisulfat nur bis zu einer Schicht; Silberchlorid wächst weiter", () => {
+  const pb = cell([{ reagent: "H2SO4 2M", ml: 80 }], "Pb", "C", 1.5);
+  L.step(pb, 120);
+  const sulfate = (L.reading(pb, "e1").coat.find((c) => c.id === "PbSO4(s)") || { n: 0 }).n;
+  assert.ok(sulfate > 1e-6, `Bleisulfat: ${sulfate}`);
+  L.step(pb, 120);
+  near((L.reading(pb, "e1").coat.find((c) => c.id === "PbSO4(s)") || { n: 0 }).n, sulfate, 0.02 * sulfate, "es wächst nicht weiter");
+  assert.ok(L.circuit(pb, "b").I < 1e-3, `der Strom bricht ein: ${L.circuit(pb, "b").I} A`);
+  const ag = cell([{ reagent: "NaCl 1M", ml: 80 }], "Ag", "C", 3);
+  L.step(ag, 120);
+  const chloride = L.reading(ag, "e1").coat.find((c) => c.id === "AgCl(s)").n;
+  L.step(ag, 120);
+  assert.ok(L.reading(ag, "e1").coat.find((c) => c.id === "AgCl(s)").n > 1.5 * chloride, "Silberchlorid ist kein dichter Belag: es wächst weiter (siehe Grenzen)");
+});
+
+test("Bleiakku: geladen entlädt er sich kaum von selbst; entladen kommt er zur Ruhe; Silber unter dickem Silberchlorid behält sein Potential", () => {
+  const l = cell([{ reagent: "H2SO4 2M", ml: 80 }], "Pb", "Pb", 3);
+  L.step(l, 60);
+  L.setVolts(l, "n", 0);
+  L.remove(l, "a");
+  const oxide = () => (L.reading(l, "e1").coat.find((c) => c.id === "PbO2(s)") || { n: 0 }).n, full = oxide();
+  L.step(l, 600);
+  assert.ok(oxide() > 0.98 * full, `nach zehn Minuten noch ${oxide() / full} des Bleidioxids`);
+  const open = L.reading(l, "u").value;
+  assert.ok(open > 1.9 && open < 2.2, `gut 2 V: ${open}`);
+  L.place(l, { type: "lamp", id: "lp", in: "b" });
+  L.step(l, 600);
+  assert.ok(Math.abs(L.circuit(l, "b").I) < 1e-5, `entladen fließt nur noch ein Hauch durch die dichte Schicht: ${L.circuit(l, "b").I} A`);
+  L.step(l, 600);
+  assert.ok(L.atRest(l), "und alles kommt zur Ruhe");
+  L.remove(l, "lp");
+  L.step(l, 5);
+  const rest = L.reading(l, "u").value;                       // unter dem dichten Bleisulfat hat das Blei kein festes Potential (siehe Grenzen)
+  assert.ok(rest > 0.5 && rest < 2.0, `entladen, ohne Last: ${rest} V`);
+  assert.ok(!(L.vessel(l, "b").n["PbSO4(s)"] > 1e-6), "kein Bleisulfat als Niederschlag im Glas: es bleibt auf den Platten");
+  // Silber, in Salzsäure dick mit Silberchlorid überzogen, gegen Kupfer in Kupfersulfat: 0,34 − 0,22 V und Nernst
+  const ag = lab([{ type: "beaker", id: "l", contains: [{ reagent: "HCl 1M", ml: 80 }] }, { type: "electrode-Ag", id: "e1", in: "l" }, { type: "electrode-C", id: "e2", in: "l" },
+    { type: "supply", id: "n", in: "l", volts: 3 }, { type: "beaker", id: "r", contains: [{ reagent: "CuSO4 0.5M", ml: 80 }] }, { type: "electrode-Cu", id: "e3", in: "r" }], { room: 25 });
+  L.step(ag, 10);
+  assert.ok(L.reading(ag, "e1").coat[0].n > 2.5e-5, "dicker Belag");
+  L.remove(ag, "n"); L.remove(ag, "e2");
+  L.place(ag, { type: "bridge", in: "l", to: "r" });
+  L.place(ag, { type: "voltmeter", id: "u", in: "l" });
+  L.step(ag, 2);
+  near(Math.abs(L.reading(ag, "u").value), 0.076, 0.03, "das Potential von Silber/Silberchlorid bleibt");
 });
 
 test("Brennstoffzelle: Gas an Platin oder Graphit haftet zum Teil; abgeschaltet gibt es gut 1 V und liefert Strom, bis es verbraucht ist; ohne Verbraucher verliert es sich in Minuten", () => {
@@ -6677,15 +6751,15 @@ test("Auflösung nach Gesetz: zwei Feststoffe im selben Glas folgen jeder seinem
     for (const [k, share] of [[5e-9, 0], [5.11e-6, 0.1]]) {
       L.db = before;
       L.register({
-        species: { "PbCO3(s)": { name: { de: "Bleicarbonat" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Pb^2+(aq)": { name: { de: "Blei(II)-Ion" }, Hf: null, src: "Probe" } },
-        equilibria: [{ eq: "PbCO3(s) <=> Pb^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
-        reagents: { "cerussite": { name: { de: "Weißbleierz" }, solid: "PbCO3(s)", area: 6 } }
+        species: { "CdCO3(s)": { name: { de: "Cadmiumcarbonat" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" } },
+        equilibria: [{ eq: "CdCO3(s) <=> Cd^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
+        reagents: { "cadmium carbonate": { name: { de: "Cadmiumcarbonat" }, solid: "CdCO3(s)", area: 6 } }
       });
       const l = lime("HCl 1M", "marble", 1);
-      L.add(l, "b", "cerussite", { g: 1 });
+      L.add(l, "b", "cadmium carbonate", { g: 1 });
       L.step(l, 10);
       near(calcium(l), calcium(alone), 0.03 * calcium(alone), `Marmor neben einem Stück mit k = ${k}`);
-      near(dissolved(l, "Pb"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
+      near(dissolved(l, "Cd"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
       assert.equal(L.atRest(l), false);
       assert.equal(l.failed || 0, 0);
     }
@@ -8990,6 +9064,31 @@ test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
   assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
   assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
   for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
+});
+
+test("README: die Folie zum Bleiakku hält, was ihr Text verspricht", () => {
+  const l = L.createLab(L.normalize(JSON.parse(slide("Bleiakku")[0])));
+  const supply = l.tools.find((t) => t.type === "supply").id, volts = l.tools.find((t) => t.type === "voltmeter").id;
+  const plates = l.tools.filter((t) => t.type === "electrode-Pb").map((t) => t.id);
+  const coat = (id, sp) => (L.reading(l, id).coat.find((c) => c.id === sp) || { n: 0 }).n;
+  L.step(l, 60);                                              // etwa eine Minute laden
+  assert.ok(coat(plates[0], "PbO2(s)") > 2e-5, "braunes Bleidioxid am Pluspol");
+  assert.ok(L.reading(l, plates[1]).bub > 0, "am Minuspol perlt Wasserstoff");
+  L.setVolts(l, supply, 0);
+  L.step(l, 2);
+  const open = L.reading(l, volts).value;
+  assert.ok(open > 1.9 && open < 2.05, `knapp 2 V: ${open}`);
+  const lamp = L.place(l, { type: "lamp", in: "akku" });
+  const seen = [];
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "lampOn") && !seen.some((e) => e.key === "lampOff"), "das Lämpchen glimmt gut zwei Minuten");
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "lampOff"), "dann ist er entladen");
+  assert.ok(coat(plates[0], "PbSO4(s)") > 2e-5 && coat(plates[1], "PbSO4(s)") > 2e-5, "beide Platten mit Bleisulfat bedeckt");
+  L.remove(l, lamp);                                          // das Lämpchen weg, dann wieder laden
+  L.setVolts(l, supply, 3);
+  L.step(l, 60);
+  assert.ok(coat(plates[0], "PbO2(s)") > 2e-5, "er lässt sich wieder laden");
 });
 
 test("README: die Folie zur Brennstoffzelle hält, was ihr Text verspricht", () => {

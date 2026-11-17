@@ -481,7 +481,7 @@
     "seen.smell": "Miris",
     "seen.ignite": "Nešto gori",
     "seen.flame": "Boja plamena",
-    "seen.plated": "Izlučuje se metal",
+    "seen.plated": "Izlučuje se prevlaka",
     "seen.lamp": "Žaruljica svijetli",
     "seen.broken": "Staklo puca",
     "err.other": "Postav se ne može prikazati",
@@ -496,7 +496,8 @@
     "spinFree": "Najprije izvadite sve iz epruvete; ništa ne smije visjeti iznad nje ni voditi u nju, smije ostati samo čep.",
     "spinFlow": "Još nešto teče – najprije pričekajte.",
     "spinEmpty": "Najprije stavite epruvetu.",
-    "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol."
+    "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol.",
+    "part.electrode-Pb": "olovna elektroda"
   },
   "names": {
     "H2O(l)": "voda",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "izbijeljeno bojilo (bezbojno)",
     "C15H15N3O3(aq)": "izbijeljeno bojilo (bezbojno)",
     "C15H14N3O3-(aq)": "izbijeljeno bojilo (bezbojno)",
-    "C25H30N3O+(aq)": "izbijeljeno bojilo (bezbojno)"
+    "C25H30N3O+(aq)": "izbijeljeno bojilo (bezbojno)",
+    "Pb(s)": "olovo",
+    "Pb^2+(aq)": "olovov(II) ion",
+    "PbSO4(s)": "olovov(II) sulfat",
+    "PbO2(s)": "olovov(IV) oksid"
   }
 }

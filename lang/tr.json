@@ -481,7 +481,7 @@
     "seen.smell": "Koku",
     "seen.ignite": "Bir şey yanıyor",
     "seen.flame": "Alev rengi",
-    "seen.plated": "Bir metal birikiyor",
+    "seen.plated": "Bir kaplama birikiyor",
     "seen.lamp": "Lamba yanıyor",
     "seen.broken": "Cam kırılıyor",
     "err.other": "Düzenek gösterilemiyor",
@@ -496,7 +496,8 @@
     "spinFree": "Önce deney tüpünden her şeyi çıkarın; üstünde hiçbir şey asılı durmamalı ya da içine girmemeli, yalnızca tıpa kalabilir.",
     "spinFlow": "Hâlâ bir şey akıyor – önce bekleyin.",
     "spinEmpty": "Önce bir deney tüpü yerleştirin.",
-    "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha."
+    "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha.",
+    "part.electrode-Pb": "kurşun elektrot"
   },
   "names": {
     "H2O(l)": "su",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "ağartılmış boya (renksiz)",
     "C15H15N3O3(aq)": "ağartılmış boya (renksiz)",
     "C15H14N3O3-(aq)": "ağartılmış boya (renksiz)",
-    "C25H30N3O+(aq)": "ağartılmış boya (renksiz)"
+    "C25H30N3O+(aq)": "ağartılmış boya (renksiz)",
+    "Pb(s)": "kurşun",
+    "Pb^2+(aq)": "kurşun(II) iyonu",
+    "PbSO4(s)": "kurşun(II) sülfat",
+    "PbO2(s)": "kurşun(IV) oksit"
   }
 }

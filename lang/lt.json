@@ -481,7 +481,7 @@
     "seen.smell": "Kvapas",
     "seen.ignite": "Kažkas dega",
     "seen.flame": "Liepsnos spalva",
-    "seen.plated": "Nusėda metalas",
+    "seen.plated": "Nusėda danga",
     "seen.lamp": "Lemputė užsidega",
     "seen.broken": "Stiklas sudūžta",
     "err.other": "Įrangos parodyti neįmanoma",
@@ -496,7 +496,8 @@
     "spinFree": "Pirmiausia viską išimkite iš mėgintuvėlio; virš jo nieko negali kabėti ir į jį nieko negali vesti, gali likti tik kamštis.",
     "spinFlow": "Dar kažkas teka – pirmiausia palaukite.",
     "spinEmpty": "Pirmiausia įstatykite mėgintuvėlį.",
-    "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą."
+    "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą.",
+    "part.electrode-Pb": "švino elektrodas"
   },
   "names": {
     "H2O(l)": "vanduo",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "išbalintas dažiklis (bespalvis)",
     "C15H15N3O3(aq)": "išbalintas dažiklis (bespalvis)",
     "C15H14N3O3-(aq)": "išbalintas dažiklis (bespalvis)",
-    "C25H30N3O+(aq)": "išbalintas dažiklis (bespalvis)"
+    "C25H30N3O+(aq)": "išbalintas dažiklis (bespalvis)",
+    "Pb(s)": "švinas",
+    "Pb^2+(aq)": "švino(II) jonas",
+    "PbSO4(s)": "švino(II) sulfatas",
+    "PbO2(s)": "švino(IV) oksidas"
   }
 }

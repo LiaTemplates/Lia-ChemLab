@@ -481,7 +481,7 @@
     "seen.smell": "Bau",
     "seen.ignite": "Sesuatu terbakar",
     "seen.flame": "Warna nyalaan",
-    "seen.plated": "Logam terenap",
+    "seen.plated": "Satu salutan terenap",
     "seen.lamp": "Mentol menyala",
     "seen.broken": "Kaca pecah",
     "err.other": "Susunan tidak dapat dipaparkan",
@@ -496,7 +496,8 @@
     "spinFree": "Keluarkan semuanya dari tabung uji dahulu; tiada apa-apa boleh tergantung di atasnya atau masuk ke dalamnya, hanya penyumbat boleh kekal.",
     "spinFlow": "Masih ada yang mengalir – tunggu dahulu.",
     "spinEmpty": "Letakkan tabung uji dahulu.",
-    "hint.centrifuge": "Sekarang ketik tabung uji yang hendak dimasukkan ke dalam pengempar – atau meja."
+    "hint.centrifuge": "Sekarang ketik tabung uji yang hendak dimasukkan ke dalam pengempar – atau meja.",
+    "part.electrode-Pb": "elektrod plumbum"
   },
   "names": {
     "H2O(l)": "air",
@@ -728,6 +729,10 @@
     "C27H28O6S^2-(aq)": "pewarna dilunturkan (tidak berwarna)",
     "C15H15N3O3(aq)": "pewarna dilunturkan (tidak berwarna)",
     "C15H14N3O3-(aq)": "pewarna dilunturkan (tidak berwarna)",
-    "C25H30N3O+(aq)": "pewarna dilunturkan (tidak berwarna)"
+    "C25H30N3O+(aq)": "pewarna dilunturkan (tidak berwarna)",
+    "Pb(s)": "plumbum",
+    "Pb^2+(aq)": "ion plumbum(II)",
+    "PbSO4(s)": "plumbum(II) sulfat",
+    "PbO2(s)": "plumbum(IV) oksida"
   }
 }
