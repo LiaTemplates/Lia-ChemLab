@@ -309,17 +309,15 @@
   }
   fx.heatColor = heatColor;
 
-  // Strömung in der Flüssigkeit als SVG. box: { x0, x1, top, bottom } der Flüssigkeit, w aus L.view (ml, T, heat), t Zeit in s,
-  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur mit fester Farbskala), "diff" (Unterschiede zum Mittel), "mix" (Schlieren: schwerer bernsteinbraun,
-  // leichter türkis als die Mischung), "vortex" (Wirbel) oder "pressure" (Druck)
-  fx.flow = function (box, w, t, key, mode, still) {
-    var heat = w.heat, s = fields[key], width = box.x1 - box.x0, height = box.bottom - box.top, deep, size, cols, cell, dt, n, i, W, out = "", span = 0, cw, ch, id;
-    if (!heat || !(w.ml > 0.005) || !(width > 2 && height > 2)) { delete fields[key]; return ""; }
+  // Rechnet das Feld eines Gefäßes bis zur Zeit t; null ohne Flüssigkeit
+  function stepped(w, t, key, still) {
+    var heat = w.heat, s = fields[key], deep, size, cols, cell, dt, n, i, oil;
+    if (!heat || !(w.ml > 0.005)) { delete fields[key]; return null; }
     deep = w.ml / 1e6 / (Math.PI * heat.d * heat.d / 40000);    // Höhe der Flüssigkeit in m, als stünde sie in einem Zylinder
     size = deep / ROWS;
     cols = Math.max(3, Math.min(40, Math.round(heat.d / 100 / size)));      // Zellen etwa quadratisch
     cell = w.ml * 4.18 / (cols * ROWS);
-    var oil = w.oil ? { share: w.oil.ml / w.ml, top: w.oil.top, rho: w.oil.rho, eta: w.oil.eta, stir: w.oil.stir } : null;
+    oil = w.oil ? { share: w.oil.ml / w.ml, top: w.oil.top, rho: w.oil.rho, eta: w.oil.eta, stir: w.oil.stir } : null;
     // neu, nach einem Sprung der Uhr oder bei ganz anderer Form: unter den jetzigen Bedingungen einschwingen.
     // Nach dem Zugießen bleibt das Gitter, damit man sieht, wohin das Zugegossene läuft; die Zellen werden dabei etwas höher.
     if (!s || s.cols > 2 * cols || cols > 2 * s.cols || t < s.t - 1e-9 || t - s.t > 30) {
@@ -332,32 +330,54 @@
     n = Math.min(40, Math.ceil(dt / STEP));
     for (i = 0; i < n; i++) advance(s, heat, w.T, cell, size, Math.min(0.5, dt / n), false, i ? 0 : Math.max(0, (w.ml - s.ml) / w.ml), oil);
     if (n) { s.t = t; s.ml = w.ml; }
+    return s;
+  }
 
-    W = cols + 2; cw = width / cols; ch = height / ROWS;
+  // Was eine Ansicht je Zelle zeigt: level(k, j) und, geteilt durch span, paint(a) → { hex, rgb, alpha }
+  function painter(s, w, mode) {
+    var W = s.cols + 2, heat = w.heat, span = 0;
     function curl(k) { return (s.v[k + 1] - s.v[k - 1] - s.u[k + W] + s.u[k - W]) / 2; }      // positiv: dreht im Uhrzeigersinn
     function level(k, j) {
       return mode === "pressure" ? j / ROWS : mode === "vortex" ? curl(k) : mode === "temp" ? s.T[k] : mode === "mix" ? s.R[k] - (heat.rho || 1000) : s.T[k] - w.T;
     }
     if (mode === "vortex" || mode === "diff" || mode === "mix") each(s, function (k, i, j) { span = Math.max(span, Math.abs(level(k, j))); });
     span = mode === "vortex" ? Math.max(0.3, span) : mode === "diff" || mode === "mix" ? Math.max(2, span) : 1;     // eine ruhige, gut gemischte Flüssigkeit bleibt blass
+    var HEX = { pressure: "#2b5fb3", up: "#d9452b", down: "#2b6fd9", heavy: "#8a5a22", light: "#2a9d8f" };
+    function paint(a) {
+      var hex = mode === "temp" ? null : mode === "pressure" ? HEX.pressure : mode === "mix" ? (a > 0 ? HEX.heavy : HEX.light) : a > 0 ? HEX.up : HEX.down;
+      var rgb = hex ? [1, 3, 5].map(function (k) { return parseInt(hex.substr(k, 2), 16); }) : heatColor(a);
+      return { hex: hex || css(rgb), rgb: rgb, alpha: mode === "temp" ? 0.55 : Math.abs(a) < 0.03 ? 0 : Math.min(1, Math.abs(a)) * (mode === "pressure" ? 0.45 : 0.6) };
+    }
+    return { level: level, span: span, paint: paint };
+  }
+
+  // Strömung in der Flüssigkeit als SVG. box: { x0, x1, top, bottom } der Flüssigkeit, w aus L.view (ml, T, heat), t Zeit in s,
+  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur mit fester Farbskala), "diff" (Unterschiede zum Mittel), "mix" (Schlieren: schwerer bernsteinbraun,
+  // leichter türkis als die Mischung), "vortex" (Wirbel) oder "pressure" (Druck)
+  fx.flow = function (box, w, t, key, mode, still) {
+    var width = box.x1 - box.x0, height = box.bottom - box.top, s, look, cols, i, W, out = "", cw, ch, id;
+    if (!(width > 2 && height > 2)) { delete fields[key]; return ""; }
+    s = stepped(w, t, key, still);
+    if (!s) return "";
+    look = painter(s, w, mode);
+    cols = s.cols; W = cols + 2; cw = width / cols; ch = height / ROWS;
     // gezeichnet in Blöcken von 2×2 Zellen: nach dem Weichzeichnen sieht man keinen Unterschied, das Bild ist ein Viertel so lang
     cw *= 2; ch *= 2;
     for (var j = 1; j <= ROWS; j += 2) for (i = 1; i <= cols; i += 2) {
       var r = Math.min(i + 1, cols);                             // bei ungerader Breite zählt die letzte Spalte doppelt
-      var a = (level(i + j * W, j) + level(r + j * W, j) + level(i + (j + 1) * W, j + 1) + level(r + (j + 1) * W, j + 1)) / 4 / span;
-      var x = box.x0 + (i - 1) / 2 * cw, y = box.top + (j - 1) / 2 * ch, last = i + 2 > cols;
-      if (mode !== "temp" && Math.abs(a) < 0.03) continue;
+      var a = (look.level(i + j * W, j) + look.level(r + j * W, j) + look.level(i + (j + 1) * W, j + 1) + look.level(r + (j + 1) * W, j + 1)) / 4 / look.span;
+      var x = box.x0 + (i - 1) / 2 * cw, y = box.top + (j - 1) / 2 * ch, last = i + 2 > cols, p = look.paint(a);
+      if (!(p.alpha > 0)) continue;
       // die äußeren Blöcke reichen über den Rand hinaus, damit das Weichzeichnen dort nicht ausbleicht
       out += '<rect x="' + f(i === 1 ? x - cw : x) + '" y="' + f(j === 1 ? y - ch : y) + '" width="' + f(cw * (1 + (i === 1) + last) + 0.3) +
-        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + (mode === "temp" ? css(heatColor(a)) : mode === "pressure" ? "#2b5fb3" : mode === "mix" ? (a > 0 ? "#8a5a22" : "#2a9d8f") : a > 0 ? "#d9452b" : "#2b6fd9") +
-        '" fill-opacity="' + (mode === "temp" ? "0.55" : (Math.abs(a) * (mode === "pressure" ? 0.45 : 0.6)).toFixed(2)) + '"/>';
+        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + p.hex + '" fill-opacity="' + p.alpha.toFixed(2) + '"/>';
     }
     cw /= 2; ch /= 2;
     id = key + "-flow";
     out = '<filter id="' + id + '" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + f(Math.min(cw, ch) * 0.8) + '"/></filter>' +
       '<g class="cl-flow" filter="url(#' + id + ')">' + out + "</g>";
     if (s.P) {                                                   // die Grenze der Ölschicht: je Spalte die Höhe, an der P die Hälfte kreuzt
-      var edge = [], c, r;
+      var edge = [], c;
       for (c = 1; c <= cols; c++) {
         for (r = 1; r < ROWS && (s.P[c + r * W] > 0.5) === (s.P[c + (r + 1) * W] > 0.5); r++);
         if (r < ROWS) edge.push(f(box.x0 + (c - 0.5) * cw) + "," + f(box.top + r * ch));
@@ -366,6 +386,25 @@
     }
     s.dots.forEach(function (d) { out += '<circle class="cl-flow-dot" cx="' + f(box.x0 + (d[0] - 0.5) * cw) + '" cy="' + f(box.top + (d[1] - 0.5) * ch) + '" r="1"/>'; });
     return out;
+  };
+
+  // Dasselbe Feld für die 3D-Bühne: cols × rows Zellen, color(x, y) mit x, y von 0 bis 1 (links oben) → [r, g, b, Deckkraft], bilinear;
+  // dots: die Spurteilchen, ebenso von 0 bis 1. null ohne Flüssigkeit.
+  fx.flowCells = function (w, t, key, mode, still) {
+    var s = stepped(w, t, key, still), look, W, cells = [];
+    if (!s) return null;
+    look = painter(s, w, mode); W = s.cols + 2;
+    each(s, function (k, i, j) { cells[k] = look.paint(look.level(k, j) / look.span); });
+    function at(i, j) { return cells[Math.max(1, Math.min(s.cols, i)) + Math.max(1, Math.min(ROWS, j)) * W]; }
+    return {
+      cols: s.cols, rows: ROWS,
+      color: function (x, y) {
+        var a = x * s.cols + 0.5, b = y * ROWS + 0.5, i = Math.floor(a), j = Math.floor(b), u = a - i, v = b - j, c = [0, 0, 0, 0], q = [[at(i, j), (1 - u) * (1 - v)], [at(i + 1, j), u * (1 - v)], [at(i, j + 1), (1 - u) * v], [at(i + 1, j + 1), u * v]], n;
+        q.forEach(function (e) { for (n = 0; n < 3; n++) c[n] += e[0].rgb[n] * e[1]; c[3] += e[0].alpha * e[1]; });
+        return c;
+      },
+      dots: s.dots.map(function (d) { return [(d[0] - 0.5) / s.cols, (d[1] - 0.5) / ROWS]; })
+    };
   };
 
   function css(rgb) { return "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")"; }

@@ -23,7 +23,7 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - [x] 3b (17.11.2026): Verteilen (`kd`, mit `via` für Iod aus dem Triiodid), Knöpfe „Schütteln“ und „Stabmixer“ (zehn Sekunden, Tropfen 0,1 mm und 8 µm, Aufrahmen nach Stokes), milchige Trübung, Reaktionen in der Ölschicht (Hexen und Brom).
   - [x] 3c (17.11.2026): Scheidetrichter (hängt wie die Bürette, lässt unten ab, lässt sich schütteln, meldet, wenn die untere Schicht abgelaufen ist).
   - [x] 3d (17.11.2026): Phasenfeld P im Strömungsbild (mitgetragen, geschärft, Menge vom Rechenkern), Dichte und Zähigkeit der Ölschicht, Stöße beim Schütteln, Grenzlinie; Öltropfen in der Zeichnung (auch ohne Strömungsansicht).
-  - [ ] 3e 3D (bisher zeigt 3D eine Ölschicht und den Scheidetrichter nicht eigens).
+  - [x] 3e (17.11.2026): Schichten, Öltropfen und Scheidetrichter in 3D; dazu die Strömungsansicht in 3D als Schnittebene durch die Mitte des Glases.
   - Offen aus 3d: Oberflächenspannung (Tropfen bleiben unter dem Gitter), eigene Wärmeausdehnung des Öls.
   - Offen aus 3b: Verteilungskoeffizienten von Iod und Brom in Hexan mit Quelle; gelöstes Iod I2(aq) im Wasser (verändert die Zinkiodid-Elektrolyse, deshalb nicht eingebaut); Emulgator; Schütteln einer offenen Flasche spritzt nicht.
   - Offen aus 3a: Ethylacetat als Schicht (braucht eine Regel für Mitlöser wie Ethanol).

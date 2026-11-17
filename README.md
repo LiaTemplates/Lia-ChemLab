@@ -980,7 +980,9 @@ Hier ist die Strömung schon eingeschaltet. Mit einem Tipp auf ein Glas öffnet 
 - **Wirbel:** Rot dreht im Uhrzeigersinn, Blau dagegen.
 - **Druck:** Er wächst mit der Tiefe, um etwa 1 hPa je Zentimeter Wasser. Was die Strömung am Druck ändert, ist zehntausendmal kleiner und nicht zu sehen.
 
-Die Strömung ist ein Bild für die Vorstellung. Gerechnet wird weiter mit einem gut durchmischten Gefäß, und die Strömung ändert nichts an der Chemie: Auch wenn unten noch eine Sirupschicht liegt, reagiert alles, als wäre es gemischt. Das Bild ist ein Querschnitt mit grobem Raster: Es zeigt die Muster richtig, die Zahlen nur ungefähr. Strömung gibt es nur in der 2D-Ansicht.
+In 3D zeigt eine senkrechte Schnittebene durch die Mitte des Glases dasselbe Bild; die Flüssigkeit ist dann farblos klar, damit man die Ebene sieht.
+
+Die Strömung ist ein Bild für die Vorstellung. Gerechnet wird weiter mit einem gut durchmischten Gefäß, und die Strömung ändert nichts an der Chemie: Auch wenn unten noch eine Sirupschicht liegt, reagiert alles, als wäre es gemischt. Das Bild ist ein Querschnitt mit grobem Raster: Es zeigt die Muster richtig, die Zahlen nur ungefähr.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1857,7 +1859,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
-- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. In 3D erscheint die Ölschicht noch nicht. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
+- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.
