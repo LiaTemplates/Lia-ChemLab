@@ -484,7 +484,19 @@
     "seen.plated": "Fém válik ki",
     "seen.lamp": "Az izzó világít",
     "seen.broken": "Az üveg eltörik",
-    "err.other": "A felépítés nem jeleníthető meg"
+    "err.other": "A felépítés nem jeleníthető meg",
+    "part.centrifuge": "centrifuga",
+    "spin": "Rotor",
+    "spin.0": "ki",
+    "spin.1": "jár",
+    "say.spinOn": "{part}: bekapcsolva",
+    "say.spinOff": "{part}: kikapcsolva",
+    "spinning": "A centrifuga jár – előbb kapcsolja ki.",
+    "tubesOnly": "A centrifugába csak kémcső fér.",
+    "spinFree": "Előbb vegyen ki mindent a kémcsőből; semmi sem lóghat fölötte és semmi sem vezethet bele, csak dugó maradhat benne.",
+    "spinFlow": "Még folyik valami – előbb várjon.",
+    "spinEmpty": "Előbb tegyen bele egy kémcsövet.",
+    "hint.centrifuge": "Most koppints arra a kémcsőre, amely a centrifugába kerüljön – vagy az asztalra."
   },
   "names": {
     "H2O(l)": "víz",

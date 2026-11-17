@@ -4422,6 +4422,133 @@ test("Messzylinder und Pipette: genau abmessen; mit Streuung ist Umgießen ungen
   assert.match(L.icon("pipette10"), /<svg/);
 });
 
+test("Zentrifuge: ein Niederschlag setzt sich in Sekunden ab, kolloider Schwefel in etwa einer Minute; nur Reagenzgläser; solange sie läuft, bleibt das Glas zu", () => {
+  const settledOf = (l, id) => L.vessel(l, "b").lumps.find((k) => k.id === id).settled;
+  // Kupferhydroxid im Reagenzglas: ohne Zentrifuge schwebt nach zehn Sekunden noch das meiste, in der Zentrifuge liegt es am Boden
+  const make = () => lab([{ type: "testtube", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 5 }] }, { type: "centrifuge", id: "z", under: "b" }, { type: "beaker", id: "x" }], { room: 20 });
+  const still = make(), spun = make();
+  for (const l of [still, spun]) { L.add(l, "b", "NaOH 1M", { ml: 5 }); L.step(l, 3); }
+  assert.equal(L.setSpin(spun, "z", 1), true);
+  for (const l of [still, spun]) L.step(l, 12);
+  assert.ok(settledOf(still, "Cu(OH)2(s)") < 0.4, `ohne Zentrifuge: ${settledOf(still, "Cu(OH)2(s)")}`);
+  assert.ok(settledOf(spun, "Cu(OH)2(s)") > 0.95, `in der Zentrifuge: ${settledOf(spun, "Cu(OH)2(s)")}`);
+  assert.equal(L.reading(spun, "z").spin, 1);
+  assert.equal(L.atRest(spun), false, "solange sie läuft, läuft die Uhr");
+  // solange sie läuft, ist das Glas unter dem Deckel: nichts hinein, nichts heraus, keine Probe, kein Gerät; sie selbst bleibt stehen
+  assert.equal(L.add(spun, "b", "NaOH 1M", { ml: 1 }), false, "zugeben");
+  assert.equal(L.pour(spun, "b", "x", 2), false, "abgießen");
+  assert.equal(L.pour(spun, "x", "b", 2), false, "hineingießen");
+  assert.equal(L.pipette(spun, "b", "x", 5), false, "pipettieren");
+  assert.equal(L.probe(spun, "b", "glow"), null, "Span");
+  assert.equal(L.dispose(spun, "b", "heavy"), null, "entsorgen");
+  assert.equal(L.vessel(spun, "x") && L.tool(spun, L.place(spun, { type: "thermometer", in: "b" })).in, null, "Thermometer");
+  assert.equal(L.attach(spun, "z", null), false, "die laufende Zentrifuge wegstellen");
+  L.step(spun, 20);                                           // eine halbe Minute insgesamt: dann liegt alles fest am Boden
+  assert.equal(L.setSpin(spun, "z", 0), true);
+  assert.equal(L.pour(spun, "b", "x", 8), true, "danach den Überstand abgießen");
+  L.step(spun, 10);
+  assert.ok(!(L.vessel(spun, "x").n["Cu(OH)2(s)"] > 1e-6), "der Überstand ist klar");
+  // kolloider Schwefel: er schwebt ohne Zentrifuge, in ihr setzt er sich in etwa einer Minute ab
+  const sulfur = lab([{ type: "testtube", id: "b", contains: [{ reagent: "Na2S2O3 1M", ml: 5 }, { reagent: "HCl 2M", ml: 5 }] }, { type: "centrifuge", id: "z", under: "b" }], { room: 20 });
+  L.step(sulfur, 300);
+  assert.equal(settledOf(sulfur, "S(s)"), 0, "ohne Zentrifuge schwebt er");
+  L.setSpin(sulfur, "z", 1);
+  L.step(sulfur, 30);
+  const half = settledOf(sulfur, "S(s)");
+  assert.ok(half > 0.2 && half < 0.6, `nach 30 s: ${half}`);
+  L.step(sulfur, 300);
+  assert.ok(settledOf(sulfur, "S(s)") > 0.95, `nach fünf Minuten: ${settledOf(sulfur, "S(s)")}`);
+  L.setSpin(sulfur, "z", 0);
+  L.step(sulfur, 60);
+  assert.ok(settledOf(sulfur, "S(s)") > 0.9, "abgesetzt bleibt abgesetzt");
+  // nur Reagenzgläser passen hinein; mit einem Gerät im Glas oder einer Bürette darüber läuft sie nicht an, ein Stopfen darf bleiben
+  assert.throws(() => lab([{ type: "beaker", id: "b" }, { type: "centrifuge", under: "b" }]), (e) => e.code === "place");
+  const other = lab([{ type: "beaker", id: "a" }, { type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "thermometer", id: "th", in: "b" }, { type: "centrifuge", id: "z", under: "b" }]);
+  assert.equal(L.tool(other, L.place(other, { type: "centrifuge", under: "a" })).in, null, "nicht unter ein Becherglas");
+  assert.equal(L.attach(other, "z", "a"), false);
+  assert.equal(L.setSpin(other, "z", 1), false, "mit dem Thermometer im Glas");
+  L.attach(other, "th", null);
+  L.place(other, { type: "stopper", in: "b" });
+  assert.equal(L.setSpin(other, "z", 1), true, "mit Stopfen");
+  assert.equal(L.setSpin(other, "th", 1), false, "ein Thermometer dreht sich nicht");
+  // was noch fließt, muss erst ankommen; was in das Glas führt (Rohr, Kühler, Salzbrücke), hält sie an; ein Manometer ist kein Stopfen
+  const flowing = lab([{ type: "testtube", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 5 }] }, { type: "centrifuge", id: "z", under: "b" }, { type: "beaker", id: "x" }]);
+  L.add(flowing, "b", "NaOH 1M", { ml: 5 });
+  L.step(flowing, 0.1);
+  assert.equal(L.setSpin(flowing, "z", 1), false, "die Lauge fließt noch hinein");
+  L.step(flowing, 3);
+  L.pour(flowing, "b", "x", 9);
+  L.step(flowing, 0.1);
+  assert.equal(L.setSpin(flowing, "z", 1), false, "es wird noch abgegossen");
+  for (const link of [{ type: "tube", in: "a", to: "b" }, { type: "condenser", in: "a", to: "b" }, { type: "bridge", in: "a", to: "b" }, { type: "manometer", in: "b" }]) {
+    const k = lab([{ type: link.type === "bridge" ? "beaker" : "flask", id: "a", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 5 }] }, Object.assign({ id: "w" }, link), { type: "centrifuge", id: "z", under: "b" }]);
+    assert.equal(L.setSpin(k, "z", 1), false, link.type);
+  }
+  // läuft sie, führt auch nichts Neues hinein, und der Stopfen bleibt sitzen
+  const shut = lab([{ type: "flask", id: "a", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "stopper", id: "s", in: "b" }, { type: "centrifuge", id: "z", under: "b", spin: 1 }]);
+  assert.equal(L.tool(shut, L.place(shut, { type: "tube", in: "a", to: "b" })).to, null, "kein Rohr in das laufende Glas");
+  assert.equal(L.attach(shut, "s", null), false, "der Stopfen bleibt");
+  // ohne Glas läuft sie nicht an; was ein Aufbau verlangt, muss genauso gehen
+  const bare = lab([{ type: "centrifuge", id: "z" }]);
+  assert.equal(L.setSpin(bare, "z", 1), false, "leer");
+  assert.equal(L.tool(bare, L.place(bare, { type: "centrifuge", spin: 1 })).spin, 0);
+  for (const more of [{ type: "thermometer", in: "b" }, { type: "burette", over: "b" }, { type: "tube", in: "a", to: "b" }])
+    assert.throws(() => lab([{ type: "flask", id: "a" }, { type: "testtube", id: "b" }, more, { type: "centrifuge", under: "b", spin: 1 }]), (e) => e.code === "place", more.type);
+  for (const bad of ["0", 7, "an"]) assert.throws(() => lab([{ type: "testtube", id: "b" }, { type: "centrifuge", under: "b", spin: bad }]), (e) => e.code === "amount", String(bad));
+  assert.equal(L.tool(lab([{ type: "testtube", id: "b" }, { type: "centrifuge", id: "z", under: "b", spin: true }]), "z").spin, 1);
+  // als Text: läuft sie, steht das im kopierten Aufbau
+  const raw = { bench: [{ type: "testtube", id: "b" }, { type: "centrifuge", id: "z", under: "b", spin: 1 }] }, copy = JSON.parse(L.describe(L.createRun(L.normalize(raw)), raw));
+  assert.deepEqual(copy.bench.find((o) => o.type === "centrifuge"), { type: "centrifuge", id: "z", under: "b", spin: 1 });
+  assert.match(L.icon("centrifuge"), /<svg/);
+});
+
+test("Zentrifuge in der Fläche: unter das Reagenzglas stellen, an- und ausschalten; solange sie läuft, sagt die Statuszeile warum nichts geht", () => {
+  const el = mount({ bench: [{ type: "testtube", id: "rg", contains: [{ reagent: "CuSO4 0.5M", ml: 5 }] }, { type: "beaker", id: "bg" }], shelf: ["centrifuge", "NaOH 1M"] });
+  press(el, "hand", "centrifuge");
+  tap(el, "bg");
+  assert.equal(part(el, ".cl-status").textContent, "Nur Reagenzgläser passen in die Zentrifuge.");
+  tap(el, "rg");
+  const z = state(el).run.lab.tools.find((t) => t.type === "centrifuge").id;
+  assert.equal(L.tool(state(el).run.lab, z).in, "rg");
+  tap(el, z);
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="spin" data-id="1"/);
+  press(el, "spin", "1");
+  frames(2);
+  assert.equal(L.tool(state(el).run.lab, z).spin, 1);
+  assert.match(logOf(el), /Zentrifuge 1: eingeschaltet/);
+  assert.match(item(el, z).innerHTML, /cl-centrifuge/);
+  assert.match(item(el, z).attributes["aria-label"], /läuft/);
+  press(el, "hand", "NaOH 1M");
+  tap(el, "rg");
+  assert.equal(part(el, ".cl-status").textContent, "Die Zentrifuge läuft – erst ausschalten.");
+  press(el, "hand", "NaOH 1M");                               // wieder ins Regal; gewählt bleibt die Zentrifuge
+  press(el, "spin", "0");
+  frames(2);
+  // mit der Zentrifuge in der Hand: ein eigener Hinweis; während etwas fließt oder ohne Glas läuft sie nicht an; der Stopfen bleibt sitzen
+  press(el, "hand", "centrifuge");
+  assert.match(part(el, ".cl-hand").innerHTML, /Reagenzglas antippen, das in die Zentrifuge soll/);
+  press(el, "hand", "centrifuge");
+  press(el, "hand", "NaOH 1M");
+  tap(el, "rg");
+  press(el, "hand", "NaOH 1M");
+  if (!/data-act="spin"/.test(part(el, ".cl-panel").innerHTML)) tap(el, z);      // die Karte der Zentrifuge
+  press(el, "spin", "1");
+  assert.equal(part(el, ".cl-status").textContent, "Es fließt noch – erst abwarten.");
+  frames(80);
+  const lone = mount({ bench: [{ type: "testtube", id: "rg", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "stopper", id: "s", in: "rg" }, { type: "centrifuge", id: "z", under: "rg", spin: 1 }, { type: "centrifuge", id: "y" }] });
+  tap(lone, "s");
+  press(lone, "remove");
+  assert.equal(part(lone, ".cl-status").textContent, "Die Zentrifuge läuft – erst ausschalten.");
+  assert.equal(L.tool(state(lone).run.lab, "s").in, "rg");
+  tap(lone, "y");
+  press(lone, "spin", "1");
+  assert.equal(part(lone, ".cl-status").textContent, "Erst ein Reagenzglas hineinstellen.");
+  assert.match(item(lone, "z").attributes["aria-label"], /läuft/);
+  assert.match(item(lone, "y").attributes["aria-label"], /: aus/);
+  frames(2);
+  assert.match(logOf(el), /Zentrifuge 1: ausgeschaltet/);
+});
+
 test("Filtrieren: der Trichter hält den Niederschlag zurück, das Filtrat läuft klar und von selbst ins Glas darunter; Kolloide laufen durch", () => {
   const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 10 }] }, { type: "beaker", id: "f" }, { type: "funnel", id: "t", over: "f" }], { room: 20 });
   L.add(l, "b", "NaOH 1M", { ml: 10 });                       // gefällt wird im Versuch (was schon im Aufbau ausfällt, liegt längst am Boden)
@@ -8797,6 +8924,34 @@ test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
   assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
   assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
   for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
+});
+
+test("README: die Folie zum Zentrifugieren hält, was ihr Text verspricht", () => {
+  const l = L.createLab(L.normalize(JSON.parse(slide("Zentrifugieren")[0])));
+  for (const id of ["links", "rechts"]) L.add(l, id, "NaOH 1M", { ml: 5 });
+  L.step(l, 3);
+  L.setSpin(l, "zentrifuge", 1);
+  L.step(l, 20);                                              // nach etwa 20 Sekunden
+  const cloud = (id) => (L.view(l, L.vessel(l, id)).cloud || { alpha: 0 }).alpha;
+  assert.ok(cloud("rechts") < 0.05, `in der Zentrifuge klar: ${cloud("rechts")}`);
+  assert.ok(cloud("links") > 0.5, `daneben noch trüb: ${cloud("links")}`);
+  assert.equal(L.pour(l, "rechts", "ueberstand", 8), false, "solange sie läuft, ist der Deckel zu");
+  L.setSpin(l, "zentrifuge", 0);
+  assert.equal(L.pour(l, "rechts", "ueberstand", 8), true);
+  L.step(l, 10);
+  assert.ok(!(L.vessel(l, "ueberstand").n["Cu(OH)2(s)"] > 1e-9), "der Überstand ist klar");
+  assert.ok(L.vessel(l, "rechts").n["Cu(OH)2(s)"] > 0.002, "der Bodensatz bleibt im Glas");
+  L.step(l, 300);                                             // gut fünf Minuten: dann ist auch das linke Glas klar
+  assert.ok(cloud("links") < 0.05, `links nach fünf Minuten: ${cloud("links")}`);
+  // der Schwefel: den Rest im rechten Glas entsorgen, dort Thiosulfat und Salzsäure; der Bodensatz wächst, die Lösung bleibt trüb
+  assert.ok(L.dispose(l, "rechts", "heavy"));
+  L.add(l, "rechts", "Na2S2O3 1M", { ml: 5 });
+  L.add(l, "rechts", "HCl 2M", { ml: 5 });
+  L.step(l, 60);
+  assert.equal(L.setSpin(l, "zentrifuge", 1), true);
+  L.step(l, 300);
+  assert.ok(L.view(l, L.vessel(l, "rechts")).sediment.ml > 0.1, "gelber Bodensatz");
+  assert.ok(cloud("rechts") > 0.5, `die Lösung darüber bleibt trüb: ${cloud("rechts")}`);
 });
 
 test("README: die Folie zum genauen Abmessen hält, was ihr Text verspricht", () => {

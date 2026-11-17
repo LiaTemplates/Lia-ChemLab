@@ -484,7 +484,19 @@
     "seen.plated": "有金属析出",
     "seen.lamp": "灯泡亮了",
     "seen.broken": "玻璃破裂",
-    "err.other": "无法显示该装置"
+    "err.other": "无法显示该装置",
+    "part.centrifuge": "离心机",
+    "spin": "转子",
+    "spin.0": "关闭",
+    "spin.1": "运转中",
+    "say.spinOn": "{part}：已开启",
+    "say.spinOff": "{part}：已关闭",
+    "spinning": "离心机正在运转——请先关闭。",
+    "tubesOnly": "离心机里只能放试管。",
+    "spinFree": "请先把试管里的东西全部取出；上方不能挂任何东西，也不能有东西通入，只能留下塞子。",
+    "spinFlow": "还有液体在流动——请先等待。",
+    "spinEmpty": "请先放入一支试管。",
+    "hint.centrifuge": "现在点击要放进离心机的试管——或点击实验台。"
   },
   "names": {
     "H2O(l)": "水",

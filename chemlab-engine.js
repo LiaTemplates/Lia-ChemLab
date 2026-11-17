@@ -710,6 +710,9 @@
   // gain: so viel besser als eine Flamme überträgt das Wasser die Wärme
   // Waage: steht unter einem Gefäß und zeigt dessen Masse samt Glas; tare zieht ab, was beim Tarieren darauf stand
   registerPart("balance", { kind: "tool", under: true, scale: true, unit: "g", sense: "m", lag: 0.5, fine: 0.01, spread: [0, 0.0002, 0.005, 0] });      // Tara stellt sie genau auf null
+  // spin: so viel schneller setzt sich ein Niederschlag ab, solange sie läuft (nicht die echte Zentrifugalbeschleunigung, sondern so, dass
+  // man zusehen kann); nur Reagenzgläser passen hinein
+  registerPart("centrifuge", { kind: "tool", under: true, spin: 20, fits: "testtube" });
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
   registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3], spread: [0.005, 0.01, 0.002, 0] });
@@ -918,6 +921,10 @@
         if (raw.unknown != null || raw.oneOf != null) throw fail("sample", item.id);      // nur ein Gefäß kann eine Probe sein
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
         if (def.flames) item.flame = flameLevel(raw.flame);
+        if (def.spin) {
+          if (raw.spin != null && [0, 1, true, false].indexOf(raw.spin) < 0) throw fail("amount", item.id);
+          item.spin = raw.spin === 1 || raw.spin === true ? 1 : 0;
+        }
         if (def.bath && raw.temp != null) {
           if (typeof raw.temp !== "number" || !(raw.temp >= def.range[0] && raw.temp <= def.range[1])) throw fail("amount", item.id);
           item.temp = raw.temp;
@@ -950,6 +957,10 @@
       // Elektroden und die Geräte eines Stromkreises gehören an ein Gefäß, in dem Elektroden Platz haben
       if (item.in != null && (!fits || ((own.electrode || own.circuit) && !def.electrodes))) throw fail("place", item.in);
       if (item.in != null && (def.insulated || def.noHeat) && (own.flames || own.bath)) throw fail("place", item.in);
+      if (item.in != null && own.fits && host.type !== own.fits) throw fail("place", item.in);
+      if (item.spin && item.in != null && bench.some(function (o) {      // läuft sie, steckt nichts im Glas außer einem Stopfen, und nichts hängt darüber oder führt hinein
+        return o !== item && ((o.in === item.in && !closer(L.parts[o.type])) || o.over === item.in || o.to === item.in);
+      })) throw fail("place", item.in);
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
@@ -1169,6 +1180,7 @@
   function makeTool(item) {
     var def = L.parts[item.type], t = { id: item.id, type: item.type, in: item.in || null, value: null };
     if (def.flames) { t.flame = item.flame || 0; t.tint = null; }      // tint: Flammenfärbung { rgb, until }
+    if (def.spin) t.spin = item.spin ? 1 : 0;
     if (def.bath) t.temp = item.temp == null ? null : item.temp;       // eingestellte Temperatur; null: die des Raums
     if (def.sense === "A") t.nm = item.nm || def.nm;                   // Wellenlänge in nm
     if (def.sense === "V") { t.n = 0; t.full = false; t.held = 0; }   // n: aufgefangenes Gas in mol, held: seine Masse in g (ohne Luft)
@@ -1245,7 +1257,7 @@
   // Zugabe aus der Vorratsflasche. Flüssigkeit fließt über kurze Zeit zu, Feststoff fällt sofort hinein.
   function add(lab, vesselId, reagentId, raw) {
     var v = vessel(lab, vesselId), r = reagent(reagentId), a = amountOf(r, raw || {});
-    if (!v || v.broken) return false;
+    if (!v || v.broken || spinning(lab, v)) return false;
     v.seal = null;                                             // zugeben heißt: kurz öffnen; der Druck rechnet danach neu
     if (r.solid) {
       if (!(a.g > 0)) return false;
@@ -1277,7 +1289,7 @@
   // (Pipette). Alles auszugießen gelingt immer; wer nur einen Teil abgießt, lässt immer einen Rest (so bleibt der Bodensatz im Glas)
   function pour(lab, fromId, toId, ml, accuracy) {
     var from = vessel(lab, fromId), to = vessel(lab, toId), most, whole;
-    if (!from || !to || from === to || from.broken || to.broken) return false;
+    if (!from || !to || from === to || from.broken || to.broken || spinning(lab, from) || spinning(lab, to)) return false;
     most = pourable(lab, fromId);
     ml = +ml || 0;
     whole = ml >= most - 1e-6;
@@ -1324,7 +1336,8 @@
     lab.used[id] = true;
     if (def.kind === "test") throw fail("part", String(raw.type));
     var host = vessel(lab, def.kind === "vessel" ? raw.over : raw.in != null ? raw.in : raw.under), made;
-    if (host && (L.parts[host.type].dispenser || host.broken)) host = null;      // nichts in und nichts über eine Bürette
+    if (host && (L.parts[host.type].dispenser || host.broken || spinning(lab, host))) host = null;      // nichts in und nichts über eine Bürette, nichts in die laufende Zentrifuge
+    if (host && def.fits && host.type !== def.fits) host = null;                 // in die Zentrifuge passt nur ein Reagenzglas
     if (host && (def.under || def.circuit || def.bridge) && lab.tools.some(function (t) {
       return (def.under ? L.parts[t.type].under : t.type === raw.type) && t.in === host.id;
     })) host = null;                                           // dort steht schon einer
@@ -1342,13 +1355,15 @@
       }));
     } else {
       var far = (def.bridge || def.duct) && host ? vessel(lab, raw.to) : null;
+      if (far && spinning(lab, far)) far = null;                                   // nichts führt in die laufende Zentrifuge
       if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].duct && t.to === far.id; }) || looped(ducts(lab), host.id, far.id)))) far = null;
       if ((def.bridge || def.duct) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
       lab.tools.push((made = makeTool({
-        id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame),
+        id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame), spin: raw.spin === 1 || raw.spin === true,
         volts: def.circuit === "supply" ? voltsOf(def, raw.volts) : 0, flip: raw.flip, to: far ? far.id : null, g: raw.g > 0 ? +raw.g : 0,
         temp: def.bath ? tempOf(def, raw.temp == null ? lab.room : raw.temp) : null, nm: def.sense === "A" && raw.nm != null ? waveOf(def, raw.nm) : 0
       })));
+      if (made.spin && !spinFree(lab, id)) made.spin = 0;
       seat(lab, made);
       survey(lab);
       prime(lab, made);
@@ -1413,7 +1428,7 @@
   // Behälter passte; spare: harmlos und doch gesammelt (nicht falsch, nur unnötig). null: unbekannter Behälter oder nichts darin
   function dispose(lab, vesselId, bin) {
     var w = waste(lab, vesselId), out;
-    if (!w || w.bin == null || BINS.indexOf(bin) < 0) return null;
+    if (!w || w.bin == null || BINS.indexOf(bin) < 0 || spinning(lab, vessel(lab, vesselId))) return null;
     empty(lab, vesselId);
     out = { vessel: vesselId, bin: bin, want: w.bin, right: w.bin === bin || (w.bin === "sink" && bin !== "sink") };
     if (w.bin === "sink" && bin !== "sink") out.spare = true;
@@ -1476,9 +1491,28 @@
     return true;
   }
 
+  // Zentrifuge an (1) oder aus (0). Anlaufen kann sie nur, wenn nichts im Reagenzglas steckt (außer einem Stopfen) und nichts darüber hängt
+  function setSpin(lab, id, on) {
+    var t = tool(lab, id);
+    if (!t || !L.parts[t.type].spin || (on && !spinFree(lab, id))) return false;
+    t.spin = on ? 1 : 0;
+    return true;
+  }
+  // ob sie anlaufen kann: ein Reagenzglas darin, nichts im Glas außer einem Stopfen, nichts darüber, nichts, was hineinführt, und es fließt nichts
+  function spinFree(lab, id) {
+    var t = tool(lab, id), v = t && vessel(lab, t.in);
+    return !!v && !v.broken && !lab.tools.some(function (o) { return o !== t && ((o.in === v.id && !closer(L.parts[o.type])) || o.to === v.id); }) &&
+      !lab.vessels.some(function (b) { return b.over === v.id; }) && !lab.flows.some(function (f) { return f.to === v.id || f.from === v.id; });
+  }
+  function closer(def) { return def.stopper && def.plug && !def.sense; }      // ein schlichter Stopfen, kein Manometer
+
+  // ob ein Gefäß in einer laufenden Zentrifuge steckt: dann ist der Deckel zu
+  function spinning(lab, v) { return !!(v && toolAt(lab, v, function (def, t) { return def.spin && t.spin; })); }
+
   function attach(lab, toolId, vesselId) {
     var t = tool(lab, toolId), v = vessel(lab, vesselId), def = t && L.parts[t.type];
-    if (!t || (v && L.parts[v.type].dispenser)) return false;
+    if (!t || (v && L.parts[v.type].dispenser) || t.spin || (v && spinning(lab, v)) || (t.in && spinning(lab, vessel(lab, t.in)))) return false;      // die laufende Zentrifuge und was im Glas steckt bleiben, wo sie sind
+    if (v && def.fits && v.type !== def.fits) return false;
     if (v && (def.electrode || def.circuit) && !L.parts[v.type].electrodes) return false;
     if (v && def.electrode && electrodesIn(lab, v.id).filter(function (o) { return o !== t; }).length >= 2) return false;
     if (v && def.bridge && (bridged(lab, v.id, t) || t.to === vesselId)) return false;
@@ -1535,6 +1569,7 @@
   var GROW = 0.5;                 // s: mit dieser Zeitkonstante wächst ein Niederschlag
   var MELT = 1.2;                 // s: so schnell löst sich ein frischer Niederschlag wieder
   var SINK = 25;                  // s: so schnell setzt er sich ab
+  var SPUN = 60;                  // s: so schnell setzt sich ein Kolloid in der laufenden Zentrifuge ab (geschätzt; ohne sie gar nicht)
   var SEEN = 5e-5;                // mol/L: ab so viel ist ein Niederschlag als Trübung zu sehen
   var HAZE = 0.003;               // mol/L: so viel Schwebendes nimmt der Flüssigkeit 63 % ihrer Durchsicht
   var OPAQUE = 0.9;               // ab dieser Deckkraft sieht man nicht mehr hindurch
@@ -3520,12 +3555,13 @@
     bath = toolAt(lab, v, function (def) { return def.bath; });
     room = bath ? bath.temp : lab.room;
     v.T = room + (v.T - room) * Math.exp(-(spec(v).loss + (bath ? spec(v).heat * L.parts[bath.type].gain : 0)) * DT / heatCapacity(v));
-    var wet = volume(v) > 0;
-    v.lumps.forEach(function (l) {                             // Niederschlag setzt sich ab
+    var wet = volume(v) > 0, spun = toolAt(lab, v, function (def, t) { return def.spin && t.spin; });
+    v.lumps.forEach(function (l) {                             // Niederschlag setzt sich ab, in der Zentrifuge viel schneller
+      var colloid = L.db.species[l.id].colloid;
       if (!l.made || l.settled >= 1) return;
       if (!wet) { l.settled = 1; return; }
-      if (L.db.species[l.id].colloid) return;                  // so fein verteilt, dass es in der Schwebe bleibt
-      l.settled += (1 - l.settled) * (1 - Math.exp(-DT / (L.db.species[l.id].settle || SINK)));
+      if (colloid && !spun) return;                            // so fein verteilt, dass es in der Schwebe bleibt
+      l.settled += (1 - l.settled) * (1 - Math.exp(-DT / (colloid ? SPUN : (L.db.species[l.id].settle || SINK) / (spun ? L.parts[spun.type].spin : 1))));
       if (l.settled > 0.995) l.settled = 1;
     });
     v.walk = (v.walk || 0) + DT * Math.sqrt((v.T + KELVIN) / (T_REF + KELVIN));      // je wärmer, desto schneller laufen die Teilchen ihren Weg ab
@@ -3539,7 +3575,7 @@
   // "relight" (flammt auf), "out" (erlischt), "calm" (brennt weiter), "glow" (glimmt weiter)
   function probe(lab, vesselId, kind, emit) {
     var v = vessel(lab, vesselId), cap, sum = 0, id, oxygen, hit, out;
-    if (!v || v.broken || stoppered(lab, v) || (kind !== "flame" && kind !== "glow" && kind !== "paper")) return null;      // an ein verschlossenes Gefäß kommt kein Span
+    if (!v || v.broken || stoppered(lab, v) || spinning(lab, v) || (kind !== "flame" && kind !== "glow" && kind !== "paper")) return null;      // an ein verschlossenes Gefäß kommt kein Span
     if (kind === "paper") return paper(lab, v, emit);
     hit = explode(lab, v, false);
     if (hit) out = { result: hit.level ? "pop" : "burn", level: hit.level };
@@ -3598,7 +3634,7 @@
   function flameTest(lab, vesselId, emit) {
     var v = vessel(lab, vesselId), burner = null, vol, sum = [0, 0, 0], weight = 0, top = 0, best = null, id, s, w, rgb, k, out;
     lab.tools.forEach(function (t) { if (!burner && L.parts[t.type].under && t.flame === 2) burner = t; });
-    if (!v || v.broken || !burner) return null;
+    if (!v || v.broken || !burner || spinning(lab, v)) return null;
     vol = volume(v);
     for (id in v.n) {
       s = L.db.species[id];
@@ -3794,7 +3830,7 @@
 
   function atRest(lab) {
     if (lab.flows.length) return false;
-    if (lab.tools.some(function (t) { return t.flame > 0 || t.tint || t.rate > REST; })) return false;      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
+    if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
     return lab.vessels.every(function (v) {
       var key;
       if (v.flag.shown > lab.t) return false;                    // eine Probe mit dem Span dauert noch an, auch wenn das Glas dabei zersprang
@@ -3983,7 +4019,7 @@
     var t = tool(lab, toolId);
     var range = t && L.parts[t.type].range;
     // over: der Messwert liegt am Ende der Skala oder darüber
-    var out = t ? { value: t.value, unit: L.parts[t.type].unit, in: t.in, type: t.type, flame: t.flame, tint: t.tint || null, full: !!t.full,
+    var out = t ? { value: t.value, unit: L.parts[t.type].unit, in: t.in, type: t.type, flame: t.flame, spin: t.spin, tint: t.tint || null, full: !!t.full,
       over: !!(range && L.parts[t.type].sense && t.value >= range[1] - 1e-9) } : null, def = t && L.parts[t.type];      // nur ein Messgerät hat ein Ende der Skala
     if (!t) return null;
     if (def.electrode) {
@@ -4348,6 +4384,7 @@
       var def = L.parts[t.type], item = { type: t.type, id: t.id }, host = t.in && vessel(lab, t.in), g;
       if (host && !host.broken) item[def.under ? "under" : "in"] = t.in;
       if (def.flames && t.flame) item.flame = t.flame;
+      if (def.spin && t.spin) item.spin = 1;
       if (def.bath) item.temp = t.temp;
       if (def.sense === "A") item.nm = t.nm;
       if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
@@ -4404,6 +4441,8 @@
   L.attach = attach;
   L.setTap = setTap;
   L.setFlame = setFlame;
+  L.setSpin = setSpin;
+  L.spinFree = spinFree;
   L.setVolts = setVolts;
   L.setTemp = setTemp;
   L.setWave = setWave;

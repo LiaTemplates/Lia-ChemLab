@@ -26,6 +26,12 @@
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
       "sameTube": "The tube leads into another vessel.",
+      "part.centrifuge": "centrifuge", "spin": "Rotor", "spin.0": "off", "spin.1": "running",
+      "say.spinOn": "{part}: switched on", "say.spinOff": "{part}: switched off",
+      "spinning": "The centrifuge is running – switch it off first.", "tubesOnly": "Only test tubes fit into the centrifuge.",
+      "spinFree": "Take everything out of the test tube first; nothing may hang over it or lead into it, only a stopper may stay.",
+      "spinFlow": "Something is still flowing – wait first.", "spinEmpty": "Put a test tube in first.",
+      "hint.centrifuge": "Now tap the test tube that should go into the centrifuge – or the bench.",
       "part.balance": "balance", "hint.scale": "Now tap the vessel to put on the balance – or the bench.", "tare": "Tare",
       "say.tare": "{part}: set to zero", "chart.mass": "Mass",
       "eq.catalyst": "catalyst",
@@ -405,6 +411,7 @@
         vars.state = text("tap." + tapKey(event.rate), lang);
         break;
       case "color": vars.color = colorWord(event.name, event.pale, lang); break;
+      case "spin": return text(event.level ? "say.spinOn" : "say.spinOff", lang, vars);
       case "flame":
         if (!(event.level > 0)) return text("say.flameOff", lang, vars);
         vars.state = text("flame." + event.level, lang);
@@ -833,6 +840,26 @@
         '<rect class="cl-scale-pan" x="' + (-a + 6) + '" y="' + (-SCALE.lift) + '" width="' + (2 * a - 12) + '" height="4" rx="1"/>' +
         '<g class="cl-meter"><rect x="-26" y="-16" width="52" height="13" rx="2"/><text x="0" y="-6" text-anchor="middle">' +
         (ctx.numbers ? shown(w, ctx.lang) : "") + "</text></g>" + badge(place ? a + 14 : 0, 14, ctx.no);
+    }
+  });
+
+  // ------------------------------------------------------------------ Zentrifuge
+
+  var ROTOR = { lift: 22, h: 30 };       // das Reagenzglas steckt oben im Deckel, sein Boden bleibt zu sehen; vorn dreht sich die Scheibe, solange sie läuft
+
+  // place: { lift, half } aus stand(), wie bei der Waage; das Glas bleibt ganz zu sehen, damit man den Bodensatz sieht
+  L.registerPart("centrifuge", {
+    width: function () { return 84; },
+    bounds: function (t, place) { var a = place ? place.half : 34; return { x0: -a - 4, x1: a + 24, top: -ROTOR.h - 2 }; },
+    stand: function (host) { var b = L.parts[host.type].bounds(host); return { lift: ROTOR.lift, half: Math.max(34, (b.x1 - b.x0) / 2), clamp: false }; },
+    span: function (host) { return 2 * (this.stand(host).half + 24); },
+    draw: function (w, ctx, place) {
+      var a = place ? place.half : 34, turn = w.spin ? (ctx.still ? 30 : ((ctx.t || 0) * 300) % 360) : 0;
+      return '<g class="cl-centrifuge"><rect class="cl-device" x="' + (-a) + '" y="' + (-ROTOR.h) + '" width="' + 2 * a + '" height="' + ROTOR.h + '" rx="6"/>' +
+        '<rect class="cl-knob" x="' + (-a + 4) + '" y="' + (-ROTOR.h + 1) + '" width="' + (2 * a - 8) + '" height="5" rx="2"/>' +      // der Deckel
+        '<ellipse class="cl-slot" cx="0" cy="' + (-ROTOR.h + 1) + '" rx="15" ry="2.5"/>' +
+        '<g transform="translate(' + (-a + 15) + ",-14) rotate(" + f(turn) + ')"><circle class="cl-knob" r="8"/><path class="cl-knob-mark" d="M0,-6L0,6M-6,0L6,0"/></g>' +
+        '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/></g>' + badge(place ? a + 14 : 0, 14, ctx.no);
     }
   });
 
@@ -1489,6 +1516,7 @@
         : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
         : id === "manometer" ? '<path class="cl-stopper" d="M9,22L19,22L18,28L10,28Z"/><line class="cl-rod" x1="14" y1="22" x2="14" y2="15"/><circle class="cl-device" cx="14" cy="9" r="7"/><line class="cl-mark" x1="14" y1="9" x2="18" y2="6"/>'
         : id === "stopper" ? '<path class="cl-stopper" d="M7,10L21,10L19,22L9,22Z"/>'
+        : id === "centrifuge" ? '<rect class="cl-device" x="2" y="15" width="24" height="12" rx="3"/><path class="cl-glass" d="M12,15L12,3L16,3L16,15"/><circle class="cl-knob" cx="8" cy="21" r="3.5"/>'
         : id === "balance" ? '<rect class="cl-scale" x="2" y="16" width="24" height="10" rx="2"/><rect class="cl-scale-pan" x="5" y="13" width="18" height="2.5"/><g class="cl-meter"><rect x="8" y="18" width="12" height="6" rx="1"/></g>'
         : id === "tube" ? '<path class="cl-stopper" d="M2,13L10,13L9,18L3,18Z"/><path class="cl-glass" d="M6,13L6,5Q6,3 8,3L20,3Q22,3 22,5L22,27"/>'
         : id === "condenser" ? '<path class="cl-jacket" d="M6,7L22,15L19.5,20L3.5,12Z"/><path class="cl-glass" d="M2,6L25,18L25,27"/>'

@@ -484,7 +484,19 @@
     "seen.plated": "Es diposita un metall",
     "seen.lamp": "La bombeta s'encén",
     "seen.broken": "El vidre es trenca",
-    "err.other": "No es pot mostrar el muntatge"
+    "err.other": "No es pot mostrar el muntatge",
+    "part.centrifuge": "centrifugadora",
+    "spin": "Rotor",
+    "spin.0": "aturada",
+    "spin.1": "en marxa",
+    "say.spinOn": "{part}: engegada",
+    "say.spinOff": "{part}: aturada",
+    "spinning": "La centrifugadora està en marxa: atura-la primer.",
+    "tubesOnly": "A la centrifugadora només hi caben tubs d'assaig.",
+    "spinFree": "Primer treu-ho tot del tub d'assaig; no hi pot penjar ni entrar-hi res, només hi pot quedar un tap.",
+    "spinFlow": "Encara flueix alguna cosa: espera primer.",
+    "spinEmpty": "Primer posa-hi un tub d'assaig.",
+    "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell."
   },
   "names": {
     "H2O(l)": "aigua",

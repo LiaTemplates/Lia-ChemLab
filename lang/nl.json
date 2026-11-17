@@ -484,7 +484,19 @@
     "seen.plated": "Er slaat een metaal neer",
     "seen.lamp": "Het lampje gaat branden",
     "seen.broken": "Het glas barst",
-    "err.other": "De opstelling kan niet worden getoond"
+    "err.other": "De opstelling kan niet worden getoond",
+    "part.centrifuge": "centrifuge",
+    "spin": "Rotor",
+    "spin.0": "uit",
+    "spin.1": "draait",
+    "say.spinOn": "{part}: aangezet",
+    "say.spinOff": "{part}: uitgezet",
+    "spinning": "De centrifuge draait – zet hem eerst uit.",
+    "tubesOnly": "Alleen reageerbuizen passen in de centrifuge.",
+    "spinFree": "Haal eerst alles uit de reageerbuis; er mag niets boven hangen of in leiden, alleen een stop mag blijven.",
+    "spinFlow": "Er stroomt nog iets – wacht eerst.",
+    "spinEmpty": "Zet eerst een reageerbuis erin.",
+    "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel."
   },
   "names": {
     "H2O(l)": "water",

@@ -484,7 +484,19 @@
     "seen.plated": "Nusėda metalas",
     "seen.lamp": "Lemputė užsidega",
     "seen.broken": "Stiklas sudūžta",
-    "err.other": "Įrangos parodyti neįmanoma"
+    "err.other": "Įrangos parodyti neįmanoma",
+    "part.centrifuge": "centrifuga",
+    "spin": "Rotorius",
+    "spin.0": "išjungta",
+    "spin.1": "veikia",
+    "say.spinOn": "{part}: įjungta",
+    "say.spinOff": "{part}: išjungta",
+    "spinning": "Centrifuga veikia – pirmiausia ją išjunkite.",
+    "tubesOnly": "Į centrifugą telpa tik mėgintuvėliai.",
+    "spinFree": "Pirmiausia viską išimkite iš mėgintuvėlio; virš jo nieko negali kabėti ir į jį nieko negali vesti, gali likti tik kamštis.",
+    "spinFlow": "Dar kažkas teka – pirmiausia palaukite.",
+    "spinEmpty": "Pirmiausia įstatykite mėgintuvėlį.",
+    "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą."
   },
   "names": {
     "H2O(l)": "vanduo",

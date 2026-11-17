@@ -484,7 +484,19 @@
     "seen.plated": "Izloča se kovina",
     "seen.lamp": "Žarnica sveti",
     "seen.broken": "Steklo poči",
-    "err.other": "Postavitve ni mogoče prikazati"
+    "err.other": "Postavitve ni mogoče prikazati",
+    "part.centrifuge": "centrifuga",
+    "spin": "Rotor",
+    "spin.0": "izklopljena",
+    "spin.1": "deluje",
+    "say.spinOn": "{part}: vklopljena",
+    "say.spinOff": "{part}: izklopljena",
+    "spinning": "Centrifuga deluje – najprej jo izklopite.",
+    "tubesOnly": "V centrifugo gredo samo epruvete.",
+    "spinFree": "Najprej vse vzemite iz epruvete; nič ne sme viseti nad njo ali voditi vanjo, ostane lahko le zamašek.",
+    "spinFlow": "Nekaj še teče – najprej počakajte.",
+    "spinEmpty": "Najprej vstavite epruveto.",
+    "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo."
   },
   "names": {
     "H2O(l)": "voda",

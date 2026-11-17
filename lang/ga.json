@@ -484,7 +484,19 @@
     "seen.plated": "Leagtar miotal síos",
     "seen.lamp": "Lasann an lampa",
     "seen.broken": "Briseann an ghloine",
-    "err.other": "Ní féidir an socrú a thaispeáint"
+    "err.other": "Ní féidir an socrú a thaispeáint",
+    "part.centrifuge": "lártheifneoir",
+    "spin": "Rótar",
+    "spin.0": "múchta",
+    "spin.1": "ag rith",
+    "say.spinOn": "{part}: curtha ar siúl",
+    "say.spinOff": "{part}: múchta",
+    "spinning": "Tá an lártheifneoir ag rith – múch é ar dtús.",
+    "tubesOnly": "Ní théann ach triaileadáin isteach sa lártheifneoir.",
+    "spinFree": "Bain gach rud as an triaileadán ar dtús; ní féidir le haon rud a bheith crochta os a chionn ná dul isteach ann, ní féidir ach stopallán a fhágáil.",
+    "spinFlow": "Tá rud éigin fós ag sileadh – fan ar dtús.",
+    "spinEmpty": "Cuir triaileadán isteach ar dtús.",
+    "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse."
   },
   "names": {
     "H2O(l)": "uisce",
