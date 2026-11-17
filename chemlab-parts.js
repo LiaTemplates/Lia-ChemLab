@@ -42,6 +42,7 @@
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
       "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
+      "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
       "chart.A": "Absorbance", "chart.spectrum": "Spectrum: absorbance against wavelength", "chart.wave": "Wavelength in nm", "chart.photo": "Photometric titration",
       "part.phmeter": "pH meter", "part.burette": "burette",
@@ -345,6 +346,7 @@
     if (r.unit === "V") return num(v, 2, lang) + " V";
     if (r.unit === "mS/cm") return v >= 0.1 ? trim(v, lang) + " mS/cm" : trim(v * 1000, lang) + " µS/cm";
     if (r.unit === "bar") return num(v, 2, lang) + " bar";
+    if (def.sense === "V") return num(v, 1, lang) + " mL · " + num(r.p == null ? 1 : r.p, 2, lang) + " bar";      // Kolbenprober mit Manometer
     if (def.scale) return num(Math.abs(v) < 0.005 ? 0 : v, 2, lang) + " g";      // Waage: auf 0,01 g, ohne „−0,00“
     if (r.unit === "g") return num(v, 3, lang) + " g";
     return num(v, 1, lang) + " " + r.unit;
@@ -388,6 +390,10 @@
       case "temp":
         if (!ctx.numbers) return text("say.tempSet", lang, vars);
         vars.temp = num(event.temp, 0, lang);
+        break;
+      case "hold":
+        if (!ctx.numbers) return text("say.holdSet", lang, vars);
+        vars.ml = num(event.hold, 0, lang);
         break;
       case "wave":
         if (!ctx.numbers) return text("say.waveSet", lang, vars);
@@ -915,7 +921,7 @@
     room: 118,                          // so viel Platz braucht er rechts neben der Mitte des Gefäßes
     bounds: function (t, place) {
       var off = place ? place.off || 20 : 0;                       // off: so weit rechts vom Stopfen beginnt der Zylinder (an einer Bürette vorbei)
-      return place ? { x0: place.x + off - 6, x1: place.x + off + 130, top: place.rim - 56, bottom: place.rim - 10 } : { x0: -62, x1: 70, top: -34 };
+      return place ? { x0: place.x + off - 6, x1: place.x + off + 130, top: place.rim - 56, bottom: place.rim - 10 } : { x0: -62, x1: 70, top: -46 };
     },
     draw: function (w, ctx, place) {
       var x0 = place ? place.x + (place.off || 20) : -56, y = place ? place.rim - 26 : -14, value = Math.max(0, Math.min(100, w.value || 0));
@@ -934,8 +940,8 @@
         out += '<line class="cl-mark" x1="' + f(x0 + 6 + (BARREL - 14) * ml / 100) + '" x2="' + f(x0 + 6 + (BARREL - 14) * ml / 100) + '" y1="' + (y - 8) + '" y2="' + (y - 4) + '"/>';
       }
       if (ctx.numbers) {
-        out += '<g class="cl-tag"><rect x="' + (x0 + 14) + '" y="' + (y - 30) + '" width="62" height="17" rx="4"/>' +
-          '<text x="' + (x0 + 45) + '" y="' + (y - 18) + '" text-anchor="middle">' + num(value, 1, ctx.lang) + " mL</text></g>";
+        out += '<g class="cl-tag"><rect x="' + (x0 - 6) + '" y="' + (y - 30) + '" width="102" height="17" rx="4"/>' +
+          '<text x="' + (x0 + 45) + '" y="' + (y - 18) + '" text-anchor="middle">' + shown(Object.assign({}, w, { value: value }), ctx.lang) + "</text></g>";
       }
       return out + (place ? "" : badge(0, 14, ctx.no));
     }

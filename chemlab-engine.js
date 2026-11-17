@@ -958,6 +958,10 @@
           if (typeof raw.temp !== "number" || !(raw.temp >= def.range[0] && raw.temp <= def.range[1])) throw fail("amount", item.id);
           item.temp = raw.temp;
         }
+        if (def.sense === "V" && raw.fill != null) {             // Kolbenprober: so viel Luft (mL) ist vorher aufgezogen
+          if (typeof raw.fill !== "number" || !(raw.fill >= 0 && raw.fill <= def.cap)) throw fail("amount", item.id);
+          item.fill = Math.round(raw.fill);
+        }
         if (def.sense === "A" && raw.nm != null) {
           if (typeof raw.nm !== "number" || !(raw.nm >= def.waves[0] && raw.nm <= def.waves[1])) throw fail("amount", item.id);
           item.nm = Math.round(raw.nm);
@@ -1212,7 +1216,7 @@
     if (def.spin) t.spin = item.spin ? 1 : 0;
     if (def.bath) t.temp = item.temp == null ? null : item.temp;       // eingestellte Temperatur; null: die des Raums
     if (def.sense === "A") t.nm = item.nm || def.nm;                   // Wellenlänge in nm
-    if (def.sense === "V") { t.n = 0; t.full = false; t.held = 0; }   // n: aufgefangenes Gas in mol, held: seine Masse in g (ohne Luft)
+    if (def.sense === "V") { t.n = 0; t.full = false; t.held = 0; t.fill = item.fill || 0; t.air = null; t.hold = null; }   // n: aufgefangenes Gas in mol, held: seine Masse in g (ohne Luft); fill, air, hold: siehe syringe()
     if (def.scale) t.tare = 0;
     if (def.electrode) {
       // n: Stoffmenge des Elektrodenmaterials, coat: was sich darauf abgeschieden hat, seen: Beläge, die schon gemeldet sind,
@@ -1351,7 +1355,7 @@
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
-    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.held = 0; t.value = 0; if ("smooth" in t) t.smooth = 0; } });   // … und der Kolbenprober
+    lab.tools.forEach(function (t) { if (t.in === vesselId && L.parts[t.type].sense === "V") { t.n = 0; t.full = false; t.held = 0; t.fill = 0; t.air = null; t.hold = null; t.value = 0; if ("smooth" in t) t.smooth = 0; } });   // … und der Kolbenprober
     survey(lab);
     return true;
   }
@@ -1554,7 +1558,7 @@
     if (v && def.duct && (t.to === vesselId || ducts(lab, t).some(function (o) { return o.in === v.id; }) || (t.to && looped(ducts(lab, t), vesselId, t.to)))) return false;
     t.in = v ? vesselId : null;
     if ((def.bridge || def.duct) && !v) t.to = null;
-    if (def.sense === "V") { t.held = 0; t.n = 0; t.full = false; t.value = 0; if ("smooth" in t) t.smooth = 0; }      // ein Kolbenprober kommt leer an
+    if (def.sense === "V") { t.held = 0; t.n = 0; t.full = false; t.air = null; t.hold = null; t.value = v ? t.fill : 0; if (!v) t.fill = 0; if ("smooth" in t) t.smooth = 0; }      // ein Kolbenprober kommt leer an, bis auf die aufgezogene Luft
     seat(lab, t);
     survey(lab);
     return true;
@@ -1576,6 +1580,18 @@
     var t = tool(lab, id);
     if (!t || L.parts[t.type].sense !== "A") return false;
     t.nm = waveOf(L.parts[t.type], nm);
+    return true;
+  }
+
+  // Kolben des Kolbenprobers in mL: angeschlossen hält man ihn dort fest (null: loslassen), allein zieht man so viel Luft auf
+  function setHold(lab, id, ml) {
+    var t = tool(lab, id), def = t && L.parts[t.type];
+    if (!t || def.sense !== "V") return false;
+    if (ml != null) ml = Math.max(0, Math.min(def.cap, Math.round(+ml || 0)));
+    if (!t.in) { t.fill = ml || 0; t.n = 0; prime(lab, t); return true; }
+    t.hold = ml;
+    if (ml != null) t.full = false;
+    prime(lab, t);
     return true;
   }
 
@@ -3158,6 +3174,21 @@
     return Math.max(0, spec(v).cap - volume(v) * 1000) / 1000 / molar(lab);
   }
 
+  // Kolbenprober t am Gefäß v: Volumen (mL) und Druck (bar) nach dem Gasgesetz für die Temperatur des Inhalts. Eingeschlossen sind
+  // die Luft im Gasraum samt der aufgezogenen (air, beim ersten Rechnen festgelegt) und das entstandene Gas (n).
+  // shortcut: Wasserdampf zählt nicht (er schlägt sich im kalten Zylinder nieder); mit Dampfdruck rechnen, wenn ein Versuch mit heißem Wasser das braucht
+  function syringe(lab, t, v) {
+    var cap = L.parts[t.type].cap, RL = R / 100, T, Vh, nRT, ml;
+    if (!v || v.broken) return { ml: Math.min(cap, (t.fill || 0) + t.n * molar(lab) * 1000), p: P_AIR };
+    T = v.T + KELVIN;
+    Vh = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000);
+    if (t.air == null) t.air = P_AIR * (Vh + (t.fill || 0) / 1000) / (RL * T);
+    nRT = (t.air + t.n) * RL * T;
+    if (t.hold != null) return { ml: t.hold, p: nRT / (Vh + t.hold / 1000) };
+    ml = (nRT / P_AIR - Vh) * 1000;
+    return ml > 0 ? { ml: Math.min(cap, ml), p: P_AIR } : { ml: 0, p: nRT / Vh };
+  }
+
   function toolAt(lab, v, test) {
     for (var i = 0; i < lab.tools.length; i++) if (lab.tools[i].in === v.id && test(L.parts[lab.tools[i].type], lab.tools[i])) return lab.tools[i];
     return null;
@@ -3622,18 +3653,21 @@
       else {
         gas += v.n[id]; gases.push(id);
         v.air[id] = (v.air[id] || 0) + v.n[id];
-        if (meter && meter.full) {                             // er ist voll, und es kommt noch Gas: der Kolben springt heraus
-          meter.in = null;
+        if (meter && meter.full && meter.hold == null) {       // er ist voll, und es kommt noch Gas: der Kolben springt heraus
+          meter.in = null; meter.fill = 0; meter.n = L.parts[meter.type].cap / 1000 / molar(lab);      // allein zeigt er weiter, dass er voll war
           if (emit) emit({ key: "plungerOut", part: meter.id, vessel: v.id });
           meter = null;
         }
-        if (meter && !meter.full) {                            // der Kolbenprober zählt mit, bis er voll ist
-          room = L.parts[meter.type].cap / 1000 / molar(lab);
-          meter.n += v.n[id];
-          if (meter.n >= room) { meter.n = room; meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
-        }
+        if (meter && !meter.full) meter.n += v.n[id];          // der Kolbenprober zählt mit, bis er voll ist
       }
       delete v.n[id];
+    }
+    if (meter && meter.in === v.id && !meter.full) {
+      room = syringe(lab, meter, v);
+      if (meter.hold != null && room.p > POP) {                // gehalten steigt der Druck, bis der Stopfen herausfliegt
+        meter.in = null; meter.hold = null; meter.fill = 0;
+        if (emit) emit({ key: "popped", vessel: v.id, part: meter.id, type: meter.type });
+      } else if (meter.hold == null && room.ml >= L.parts[meter.type].cap) { meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
     }
     v.gas = (vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0) + (v.pipe || 0);      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
     v.pipe = 0;
@@ -3840,7 +3874,7 @@
     if (def.circuit) return def.circuit === "supply" ? t.volts : t.goal;
     if (def.bath) return t.temp;
     if (kind === "T") return Math.max(L.parts[t.type].range[0], Math.min(L.parts[t.type].range[1], v ? v.T : lab.room));
-    if (kind === "V") return t.n * molar(lab) * 1000;          // aufgefangenes Gas in mL
+    if (kind === "V") return syringe(lab, t, v).ml;           // aufgefangenes Gas samt Luft in mL
     if (kind === "p") return v && !v.broken && v.p != null ? v.p : P_AIR;
     if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
     vol = v ? volume(v) : 0;
@@ -3922,6 +3956,7 @@
   function atRest(lab) {
     if (lab.flows.length) return false;
     if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;
+    if (lab.tools.some(function (t) { return t.hold != null && t.in && syringe(lab, t, vessel(lab, t.in)).p > POP; })) return false;      // gleich fliegt der Kolbenprober heraus
     if (lab.tools.some(function (t) { for (var id in t.film) return true; return false; })) return false;      // Gas an einer Elektrode verliert sich noch      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
     return lab.vessels.every(function (v) {
       var key;
@@ -4139,6 +4174,7 @@
       out.drip = !!(t.in && vessel(lab, t.in) && vessel(lab, t.in).boil > 0 && vessel(lab, t.to) && !vessel(lab, t.to).broken);
     }
     if (def.bath) out.temp = t.temp;
+    if (def.sense === "V") { out.p = syringe(lab, t, vessel(lab, t.in)).p; out.hold = t.hold; }      // das Manometer am Kolbenprober
     if (def.sense === "A") out.nm = t.nm;
     return out;
   }
@@ -4507,6 +4543,7 @@
       if (def.spin && t.spin) item.spin = 1;
       if (def.bath) item.temp = t.temp;
       if (def.sense === "A") item.nm = t.nm;
+      if (def.sense === "V" && t.fill) item.fill = t.fill;
       if (def.circuit === "supply") { item.volts = t.volts; if (t.flip) item.flip = true; }
       if ((def.bridge || def.duct) && item.in && t.to && vessel(lab, t.to) && !vessel(lab, t.to).broken) item.to = t.to;      // ohne das erste Gefäß liegt sie für sich
       if (def.electrode) { g = round(t.n0 * species(def.electrode).M); if (Math.abs(g - def.g) > 1e-9) item.g = g; }
@@ -4566,6 +4603,7 @@
   L.setVolts = setVolts;
   L.setTemp = setTemp;
   L.setWave = setWave;
+  L.setHold = setHold;
   L.absorbance = absorbance;
   L.waveRgb = waveRgb;
   L.particles = particles;

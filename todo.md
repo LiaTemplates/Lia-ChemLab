@@ -4,10 +4,8 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
 
 ## Größere Schritte
 
-- [ ] **Gasgesetze** (mittel, etwa wie das Kalorimeter)
-  - Kolbenprober, dessen Volumen der Temperatur folgt (Gay-Lussac: Kolben erwärmen, der Kolben wandert).
-  - Kolben hineindrücken (Boyle): Der Druck steigt.
-  - Haken: In einem Stopfen steckt bisher nur ein Gerät. Für Kolbenprober und Manometer zugleich braucht es einen Stopfen mit zwei Bohrungen oder ein Manometer am Kolbenprober.
+- [x] **Gasgesetze** (17.11.2026): Der Kolbenprober folgt der Temperatur (Gay-Lussac), lässt sich halten (Boyle) und hat ein Manometer.
+  - Offen: Druck im Diagramm, Aufgabenziel `measure: p` mit dem Kolbenprober, `hold` im Aufbau (`bench`), Wasserdampf im Kolbenprober.
 - [ ] **Chromatographie** (mittel bis groß, eigenes Teilmodell)
   - Papierstreifen im Becherglas, Laufmittelfront steigt mit der Zeit, Flecken wandern nach ihrem Rf-Wert.
   - Daten je Farbstoff (etwa Filzstiftfarben, die sich auftrennen), Zeichnung in 2D und 3D.

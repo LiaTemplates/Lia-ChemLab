@@ -2771,6 +2771,92 @@ test("Kolbenprober: ist er voll, springt der Kolben heraus", () => {
   near(L.reading(l, "kp").value, 100, 0.5, "er zeigt weiter seine 100 mL");
 });
 
+test("Gasgesetze: Gay-Lussac – im Wasserbad dehnt sich die Luft im Kolben aus, der Kolben wandert; der Druck bleibt", () => {
+  const l = lab([{ type: "flask", id: "k" }, { type: "syringe", id: "kp", in: "k" }, { type: "bath", id: "wb", under: "k", temp: 20 }], { room: 20 });
+  L.step(l, 5);
+  near(L.reading(l, "kp").value, 0, 1e-6, "bei Raumtemperatur leer");
+  L.setTemp(l, "wb", 80);
+  L.step(l, 600);
+  near(L.reading(l, "kp").value, 100 * (353.15 / 293.15 - 1), 0.3, "V/T bleibt gleich");
+  near(L.reading(l, "kp").p, 1, 1e-9, "frei: Luftdruck");
+  L.setTemp(l, "wb", 0);
+  L.step(l, 900);
+  near(L.reading(l, "kp").value, 0, 1e-6, "abgekühlt: der Kolben steht am Anschlag");
+  near(L.reading(l, "kp").p, 273.15 / 293.15, 0.005, "und im Kolben herrscht Unterdruck");
+});
+
+test("Gasgesetze: Boyle – Luft aufziehen, anschließen, den Kolben hineinschieben; bei 1,5 bar fliegt er heraus", () => {
+  const seen = [], l = lab([{ type: "testtube", id: "t" }, { type: "syringe", id: "kp" }, { type: "thermometer", id: "th" }], { room: 20 });
+  assert.equal(L.setHold(l, "th", 10), false, "nur am Kolbenprober");
+  assert.equal(L.setHold(l, "kp", 60), true);
+  near(L.reading(l, "kp").value, 60, 1e-9, "allein: 60 mL Luft aufgezogen");
+  L.attach(l, "kp", "t");
+  L.step(l, 2);
+  near(L.reading(l, "kp").value, 60, 1e-6, "angeschlossen: die Luft bleibt");
+  L.setHold(l, "kp", 40);
+  L.step(l, 2);
+  assert.equal(L.reading(l, "kp").hold, 40);
+  near(L.reading(l, "kp").p, 80 / 60, 1e-6, "p·V bleibt gleich (20 mL im Glas)");
+  L.setHold(l, "kp", null);
+  L.step(l, 2);
+  near(L.reading(l, "kp").value, 60, 1e-6, "losgelassen: zurück");
+  near(L.reading(l, "kp").p, 1, 1e-9);
+  L.setHold(l, "kp", 35);
+  L.step(l, 2, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "popped"), "1,45 bar hält er");
+  L.setHold(l, "kp", 20);
+  L.step(l, 2, (e) => seen.push(e));
+  assert.ok(seen.some((e) => e.key === "popped" && e.part === "kp" && e.type === "syringe"), "bei 2 bar fliegt er heraus");
+  assert.equal(L.tool(l, "kp").in, null);
+  const ready = lab([{ type: "testtube", id: "t" }, { type: "syringe", id: "kp", in: "t", fill: 60 }], { room: 20 });
+  near(L.reading(ready, "kp").value, 60, 1e-6, "im Aufbau: 60 mL Luft schon aufgezogen");
+  L.setHold(ready, "kp", 40);
+  near(L.reading(ready, "kp").p, 80 / 60, 1e-6);
+  L.setHold(ready, "kp", 20);
+  assert.equal(L.atRest(ready), false, "über 1,5 bar ruht die Uhr nicht: gleich fliegt er heraus");
+  assert.throws(() => L.normalize({ bench: [{ type: "syringe", fill: 150 }] }), (e) => e.code === "amount");
+});
+
+test("Gasgesetze: Anzeige mit Druck, Zeichnung, Sätze und Texte in allen Sprachen", () => {
+  assert.equal(L.shown({ type: "syringe", unit: "mL", value: 62, p: 1.354 }, "de"), "62,0 mL · 1,35 bar");
+  const svg = L.parts.syringe.draw({ type: "syringe", unit: "mL", value: 40, p: 1.25 }, ctx(), { x: 0, rim: -196, w: 26 });
+  clean(svg, "Kolbenprober mit Druck");
+  assert.match(svg, /40,0 mL · 1,25 bar/);
+  assert.equal(L.say({ key: "hold", part: "kp", hold: 40 }, { lang: "de", numbers: true, names: { kp: "Kolbenprober 1" } }), "Kolbenprober 1: Kolben auf 40 mL gehalten");
+  assert.equal(L.say({ key: "release", part: "kp" }, { lang: "de", numbers: true, names: { kp: "Kolbenprober 1" } }), "Kolbenprober 1: Kolben losgelassen");
+  for (const code of fs.readdirSync(new URL("lang/", here)).map((f) => f.replace(".json", ""))) {
+    const table = JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here)));
+    for (const key of ["hold", "release", "say.hold", "say.holdSet", "say.release"]) assert.ok(table.strings[key], `${code}: ${key}`);
+  }
+});
+
+test("Gasgesetze an der Fläche: Kolben am Schieber halten und loslassen, Protokoll", () => {
+  const el = mount({ room: 20, bench: [{ type: "testtube", id: "t" }, { type: "syringe", id: "kp", in: "t" }] });
+  tap(el, "kp");
+  assert.match(part(el, ".cl-panel").innerHTML, /data-act="hold"[^>]*min="0"[^>]*max="100"/);
+  assert.equal(part(el, ".cl-panel").querySelector('[data-act="release"]').disabled, true, "frei: nichts loszulassen");
+  enter(el, "change", "hold", "5");
+  assert.equal(state(el).run.lab.tools.find((t) => t.id === "kp").hold, 5);
+  assert.match(logOf(el), /Kolbenprober 1: Kolben auf 5 mL gehalten/);
+  frames(0.1);
+  assert.equal(part(el, ".cl-panel").querySelector(".cl-dial-shown").textContent, "5 mL");
+  assert.match(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /5,0 mL · 0,80 bar/);
+  press(el, "release");
+  assert.equal(state(el).run.lab.tools.find((t) => t.id === "kp").hold, null);
+  assert.match(logOf(el), /Kolbenprober 1: Kolben losgelassen/);
+});
+
+test("Gasgesetze in der Messwerttabelle: Volumen und Druck des Kolbenprobers als Paar", () => {
+  const el = mount({ room: 20, table: true, bench: [{ type: "testtube", id: "t" }, { type: "syringe", id: "kp", in: "t", fill: 60 }] }), box = part(el, ".cl-readings");
+  tap(el, "kp");
+  enter(el, "change", "hold", "40");
+  frames(0.1);
+  press(el, "note");
+  const head = /<thead>(.*?)<\/thead>/.exec(box.innerHTML)[1];
+  assert.deepEqual([...head.matchAll(/<th scope="col">(.*?)<\/th>/g)].map((m) => m[1]), ["Nr.", "t (s)", "Kolbenprober 1 (mL)", "Kolbenprober 1 (bar)"]);
+  assert.match(box.innerHTML, /<td>40,0<\/td><td>1,33<\/td><\/tr>/);
+});
+
 test("Manometer: zeigt den Druck im verschlossenen Glas, fliegt bei 1,5 bar heraus wie ein Stopfen", () => {
   const seen = [], l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }] }, { type: "manometer", id: "m", in: "t" }], { room: 20 });
   L.step(l, 3);
@@ -2891,7 +2977,9 @@ test("Kolbenprober: misst das Gasvolumen – 1 mmol Wasserstoff sind knapp 25 mL
   const run = L.createRun(config);
   assert.equal(L.reading(run.lab, "kp").value, 0);
   L.advance(run, 400);
-  near(L.reading(run.lab, "kp").value, 24.79 * 0.0243 / 24.305 * 1000, 0.05, "Volumen in mL");
+  assert.ok(L.reading(run.lab, "kp").value > 24.79 * 0.0243 / 24.305 * 1000 + 0.1, "noch warm von der Reaktion: etwas mehr");
+  L.advance(run, 5000);
+  near(L.reading(run.lab, "kp").value, 24.79 * 0.0243 / 24.305 * 1000, 0.05, "abgekühlt: Volumen in mL");
   assert.equal(L.reading(run.lab, "kp").unit, "mL");
   const points = L.series(run, { tool: "kp" });
   assert.ok(points[0][1] === 0 && points[points.length - 1][1] > 24, "die Kurve für das Diagramm");
@@ -3321,7 +3409,7 @@ test("Kolbenprober an der Fläche: Anzeige am Gerät und Kurve des Gasvolumens",
   frames(10);
   const value = L.reading(state(el).run.lab, "syringe1").value;
   assert.ok(value > 5, `${value} mL`);
-  assert.match(item(el, "syringe1").attributes["aria-label"], /^Kolbenprober 1 an Reagenzglas 1: \d+,\d mL$/);
+  assert.match(item(el, "syringe1").attributes["aria-label"], /^Kolbenprober 1 an Reagenzglas 1: \d+,\d mL · \d,\d\d bar$/);
   assert.match(part(el, ".cl-charts").innerHTML, /Gasvolumen in mL/);
   assert.match(item(el, "syringe1").innerHTML, /cl-stopper/);
 });
@@ -3558,7 +3646,7 @@ test("Kolbenprober: beginnt nach dem Ausleeren bei null, verschließt das Gefä�
   const c = lab([{ type: "testtube", id: "b", contains: [{ reagent: "charcoal", g: 0.1 }] }, { type: "burner", id: "br", under: "b", flame: 2 }, { type: "syringe", id: "kp", in: "b" }], { room: 25 });
   L.step(c, 600);
   assert.equal(gasOf(c, "CO2(g)"), 0, "verschlossen fehlt die Luft");
-  assert.equal(L.reading(c, "kp").value, 0);
+  assert.ok(L.reading(c, "kp").value > 30, "nur die heiße Luft dehnt sich aus");
   L.remove(c, "kp");
   L.step(c, 600);
   near(gasOf(c, "CO2(g)"), 0.1 / 12.011, 1e-9, "offen verbrennt die Kohle");

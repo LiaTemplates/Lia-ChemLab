@@ -552,12 +552,12 @@
     // Folgt eine Einstellung auf die vorige, ohne dass die Uhr dazwischen weiterlief und ohne dass etwas anderes
     // im Protokoll steht, ersetzt sie deren Zeile. Lief die Uhr, hat die vorige Spannung eine Weile gegolten: Ihre Zeile bleibt.
     var dialed = null;
-    // Ein Schieber wurde losgelassen: Spannung des Netzgeräts ("volts"), Temperatur des Wasserbads ("temp") oder Wellenlänge des
-    // Fotometers ("wave", im Protokoll "nm"). Wer im selben Augenblick weiterdreht, bekommt eine Zeile im Protokoll, nicht viele.
+    // Ein Schieber wurde losgelassen: Spannung des Netzgeräts ("volts"), Temperatur des Wasserbads ("temp"), Wellenlänge des
+    // Fotometers ("wave", im Protokoll "nm") oder Kolben des Kolbenprobers ("hold"). Wer im selben Augenblick weiterdreht, bekommt eine Zeile im Protokoll, nicht viele.
     function setDial(id, key, value) {
       var run = st.run, def = L.parts[L.tool(run.lab, id).type], field = key === "wave" ? "nm" : key, mark = { key: key, part: id }, again;
-      var set = key === "volts" ? L.setVolts : key === "temp" ? L.setTemp : L.setWave;
-      var limits = key === "volts" ? [0, def.max] : key === "temp" ? def.range : def.waves;
+      var set = key === "volts" ? L.setVolts : key === "temp" ? L.setTemp : key === "hold" ? L.setHold : L.setWave;
+      var limits = key === "volts" ? [0, def.max] : key === "temp" ? def.range : key === "hold" ? [0, def.cap] : def.waves;
       value = Math.max(limits[0], Math.min(limits[1], value));
       value = key === "volts" ? Math.round(value * 10) / 10 : Math.round(value);
       mark[field] = value;
@@ -1060,6 +1060,9 @@
           (L.parts[t.type].bath ? dial("temp", L.parts[t.type].range, 1, t.temp) : "") +
           (L.parts[t.type].scale ? '<div class="cl-tap"><button type="button" class="cl-btn" data-act="tare">' + esc(T("tare")) + "</button></div>" : "") +
           (L.parts[t.type].sense === "A" ? dial("wave", L.parts[t.type].waves, 5, t.nm) : "") +
+          // Kolbenprober: den Kolben an einem Schieber halten (allein: Luft aufziehen) und wieder loslassen
+          (L.parts[t.type].sense === "V" ? dial("hold", [0, L.parts[t.type].cap], 1, Math.round(t.value || 0)).replace("</div>",
+            ' <button type="button" class="cl-btn" data-act="release">' + esc(T("release")) + "</button></div>") : "") +
           '<div class="cl-contents"></div><div class="cl-actions">' + removal() + "</div>";
       } else if (st.copyText != null) {
         html = '<p class="cl-hint">' + esc(T(st.copyHint)) + '</p><textarea class="cl-copy" readonly rows="8" aria-label="' + esc(T(st.copyHint)) + '">' + esc(st.copyText) + "</textarea>";
@@ -1219,6 +1222,14 @@
               (show.numbers ? esc(T("panel.shows")) + " " + esc(shownValue(w)) +
                 (w.value == null ? "" : " · " + esc(T("transmission")) + " " + (w.over ? "< " + L.num(0.1, 1, lang) : L.num(100 * Math.pow(10, -w.value), 1, lang)) + " %") : "") + "</p>";
           }
+        } else if (L.parts[t.type].sense === "V") {             // Stellung des Kolbens an Ort und Stelle nachführen
+          w = ui.panel.querySelector(".cl-dial");
+          rows = dragging == null ? Math.round(t.value || 0) : dragging;
+          if (dragging == null) w.value = String(rows);
+          w.setAttribute("aria-valuetext", show.numbers ? rows + " mL" : Math.round(rows / L.parts[t.type].cap * 100) + " %");
+          ui.panel.querySelector(".cl-dial-shown").textContent = show.numbers ? rows + " mL" : "";
+          ui.panel.querySelector('[data-act="release"]').disabled = t.hold == null;
+          box.innerHTML = show.numbers ? "<p>" + esc(T("panel.shows")) + " " + esc(shownValue(L.reading(lab, t.id))) + "</p>" : "";
         } else if (L.parts[t.type].spin) {                      // ob sie läuft, an den Knöpfen vermerken
           [0, 1].forEach(function (level) {
             ui.panel.querySelector('[data-act="spin"][data-id="' + level + '"]').setAttribute("aria-pressed", level === t.spin ? "true" : "false");
@@ -1482,6 +1493,7 @@
         value = def.circuit === "supply" ? t.volts : t.value;
         out.push({ key: t.id, unit: unit === "E" || unit === "pH" ? "" : c[0], label: label[t.id] + " (" + (unit === "E" ? T("unit.E") : c[0]) + ")",
           text: value == null ? "–" : c[1] ? L.num(value * c[2], c[1], lang) : L.trim(value * c[2], lang) });
+        if (def.sense === "V") out.push({ key: t.id + ":p", unit: "bar", label: label[t.id] + " (bar)", text: L.num(L.reading(lab, t.id).p, 2, lang) });      // sein Manometer
       });
       lab.vessels.forEach(function (v) {
         if (L.parts[v.type].dispenser && !L.parts[v.type].filter && show.volumes) out.push({ key: v.id, unit: "mL", label: label[v.id] + ": " + T("table.given") + " (mL)", text: L.num(v.given, 1, lang) });
@@ -1667,7 +1679,7 @@
         t = L.tool(lab, cmd.set);
         if (!t) return;
         // nur was das Gerät kennt und was sich ändert: ein Regler, der beim Laden seinen Startwert schickt, hinterlässt nichts
-        [["volts", "volts"], ["temp", "temp"], ["nm", "wave"]].forEach(function (k) {
+        [["volts", "volts"], ["temp", "temp"], ["nm", "wave"], ["hold", "hold"]].forEach(function (k) {
           if (cmd[k[0]] != null && t[k[0]] !== undefined && +cmd[k[0]] !== t[k[0]]) setDial(cmd.set, k[1], +cmd[k[0]]);
         });
         if (cmd.flame != null && t.flame !== undefined && +cmd.flame !== t.flame) {
@@ -1804,6 +1816,10 @@
         id = st.sel;
         change(function (l) { return L.tare(l, id); }, { key: "tare", part: id });
       }
+      else if (act === "release" && L.tool(lab, st.sel) && L.tool(lab, st.sel).hold != null) {
+        id = st.sel;
+        change(function (l) { return L.setHold(l, id, null); }, { key: "release", part: id });
+      }
       else if (act === "flip" && L.tool(lab, st.sel)) {
         id = st.sel;
         r = !L.tool(lab, id).flip;
@@ -1855,7 +1871,7 @@
         L.guess(st.run.lab, sampleOf(st.sel), t.value);
         refresh();
       }
-      else if ((act === "volts" || act === "temp" || act === "wave") && L.tool(st.run.lab, st.sel)) {
+      else if ((act === "volts" || act === "temp" || act === "wave" || act === "hold") && L.tool(st.run.lab, st.sel)) {
         // beim Ziehen folgt nur die Anzeige; erst beim Loslassen wird eingestellt (ein Eingriff, eine Zeile im Protokoll)
         dragging = ev.type !== "change" ? parseFloat(String(t.value).replace(",", ".")) || 0 : null;
         if (dragging != null) { renderContents(); return; }
@@ -1865,7 +1881,7 @@
 
     // Der Schieber wurde losgelassen oder verlassen, ohne dass sich sein Wert geändert hat: die Anzeige gilt wieder der eingestellten Spannung
     function onLeave(ev) {
-      if (dragging == null || !ev.target || !ev.target.getAttribute || ["volts", "temp", "wave"].indexOf(ev.target.getAttribute("data-act")) < 0) return;
+      if (dragging == null || !ev.target || !ev.target.getAttribute || ["volts", "temp", "wave", "hold"].indexOf(ev.target.getAttribute("data-act")) < 0) return;
       dragging = null;
       renderContents();
     }
