@@ -288,6 +288,17 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
+        // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
+        if (data.oil != null && !(phase === "aq" && data.Vm > 0 && data.oil && typeof data.oil.sol === "number" && data.oil.sol >= 0)) throw fail("species", id + " oil");
+        // kd: Verteilung c(Ölschicht)/c(Wasser) eines gelösten Stoffs; oilBands: seine Banden, wenn er im Öl gelöst ist
+        // via: [Träger, Rest] – der Stoff geht aus dem Träger ins Öl und lässt den Rest im Wasser (Iod aus dem Triiodid)
+        if (data.kd != null && !(typeof data.kd === "number" && data.kd > 0 && !parse(id).charge && (phase === "aq" || (Array.isArray(data.via) && data.via.length === 2))))
+          throw fail("species", id + " kd");
+        if (data.oilBands != null && !(Array.isArray(data.oilBands) && data.oilBands.every(function (b) { return Array.isArray(b) && b.length === 3 && b.every(isFinite); })))
+          throw fail("species", id + " oilBands");
+        // eta: Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, für die Strömungsansicht
+        if (data.eta != null && !((phase === "aq" || phase === "l") && Array.isArray(data.eta) && data.eta.length === 2 &&
+          data.eta[0] > 0 && data.eta[1] > 0 && data.eta[0] >= data.eta[1] && isFinite(data.eta[0]))) throw fail("species", id + " eta");
         // solvent: ein organisches Lösungsmittel, das in den Behälter für organische Abfälle gehört, auch wenn es nicht verdampft (kein Tb)
         if (data.solvent != null && !(data.solvent === true && phase === "aq" && data.Vm != null)) throw fail("species", id + " solvent");
         var gamma = pack.species[id] && pack.species[id].gamma;
@@ -719,6 +730,8 @@
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
+  // Scheidetrichter: hängt wie die Bürette, lässt unten ab (zuerst die untere Schicht) und lässt sich schütteln (shake); d: seine größte Weite
+  registerPart("separator", { kind: "vessel", dispenser: true, shake: true, cap: 100, d: 5.5, Cv: 60, loss: 0.12 });
   // Trichter mit Filterpapier: hängt wie die Bürette über einem Gefäß und läuft von selbst ab (drain, mL/s, geschätzt für einen
   // Rundfilter); Feststoffe bleiben im Filter, nur Kolloide laufen mit durch
   registerPart("funnel", { kind: "vessel", dispenser: true, filter: true, cap: 60, d: 4, Cv: 30, loss: 0.08, drain: 0.5 });
@@ -1022,6 +1035,8 @@
         volumes: show.volumes !== false,                           // mL unter den Gefäßen und das Abgegebene der Bürette
         log: show.log !== false,
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
+        flow: ["temp", "diff", "mix", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
+        flow3d: show.flow3d === "particles" ? "particles" : "cut",       // wie sie in 3D erscheint
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
@@ -1080,14 +1095,163 @@
     return ml > 0 ? (ml + solute) / 1000 : 0;      // ein trockener Rückstand ist keine Flüssigkeit, auch wenn seine Ionen ein Eigenvolumen haben
   }
 
+  // ------------------------------------------------------------------ Zweite flüssige Schicht
+  // Was sich nicht mit Wasser mischt (Stoffdaten: oil), bildet über seiner Löslichkeit eine eigene Schicht v.org. Alles Wässrige bleibt in v.n:
+  // Konzentrationen, pH-Wert, Gleichgewichte und Messgeräte gelten der wässrigen Schicht. Reines Öl ist eine Ölschicht ohne Wasser darunter.
+  function oilVolume(v) {         // L
+    var ml = 0, id;
+    for (id in v.org || {}) ml += v.org[id] * (L.db.species[id].Vm || 0);
+    return ml / 1000;
+  }
+
+  function filled(v) { return volume(v) + oilVolume(v); }      // alles Flüssige in L: für Füllhöhe, freien Platz und Gasraum
+
+  function oilOnTop(v) {          // die leichtere Schicht liegt oben
+    var g = 0, id, vol = oilVolume(v);
+    for (id in v.org || {}) g += v.org[id] * L.db.species[id].M;
+    return !(vol > 0) || g / vol < (heaviness(v) || 1000);
+  }
+
+  function separate(v) {
+    var water = v.n[WATER] > 0 ? v.n[WATER] * L.db.species[WATER].M / L.db.species[WATER].rho / 1000 : 0, ids = {}, id, s, all, keep;      // water in L
+    v.org = v.org || {};
+    for (id in v.n) ids[id] = 1;
+    for (id in v.org) ids[id] = 1;
+    for (id in ids) {
+      s = L.db.species[id];
+      if (!s.oil) continue;
+      all = (v.n[id] || 0) + (v.org[id] || 0);
+      keep = Math.min(all, s.oil.sol * water);                   // gelöst im Wasser, so viel es aufnimmt
+      if (keep > 0) v.n[id] = keep; else delete v.n[id];
+      if (all - keep > 1e-12) v.org[id] = all - keep; else delete v.org[id];
+    }
+    // ist kein Öl mehr da (verdampft, gelöst), kommt, was darin gelöst war, zurück ins Wasser; Iod als Feststoff, der sich dort mit Iodid löst
+    if (!Object.keys(v.org).some(function (k) { return L.db.species[k].oil; })) {
+      for (id in v.org) { if (L.db.species[id].phase === "s") growSolid(v, id, v.org[id]); else v.n[id] = (v.n[id] || 0) + v.org[id]; }
+      v.org = {};
+      v.drop = null;
+    }
+  }
+
+  // ------------------------------------------------------------------ Verteilen, Schütteln, Mixen
+  var KL = 1e-5;                  // m/s: Stoffübergang an der Grenze zweier Flüssigkeiten (übliche Größenordnung, geschätzt)
+  var BEADS = { shake: 1e-4, mix: 8e-6 };       // m: Tropfenradius beim Schütteln von Hand und mit dem Stabmixer (geschätzt)
+  var AGITATE = 10;               // s: so lange schüttelt oder mixt man; so lange bleibt alles Öl in Tropfen
+
+  function grenze(v) {            // Grenzfläche zwischen den Schichten in m²: die flache Grenze und die Tropfen
+    var d = spec(v).d / 100, flat = Math.PI * d * d / 4;
+    return flat + (v.drop ? 3 * v.drop.share * oilVolume(v) / 1000 / v.drop.r : 0);
+  }
+
+  // Gelöste Stoffe mit kd wandern zwischen Wasser und Öl zum Gleichgewicht c(Öl) = kd · c(Wasser), mit via = [Träger, Rest]
+  // c(Öl) = kd · c(Träger) / c(Rest) (Iod aus dem Triiodid). Wie schnell: Stoffübergang mal Grenzfläche, ruhend Minuten, geschüttelt Sekunden.
+  function distribute(v) {
+    var Va = volume(v), Vo = oilVolume(v), rate, f, id, s, x, b, c, n, eq;
+    if (!(Va > 0 && Vo > 0)) return;
+    rate = KL * grenze(v) * (1 / Va + 1 / Vo) * 1000;            // je s; Volumen in L, daher ·1000
+    f = 1 - Math.exp(-rate * DT);
+    for (id in L.db.species) {
+      s = L.db.species[id];
+      if (!s.kd) continue;
+      if (s.via) {
+        var carrier = v.n[s.via[0]] || 0, rest = v.n[s.via[1]] || 0, inOil = v.org[id] || 0;
+        if (!(carrier > 0 || inOil > 0)) continue;
+        // (Öl + x)(Rest + x) = kd · Vo · (Träger − x)
+        b = inOil + rest + s.kd * Vo; c = inOil * rest - s.kd * Vo * carrier;
+        x = Math.max(-inOil, Math.min(carrier, (-b + Math.sqrt(b * b - 4 * c)) / 2)) * f;
+        if (!(Math.abs(x) > 1e-15)) continue;
+        v.n[s.via[0]] = carrier - x; v.n[s.via[1]] = rest + x;
+        if (!(v.n[s.via[0]] > 1e-300)) delete v.n[s.via[0]];
+        v.org[id] = inOil + x;
+        if (!(v.org[id] > 1e-300)) delete v.org[id];
+      } else {
+        n = (v.n[id] || 0) + (v.org[id] || 0);
+        if (!(n > 0)) continue;
+        eq = n * s.kd * Vo / (Va + s.kd * Vo);
+        x = (eq - (v.org[id] || 0)) * f;
+        if (!(Math.abs(x) > 1e-15)) continue;
+        v.org[id] = (v.org[id] || 0) + x; v.n[id] = (v.n[id] || 0) - x;
+        if (!(v.n[id] > 1e-300)) delete v.n[id];
+        if (!(v.org[id] > 1e-300)) delete v.org[id];
+      }
+      v.dirty = true;
+    }
+  }
+
+  // Die Tropfen steigen auf (oder sinken) nach Stokes, durch die Höhe der wässrigen Schicht: grobe in Sekunden, feine in Minuten.
+  // Gleich große Tropfen steigen gleich schnell: Die Grenze zwischen trüb und klar wandert gleichmäßig, nach der Steigzeit ist alles oben.
+  function cream(lab, v) {
+    var oil = oilVolume(v), Va = volume(v), d = spec(v).d / 100, g = 0, id, rise, high;
+    if (!v.drop || !(oil > 0 && Va > 0)) { v.drop = null; return; }
+    if (lab.t < v.drop.until) return;                           // es wird noch geschüttelt
+    for (id in v.org) g += v.org[id] * L.db.species[id].M;
+    rise = 2 / 9 * Math.abs((heaviness(v) || 1000) - g / oil) * 9.81 * v.drop.r * v.drop.r / ((viscosity(v) || [0.89])[0] / 1000);
+    high = Va / 1000 / (Math.PI * d * d / 4);
+    v.drop.share -= rise / high * DT;
+    if (!(v.drop.share > 0)) v.drop = null;
+  }
+
+  // Schütteln oder Mixen (how: "shake" oder "mix"): das Öl zerfällt ganz in Tropfen
+  function shake(lab, vesselId, how) {
+    var v = vessel(lab, vesselId);
+    if (!v || v.broken || !(filled(v) > 0) || !BEADS[how]) return false;
+    if (oilVolume(v) > 0 && volume(v) > 0) v.drop = { share: 1, r: BEADS[how], until: lab.t + AGITATE };
+    v.dirty = true;
+    return true;
+  }
+
+  // Reaktionen mit Geschwindigkeitsgesetz in der Ölschicht: nur zwischen ungeladenen Stoffen, die alle darin gelöst sind (Hexen und Brom)
+  function oilKinetics(v) {
+    var Vo = oilVolume(v);
+    if (!(Vo > 0)) return;
+    L.db.reactions.forEach(function (r) {
+      var rate = r.rate, k, speedOf = 1, most = Infinity, id, x, h;
+      if (!rate || rate.fast || rate.surface || rate.ignite != null || !rate.order || !(rate.k > 0)) return;
+      for (id in r.nu) {
+        if (L.db.species[id].charge || L.db.species[id].phase !== "aq") return;
+        if (r.nu[id] < 0) { if (!(v.org[id] > 0)) return; most = Math.min(most, v.org[id] / -r.nu[id]); }
+      }
+      for (id in rate.order) { if (!(v.org[id] > 0)) return; speedOf *= Math.pow(v.org[id] / Vo, rate.order[id]); }
+      k = rate.k * Math.exp(-(rate.Ea || 0) * 1000 / R * (1 / (v.T + KELVIN) - 1 / (T_REF + KELVIN)));
+      x = Math.min(most, k * speedOf * Vo * DT);
+      if (!(x > 0)) return;
+      for (id in r.nu) { v.org[id] = (v.org[id] || 0) + r.nu[id] * x; if (!(v.org[id] > 1e-300)) delete v.org[id]; }
+      h = heatOf(r);
+      if (h != null) v.q -= x * h * 1000;
+      v.dirty = true;
+    });
+  }
+
+  function both(v) {              // Stoffmengen beider Schichten zusammen
+    var out = {}, id;
+    for (id in v.n) out[id] = v.n[id];
+    for (id in v.org || {}) out[id] = (out[id] || 0) + v.org[id];
+    return out;
+  }
+
+  // Wie viel mL aus welcher Schicht, wenn ml abfließen: von oben (Ausgießen) oder von unten (Pipette, Hahn, Filter)
+  function layered(v, ml, bottom) {
+    var aq = volume(v) * 1000, oil = oilVolume(v) * 1000, first = oilOnTop(v) !== !!bottom ? "oil" : "aq", a, o;
+    if (first === "oil") { o = Math.min(ml, oil); a = Math.min(aq, ml - o); }
+    else { a = Math.min(ml, aq); o = Math.min(oil, ml - a); }
+    return { aq: a, oil: o };
+  }
+
+  function heaviness(v) {         // Dichte der Flüssigkeit in kg/m³ (g/L), ohne Wärmeausdehnung; gelöste Ionen ohne Eigenvolumen machen sie schwerer
+    var vol = volume(v), g = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") g += v.n[id] * s.M; }
+    return vol > 0 ? g / vol : null;
+  }
+
   function heatCapacity(v) {      // J/K, mit dem Glas
     var C = spec(v).Cv, id;
     for (id in v.n) C += v.n[id] * L.db.species[id].cp;
+    for (id in v.org || {}) C += v.org[id] * L.db.species[id].cp;
     return C;
   }
 
   function free(lab, v) {         // freier Platz in mL, Zuflüsse schon abgezogen
-    var room = spec(v).cap - volume(v) * 1000;
+    var room = spec(v).cap - filled(v) * 1000;
     lab.flows.forEach(function (f) { if (f.to === v.id) room -= f.left; });
     return room;
   }
@@ -1110,6 +1274,7 @@
     for (id in amounts) if (amounts[id] > 0) v.n[id] = (v.n[id] || 0) + amounts[id];
     after = heatCapacity(v);
     if (after > before) v.T = (before * v.T + (after - before) * T) / after;
+    separate(v);
     v.dirty = true;
   }
 
@@ -1125,11 +1290,14 @@
   }
 
   // Umgießen oder Tropfen aus der Bürette, mit derselben örtlichen Mischwärme: die Portion hat die Zusammensetzung der Flüssigkeit in from
-  function pourInto(lab, from, to, ml, emit) {
-    var vol = volume(from) * 1000, amounts = {}, id, s;
-    ml = Math.min(ml, vol);                                    // vom letzten Rest zählt nur, was noch da ist
-    for (id in from.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && vol > 0) amounts[id] = from.n[id] * ml / vol; }
-    return splash(lab, to, amounts, ml, function () { return transfer(from, to, ml); }, emit, from.T);
+  // bottom: aus der unteren Schicht zuerst (Pipette, Hahn), sonst aus der oberen (Ausgießen)
+  function pourInto(lab, from, to, ml, emit, bottom) {
+    var vol = volume(from) * 1000, oil = oilVolume(from) * 1000, amounts = {}, id, s, take;
+    ml = Math.min(ml, vol + oil);                              // vom letzten Rest zählt nur, was noch da ist
+    take = layered(from, ml, bottom);
+    for (id in from.n) { s = L.db.species[id]; if ((s.phase === "l" || s.phase === "aq") && vol > 0) amounts[id] = from.n[id] * take.aq / vol; }
+    for (id in from.org || {}) if (L.db.species[id].phase !== "s") amounts[id] = (amounts[id] || 0) + from.org[id] * take.oil / oil;      // für die Mischwärme
+    return splash(lab, to, amounts, ml, function () { return transfer(from, to, ml, bottom); }, emit, from.T);
   }
 
   // amounts: was hinzukommt (mol), ml sein Volumen; put gibt es wirklich hinein und sagt, wie viel (mL)
@@ -1180,7 +1348,7 @@
 
   function makeVessel(lab, item) {
     return {
-      id: item.id, type: item.type, size: item.size, n: {}, out: {}, lumps: [], T: lab.room,
+      id: item.id, type: item.type, size: item.size, n: {}, org: {}, out: {}, lumps: [], T: lab.room,      // n: die wässrige Lösung, org: eine Ölschicht
       real: lab.model === "real",                               // rechnet dieses Gefäß mit Aktivitäten?
       ext: {}, rate: {}, gas: 0, q: 0, dirty: true, Teq: lab.room,
       over: item.over || null, tap: 0, given: 0,                // nur für Büretten: Gefäß darunter, Hahn in mL/s, abgegeben in mL
@@ -1304,7 +1472,7 @@
 
   // Umgießen: nur die Flüssigkeit mit allem Gelösten, Feststoffe bleiben zurück
   function pourable(lab, id) {    // was sich aus einem Gefäß noch ausgießen lässt, in mL: ohne das, was schon unterwegs ist
-    var v = vessel(lab, id), ml = v ? volume(v) * 1000 : 0;
+    var v = vessel(lab, id), ml = v ? filled(v) * 1000 : 0;
     lab.flows.forEach(function (f) { if (f.from === id) ml -= f.left; });
     return Math.max(0, ml);
   }
@@ -1320,7 +1488,7 @@
   // Umgießen. Streuen die Anzeigen (scatter), trifft man eine eingestellte Menge nur so genau, wie die Gefäße es erlauben:
   // am Messzylinder misst man ab (siehe tolerance); accuracy: Anteil, der das ersetzt
   // (Pipette). Alles auszugießen gelingt immer; wer nur einen Teil abgießt, lässt immer einen Rest (so bleibt der Bodensatz im Glas)
-  function pour(lab, fromId, toId, ml, accuracy) {
+  function pour(lab, fromId, toId, ml, accuracy, bottom) {
     var from = vessel(lab, fromId), to = vessel(lab, toId), most, whole;
     if (!from || !to || from === to || from.broken || to.broken || spinning(lab, from) || spinning(lab, to)) return false;
     most = pourable(lab, fromId);
@@ -1332,7 +1500,7 @@
     }
     ml = Math.min(ml, most, free(lab, to));
     if (!(ml > 1e-6)) return false;
-    lab.flows.push({ from: fromId, to: toId, left: ml, rate: ml / duration(ml) });
+    lab.flows.push({ from: fromId, to: toId, left: ml, rate: ml / duration(ml), bottom: !!bottom });
     return true;
   }
 
@@ -1343,14 +1511,14 @@
     if (!from || !to || from === to || from.broken || to.broken || L.parts[from.type].dispenser) return false;
     if (stoppered(lab, from) || stoppered(lab, to)) return false;
     if (pourable(lab, fromId) < ml - 1e-9 || free(lab, to) < ml - 1e-9) return false;
-    return pour(lab, fromId, toId, ml, PIPETTE);
+    return pour(lab, fromId, toId, ml, PIPETTE, true);      // die Pipette saugt unten an
   }
 
   function empty(lab, vesselId) {
     var v = vessel(lab, vesselId);
     if (!v) return false;
     lab.flows = lab.flows.filter(function (f) { return f.to !== vesselId && f.from !== vesselId; });
-    v.n = {}; v.out = {}; v.lumps = []; v.ext = {}; v.rate = {}; v.gas = 0; v.T = lab.room; v.tap = 0;
+    v.n = {}; v.org = {}; v.drop = null; v.out = {}; v.lumps = []; v.ext = {}; v.rate = {}; v.gas = 0; v.T = lab.room; v.tap = 0;
     v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null;
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
@@ -1432,20 +1600,20 @@
   // ab 15 % des Volumens, saure oder alkalische Flüssigkeit (auch über Resten), Feststoffe, sonst der Ausguss.
   // Zurück: { bin } (bin null: es ist nichts darin) oder null für ein zersprungenes oder unbekanntes Gefäß
   function waste(lab, vesselId) {
-    var v = vessel(lab, vesselId), vol, id, s, el, heavy = false, alkali = false, oxid = 0, organic = 0, solid = 0, any = false;
+    var v = vessel(lab, vesselId), vol, id, s, el, heavy = false, alkali = false, oxid = 0, organic = 0, solid = 0, any = false, all;
     if (!v || v.broken) return null;
-    vol = volume(v);
-    for (id in v.n) {
+    vol = filled(v); all = both(v);
+    for (id in all) {
       s = L.db.species[id];
-      if (!(v.n[id] > 1e-7) || id === WATER) continue;
+      if (!(all[id] > 1e-7) || id === WATER) continue;
       any = true;
       el = elementsOf(id);
       // ein Metallstück ist Feststoff, kein Salz; was sich aber aus einer Lösung abgeschieden hat (ein Silberspiegel), sammelt man mit den Schwermetallen
       if (s.phase === "s" && el.length === 1) { if (ALKALI[el[0]]) alkali = true; else if (HEAVY[el[0]] && fresh(v, id) > 1e-7) heavy = true; }
       else if (el.some(function (e) { return HEAVY[e]; })) heavy = true;
-      if (OXIDIZER[id]) oxid += v.n[id];
+      if (OXIDIZER[id]) oxid += all[id];
       if (el.indexOf("C") >= 0 && el.indexOf("H") >= 0)        // flüssiger oder flüchtiger gelöster organischer Stoff, mit seinem Volumen
-        organic += s.phase === "l" ? v.n[id] * s.M / s.rho / 1000 : s.phase === "aq" && (s.Tb != null || s.solvent) && s.Vm ? v.n[id] * s.Vm / 1000 : 0;
+        organic += s.phase === "l" ? all[id] * s.M / s.rho / 1000 : s.phase === "aq" && (s.Tb != null || s.solvent || s.oil) && s.Vm ? all[id] * s.Vm / 1000 : 0;
     }
     v.lumps.forEach(function (l) { if (!l.made) solid += l.n * L.db.species[l.id].M; });
     if (!any && !(vol > 0)) return { bin: null };
@@ -1455,9 +1623,9 @@
     if (oxid > 1e-5) return { bin: "reduce" };
     if ((v.n["SO3^2-(aq)"] || 0) + (v.n["HSO3-(aq)"] || 0) + (v.n["SO2(aq)"] || 0) > 1e-5) return { bin: "oxidize" };      // Sulfit: erst zu Sulfat oxidieren
     if (vol > 0 && organic / vol >= 0.15) return { bin: "organic" };
-    if (vol > 0.0005 && harsh(v, vol)) return { bin: "acid" };
+    if (vol > 0.0005 && harsh(v, volume(v))) return { bin: "acid" };
     if (solid > 0.01 || (!(vol > 0.0005) && v.lumps.length)) return { bin: "solid" };
-    return { bin: harsh(v, vol) ? "acid" : "sink" };
+    return { bin: harsh(v, volume(v)) ? "acid" : "sink" };
   }
 
   // Den Inhalt eines Gefäßes in einen Behälter geben: Das Gefäß ist danach leer. Zurück, was richtig gewesen wäre und ob der
@@ -1495,7 +1663,7 @@
   // Was die Waage unter v trägt, in g: Glas, Gelöstes, Feststoff, Gas über der Flüssigkeit und das Gas im Kolbenprober
   function weigh(lab, v) {
     var m = glassMass(v), id, meter = toolAt(lab, v, function (def) { return def.sense === "V"; });
-    for (id in v.n) m += v.n[id] * L.db.species[id].M;
+    for (id in both(v)) m += both(v)[id] * L.db.species[id].M;
     for (id in v.air) m += v.air[id] * L.db.species[id].M;
     return m + (meter ? meter.held || 0 : 0);
   }
@@ -3039,18 +3207,25 @@
   // ------------------------------------------------------------------ Zeitschritt
 
   // Flüssigkeit von einem Gefäß ins andere: mit allem Gelösten und dem Niederschlag, der noch schwebt
-  function transfer(from, to, ml) {
+  function transfer(from, to, ml, bottom) {
     if (from.veiled) to.veiled = true;
-    var vol = volume(from) * 1000, share, moved = {}, id, phase;
-    if (!(vol > 1e-9) || !(ml > 0)) return 0;
-    ml = vol - ml < 1e-6 ? vol : ml;                           // kein Film bleibt zurück
+    var vol = volume(from) * 1000, oil = oilVolume(from) * 1000, share, moved = {}, id, phase, take;
+    if (!(vol + oil > 1e-9) || !(ml > 0)) return 0;
+    ml = vol + oil - ml < 1e-6 ? vol + oil : ml;               // kein Film bleibt zurück
 
-    share = ml / vol;
+    take = layered(from, ml, bottom);                           // aus welcher Schicht wie viel
+    var oily = {};                                              // was aus der Ölschicht kommt, kommt drüben wieder als Ölschicht an
+    if (oil > 0) for (id in from.org) {
+      oily[id] = from.org[id] * take.oil / oil;
+      if ((from.org[id] -= oily[id]) < 1e-300) delete from.org[id];
+    }
+    share = vol > 0 ? take.aq / vol : 0;
     for (id in from.n) {
       phase = L.db.species[id].phase;
       if (phase !== "l" && phase !== "aq") continue;
-      moved[id] = from.n[id] * share;
-      if ((from.n[id] -= moved[id]) < 1e-300) delete from.n[id];
+      var part = from.n[id] * share;
+      moved[id] = part;
+      if ((from.n[id] -= part) < 1e-300) delete from.n[id];
     }
     var sieve = L.parts[from.type].filter;                    // durch ein Filter geht nur, was kolloid verteilt ist
     // alles in einen Trichter gegossen: Man schwenkt auf und spült den Bodensatz und die Stücke mit hinein
@@ -3080,6 +3255,9 @@
     });
     from.dirty = true;
     mixIn(to, moved, from.T);
+    to.org = to.org || {};
+    for (id in oily) to.org[id] = (to.org[id] || 0) + oily[id];
+    separate(to);
     return ml;
   }
 
@@ -3089,7 +3267,7 @@
       if (!to) return false;
       if (f.from) {
         from = vessel(lab, f.from);
-        dv = from ? pourInto(lab, from, to, dv, emit) : 0;
+        dv = from ? pourInto(lab, from, to, dv, emit, f.bottom) : 0;
         if (!(dv > 0)) return false;
       } else splash(lab, to, portion(reagent(f.reagent), { ml: dv }), dv, function () { putReagent(lab, to, reagent(f.reagent), { ml: dv }); return dv; }, emit);
       f.left -= dv;
@@ -3099,7 +3277,7 @@
 
   function drip(lab, emit) {      // Büretten: bei offenem Hahn läuft es in das Gefäß darunter; ein Filter läuft von selbst
     lab.vessels.forEach(function (v) {
-      var def = L.parts[v.type], rate = def.filter ? (volume(v) > 0 ? def.drain : 0) : v.tap, to = rate > 0 ? vessel(lab, v.over) : null, room;
+      var def = L.parts[v.type], rate = def.filter ? (filled(v) > 0 ? def.drain : 0) : v.tap, to = rate > 0 ? vessel(lab, v.over) : null, room;
       if (!to || to.broken) return;
       room = free(lab, to);
       if (room <= 1e-6) {                                      // das Gefäß darunter ist voll: der Hahn schließt, ein Filter wartet
@@ -3108,7 +3286,13 @@
         if (emit) emit({ key: "tapFull", vessel: v.id });
         return;
       }
-      v.given += pourInto(lab, v, to, Math.min(rate * DT, room), emit);
+      v.given += pourInto(lab, v, to, Math.min(rate * DT, room), emit, true);      // der Hahn ist unten
+      // zwei Schichten: ist die untere abgelaufen, sagt das Protokoll Bescheid (dann schließt man den Hahn); einmal je untere Schicht
+      if (def.shake) {
+        var lower = oilOnTop(v) ? volume(v) : oilVolume(v), upper = oilOnTop(v) ? oilVolume(v) : volume(v);
+        if (lower * 1000 > 0.5) v.flag.layer = true;
+        else if (v.flag.layer && upper > 0) { v.flag.layer = false; if (emit) emit({ key: "layerOut", vessel: v.id }); }
+      }
     });
   }
 
@@ -3171,7 +3355,7 @@
 
   // So viel Gas (mol) hat über der Flüssigkeit im Gefäß Platz
   function headroom(lab, v) {
-    return Math.max(0, spec(v).cap - volume(v) * 1000) / 1000 / molar(lab);
+    return Math.max(0, spec(v).cap - filled(v) * 1000) / 1000 / molar(lab);
   }
 
   // Kolbenprober t am Gefäß v: Volumen (mL) und Druck (bar) nach dem Gasgesetz für die Temperatur des Inhalts. Eingeschlossen sind
@@ -3181,7 +3365,7 @@
     var cap = L.parts[t.type].cap, RL = R / 100, T, Vh, nRT, ml;
     if (!v || v.broken) return { ml: Math.min(cap, (t.fill || 0) + t.n * molar(lab) * 1000), p: P_AIR };
     T = v.T + KELVIN;
-    Vh = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000);
+    Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000);
     if (t.air == null) t.air = P_AIR * (Vh + (t.fill || 0) / 1000) / (RL * T);
     nRT = (t.air + t.n) * RL * T;
     if (t.hold != null) return { ml: t.hold, p: nRT / (Vh + t.hold / 1000) };
@@ -3494,7 +3678,7 @@
   // Flüssigkeit aus dem zweiten Gefäß zurück, und trifft sie auf ein Glas, das heißer ist als CRACK, zerspringt es.
   function pressure(lab, v, emit) {
     var pipe = toolAt(lab, v, function (def) { return def.pipe; }), plug = toolAt(lab, v, function (def) { return def.plug; });
-    var V = Math.max(1e-6, (spec(v).cap - volume(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot, room, x;
+    var V = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, gas = 0, id, vap, full, total, p, into, ml, hot, room, x;
     v.p = null;
     if (!pipe && !plug) { v.seal = null; return; }
     // während umgegossen wird, ist das Gefäß offen; danach rechnet der Druck neu
@@ -3521,9 +3705,9 @@
     if (p >= P_AIR) { v.seal = Math.max(0, v.seal - (total - full) * v.seal / total); v.flag.suck = false; return; }
     into = pipe.to ? vessel(lab, pipe.to) : null;
     ml = (full - total) * RL * T / P_AIR * 1000;
-    if (into && !into.broken && volume(into) > 0 && ml > 1e-3) {
+    if (into && !into.broken && filled(into) > 0 && ml > 1e-3) {
       hot = v.T > CRACK;
-      ml = transfer(into, v, Math.min(ml, volume(into) * 1000));
+      ml = transfer(into, v, Math.min(ml, filled(into) * 1000), true);      // was im Rohr ist, kommt von unten
       if (ml > 0 && !v.flag.suck) { v.flag.suck = true; if (emit) emit({ key: "suckBack", vessel: v.id, from: into.id }); }
       if (hot && ml > 0.02) shatter(lab, v, emit);
     } else v.seal += full - total;                             // aus einem leeren Gefäß strömt Luft zurück
@@ -3532,15 +3716,24 @@
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
   // g: Aktivitätskoeffizient nach Van Laar, wo ein Stoff Konstanten mit Wasser hat (mix). Salze und andere gelöste Stoffe zählen
   // nicht mit: Eine Salzlösung siedet hier wie Wasser bei 100 °C. null, wenn nichts Flüchtiges da ist.
+  // Die Ölschicht (org: true) verdampft für sich, mit Anteilen unter ihren eigenen flüchtigen Stoffen: Zwei Schichten sieden, sobald die
+  // Summe beider Dampfdrücke den Luftdruck erreicht, früher als jede für sich (Wasserdampfdestillation).
   function volatiles(v) {
-    var list = [], total = 0, id, s, water = null, lnw = 0;
+    var list = [], total = 0, id, s, water = null, lnw = 0, oil = [], sum = 0;
+    for (id in v.org || {}) {
+      s = L.db.species[id];
+      if (s.Tb == null) continue;
+      oil.push({ id: id, n: v.org[id], Tb: s.Tb, H: s.Hvap * 1000, g: 1, org: true });
+      sum += v.org[id];
+    }
+    oil.forEach(function (c) { c.x = c.n / sum; });
     for (id in v.n) {
       s = L.db.species[id];
       if (id !== WATER && !(s.Tb != null && s.phase === "aq")) continue;
       list.push({ id: id, n: v.n[id], Tb: id === WATER ? BOIL : s.Tb, H: id === WATER ? VAPOR : s.Hvap * 1000, mix: s.mix, g: 1 });
       total += v.n[id];
     }
-    if (!(total > 0)) return null;
+    if (!(total > 0)) return oil.length ? oil : null;
     list.forEach(function (c) { c.x = c.n / total; if (c.id === WATER) water = c; });
     if (water) list.forEach(function (c) {
       var a, b, d;
@@ -3551,7 +3744,7 @@
       lnw += b * Math.pow(a * c.x / d, 2);
     });
     if (water) water.g = Math.exp(lnw);
-    return list;
+    return list.concat(oil);
   }
 
   // Dampfdruck eines Teils über der Mischung bei T (°C), als Anteil am Luftdruck: Raoult mit Clausius-Clapeyron
@@ -3600,9 +3793,9 @@
     if (cool) into = vessel(lab, cool.to);
     if (into && (into.broken || L.parts[into.type].dispenser || free(lab, into) < 1)) into = null;      // die Vorlage läuft nicht über
     list.forEach(function (c) {
-      var x = Math.min(c.y * boil, v.n[c.id] || 0);             // nie mehr, als noch da ist
+      var store = c.org ? v.org : v.n, x = Math.min(c.y * boil, store[c.id] || 0);      // nie mehr, als noch da ist
       if (!(x > 0)) return;
-      if ((v.n[c.id] -= x) < 1e-300) delete v.n[c.id];
+      if ((store[c.id] -= x) < 1e-300) delete store[c.id];
       if (into) cold[c.id] = x;
       else if (c.id === WATER) v.out[STEAM] = (v.out[STEAM] || 0) + x;
       else v.out[vapourOf(c.id)] = (v.out[vapourOf(c.id)] || 0) + x;
@@ -3614,9 +3807,34 @@
     dry(v, emit);
   }
 
+  // Wärmeströme eines Gefäßes: q Leistung der Flamme darunter in W, k Verlust in W/K an room (Raum oder Wasserbad: bath), d Durchmesser in cm
+  function warmth(lab, v) {
+    var burner = toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; }), bath = toolAt(lab, v, function (def) { return def.bath; });
+    return { q: burner ? spec(v).heat * (L.parts[burner.type].flames[burner.flame] - v.T) : 0, k: spec(v).loss + (bath ? spec(v).heat * L.parts[bath.type].gain : 0),
+      room: bath ? bath.temp : lab.room, bath: !!bath, d: spec(v).d || 3 };
+  }
+
+  // Zähigkeit der Flüssigkeit in mPa·s bei 25 und 50 °C, für die Strömungsansicht: ln η gemischt nach den Stoffmengenanteilen,
+  // was keine eigene hat (Ionen, gelöste Gase), zählt wie Wasser.
+  // shortcut: ideale Mischungsregel, Glycerin-Wasser-Gemische werden damit etwa halb so zäh wie gemessen; ein Wechselwirkungsglied, wenn das stört
+  function viscosity(v, store) {      // store: statt der wässrigen Lösung eine andere Mischung (die Ölschicht)
+    var water = L.db.species[WATER].eta || [0.890, 0.5465], total = 0, a = 0, b = 0, id, s, e, n = store || v.n;
+    for (id in n) {
+      s = L.db.species[id];
+      if (s.phase !== "aq" && s.phase !== "l") continue;
+      e = s.eta || water;
+      total += n[id]; a += n[id] * Math.log(e[0]); b += n[id] * Math.log(e[1]);
+    }
+    return total > 0 ? [Math.exp(a / total), Math.exp(b / total)] : null;
+  }
+
   function advanceVessel(lab, v, emit) {
-    var id, gases = [], gas = 0, moving = false, vol, dissolved, burner, meter, room, bath;
+    var id, gases = [], gas = 0, moving = false, vol, dissolved, meter, room, bath;
     if (v.broken) return;
+    separate(v);                                               // auch nach einer Reaktion oder wenn Wasser verdampft ist
+    distribute(v);
+    oilKinetics(v);
+    cream(lab, v);
     boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
     hotSpots(lab, v, emit);
@@ -3629,8 +3847,7 @@
     dissolved = above(v, vol);
     dissolved.forEach(function (g) { if (g.p > P_AIR * OVER) fizz(v, g, vol); });
 
-    burner = toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; });
-    if (burner) v.q += spec(v).heat * (L.parts[burner.type].flames[burner.flame] - v.T) * DT;      // die Flamme heizt
+    v.q += warmth(lab, v).q * DT;                              // die Flamme heizt
     if (v.q) v.T += v.q / heatCapacity(v);
     v.q = 0;
 
@@ -3677,9 +3894,9 @@
     if (v.broken) return;
 
     // Wärmeabgabe an den Raum; im Wasserbad an das Bad, und das viel schneller
-    bath = toolAt(lab, v, function (def) { return def.bath; });
-    room = bath ? bath.temp : lab.room;
-    v.T = room + (v.T - room) * Math.exp(-(spec(v).loss + (bath ? spec(v).heat * L.parts[bath.type].gain : 0)) * DT / heatCapacity(v));
+    room = warmth(lab, v);
+    v.T = room.room + (v.T - room.room) * Math.exp(-room.k * DT / heatCapacity(v));
+    bath = room.bath;
     var wet = volume(v) > 0, spun = toolAt(lab, v, function (def, t) { return def.spin && t.spin; });
     v.lumps.forEach(function (l) {                             // Niederschlag setzt sich ab, in der Zentrifuge viel schneller
       var colloid = L.db.species[l.id].colloid;
@@ -3965,8 +4182,9 @@
       if (v.gas > 1e-9 || v.dirty || v.boil > 0 || Math.abs(v.T - ambient(lab, v)) > 0.05) return false;
       if (lab.t - v.flag.tinted < FADE) return false;            // die Farbe hat sich eben noch geändert
       for (key in v.lit) return false;
+      if (v.drop) return false;                                  // Tropfen schweben noch
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
-      if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && volume(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
+      if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && filled(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte
       if (v.lumps.some(function (l) { return l.made && !L.db.species[l.id].colloid && l.settled < 0.97 && l.n * (1 - l.settled) > SEEN / 5 * volume(v); })) return false;
       for (key in v.rate) if (v.rate[key] > REST) return false;
@@ -4038,12 +4256,14 @@
   }
 
   // conc: mol/L je gelöstem Teilchen, d: Schichtdicke in cm → { rgb, name, pale }
-  function tint(conc, d) {
-    var sum = [0, 0, 0], extra = [1, 1, 1], bands = [], id, s, i, k, A, T, rgb, base;
+  function tint(conc, d, oil) {          // oil: gelöst im Öl, mit den Banden dort (oilBands)
+    var sum = [0, 0, 0], extra = [1, 1, 1], bands = [], id, s, i, k, A, T, rgb, base, own;
     for (id in conc) {
       s = L.db.species[id];
       if (!s || !(conc[id] > 0)) continue;
-      if (s.bands) s.bands.forEach(function (band) { bands.push([band[0], band[1] / 2.3548, band[2] * conc[id] * d]); });
+      own = oil && s.oilBands ? s.oilBands : s.bands;
+      if (oil && s.phase === "s" && !s.oilBands) continue;
+      if (own) own.forEach(function (band) { bands.push([band[0], band[1] / 2.3548, band[2] * conc[id] * d]); });
       else if (s.phase === "aq" && (base = fromHex(s.color)))       // nur eine Farbe bekannt: gilt bei der Konzentration "at"
         for (k = 0; k < 3; k++) extra[k] *= Math.pow(base[k], conc[id] * d / (s.at || 0.1));
     }
@@ -4075,6 +4295,35 @@
     return (samples[key] = tint(conc, r.drops ? 0.2 : 3).rgb);
   }
 
+  // ml: was als Schicht liegt (ohne die Tropfen), all: das ganze Öl, drops: Anteil des Öls, der als Tropfen im Wasser schwebt, r: ihr Radius in m,
+  // stir: es wird gerade geschüttelt oder gemixt; rho: Dichte in kg/m³ und eta: Zähigkeit bei 25 und 50 °C, für die Strömungsansicht
+  function oilLayer(v, lab) {
+    var vol = oilVolume(v), conc = {}, main = null, g = 0, id;
+    if (!(vol > 0)) return null;
+    for (id in v.org) {
+      conc[id] = v.org[id] / vol; g += v.org[id] * L.db.species[id].M;
+      if (L.db.species[id].oil && (!main || v.org[id] * L.db.species[id].Vm > v.org[main] * L.db.species[main].Vm)) main = id;
+    }
+    return { ml: vol * 1000 * (1 - (v.drop ? v.drop.share : 0)), all: vol * 1000, top: oilOnTop(v), color: tint(conc, spec(v).d, true), main: main,
+      drops: v.drop ? v.drop.share : 0, r: v.drop ? v.drop.r : 0, stir: !!(v.drop && lab && lab.t < v.drop.until), rho: g / vol, eta: viscosity(v, v.org) };
+  }
+
+  // Trübung durch Schwebendes: der Niederschlag (rgb, alpha) und dazu die Öltropfen, milchig in einem Hauch der Farbe des Öls
+  function cloudy(v, rgb, alpha) {
+    var a = milk(v), oil, both;
+    if (!(a > 0)) return { rgb: rgb, alpha: alpha };
+    oil = oilLayer(v).color.rgb.map(function (c) { return Math.round(0.75 * 250 + 0.25 * c); });
+    both = 1 - (1 - alpha) * (1 - a);
+    return { rgb: rgb.map(function (c, k) { return Math.round((c * alpha + oil[k] * a) / (alpha + a)); }), alpha: both };
+  }
+
+  // Trübung durch Öltropfen im Wasser: Licht wird an der Grenzfläche gestreut, Extinktion 1,5 · Volumenanteil / Radius über die Weite des Gefäßes
+  function milk(v) {
+    var Va = volume(v), oil = oilVolume(v);
+    if (!v.drop || !(Va > 0)) return 0;
+    return 1 - Math.exp(-1.5 * v.drop.share * oil / Va / v.drop.r * spec(v).d / 100);
+  }
+
   function colorOf(v) {
     var vol = volume(v), conc = {}, id;
     if (vol > 0) for (id in v.n) if (L.db.species[id].phase === "aq") conc[id] = v.n[id] / vol;
@@ -4090,9 +4339,10 @@
       s = L.db.species[id];
       list.push({ id: id, phase: s.phase, n: v.n[id], c: s.phase === "aq" && vol > 0 ? v.n[id] / vol : null });
     }
+    for (id in v.org || {}) list.push({ id: id, phase: L.db.species[id].phase, n: v.org[id], c: null, oil: true });      // in der Ölschicht
     list.sort(function (a, b) { return b.n - a.n; });
     var cloud = [0, 0, 0], ground = [0, 0, 0], hanging = 0, lying = 0, loose = 0, residue = 0, air = {}, cap = headroom(lab, v);
-    var paste = thick(v, vol);
+    var paste = thick(v, vol), boils = volatiles(v);
     if (!(vol > 0) || paste) list.forEach(function (x) { if (x.phase === "aq") residue += x.n; });
     for (id in v.air) air[id] = cap > 0 ? Math.min(1, v.air[id] / cap) : 0;
     var mirror = null, share;
@@ -4115,10 +4365,12 @@
       loose += l.n * down * L.db.species[l.id].M / 0.4;        // mL, locker geschüttet mit 0,4 g/mL
     });
     return {
-      id: v.id, type: v.type, cap: spec(v).cap, ml: vol * 1000, T: v.T,
+      id: v.id, type: v.type, cap: spec(v).cap, ml: filled(v) * 1000, T: v.T,
+      // oil: die Ölschicht (mL, oben oder unten, Farbe, ihr Hauptstoff), sonst null; ml oben ist alles zusammen
+      oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
-      cloud: { rgb: cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), alpha: vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0 },
+      cloud: cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),
       sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: loose },
       // mirror: ein Spiegel am Glas (Farbe, Füllhöhe in mL, bis zu der er reicht, und wie dicht er ist, 0 bis 1), sonst null
       mirror: mirror,
@@ -4128,6 +4380,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
+      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet), Zähigkeit und Dichte
+      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null, eta: viscosity(v), rho: heaviness(v) }),
       // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
       blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab
@@ -4238,8 +4492,7 @@
     var m = { tools: {}, v: {} };
     lab.tools.forEach(function (t) { if (t.value != null) m.tools[t.id] = t.value + (t.tare || 0); });      // die Waage ohne Tara: das Diagramm zeigt Änderungen
     lab.vessels.forEach(function (v) {
-      var n = {}, id;
-      for (id in v.n) n[id] = v.n[id];
+      var n = both(v), id;
       for (id in v.air) n[id] = (n[id] || 0) + v.air[id];
       for (id in v.out) n[id] = (n[id] || 0) + v.out[id];
       m.v[v.id] = { T: v.T, n: n, given: v.given };
@@ -4424,8 +4677,8 @@
     });
     lab.vessels.forEach(function (v) {
       var n = {}, id;
-      if (!v.veiled) for (id in v.n) if (v.n[id] > 1e-12) n[id] = sig(v.n[id]);      // eine Probe verrät auch Folienskripten nichts
-      out.vessels[v.id] = { ml: sig(volume(v) * 1000), T: sig(v.T), n: n, equations: v.veiled ? [] : reactions(lab, v.id).map(function (r) {
+      if (!v.veiled) for (id in both(v)) if (both(v)[id] > 1e-12) n[id] = sig(both(v)[id]);      // eine Probe verrät auch Folienskripten nichts
+      out.vessels[v.id] = { ml: sig(filled(v) * 1000), T: sig(v.T), n: n, equations: v.veiled ? [] : reactions(lab, v.id).map(function (r) {
         return side(r.left) + (r.complete ? " → " : " ⇌ ") + side(r.right);
       }) };
     });
@@ -4625,6 +4878,7 @@
   L.reading = reading;
   L.hazards = hazards;
   L.pipette = pipette;
+  L.shake = shake;
   L.waste = waste;
   L.dispose = dispose;
   L.BINS = BINS;

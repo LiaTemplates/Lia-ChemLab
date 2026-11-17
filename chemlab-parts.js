@@ -38,6 +38,7 @@
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
       "lens.residue": "No liquid in the vessel; a residue from evaporation lies at the bottom.",
+      "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
       "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
@@ -45,7 +46,7 @@
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
       "chart.A": "Absorbance", "chart.spectrum": "Spectrum: absorbance against wavelength", "chart.wave": "Wavelength in nm", "chart.photo": "Photometric titration",
-      "part.phmeter": "pH meter", "part.burette": "burette",
+      "part.phmeter": "pH meter", "part.burette": "burette", "part.separator": "separatory funnel",
       "part.dish": "evaporating dish", "part.burner": "burner", "part.syringe": "gas syringe",
       "part.splint": "Burning splint", "part.glowsplint": "Glowing splint", "part.rod": "Flame test rod",
       "part.conductometer": "conductivity meter", "part.supply": "power supply", "part.ammeter": "ammeter",
@@ -101,7 +102,8 @@
       "say.flameTest": "Rod from {vessel} held in the flame: it glows {color}.",
       "say.flameNone": "Rod from {vessel} held in the flame: no colour.",
       "say.broken": "{vessel} is shattered!", "say.syringeFull": "{part} is full.",
-      "aria.under": "under {vessel}", "aria.at": "connected to {vessel}", "aria.flame": "flame {state}", "aria.boiling": "boiling",
+      "aria.under": "under {vessel}", "aria.at": "connected to {vessel}", "aria.flame": "flame {state}", "aria.boiling": "boiling", "shake": "Shake", "mix": "Hand blender", "say.layerOut": "{vessel}: the lower layer has run out – close the tap now", "say.shake": "{vessel}: shaken for ten seconds", "say.mix": "{vessel}: mixed with a hand blender for ten seconds",
+      "aria.oilTop": "on top a layer of {name}", "aria.oilBottom": "at the bottom a layer of {name}",
       "aria.residue": "residue", "aria.broken": "shattered", "aria.burning": "on fire",
       "amount": "Amount", "less": "less", "more": "more",
       "ghs.GHS01": "explosive", "ghs.GHS02": "flammable", "ghs.GHS03": "oxidising", "ghs.GHS04": "gas under pressure", "ghs.GHS05": "corrosive",
@@ -567,7 +569,17 @@
     var layer;
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
-        '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor(w.color.rgb) + '"/>';
+        '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';
+      // zwei Schichten: die obere füllt alles, die untere bis zu ihrer eigenen Höhe, dazwischen die Grenze
+      if (w.oil && (shape.level || L.parts[w.type].surface)) {
+        layer = w.oil.top ? w.ml - w.oil.ml : w.oil.ml;
+        if (layer > 0.005) {
+          // shape.level: die Höhe einer Füllung, wenn die Form sie selbst kennt (ein hängendes Gerät)
+          layer = Math.min(shape.bottom, shape.level ? shape.level(layer) : L.parts[w.type].surface(Object.assign({}, w, { ml: layer })));
+          out += '<path class="cl-liquid" d="' + shape.fill(layer) + '" fill="' + liquidColor((w.oil.top ? w.color : w.oil.color).rgb) + '"/>' +
+            '<line class="cl-boundary" clip-path="url(#' + esc(clip) + ')" x1="' + f(shape.x0 - 30) + '" x2="' + f(shape.x1 + 30) + '" y1="' + f(layer) + '" y2="' + f(layer) + '"/>';
+        }
+      }
       // Niederschlag: was schwebt, trübt die Flüssigkeit in seiner Farbe; was sich abgesetzt hat, liegt als Schicht am Boden
       if (w.cloud && w.cloud.alpha > 0.02) {
         // etwas abgedunkelt, damit auch ein weißer Niederschlag vor der hellen Wand als milchige Trübung zu sehen ist
@@ -598,6 +610,15 @@
         '" stroke-opacity="' + (0.7 * Math.min(1, w.mirror.share)).toFixed(2) + '"/>';
     }
     if (w.ml > 0.005) {
+      // Öltropfen: nur im noch trüben Teil der wässrigen Schicht, der beim Aufrahmen von unten (oder oben) her klar wird
+      if (w.oil && w.oil.drops > 0 && L.fx && (shape.level || L.parts[w.type].surface)) {
+        var edge = w.oil.top ? w.ml - w.oil.all : w.oil.all, line = edge > 0.005 ? Math.min(shape.bottom, shape.level ? shape.level(edge) : L.parts[w.type].surface(Object.assign({}, w, { ml: edge }))) : shape.bottom;
+        var water = w.oil.top ? { top: line, bottom: shape.bottom } : { top: shape.top, bottom: line }, deep = (water.bottom - water.top) * Math.min(1, w.oil.drops);
+        out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.droplets({ x0: shape.x0, x1: shape.x1, top: w.oil.top ? water.top : water.bottom - deep, bottom: w.oil.top ? water.top + deep : water.bottom },
+          w.oil.drops, w.oil.r, ctx.t, ctx.seed || 1, ctx.still, w.oil.color.rgb, w.oil.top) + "</g>";
+      }
+      // Strömung: Temperatur, Wirbel oder Druck im Querschnitt, über der Flüssigkeit und unter den Blasen
+      if (ctx.flow && w.heat && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.flow(box, w, ctx.t, esc(clip), ctx.flow, ctx.still) + "</g>";
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf
       if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.bubbles(box, Math.max(w.gas, w.steam), ctx.t, ctx.seed || 1, ctx.still) + "</g>";
       out += '<line class="cl-surface" x1="' + f(shape.x0) + '" x2="' + f(shape.x1) + '" y1="' + f(shape.top) + '" y2="' + f(shape.top) + '"/>';
@@ -1353,6 +1374,47 @@
     }
   });
 
+  // ------------------------------------------------------------------ Scheidetrichter
+
+  // Ein Kegel, unten spitz, oben mit Stopfen; darunter Hahn und Auslauf. Volumen wie im Kegel: Höhe ∝ (ml / cap)^(1/3).
+  var SEP = { high: 120, wide: 30, neck: 3, cap: 100 };
+
+  function separatorAt(mount) {
+    var m = mount || { x: 0, rim: -70, surface: -2 }, tip = m.rim - 8, cock = tip - 16, bottom = cock - 10;
+    return { x: m.x, rim: m.rim, tip: tip, cock: cock, bottom: bottom, top: bottom - SEP.high, surface: m.surface, rod: Math.max(m.x + 40, (m.edge || 0) + 14) };
+  }
+
+  function separatorLevel(g, ml) { return g.bottom - SEP.high * Math.pow(Math.max(0, Math.min(1, ml / SEP.cap)), 1 / 3); }
+
+  function separatorFill(g, y) {         // die Flüssigkeit bis zur Höhe y
+    var a = SEP.neck + (SEP.wide - SEP.neck) * (g.bottom - y) / SEP.high;
+    return "M" + f(g.x - SEP.neck) + "," + g.bottom + "L" + f(g.x - a) + "," + f(y) + "L" + f(g.x + a) + "," + f(y) + "L" + f(g.x + SEP.neck) + "," + g.bottom + "Z";
+  }
+
+  L.registerPart("separator", {
+    width: function () { return 100; },
+    surface: function (w, mount) { return separatorLevel(separatorAt(mount), w.ml); },
+    reach: function (mount) { return -separatorAt(mount).top + 26; },
+    bounds: function (v, mount) { var g = separatorAt(mount); return { x0: g.x - SEP.wide - 4, x1: g.x + SEP.wide + 4, top: g.top - 14, bottom: g.rim - 2 }; },
+    draw: function (w, ctx, mount) {
+      var g = separatorAt(mount), x = g.x, rod = g.rod, open = w.tap > 0, y = separatorLevel(g, w.ml), out;
+      out = '<rect class="cl-stand" x="' + (rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
+        '<line class="cl-rod" x1="' + rod + '" x2="' + rod + '" y1="-5" y2="' + (g.top - 10) + '"/>' +
+        '<path class="cl-rod" fill="none" d="M' + rod + "," + (g.top + 40) + "L" + (x + SEP.wide * 0.75) + "," + (g.top + 40) + '"/>';
+      if (w.ml > 0.005) out += contents(w, ctx, { path: separatorFill(g, y), fill: function (h) { return separatorFill(g, h); }, level: function (ml) { return separatorLevel(g, ml); },
+        x0: x - SEP.wide * 0.6, x1: x + SEP.wide * 0.6, top: y, bottom: g.bottom, rim: g.top, tall: true });
+      out += '<path class="cl-glass" d="M' + (x - SEP.neck) + "," + g.bottom + "L" + (x - SEP.wide) + "," + g.top + "Q" + x + "," + (g.top - 16) + " " + (x + SEP.wide) + "," + g.top +
+        "L" + (x + SEP.neck) + "," + g.bottom + '"/>' +
+        '<path class="cl-stopper" d="M' + (x - 5) + "," + (g.top - 18) + "L" + (x + 5) + "," + (g.top - 18) + "L" + (x + 4) + "," + (g.top - 8) + "L" + (x - 4) + "," + (g.top - 8) + 'Z"/>' +
+        '<path class="cl-glass" d="M' + (x - 2) + "," + g.bottom + "L" + (x - 2) + "," + (g.tip - 3) + "L" + x + "," + g.tip + "L" + (x + 2) + "," + (g.tip - 3) + "L" + (x + 2) + "," + g.bottom + '"/>' +
+        '<rect class="cl-cock" x="' + (x - 4) + '" y="' + (g.cock - 4) + '" width="8" height="8" rx="2"/>' +
+        (open ? '<line class="cl-cock-grip" x1="' + x + '" x2="' + x + '" y1="' + (g.cock - 7) + '" y2="' + (g.cock + 7) + '"/>'
+          : '<line class="cl-cock-grip" x1="' + (x - 9) + '" x2="' + (x + 9) + '" y1="' + g.cock + '" y2="' + g.cock + '"/>');
+      if (open && w.ml > 0.001 && mount && L.fx) out += w.tap >= 0.3 ? L.fx.stream(x, g.tip, g.surface, ctx.t, ctx.still) : L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);
+      return out + (mount ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
   // ------------------------------------------------------------------ Messzylinder
 
   // Breite und Höhe der Röhre in Bildpunkten, Teilung (klein, mit Zahl) in mL
@@ -1549,6 +1611,7 @@
         : id === "bath" ? '<rect class="cl-bath-water" x="4" y="15" width="20" height="11"/><path class="cl-glass" d="M3,9L3,25Q3,27 5,27L23,27Q25,27 25,25L25,9"/><path class="cl-glass" d="M11,3L11,19A3,3 0 0 0 17,19L17,3"/>'
         : id === "photometer" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><circle class="cl-light" cx="7" cy="25" r="2.6" fill="rgb(70, 220, 90)"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:8px">λ</text></g>'
         : id === "burette" ? '<rect class="cl-glass" x="11.5" y="2" width="5" height="19" rx="1"/><rect class="cl-cock" x="10" y="21" width="8" height="4" rx="1"/><path class="cl-glass" d="M14,25L14,29"/>'
+        : id === "separator" ? '<path class="cl-glass" d="M13,20L5,5Q14,1 23,5L15,20Z"/><rect class="cl-cock" x="10" y="20" width="8" height="4" rx="1"/><path class="cl-glass" d="M14,24L14,29"/>'
         : id === "phmeter" ? '<rect class="cl-probe" x="5" y="8" width="4" height="19" rx="2"/><g class="cl-meter"><rect x="11" y="4" width="16" height="11" rx="2"/><text x="19" y="12.5" text-anchor="middle" style="font-size:7px">pH</text></g>'
         : '<rect class="cl-thermo" x="12" y="2" width="4" height="22" rx="2"/><circle class="cl-mercury" cx="14" cy="25" r="3.5"/><rect class="cl-mercury" x="13.2" y="12" width="1.6" height="12"/>';
       return '<svg viewBox="0 0 28 30" width="28" height="30" aria-hidden="true">' + body + "</svg>";
@@ -1593,5 +1656,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

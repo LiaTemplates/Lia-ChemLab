@@ -22,7 +22,7 @@ const amount = (l, species, id) => L.vessel(l, id || "b").n[species] || 0;
 const totals = (l) => {
   let mass = 0, charge = 0;
   for (const v of l.vessels)
-    for (const [store, sign] of [[v.n, 1], [v.out, 1], [v.air || {}, 1], [v.taken || {}, -1]])      // taken: was aus der Luft kam
+    for (const [store, sign] of [[v.n, 1], [v.org || {}, 1], [v.out, 1], [v.air || {}, 1], [v.taken || {}, -1]])      // taken: was aus der Luft kam, org: die Ölschicht
       for (const [id, n] of Object.entries(store)) {
         mass += sign * n * L.species(id).M;
         charge += sign * n * L.species(id).charge;
@@ -115,6 +115,7 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
   assert.throws(
     () => L.register({ equilibria: [{ eq: "H2O(l) <=> H+(aq) + 2 OH-(aq)", logK: -14 }] }),
     (e) => e.code === "data", "nicht ausgeglichen");
+  assert.throws(() => L.register({ species: { "C4H10O(aq)": { eta: [1, 2] } } }), (e) => e.code === "data" && /eta/.test(e.detail), "zäher im Warmen");
   assert.equal(Object.keys(L.db.species).length, before, "nichts davon wurde übernommen");
 });
 
@@ -583,6 +584,65 @@ test("Blasen: Zahl nach der Gasmenge, Ort nach der Zeit, rückwärts wie vorwär
   assert.equal(L.fx.bubbles(box, 2e-5, 3, 1, true), L.fx.bubbles(box, 2e-5, 9, 1, true), "ohne Bewegung: stehendes Bild");
 });
 
+test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sinkt an den Wänden; ohne Heizung bleibt alles still", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", id: "br", under: "b", flame: 2 }], { room: 20 });
+  L.step(l, 30);
+  const w = L.view(l, L.vessel(l, "b")), box = { x0: -30, x1: 30, top: -60, bottom: -2 };
+  assert.ok(w.heat.q > 100 && w.heat.k > 0 && w.heat.room === 20, "der Rechenkern nennt Flamme, Verlust und Raum");
+  L.fx.flow(box, w, 0, "warm", "temp");
+  const svg = L.fx.flow(box, w, 5, "warm", "temp");
+  assert.match(svg, /<filter[\s\S]*<rect[\s\S]*cl-flow-dot/, "Wärmebild und Spurteilchen");
+  const s = L.fx.fields.warm, W = s.cols + 2, rows = s.T.length / W - 2, at = (x, i, j) => x[i + j * W], mid = Math.round((s.cols + 1) / 2);
+  let sum = 0;
+  for (let j = 1; j <= rows; j++) for (let i = 1; i <= s.cols; i++) sum += at(s.T, i, j);
+  near(sum / (s.cols * rows), w.T, 1e-6, "das Mittel ist die Temperatur des Rechenkerns");
+  assert.ok(at(s.T, mid, rows) > at(s.T, 1, rows) + 1, "über der Flamme ist es wärmer als am Rand");
+  assert.ok(at(s.v, mid, rows / 2) < -1, "in der Mitte steigt es auf (y zeigt nach unten)");
+  assert.ok(at(s.v, 2, rows / 2) > 0, "an der Wand sinkt es ab");
+  for (const mode of ["diff", "vortex", "pressure"]) assert.match(L.fx.flow(box, w, 5.1, "warm", mode), /<rect/, mode);
+  // dasselbe Feld für 3D: Farbe und Strömung an einer Stelle, von 0 bis 1 über Breite und Höhe
+  const cells = L.fx.flowCells(w, 5.2, "warm", "temp");
+  assert.ok(cells.flow(0.5, 0.5)[1] < 0, "in der Mitte nach oben (v nach unten positiv)");
+  assert.equal(cells.color(0.5, 0.9).length, 4, "Farbe und Deckkraft");
+  assert.ok(cells.color(0.5, 0.95)[0] > cells.color(0.05, 0.05)[0], "über der Flamme röter als oben am Rand");
+  assert.deepEqual(L.fx.heatColor(20), [90, 170, 230], "20 °C hellblau");
+  assert.deepEqual(L.fx.heatColor(100), [150, 40, 170], "100 °C violett");
+  assert.deepEqual(L.fx.heatColor(-5), [40, 70, 200], "kälter als 0 °C bleibt dunkelblau");
+  assert.deepEqual(L.fx.heatColor(70), [233, 100, 40], "zwischen orange und rot");
+  const colors = (svg) => new Set(svg.match(/fill="rgb\([^)]*\)"/g));
+  assert.notDeepEqual(colors(L.fx.flow(box, Object.assign({}, w, { T: 25 }), 6, "farbe", "temp")), colors(L.fx.flow(box, Object.assign({}, w, { T: 90 }), 6, "heiss", "temp")),
+    "die Farbe zeigt die Temperatur selbst, nicht nur die Unterschiede");
+
+  const boiling = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", under: "b", flame: 2 }], { room: 20 });
+  L.step(boiling, 300);
+  const hot = L.view(boiling, L.vessel(boiling, "b"));
+  assert.ok(hot.steam > 0 && hot.heat.boil === 100, "es siedet, bei 100 °C");
+  L.fx.flow(box, hot, 0, "boil", "temp"); L.fx.flow(box, hot, 5, "boil", "temp");
+  assert.ok(Math.max(...L.fx.fields.boil.T) <= 103 + 1e-9, "höchstens wenige Kelvin über dem Siedepunkt");
+  assert.ok(Math.max(...L.fx.fields.boil.v.map(Math.abs)) > 0.5, "es strömt weiter");
+  assert.equal(L.view(lab([{ type: "beaker", id: "b" }]), L.vessel(lab([{ type: "beaker", id: "b" }]), "b")).heat.boil, null, "leer: nichts, was siedet");
+
+  // kaltes Wasser auf heißes gießen: der Rechenkern mischt sofort, im Bild kommt es dort an, wo der Strahl auftrifft, nie kälter als es selbst
+  const still = { k: 0.25, room: 20, d: 7, boil: 100, q: 0 };
+  let ml = 150, T = 80, t = 0;
+  L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp");
+  for (; t < 2; t += 1 / 60) { const add = 50 / 120; T = (ml * T + add * 20) / (ml + add); ml += add; L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp"); }
+  const p = L.fx.fields.pour, row = (j) => { let a = 0; for (let i = 1; i <= p.cols; i++) a += p.T[i + j * (p.cols + 2)]; return a / p.cols; };
+  const coldest = Math.min(...Array.from({ length: 24 }, (_, j) => Math.min(...Array.from({ length: p.cols }, (_, i) => p.T[i + 1 + (j + 1) * (p.cols + 2)]))));
+  assert.ok(coldest < 30 && coldest > 19, `das kalte Wasser, nicht kälter als 20 °C: ${coldest}`);
+  assert.ok(Math.max(...p.T) > T + 1, "daneben noch das heiße");
+  let mean = 0;
+  for (let j = 1; j <= 24; j++) mean += row(j) / 24;
+  near(mean, T, 1e-6, "das Mittel ist die gemischte Temperatur des Rechenkerns");
+
+  const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
+  const c = L.view(cold, L.vessel(cold, "b"));
+  L.fx.flow(box, c, 0, "cold", "temp"); L.fx.flow(box, c, 5, "cold", "temp");
+  assert.ok(Math.max(...L.fx.fields.cold.v.map(Math.abs), ...L.fx.fields.cold.u.map(Math.abs)) < 1e-9, "keine Wärme, keine Strömung");
+  assert.equal(L.fx.flow(box, Object.assign({}, c, { ml: 0 }), 6, "cold", "temp"), "", "ohne Flüssigkeit kein Bild");
+  assert.ok(L.fx.density(4) > L.fx.density(0) && L.fx.density(4) > L.fx.density(20), "Wasser ist bei 4 °C am dichtesten");
+});
+
 test("Beobachtungen: als Satz in der Sprache des Kurses", () => {
   const say = (event, more) => L.say(event, Object.assign({ lang: "de", numbers: true, names: { b: "Reagenzglas 1", c: "Becherglas 1" } }, more));
   assert.equal(say({ key: "gas", vessel: "b", species: ["H2(g)"] }), "Reagenzglas 1: Gasblasen steigen auf.");
@@ -899,6 +959,204 @@ test("Zahlen ausblenden: es bleiben Beobachtungen und Gleichungen ohne Werte", (
   assert.match(logOf(el), /Es ist warm geworden/);
   tap(el, "rg");
   assert.doesNotMatch(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /mmol|pH/);
+});
+
+test("Strömung: zähe Flüssigkeiten strömen langsamer – Zuckersirup etwa sechsmal, Glycerin gut zwanzigmal", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const eta = (reagent) => { const l = beaker([{ reagent, ml: 50 }], { room: 20 }); return L.view(l, L.vessel(l, "b")).heat.eta; };
+  const at20 = (e) => Math.exp(Math.log(e[0]) + (Math.log(e[1]) - Math.log(e[0])) * (1 / 293.15 - 1 / 298.15) / (1 / 323.15 - 1 / 298.15));
+  near(at20(eta("H2O")), 1.0, 0.03, "Wasser bei 20 °C, mPa·s");
+  near(at20(eta("sugar syrup")), 58.5, 10, "Zuckersirup 60 %");
+  near(at20(eta("glycerol")), 1200, 250, "Glycerin 99,5 %");
+  const box = { x0: -40, x1: 40, top: -80, bottom: -2 }, speed = (name, e) => {
+    const w = { ml: 200, T: 30, heat: { q: 130, k: 0.25, room: 20, d: 7, boil: 100, eta: e } };
+    for (let t = 0; t < 20; t += 1 / 20) L.fx.flow(box, w, t, name, "temp");
+    const s = L.fx.fields[name];
+    let sum = 0;
+    s.u.forEach((u, k) => { sum += Math.hypot(u, s.v[k]); });
+    return sum;
+  };
+  const water = speed("wasser", eta("H2O")), syrup = speed("sirup", eta("sugar syrup")), glycerol = speed("glycerin", eta("glycerol"));
+  assert.ok(water > 3 * syrup && syrup > 1.5 * glycerol, `Wasser ${water}, Sirup ${syrup}, Glycerin ${glycerol}`);
+});
+
+test("Strömung: Schweres sinkt als Schliere zu Boden, Leichtes bleibt oben; das Mittel ist die Dichte der Mischung", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const box = { x0: -40, x1: 40, top: -80, bottom: -2 };
+  const pour = (reagent, ml, key) => {
+    const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }] }], { room: 20 });
+    const frame = () => { const w = L.view(l, L.vessel(l, "b")); L.fx.flow(box, w, l.t, key, "mix"); return w; };
+    frame();
+    L.add(l, "b", reagent, { ml });
+    for (let i = 0; i < 200; i++) { L.step(l, 0.05); frame(); }      // 10 s, Bild für Bild
+    const w = frame(), s = L.fx.fields[key], W = s.cols + 2;
+    const row = (j) => { let a = 0; for (let i = 1; i <= s.cols; i++) a += s.R[i + j * W]; return a / s.cols - w.heat.rho; };
+    let mean = 0;
+    for (let j = 1; j <= 24; j++) mean += row(j) / 24;
+    near(mean, 0, 1e-6, `${reagent}: im Mittel die Dichte der Mischung`);
+    return { top: row(1), bottom: row(24), w };
+  };
+  const syrup = pour("sugar syrup", 20, "sirup");
+  assert.ok(syrup.w.heat.rho > 1030, "Sirup macht die Mischung schwerer");
+  assert.ok(syrup.bottom > 5 && syrup.top < 0, `Sirup liegt nach 10 s unten: ${syrup.bottom} / ${syrup.top}`);
+  const acid = pour("H2SO4 conc", 5, "säure");
+  assert.ok(acid.bottom > 5 && acid.top < 0, `Schwefelsäure sinkt: ${acid.bottom} / ${acid.top}`);
+  const ethanol = pour("ethanol", 20, "ethanol");
+  assert.ok(ethanol.top < -20 && ethanol.bottom > 0, `Ethanol bleibt oben: ${ethanol.top} / ${ethanol.bottom}`);
+  assert.match(L.fx.flow(box, ethanol.w, L.fx.fields.ethanol.t + 0.1, "ethanol", "mix"), /#2a9d8f/, "leichter: türkis");
+});
+
+test("Zwei Schichten: Hexan und Olivenöl schwimmen auf Wasser, Abgießen nimmt die obere, die Pipette die untere", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const two = (more) => lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }, { type: "beaker", id: "c", ml: 250 }].concat(more || []), { room: 20 });
+  let l = two(), w;
+  const before = totals(l);
+  L.step(l, 1);
+  w = L.view(l, L.vessel(l, "b"));
+  near(w.ml, 70, 0.1, "zusammen 70 mL");
+  near(w.oil.ml, 20, 0.1, "davon 20 mL Hexan als Schicht");
+  assert.equal(w.oil.top, true, "Hexan ist leichter und liegt oben");
+  assert.equal(w.oil.main, "C6H14(aq)");
+  near(amount(l, "C6H14(aq)") / 0.05, 1.1e-4, 2e-5, "im Wasser gelöst nur, so viel es aufnimmt (mol/L)");
+  near(L.free(l, L.vessel(l, "b")), 180, 0.1, "Platz ist für beides zusammen");
+  // abgießen: zuerst die obere Schicht
+  assert.ok(L.pour(l, "b", "c", 15));
+  L.step(l, 10);
+  near(L.view(l, L.vessel(l, "c")).oil.ml, 15, 0.1, "15 mL Hexan sind drüben, als Ölschicht ohne Wasser");
+  near(L.view(l, L.vessel(l, "b")).oil.ml, 5, 0.1, "5 mL Hexan bleiben auf dem Wasser");
+  near(L.view(l, L.vessel(l, "b")).ml, 55, 0.1);
+  near(totals(l).mass, before.mass, 1e-6, "keine Masse geht verloren");
+  // die Pipette saugt unten an: Wasser
+  l = two();
+  L.step(l, 1);
+  assert.ok(L.pipette(l, "b", "c", 10));
+  L.step(l, 10);
+  assert.equal(L.view(l, L.vessel(l, "c")).oil, null, "nur Wasser in der Pipette");
+  near(L.view(l, L.vessel(l, "b")).oil.ml, 20, 0.1, "das Hexan blieb oben");
+  // Olivenöl auf Kupfersulfat-Lösung: die Lösung bleibt, wie sie ist
+  l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "CuSO4 0.1M", ml: 50 }, { reagent: "olive oil", ml: 30 }] }], { room: 20 });
+  L.step(l, 1);
+  w = L.view(l, L.vessel(l, "b"));
+  near(w.oil.ml, 30, 0.1, "Öl als Schicht");
+  const plain = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "CuSO4 0.1M", ml: 50 }] }], { room: 20 });
+  L.step(plain, 1);
+  const cu = (v) => v.species.find((s) => s.id === "Cu^2+(aq)").c;
+  near(cu(w), cu(L.view(plain, L.vessel(plain, "b"))), 2e-5, "Kupfer-Ionen wie ohne Öl (bis auf die Spur Wasser aus der Ölflasche): das Öl verdünnt nichts");
+  assert.equal(w.oil.color.name, "yellow");
+  assert.equal(L.waste(l, "b").bin, "heavy", "Kupfer geht vor");
+  l = two();
+  L.step(l, 1);
+  assert.equal(L.waste(l, "b").bin, "organic", "Wasser mit Hexan: organische Abfälle");
+});
+
+test("Zwei Schichten: Hexan und Wasser sieden zusammen bei 62 °C, bis das Hexan fort ist (Wasserdampfdestillation)", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }, { type: "burner", under: "b", flame: 1 }], { room: 20 });
+  let top = 0;
+  for (let i = 0; i < 600 && L.view(l, L.vessel(l, "b")).oil; i++) { L.step(l, 1); if (L.view(l, L.vessel(l, "b")).steam > 0) top = Math.max(top, L.vessel(l, "b").T); }
+  near(top, 61.6, 1.5, "siedet unter beiden Siedepunkten (Hexan 68,7 °C, Wasser 100 °C)");
+  assert.equal(L.view(l, L.vessel(l, "b")).oil, null, "das Hexan ist verdampft");
+  near(L.view(l, L.vessel(l, "b")).ml, 50, 2, "das Wasser ist fast ganz noch da");
+  L.step(l, 240);
+  near(L.vessel(l, "b").T, 100, 0.5, "danach siedet das Wasser allein");
+});
+
+test("Ausschütteln: Iod geht aus der Lugol-Lösung ins Hexan, ruhend langsam, geschüttelt in Sekunden; der Mixer macht eine milchige Emulsion", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const iodine = () => lab([{ type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 8 }, { reagent: "Lugol", drops: 20 }, { reagent: "hexane", ml: 3 }] }], { room: 20 });
+  const inOil = (l) => L.vessel(l, "b").org["I2(s)"] || 0;
+  let l = iodine();
+  L.step(l, 30);
+  assert.ok(inOil(l) < 1e-6, `ruhend wandert kaum etwas: ${inOil(l)}`);
+  L.shake(l, "b", "shake");
+  L.step(l, 30);
+  near(inOil(l), 8.3e-6, 4e-7, "geschüttelt: im Gleichgewicht gut vier Fünftel des Iods im Hexan");
+  assert.ok(["pink", "violet", "purple"].includes(look(l).oil.color.name), "Iod in Hexan ist violett: " + look(l).oil.color.name);
+  assert.equal(L.view(l, L.vessel(l, "b")).cloud.alpha < 0.05, true, "nach einer halben Minute hat sich alles wieder abgesetzt");
+  const before = totals(iodine());
+  near(totals(l).mass, before.mass, 1e-9, "Masse bleibt");
+  // Olivenöl und Wasser: geschüttelt grobe Tropfen, gemixt feine; die feinen bleiben viel länger in der Schwebe
+  const oil = () => lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }, { reagent: "olive oil", ml: 30 }] }], { room: 20 });
+  const settled = (how) => { const m = oil(); L.step(m, 1); L.shake(m, "b", how); L.step(m, 10); const turbid = L.view(m, L.vessel(m, "b")).cloud.alpha; let t = 0; while (L.vessel(m, "b").drop && t < 7200) { L.step(m, 10); t += 10; } return { turbid, t }; };
+  const shaken = settled("shake"), mixed = settled("mix");
+  assert.ok(shaken.turbid > 0.9 && mixed.turbid > 0.9, "beides zuerst trüb");
+  assert.ok(mixed.t > 4 * shaken.t, `gemixt dauert es viel länger: ${mixed.t} s gegen ${shaken.t} s`);
+  assert.ok(mixed.t > 600 && mixed.t < 3600, `gemixt trennt es sich in zehn Minuten bis einer Stunde: ${mixed.t} s`);
+  l = oil(); L.step(l, 1); L.shake(l, "b", "mix"); L.step(l, 10);
+  assert.ok(L.view(l, L.vessel(l, "b")).oil.ml < 1, "während des Mixens liegt keine Schicht oben");
+  assert.equal(L.shake(lab([{ type: "beaker", id: "b" }]), "b", "mix"), false, "ein leeres Glas lässt sich nicht mixen");
+});
+
+test("Scheidetrichter: schütteln, absetzen lassen, die untere Schicht ablassen; das Protokoll sagt, wann der Hahn zu soll", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "unten", ml: 100 }, { type: "separator", id: "s", over: "unten", contains: [{ reagent: "H2O", ml: 40 }, { reagent: "Lugol", drops: 60 }, { reagent: "hexane", ml: 20 }] }], { room: 20 });
+  const s = () => L.vessel(l, "s"), b = () => L.vessel(l, "unten"), seen = [];
+  L.step(l, 1);
+  assert.ok(L.shake(l, "s", "shake"), "ein Scheidetrichter lässt sich schütteln");
+  L.step(l, 50);
+  assert.ok(L.setTap(l, "s", 1));
+  for (let i = 0; i < 400 && !seen.length; i++) L.step(l, 0.5, (e) => { if (e.key === "layerOut") seen.push(e); });
+  assert.equal(seen.length, 1, "Meldung, sobald die untere Schicht abgelaufen ist");
+  assert.equal(L.say(seen[0], { lang: "de", names: { s: "Scheidetrichter 1" } }), "Scheidetrichter 1: Die untere Schicht ist abgelaufen – jetzt den Hahn schließen.");
+  L.setTap(l, "s", 0);
+  L.step(l, 2);
+  assert.equal(L.view(l, b()).oil, null, "im Becherglas kein Hexan");
+  near(L.view(l, b()).ml, 43, 0.6, "dort die wässrige Schicht");
+  near(L.view(l, s()).oil.ml, 20, 0.1, "das Hexan bleibt im Trichter");
+  assert.ok((s().org["I2(s)"] || 0) > 0.8 * 3e-5, "mit dem meisten Iod");
+  assert.match(L.parts.separator.draw(L.view(l, s()), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }, L.parts.beaker.mount(L.view(l, b()))), /cl-cock[\s\S]*cl-stopper|cl-stopper[\s\S]*cl-cock/);
+});
+
+test("Strömung mit Ölschicht: das Phasenfeld liegt scharf oben, so viel wie der Rechenkern zählt; beim Schütteln Tropfen, danach wieder eine Schicht", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 120 }, { reagent: "olive oil", ml: 50 }] }, { type: "burner", under: "b", flame: 1 }], { room: 20 });
+  const box = { x0: -40, x1: 40, top: -100, bottom: -2 }, view = () => L.view(l, L.vessel(l, "b"));
+  const run = (seconds) => { let svg; for (let i = 0; i < seconds * 20; i++) { L.step(l, 0.05); svg = L.fx.flow(box, view(), l.t, "öl", "temp"); } return svg; };
+  const P = () => L.fx.fields["öl"].P, cols = () => L.fx.fields["öl"].cols;
+  const share = () => { let a = 0; for (let j = 1; j <= 24; j++) for (let i = 1; i <= cols(); i++) a += P()[i + j * (cols() + 2)]; return a / (24 * cols()); };
+  L.step(l, 0.05); L.fx.flow(box, view(), l.t, "öl", "temp");
+  let svg = run(20);
+  near(share(), view().oil.ml / view().ml, 1e-6, "so viel Öl im Feld, wie als Schicht liegt");
+  let sharp = 0;
+  for (let j = 1; j <= 24; j++) for (let i = 1; i <= cols(); i++) { const p = P()[i + j * (cols() + 2)]; if (p < 0.05 || p > 0.95) sharp++; }
+  assert.ok(sharp > 0.9 * 24 * cols(), "die Grenze bleibt scharf");
+  assert.ok(P()[Math.round(cols() / 2) + 1 * (cols() + 2)] > 0.95 && P()[Math.round(cols() / 2) + 24 * (cols() + 2)] < 0.05, "geheizt bleibt das Öl oben, das Wasser unten");
+  assert.match(svg, /cl-flow-edge/, "die Grenze ist eingezeichnet");
+  const plain = (w) => L.parts.beaker.draw(w, { lang: "de", uid: "u", t: l.t, still: true, seed: 1 });
+  assert.doesNotMatch(plain(view()), /cl-droplet/, "ruhig: keine Tropfen");
+  L.shake(l, "b", "shake");
+  run(5);
+  near(share(), 0, 1e-6, "beim Schütteln ist alles Öl in Tropfen");
+  assert.match(plain(view()), /cl-droplet/, "Tropfen in der Zeichnung");
+  run(60);
+  near(share(), view().oil.ml / view().ml, 1e-6, "danach wieder eine Schicht");
+  assert.equal(view().oil.drops, 0, "alle Tropfen sind oben");
+});
+
+test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein Öl ohne Volumen wird abgelehnt", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "olive oil", ml: 20 }] }], { room: 20 });
+  L.step(l, 1);
+  assert.match(L.parts.beaker.draw(L.view(l, L.vessel(l, "b")), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }), /cl-boundary/);
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }] });
+  frames(1);
+  assert.match(item(el, "b").attributes["aria-label"], /oben eine Schicht Hexan/);
+  assert.throws(() => L.register({ species: { "C7H16(aq)": { oil: { sol: 0 } } } }), (e) => e.code === "data" && /oil/.test(e.detail));
+});
+
+test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {
+  assert.equal(L.normalize({ bench: [], show: { flow: "vortex" } }).show.flow, "vortex");
+  assert.equal(L.normalize({ bench: [], show: { flow: "wind" } }).show.flow, null, "Unbekanntes bleibt aus");
+  assert.equal(L.normalize({ bench: [], show: { flow3d: "particles" } }).show.flow3d, "particles", "in 3D als Teilchen");
+  assert.equal(L.normalize({ bench: [] }).show.flow3d, "cut", "sonst als Schnitt");
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burner", under: "b", flame: 1 }], show: { flow: "temp" } });
+  frames(1);
+  assert.match(item(el, "b").innerHTML, /cl-flow/, "gleich zu Beginn zu sehen");
+  tap(el, "b");
+  assert.equal(part(el, ".cl-panel").querySelector('[data-act="flow3d"]'), null, "die Wahl für 3D gibt es nur in 3D");
+  ["diff", "mix", "vortex", "pressure", ""].forEach(() => press(el, "flow"));
+  frames(1);
+  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Unterschieden, Schlieren, Wirbel und Druck wieder aus");
 });
 
 test("Anzeige: Diagramme, Gleichungen und Protokoll lassen sich abschalten", () => {
@@ -8664,12 +8922,19 @@ test("Organische Nachweise: Tollens gibt mit Aldehyd in der Wärme einen Silbers
   assert.throws(() => L.register({ reactions: [{ eq: "H+(aq) + OH-(aq) -> H2O(l)", rate: { k: 1 }, mirror: true, src: "x" }] }), (e) => e.code === "data", "ein Spiegel braucht einen Feststoff");
 });
 
-test("Organische Nachweise: Bromwasser wird von Hexen sofort entfärbt, von Hexan nicht", () => {
+test("Organische Nachweise: geschüttelt entfärbt Hexen das Bromwasser, Hexan nimmt das Brom nur auf", () => {
   L.register(organic);
-  const test = (sample) => { const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }], { room: 20 }); L.add(l, "b", sample, { ml: 1 }); L.step(l, 10); return l; };
+  const test = (sample) => {
+    const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }], { room: 20 });
+    L.add(l, "b", sample, { ml: 1 }); L.step(l, 3); L.shake(l, "b", "shake"); L.step(l, 40); return l;
+  };
   assert.notEqual(look(lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }])).color.name, "colorless", "Bromwasser ist gefärbt");
-  assert.equal(look(test("hexene")).color.name, "colorless", "Hexen entfärbt");
-  assert.notEqual(look(test("hexane")).color.name, "colorless", "Hexan nicht");
+  const ene = test("hexene"), ane = test("hexane");
+  assert.equal(look(ene).color.name, "colorless", "Hexen entfärbt");
+  assert.equal(look(ene).oil.color.name, "colorless", "auch die Hexenschicht ist farblos");
+  assert.ok((L.vessel(ene, "b").org["C6H12Br2(aq)"] || 0) > 9e-5, "Dibromhexan in der oberen Schicht");
+  assert.notEqual(look(ane).oil.color.name, "colorless", "Hexan nimmt das Brom auf und färbt sich");
+  near((L.vessel(ane, "b").n["Br2(aq)"] || 0) + (L.vessel(ane, "b").org["Br2(aq)"] || 0), 1e-4, 1e-6, "das Brom ist nur verteilt, nicht verbraucht");
 });
 
 test("Organische Nachweise: Entsorgung, Geschwindigkeit kalt und warm, unbekannte Proben, Sonderfälle des Spiegels", () => {

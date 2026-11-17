@@ -60,7 +60,10 @@
         }
         if (w.broken) return;
         level = opts.level(w, d);
-        u.inside.update(w, shape, level, d.ctx, !!opts.tall, w.mirror ? opts.level(Object.assign({}, w, { ml: Math.max(0.01, w.mirror.ml) }), d) : null);
+        // zwei Schichten: die Grenze in der Höhe, bis zu der die untere reicht
+        var lower = w.oil ? (w.oil.top ? w.ml - w.oil.ml : w.oil.ml) : 0;
+        u.inside.update(w, shape, level, d.ctx, !!opts.tall, w.mirror ? opts.level(Object.assign({}, w, { ml: Math.max(0.01, w.mirror.ml) }), d) : null,
+          w.oil && lower > 0.005 && w.oil.ml > 0.005 ? opts.level(Object.assign({}, w, { ml: lower }), d) : null);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
         u.tag.position.set(0, 0.15 - kit.up(d.lift), (shape.front || shape.inner(shape.rim)) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist; front: weiteste Stelle
         if (opts.refresh) opts.refresh(group, d, shape);
@@ -281,6 +284,66 @@
       u.tag.userData.write(d.hang ? " " : String(d.ctx.no || " "));
       u.tag.visible = !d.hang;
       u.tag.position.set(x, floor + 0.15, 1.6);
+    }
+  });
+
+  // ------------------------------------------------------------------ Scheidetrichter
+
+  // Ein Kegel aus Glas, Spitze unten, mit Stopfen; darunter Auslauf und Hahn, daneben das Stativ wie bei der Bürette.
+  // Der Inhalt ist derselbe wie in jedem Glas (fx.contents): Schichten, Trübung, Tropfen und die Strömungsansicht.
+  L.registerLook("separator", "lab", {
+    build: function (kit, d) {
+      var group = new THREE.Group(), body = new THREE.Group(), m = steel();
+      var inside = fx.contents(kit, d.ctx.seed || 1), tag = kit.label(0.75);
+      var stopper = new THREE.Mesh(new THREE.CylinderGeometry(cm(5), cm(4), cm(10), 16), fx.matte(0xb5523a, 0.7));
+      var stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(2), cm(1), 1, 12, 1, true), fx.glass());
+      var cock = new THREE.Group(), barrel = new THREE.Mesh(new THREE.CylinderGeometry(cm(3.5), cm(3.5), cm(14), 16).rotateZ(Math.PI / 2), fx.glass());
+      var grip = new THREE.Mesh(new THREE.BoxGeometry(cm(4), cm(16), cm(3)), fx.matte(0x2f6fb0, 0.45));
+      var foot = new THREE.Mesh(new THREE.BoxGeometry(cm(46), cm(5), 9), fx.matte(0x3a3f45, 0.5, 0.3));
+      var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 8, 32).rotateX(Math.PI / 2), m);
+      var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
+      var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
+      cock.add(barrel, grip);
+      [foot, rod, arm, grip].forEach(function (o) { o.castShadow = true; });
+      body.add(inside.group, stopper, stem, cock);
+      group.add(body, foot, rod, ring, arm, flow, tag);
+      group.userData = { body: body, inside: inside, stopper: stopper, stem: stem, cock: cock, grip: grip, foot: foot, rod: rod, ring: ring, arm: arm, flow: flow, tag: tag, key: null };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, w = d.data, g = S.separatorAt(d.hang), P = S.separator, x = cm(g.x), floor = cm(-g.bottom), rim = cm(-g.top), Z = -5;
+      var neck = cm(P.neck), wide = cm(P.wide), shape = { id: "separator" + floor.toFixed(2), floor: floor, rim: rim, steps: 12,
+        inner: function (y) { return neck + (wide - neck) * Math.max(0, Math.min(1, (y - floor) / (rim - floor))); } };
+      var level = cm(-L.parts.separator.surface(w, d.hang)), lower = w.oil ? (w.oil.top ? w.ml - w.oil.ml : w.oil.ml) : 0, open = w.tap > 0, tip = cm(-g.tip), y, t = d.ctx.still ? 0 : d.ctx.t;
+      if (u.key !== shape.id) {                      // das Glas folgt der Höhe, in der er hängt
+        u.key = shape.id;
+        if (u.glass) { u.body.remove(u.glass); u.glass.geometry.dispose(); }
+        u.glass = new THREE.Mesh(fx.wall(shape, 0.06, 0.04), fx.glass());
+        u.glass.renderOrder = 2;
+        u.body.add(u.glass);
+      }
+      u.body.position.set(x, 0, 0);
+      u.inside.update(w, shape, w.ml > 0.005 ? level : floor, d.ctx, true, null,
+        w.oil && lower > 0.005 && w.oil.ml > 0.005 ? cm(-L.parts.separator.surface(Object.assign({}, w, { ml: lower }), d.hang)) : null);
+      u.stopper.position.set(0, rim + cm(6), 0);
+      u.stem.scale.y = floor - tip; u.stem.position.set(0, (floor + tip) / 2, 0);
+      u.cock.position.set(0, cm(-g.cock), 0);
+      u.grip.rotation.z = open ? 0 : Math.PI / 2;
+      u.grip.position.set(0, 0, cm(5));
+      // Stativ mit Ring um den Trichter
+      var base = -kit.up(d.lift), rodX = cm(g.rod), ringY = rim - (rim - floor) * 0.35, dx = x - rodX, len;
+      u.foot.position.set(rodX + cm(13), base + cm(2.5), Z);
+      u.rod.scale.y = rim + 1 - base; u.rod.position.set(rodX, base + u.rod.scale.y / 2, Z);
+      u.ring.scale.setScalar(wide * 0.75 + 0.1); u.ring.position.set(x, ringY, 0);
+      len = Math.sqrt(dx * dx + Z * Z);
+      u.arm.scale.set(len, 1, 1); u.arm.position.set((x + rodX) / 2, ringY, Z / 2); u.arm.rotation.y = Math.atan2(Z, dx);
+      // Strahl zum Gefäß darunter
+      y = d.hang ? cm(-g.surface) : 0;
+      u.flow.visible = open && w.ml > 0.001 && !!d.hang;
+      if (u.flow.visible) { u.flow.scale.set(w.tap >= 0.3 ? 0.05 : 0.025, tip - y, w.tap >= 0.3 ? 0.05 : 0.025); u.flow.position.set(x + 0.01 * Math.sin(t * 40), (tip + y) / 2, 0); }
+      u.tag.userData.write(d.hang ? " " : String(d.ctx.no || " "));
+      u.tag.visible = !d.hang;
+      u.tag.position.set(x, base + 0.15, 1.6);
     }
   });
 

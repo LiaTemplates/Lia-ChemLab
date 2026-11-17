@@ -98,7 +98,7 @@ Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
 Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
 
-> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
+> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -968,6 +968,34 @@ Das Glas antippen und „Teilchenlupe“ wählen: Sie zeigt, was in einem winzig
  "show":{"charts":["n"]}}
 ```
 
+## Strömung im Gefäß
+
+Hier ist die Strömung schon eingeschaltet. Mit einem Tipp auf ein Glas öffnet sich sein Feld: Unter **Inhalt** wechselt der Knopf „Strömung“ die Ansicht: Temperatur, Temperaturunterschiede, Schlieren, Wirbel, Druck, aus. In einem eigenen Aufbau schaltet `"show":{"flow":"temp"}` sie gleich zu Beginn ein (oder `"diff"`, `"mix"`, `"vortex"`, `"pressure"`). Die Ansicht gilt für alle Gefäße auf der Arbeitsfläche.
+
+- **Über dem Brenner** steigt das warme Wasser in der Mitte auf, kühlt an der Oberfläche und an den Wänden ab und sinkt dort wieder nach unten. Die kleinen Punkte treiben mit der Strömung.
+- **Im warmen Wasserbad** kommt die Wärme von den Wänden. Dort steigt das Wasser auf, in der Mitte sinkt es ab.
+- **Temperatur:** Jede Temperatur hat ihre feste Farbe: unter 20 °C blau, dann gelb (40 °C), orange (60 °C), rot (80 °C) und violett ab 100 °C. Das Glas über dem Brenner färbt sich also nach und nach von Blau über Rot zu Violett.
+- **Temperaturunterschiede:** Rot ist wärmer, Blau kühler als der Mittelwert, den das Thermometer zeigt. So werden auch kleine Unterschiede von wenigen Grad sichtbar.
+- **Schlieren:** Was man zugießt, kommt dort an, wo der Strahl auftrifft, und behält erst seine eigene Dichte und Zähigkeit. Bernsteinbraun ist schwerer als die Mischung, Türkis leichter. Konzentrierte Schwefelsäure, Zuckersirup oder Salzlösung sinken zu Boden, Ethanol bleibt oben. Ohne Heizen und Rühren bleiben die Schichten lange liegen, wie in einem echten Glas.
+- **Wirbel:** Rot dreht im Uhrzeigersinn, Blau dagegen.
+- **Druck:** Er wächst mit der Tiefe, um etwa 1 hPa je Zentimeter Wasser. Was die Strömung am Druck ändert, ist zehntausendmal kleiner und nicht zu sehen.
+
+In 3D gibt es zwei Darstellungen, der Knopf „3D: Schnitt“ unter **Inhalt** wechselt zwischen ihnen: eine senkrechte **Schnittebene** durch die Mitte des Glases mit demselben Bild wie in 2D, oder **Teilchen** im ganzen Glas, die mit der Strömung treiben und die Farbe der Ansicht tragen. Für die Teilchen wird das Bild um die Achse des Glases gedreht: Aus den zwei Walzen im Schnitt wird ein Ring, in der Mitte steigt es auf, an der ganzen Wand sinkt es ab. Die Flüssigkeit ist dabei farblos klar, damit man Ebene und Teilchen sieht.
+
+Die Strömung ist ein Bild für die Vorstellung. Gerechnet wird weiter mit einem gut durchmischten Gefäß, und die Strömung ändert nichts an der Chemie: Auch wenn unten noch eine Sirupschicht liegt, reagiert alles, als wäre es gemischt. Das Bild ist ein Querschnitt mit grobem Raster: Es zeigt die Muster richtig, die Zahlen nur ungefähr.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"brenner","ml":250,"contains":[{"reagent":"H2O","ml":200}]},
+  {"type":"thermometer","in":"brenner"},
+  {"type":"burner","under":"brenner","flame":1},
+  {"type":"beaker","id":"bad","ml":250,"contains":[{"reagent":"H2O","ml":200}]},
+  {"type":"bath","under":"bad","temp":60}
+ ],
+ "shelf":["H2O"],
+ "show":{"charts":["T"],"flow":"temp"}}
+```
+
 ## Ideale und reale Lösung
 
 Der Baustein kennt zwei Rechenmodelle. In der Vorgabe rechnet er **ideal**, mit Konzentrationen: Salzsäure mit 0,1 mol/L hat dann den pH-Wert 1,00, und am Halbäquivalenzpunkt einer schwachen Säure gilt pH = pKs, wie es im Lehrbuch steht. Mit `"model": "real"` rechnet er mit **Aktivitäten**: Ionen schirmen einander ab und wirken deshalb schwächer, als ihre Konzentration erwarten lässt. Dann zeigt das pH-Meter, was man im Labor misst, bei derselben Salzsäure 1,08.
@@ -1213,7 +1241,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1308,7 +1336,7 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
 
 - **Fehling-Probe** (Fehling I und II gemischt, tiefblau, im Wasserbad bei 80 °C): Ein Aldehyd und Glucose reduzieren das Kupfer, in etwa einer Minute fällt ziegelrotes Kupfer(I)-oxid aus. Aceton, ein Keton, tut das nicht. Ohne Wasserbad dauert es sehr viel länger.
 - **Tollens-Probe** (ammoniakalische Silbernitrat-Lösung, im Wasserbad bei 60 °C): Ein Aldehyd und Glucose scheiden Silber ab, und das legt sich als glänzender **Silberspiegel** an die Glaswand, mit Ethanal in etwa einer Minute, mit Glucose in einigen Minuten. Er bleibt am Glas, auch wenn du die Lösung ausgießt.
-- **Bromwasser** (gelbbraun): Hexen entfärbt es sofort, denn das Brom lagert sich an die Doppelbindung an. Hexan nicht.
+- **Bromwasser** (gelbbraun): Hexen und Hexan bilden eine Schicht auf dem Wasser. Schüttle das Glas: Mit Hexen wird alles farblos, denn das Brom geht in die Hexenschicht und lagert sich dort an die Doppelbindung an. Hexan nimmt das Brom nur auf und färbt sich gelb, entfärbt wird nichts.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1319,6 +1347,95 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
   {"type":"testtube","id":"brom","contains":[{"reagent":"bromine water","ml":5}]}
  ],
  "shelf":["ethanal","glucose","acetone","hexene","hexane","Fehling I","Fehling II","Tollens","bromine water","testtube","bath"],
+ "show":{"charts":false}}
+```
+
+## Zähe Flüssigkeiten
+
+@[ChemLab.pack](packs/organic.json)
+
+Drei Bechergläser auf gleichen Flammen: Wasser, Zuckersirup und Glycerin. Die Strömung ist eingeschaltet, mit fester Farbe je Temperatur.
+
+- **Wasser** ist dünnflüssig. Die warme Fahne steigt schnell auf, und die Wärme verteilt sich bald im ganzen Glas.
+- **Zuckersirup** (60 % Zucker) ist etwa sechzigmal so zäh wie Wasser und strömt etwa sechsmal langsamer. Das Warme sammelt sich oben, unten bleibt es kühl: Die Schichten mischen sich kaum.
+- **Glycerin** (99,5 %) ist über tausendmal so zäh wie Wasser. Über der Flamme bildet sich eine heiße Blase, die nur langsam aufsteigt.
+
+Gieß Zuckersirup in das Glas mit Wasser und schalte unter **Inhalt** auf „Strömung: Schlieren“: Der Sirup sinkt als bernsteinbraune Schliere zu Boden und bleibt dort liegen, bis die Flamme das Glas durchmischt.
+
+Wird eine Flüssigkeit wärmer, wird sie dünnflüssiger: Glycerin ist bei 50 °C sechsmal weniger zäh als bei 25 °C. Die Zähigkeit einer Mischung folgt aus der ihrer Bestandteile. Mit Wasser verdünntes Glycerin trifft diese einfache Regel nur ungefähr: Glycerin 85 % wird etwa halb so zäh, wie es ist.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":80}]},
+  {"type":"burner","under":"wasser","flame":1},
+  {"type":"beaker","id":"sirup","contains":[{"reagent":"sugar syrup","ml":80}]},
+  {"type":"burner","under":"sirup","flame":1},
+  {"type":"beaker","id":"glycerin","contains":[{"reagent":"glycerol","ml":80}]},
+  {"type":"burner","under":"glycerin","flame":1}
+ ],
+ "shelf":["H2O","sugar syrup","glycerol","beaker","burner","thermometer"],
+ "show":{"charts":false,"flow":"temp"}}
+```
+
+## Öl und Wasser
+
+@[ChemLab.pack](packs/organic.json)
+
+Olivenöl und Hexan mischen sich nicht mit Wasser: Sie bilden eine eigene Schicht, und weil sie leichter sind, schwimmt sie oben. Im Becherglas liegt goldgelbes Öl auf blauer Kupfersulfat-Lösung, im Reagenzglas farbloses Hexan auf Wasser.
+
+- **Abgießen** nimmt zuerst die obere Schicht: Gieß aus dem Reagenzglas etwas ins leere Glas, dann kommt erst das Hexan.
+- **Die Pipette** saugt unten an und holt Wasser, auch unter einer Ölschicht.
+- **Das Öl verdünnt nichts:** Die Kupfersulfat-Lösung bleibt so blau und so konzentriert wie ohne Öl. pH-Wert, Leitfähigkeit und alle Messgeräte gelten der wässrigen Schicht.
+- **Zusammen sieden** Hexan und Wasser schon bei etwa 62 °C, früher als jedes für sich (Hexan 69 °C, Wasser 100 °C), denn ihre Dampfdrücke addieren sich: Das ist die Wasserdampfdestillation. Stell das rechte Glas auf die Flamme: Das Thermometer bleibt bei 62 °C stehen, bis das Hexan verdampft ist, dann steigt es auf 100 °C.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"oel","ml":250,"contains":[{"reagent":"CuSO4 0.1M","ml":80},{"reagent":"olive oil","ml":30}]},
+  {"type":"testtube","id":"hexan","contains":[{"reagent":"H2O","ml":8},{"reagent":"hexane","ml":5}]},
+  {"type":"beaker","id":"leer"},
+  {"type":"beaker","id":"sieden","contains":[{"reagent":"H2O","ml":40},{"reagent":"hexane","ml":20}]},
+  {"type":"thermometer","in":"sieden"}
+ ],
+ "shelf":["olive oil","hexane","H2O","beaker","testtube","burner","thermometer"],
+ "show":{"charts":["T"]}}
+```
+
+## Ausschütteln
+
+@[ChemLab.pack](packs/organic.json)
+
+Im Reagenzglas liegt Hexan auf Lugol-Lösung (Iod in Iodid-Lösung, gelbbraun). Iod löst sich in Hexan viel besser als in Wasser, aber es wandert nur über die Grenze zwischen den Schichten. Ruhig stehend dauert das viele Minuten.
+
+- **Schütteln** (Knopf im Feld des Glases, unter **Inhalt**): Zehn Sekunden lang zerfällt das Hexan in feine Tropfen, die Grenzfläche wird groß, und das Iod geht in Sekunden ins Hexan. Danach steigen die Tropfen auf, und oben liegt eine violette Schicht über einer viel blasseren Lösung.
+- **Die Tropfen** sind zu sehen: Grobe vom Schütteln steigen sichtbar auf, feine vom Mixen stehen fast still. Der trübe Teil wird von unten her klar, so wie die Tropfen nach oben wandern.
+- **In der Strömungsansicht** hat die Ölschicht ihre eigene Dichte und Zähigkeit, eine gestrichelte Linie zeigt die Grenze. Heizt man von unten, strömt das Wasser unter dem Öl für sich. Beim Schütteln wirbelt alles durcheinander, danach bildet sich die Schicht neu.
+- **Mixen** mit dem Stabmixer zerschlägt Öl und Wasser im Becherglas in winzige Tropfen: Die Flüssigkeit wird milchig trüb, denn die Tropfen streuen das Licht. Geschüttelt trennt es sich in wenigen Minuten, gemixt dauert es etwa eine halbe Stunde, bis das Öl wieder oben liegt. Ein Emulgator, der die Emulsion dauerhaft hält (wie Eigelb in Mayonnaise), gibt es nicht.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"iod","contains":[{"reagent":"H2O","ml":8},{"reagent":"Lugol","drops":20},{"reagent":"hexane","ml":3}]},
+  {"type":"beaker","id":"oel","ml":250,"contains":[{"reagent":"H2O","ml":100},{"reagent":"olive oil","ml":30}]}
+ ],
+ "shelf":["Lugol","hexane","olive oil","H2O","testtube","beaker"],
+ "show":{"charts":false}}
+```
+
+## Scheidetrichter
+
+@[ChemLab.pack](packs/organic.json)
+
+Im Scheidetrichter liegt Hexan auf Lugol-Lösung. So trennt man die Schichten nach dem Ausschütteln:
+
+1. Den Trichter antippen und unter **Inhalt** auf **Schütteln** tippen: Das Iod geht ins Hexan.
+2. Warten, bis sich die Schichten wieder getrennt haben: oben violett, unten blassgelb.
+3. Den **Hahn** öffnen. Unten läuft zuerst die untere Schicht ins Becherglas. Ist sie abgelaufen, meldet das Protokoll: jetzt den Hahn schließen. Das violette Hexan bleibt im Trichter.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"unten","ml":100},
+  {"type":"separator","id":"trichter","over":"unten","contains":[{"reagent":"H2O","ml":40},{"reagent":"Lugol","drops":60},{"reagent":"hexane","ml":20}]}
+ ],
+ "shelf":["Lugol","hexane","H2O","beaker","separator"],
  "show":{"charts":false}}
 ```
 
@@ -1427,7 +1544,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `g` – bei einer Elektrode ihre Masse in g, falls sie von der Vorgabe abweichen soll.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
-- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
+- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur mit fester Farbskala, `"diff"` Unterschiede zum Mittelwert, `"mix"` Schlieren (Dichte dessen, was zugegossen wurde), `"vortex"` Wirbel, `"pressure"` Druck. `flow3d` wählt, wie die Strömung in 3D erscheint: `"cut"` als Schnittebene (Vorgabe) oder `"particles"` als Teilchen im ganzen Glas. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell. `volumes: false` blendet die Milliliter unter den Gefäßen und das Abgegebene der Bürette aus (auch in der Messwerttabelle).
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
@@ -1559,6 +1676,9 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
+| `oil` | `{"sol": …}`: eine Flüssigkeit, die sich nicht mit Wasser mischt (Hexan, Öl). Über ihrer Löslichkeit `sol` in mol je Liter Wasser bildet sie eine eigene Schicht, die leichtere liegt oben; ohne Wasser ist sie die Flüssigkeit allein. Braucht `Vm` |
+| `kd`, `oilBands` | Wie sich ein ungeladener gelöster Stoff auf Ölschicht und Wasser verteilt, c(Öl) = kd · c(Wasser), und seine Banden im Öl (Brom: `20`, `[[415, 100, 200]]`). Mit `"via": [Träger, Rest]` kommt der Stoff aus dem Träger und lässt den Rest im Wasser: Iod geht aus dem Triiodid ins Hexan, c(Öl) = kd · c(I₃⁻) / c(I⁻) |
+| `eta` | Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, `[η25, η50]`, für die Strömungsansicht (Glycerin: `[934, 152]`). Dazwischen und darüber hinaus folgt sie der Temperatur nach Andrade; eine Mischung mischt den Logarithmus nach den Stoffmengenanteilen. Ohne Angabe zählt ein Stoff wie Wasser |
 | `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
@@ -1739,7 +1859,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
-- Jedes Gefäß gilt als durchmischt; Schlieren und Schichten gibt es nicht.
+- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.
