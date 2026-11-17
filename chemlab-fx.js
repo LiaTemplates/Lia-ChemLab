@@ -113,6 +113,7 @@
   var ROWS = 24, STEP = 0.05, GRAV = 9.81, fields = {};
   var SUPER = 3;                  // so viel K über dem Siedepunkt wird es am heißen Boden höchstens; was darüber geht, verdampft
   var ALPHA = 1.4e-7;             // Temperaturleitfähigkeit von Wasser in m²/s; shortcut: für jede Flüssigkeit dieselbe
+  var DIFFUSE = 1e-9;             // Diffusion gelöster Stoffe in m²/s: so langsam, dass Schlieren nur durch Strömung und Wirbel vergehen
   var EDDY = 0.03;                // Wirbel, die das grobe Gitter nicht auflöst, mischen mit 0,03 Zellen mal Geschwindigkeit: wo nichts strömt, auch nichts
   fx.fields = fields;
 
@@ -120,8 +121,10 @@
   // shortcut: jede Flüssigkeit strömt wie Wasser; eigene Dichten, wenn Ethanol oder Öl dazukommen
   fx.density = function (T) { return 1000 * (1 - (T - 3.98) * (T - 3.98) * (T + 283) / (503570 * (T + 67.26))); };
 
-  function field(cols, T) {
-    var n = (cols + 2) * (ROWS + 2), s = { cols: cols, u: new Float64Array(n), v: new Float64Array(n), T: new Float64Array(n).fill(T), p: new Float64Array(n), dots: [] }, i;
+  // T Temperatur in °C, R Dichte ohne Wärmeausdehnung in kg/m³, N natürlicher Logarithmus der Zähigkeit bei 25 °C in mPa·s: je Zelle, von der Strömung getragen
+  function field(cols, T, R, N) {
+    var n = (cols + 2) * (ROWS + 2), s = { cols: cols, u: new Float64Array(n), v: new Float64Array(n), T: new Float64Array(n).fill(T), p: new Float64Array(n), dots: [],
+      R: new Float64Array(n).fill(R), N: new Float64Array(n).fill(N) }, i;
     for (i = 0; i < 30; i++) s.dots.push([0.5 + cols * pseudo(17, i), 0.5 + ROWS * pseudo(23, i)]);      // Spurteilchen, in Zellen
     return s;
   }
@@ -169,24 +172,55 @@
     bound(s, 1, s.u); bound(s, 2, s.v);
   }
 
+  // Mittel auf den Wert des Rechenkerns, der alles sofort mischt. Was eben zugeflossen ist (inflow: Anteil an der Flüssigkeit), kommt dort an,
+  // wo der Strahl auftrifft: links der Mitte (wie fx.stream), ein Viertel der Breite, und so tief, bis die Zellen dort es aufnehmen können
+  // (ist es oben schon so kalt wie das Zugegossene, reicht der Strahl weiter hinab). Jede Zelle mischt sich dabei nur mit dem Zugegossenen,
+  // bleibt also zwischen Werten, die es schon gibt. Eine Schicht über die ganze Breite bliebe liegen, auch wenn sie schwerer ist:
+  // ohne Störung kippt sie im Rechner nie.
+  // before: der Wert des Rechenkerns im Schritt davor. Aus ihm, nicht aus dem Mittel des Felds, folgt der Wert des Zugegossenen:
+  // Das Mittragen mit der Strömung erhält das Mittel nicht ganz genau, und geteilt durch den kleinen Anteil inflow würde der Fehler groß.
+  function settle(s, x, target, inflow, before) {
+    var n = s.cols * ROWS, W = s.cols + 2, sum = 0, poured, need, wide, left, top, room = 0, share, i, j;
+    if (inflow > 1e-6) {
+      poured = (target - (1 - inflow) * before) / inflow;
+      need = inflow * n * (poured - before);                     // um so viel ändert sich die Summe über alle Zellen
+      wide = Math.max(2, Math.round(s.cols / 4)); left = Math.max(1, Math.round(s.cols * 0.4 - wide / 2));
+      for (top = 0; top < ROWS && Math.abs(room) < Math.abs(need); ) {
+        top++;
+        for (i = left; i < left + wide; i++) room += poured - x[i + top * W];
+      }
+      share = room * need > 0 ? Math.min(1, need / room) : 0;
+      for (j = 1; j <= top; j++) for (i = left; i < left + wide; i++) x[i + j * W] += share * (poured - x[i + j * W]);
+    }
+    each(s, function (k) { sum += x[k]; });
+    sum = target - sum / n;
+    each(s, function (k) { x[k] += sum; });
+    bound(s, 0, x);
+  }
+
   // Ein Schritt um dt Sekunden. heat: { q, k, room, boil } aus dem Rechenkern; cell: Wärmekapazität einer Zelle in J/K, size: Kantenlänge in m;
   // inflow: welcher Anteil der Flüssigkeit eben zugeflossen ist (er kommt oben an), sonst 0
   function advance(s, heat, T, cell, size, dt, still, inflow) {
-    var W = s.cols + 2, x = s.T, rho = fx.density(T), lo = Math.round(s.cols * 0.2), hi = s.cols + 1 - lo, rim = 2 * ROWS + s.cols, sum = 0, i, j, k, nu, nv;
+    var W = s.cols + 2, x = s.T, rho = fx.density(T), lo = Math.round(s.cols * 0.2), hi = s.cols + 1 - lo, rim = 2 * ROWS + s.cols, i, j, k, nu, nv;
     for (i = lo; i <= hi; i++) x[i + ROWS * W] += heat.q * dt / ((hi - lo + 1) * cell);      // die Flamme heizt die Mitte des Bodens
     if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });
     for (j = 1; j <= ROWS; j++) for (i = 1; i <= s.cols; i++) if (i === 1 || i === s.cols || j === 1) {      // Wände und Oberfläche geben ab
       k = i + j * W;
       x[k] -= heat.k / rim * (x[k] - heat.room) * dt / cell;
     }
-    each(s, function (k) { s.v[k] -= GRAV * (rho - fx.density(x[k])) / rho / size * dt; });      // leichter steigt auf (y zeigt nach unten)
+    // schwerer sinkt (y zeigt nach unten): aus der Temperatur und aus dem, was in der Zelle gelöst ist. Was überall gleich ist,
+    // trägt der Schweredruck; abgezogen, damit Rundungsreste ein ruhendes Glas nicht bewegen
+    var mass = heat.rho || 1000, lift = new Float64Array(x.length), even = 0;
+    each(s, function (k) { lift[k] = fx.density(x[k]) - rho + s.R[k] - mass; even += lift[k] / (s.cols * ROWS); });
+    each(s, function (k) { s.v[k] += GRAV * (lift[k] - even) / mass / size * dt; });
     // Zähigkeit je Zelle nach ihrer Temperatur (zwischen 25 und 50 °C linear in 1/T, nach Andrade), als Zellen²/s
-    var eta = heat.eta || [0.890, 0.5465], low = Math.log(eta[0]), slope = (Math.log(eta[1]) - low) / (1 / 323.15 - 1 / 298.15);
-    var visc = new Float64Array(x.length), cond = new Float64Array(x.length);
+    var eta = heat.eta || [0.890, 0.5465], slope = (Math.log(eta[1]) - Math.log(eta[0])) / (1 / 323.15 - 1 / 298.15);
+    var visc = new Float64Array(x.length), cond = new Float64Array(x.length), stir = new Float64Array(x.length);
     each(s, function (k) {
       var eddy = EDDY * Math.sqrt(s.u[k] * s.u[k] + s.v[k] * s.v[k]);
-      visc[k] = Math.exp(low + slope * (1 / (x[k] + 273.15) - 1 / 298.15)) / 1000 / fx.density(x[k]) / (size * size) + eddy;
+      visc[k] = Math.exp(s.N[k] + slope * (1 / (x[k] + 273.15) - 1 / 298.15)) / 1000 / (s.R[k] || mass) / (size * size) + eddy;
       cond[k] = ALPHA / (size * size) + eddy;
+      stir[k] = DIFFUSE / (size * size) + eddy;
     });
     spread(s, 1, s.u, visc, dt); spread(s, 2, s.v, visc, dt);
     // spread glättet nur kleine Wirbel. Die warme Fahne bremst die Zähigkeit wie nach Stokes: Vom Radius r steigt sie mit 2/9·g′·r²/ν,
@@ -198,19 +232,14 @@
     project(s);
     s.T = x = advect(s, 0, x, dt);
     spread(s, 0, x, cond, dt);
-    each(s, function (k) { sum += x[k]; });
-    sum /= s.cols * ROWS;
-    if (inflow > 1e-6) {           // der Rechenkern mischt Zugegossenes sofort; im Bild kommt es oben an und mischt sich erst dort ein
-      var poured = (T - (1 - inflow) * sum) / inflow, top = Math.min(ROWS, Math.ceil(ROWS * inflow)), share = inflow * ROWS / top;      // seine Temperatur, aus der Energiebilanz
-      each(s, function (k, i, j) { if (j <= top) x[k] += share * (poured - x[k]); });
-      sum = 0;
-      each(s, function (k) { sum += x[k]; });
-      sum /= s.cols * ROWS;
-    }
-    sum = T - sum;
-    each(s, function (k) { x[k] += sum; });                     // das Mittel bleibt die Temperatur des Rechenkerns
-    if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });      // beim Sieden liegt das Mittel damit knapp darunter
-    bound(s, 0, x);
+    s.R = advect(s, 0, s.R, dt); spread(s, 0, s.R, stir, dt);
+    s.N = advect(s, 0, s.N, dt); spread(s, 0, s.N, stir, dt);
+    var at = s.at || { T: T, R: mass, N: Math.log(eta[0]) };
+    settle(s, x, T, inflow, at.T);
+    settle(s, s.R, mass, inflow, at.R);
+    settle(s, s.N, Math.log(eta[0]), inflow, at.N);
+    s.at = { T: T, R: mass, N: Math.log(eta[0]) };
+    if (heat.boil != null) { each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); }); bound(s, 0, x); }      // beim Sieden liegt das Mittel damit knapp darunter
     if (!still) s.dots.forEach(function (d) {
       var a = sample(s, s.u, d[0], d[1]), b = sample(s, s.v, d[0], d[1]);
       d[0] = Math.max(0.6, Math.min(s.cols + 0.4, d[0] + a * dt));
@@ -229,7 +258,8 @@
   fx.heatColor = heatColor;
 
   // Strömung in der Flüssigkeit als SVG. box: { x0, x1, top, bottom } der Flüssigkeit, w aus L.view (ml, T, heat), t Zeit in s,
-  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur mit fester Farbskala), "diff" (Unterschiede zum Mittel), "vortex" (Wirbel) oder "pressure" (Druck)
+  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur mit fester Farbskala), "diff" (Unterschiede zum Mittel), "mix" (Schlieren: schwerer bernsteinbraun,
+  // leichter türkis als die Mischung), "vortex" (Wirbel) oder "pressure" (Druck)
   fx.flow = function (box, w, t, key, mode, still) {
     var heat = w.heat, s = fields[key], width = box.x1 - box.x0, height = box.bottom - box.top, deep, size, cols, cell, dt, n, i, W, out = "", span = 0, cw, ch, id;
     if (!heat || !(w.ml > 0.005) || !(width > 2 && height > 2)) { delete fields[key]; return ""; }
@@ -240,8 +270,8 @@
     // neu, nach einem Sprung der Uhr oder bei ganz anderer Form: unter den jetzigen Bedingungen einschwingen.
     // Nach dem Zugießen bleibt das Gitter, damit man sieht, wohin das Zugegossene läuft; die Zellen werden dabei etwas höher.
     if (!s || s.cols > 2 * cols || cols > 2 * s.cols || t < s.t - 1e-9 || t - s.t > 30) {
-      s = fields[key] = field(cols, w.T);
-      for (i = 0; i < 100; i++) advance(s, heat, w.T, cell, size, STEP, true, 0);
+      s = fields[key] = field(cols, w.T, heat.rho || 1000, Math.log((heat.eta || [0.890])[0]));
+      for (i = 0; i < 60; i++) advance(s, heat, w.T, cell, size, STEP, true, 0);      // 3 s: so lange braucht die Fahne, um sich zu bilden
       s.t = t; s.ml = w.ml;
     }
     cols = s.cols; cell = w.ml * 4.18 / (cols * ROWS);
@@ -252,9 +282,11 @@
 
     W = cols + 2; cw = width / cols; ch = height / ROWS;
     function curl(k) { return (s.v[k + 1] - s.v[k - 1] - s.u[k + W] + s.u[k - W]) / 2; }      // positiv: dreht im Uhrzeigersinn
-    function level(k, j) { return mode === "pressure" ? j / ROWS : mode === "vortex" ? curl(k) : mode === "temp" ? s.T[k] : s.T[k] - w.T; }
-    if (mode === "vortex" || mode === "diff") each(s, function (k, i, j) { span = Math.max(span, Math.abs(level(k, j))); });
-    span = mode === "vortex" ? Math.max(0.3, span) : mode === "diff" ? Math.max(2, span) : 1;     // eine ruhige Flüssigkeit bleibt blass
+    function level(k, j) {
+      return mode === "pressure" ? j / ROWS : mode === "vortex" ? curl(k) : mode === "temp" ? s.T[k] : mode === "mix" ? s.R[k] - (heat.rho || 1000) : s.T[k] - w.T;
+    }
+    if (mode === "vortex" || mode === "diff" || mode === "mix") each(s, function (k, i, j) { span = Math.max(span, Math.abs(level(k, j))); });
+    span = mode === "vortex" ? Math.max(0.3, span) : mode === "diff" || mode === "mix" ? Math.max(2, span) : 1;     // eine ruhige, gut gemischte Flüssigkeit bleibt blass
     // gezeichnet in Blöcken von 2×2 Zellen: nach dem Weichzeichnen sieht man keinen Unterschied, das Bild ist ein Viertel so lang
     cw *= 2; ch *= 2;
     for (var j = 1; j <= ROWS; j += 2) for (i = 1; i <= cols; i += 2) {
@@ -264,7 +296,7 @@
       if (mode !== "temp" && Math.abs(a) < 0.03) continue;
       // die äußeren Blöcke reichen über den Rand hinaus, damit das Weichzeichnen dort nicht ausbleicht
       out += '<rect x="' + f(i === 1 ? x - cw : x) + '" y="' + f(j === 1 ? y - ch : y) + '" width="' + f(cw * (1 + (i === 1) + last) + 0.3) +
-        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + (mode === "temp" ? css(heatColor(a)) : mode === "pressure" ? "#2b5fb3" : a > 0 ? "#d9452b" : "#2b6fd9") +
+        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + (mode === "temp" ? css(heatColor(a)) : mode === "pressure" ? "#2b5fb3" : mode === "mix" ? (a > 0 ? "#8a5a22" : "#2a9d8f") : a > 0 ? "#d9452b" : "#2b6fd9") +
         '" fill-opacity="' + (mode === "temp" ? "0.55" : (Math.abs(a) * (mode === "pressure" ? 0.45 : 0.6)).toFixed(2)) + '"/>';
     }
     cw /= 2; ch /= 2;

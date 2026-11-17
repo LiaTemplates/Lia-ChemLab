@@ -62,6 +62,7 @@
     "flow": "Korronteak",
     "flow.temp": "tenperatura",
     "flow.diff": "tenperatura-aldeak",
+    "flow.mix": "nahasketa-marrak",
     "flow.vortex": "zurrunbiloak",
     "flow.pressure": "presioa",
     "lens": "Partikula-ikuspegia",

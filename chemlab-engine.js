@@ -1025,7 +1025,7 @@
         volumes: show.volumes !== false,                           // mL unter den Gefäßen und das Abgegebene der Bürette
         log: show.log !== false,
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
-        flow: ["temp", "diff", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
+        flow: ["temp", "diff", "mix", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
@@ -1082,6 +1082,12 @@
     var ml = 0, solute = 0, id, s;
     for (id in v.n) { s = L.db.species[id]; if (s.phase === "l") ml += v.n[id] * s.M / s.rho; else if (s.Vm) solute += v.n[id] * s.Vm; }
     return ml > 0 ? (ml + solute) / 1000 : 0;      // ein trockener Rückstand ist keine Flüssigkeit, auch wenn seine Ionen ein Eigenvolumen haben
+  }
+
+  function heaviness(v) {         // Dichte der Flüssigkeit in kg/m³ (g/L), ohne Wärmeausdehnung; gelöste Ionen ohne Eigenvolumen machen sie schwerer
+    var vol = volume(v), g = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") g += v.n[id] * s.M; }
+    return vol > 0 ? g / vol : null;
   }
 
   function heatCapacity(v) {      // J/K, mit dem Glas
@@ -4152,8 +4158,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
-      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet) und Zähigkeit
-      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null, eta: viscosity(v) }),
+      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet), Zähigkeit und Dichte
+      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null, eta: viscosity(v), rho: heaviness(v) }),
       // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
       blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab

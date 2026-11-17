@@ -62,6 +62,7 @@
     "flow": "Proudění",
     "flow.temp": "teplota",
     "flow.diff": "rozdíly teplot",
+    "flow.mix": "šlíry",
     "flow.vortex": "víry",
     "flow.pressure": "tlak",
     "lens": "Částicový pohled",

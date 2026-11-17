@@ -62,6 +62,7 @@
     "flow": "Straumes",
     "flow.temp": "temperatūra",
     "flow.diff": "temperatūras atšķirības",
+    "flow.mix": "sajaukšanās svītras",
     "flow.vortex": "virpuļi",
     "flow.pressure": "spiediens",
     "lens": "Daļiņu lupa",

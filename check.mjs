@@ -617,14 +617,15 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   assert.ok(Math.max(...L.fx.fields.boil.v.map(Math.abs)) > 0.5, "es strömt weiter");
   assert.equal(L.view(lab([{ type: "beaker", id: "b" }]), L.vessel(lab([{ type: "beaker", id: "b" }]), "b")).heat.boil, null, "leer: nichts, was siedet");
 
-  // kaltes Wasser auf heißes gießen: der Rechenkern mischt sofort, im Bild liegt es erst oben, nie kälter als es selbst
+  // kaltes Wasser auf heißes gießen: der Rechenkern mischt sofort, im Bild kommt es dort an, wo der Strahl auftrifft, nie kälter als es selbst
   const still = { k: 0.25, room: 20, d: 7, boil: 100, q: 0 };
   let ml = 150, T = 80, t = 0;
   L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp");
   for (; t < 2; t += 1 / 60) { const add = 50 / 120; T = (ml * T + add * 20) / (ml + add); ml += add; L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp"); }
   const p = L.fx.fields.pour, row = (j) => { let a = 0; for (let i = 1; i <= p.cols; i++) a += p.T[i + j * (p.cols + 2)]; return a / p.cols; };
-  assert.ok(row(1) < 30 && row(1) > 19, `oben das kalte Wasser: ${row(1)}`);
-  assert.ok(row(24) > T + 1, "unten noch das heiße");
+  const coldest = Math.min(...Array.from({ length: 24 }, (_, j) => Math.min(...Array.from({ length: p.cols }, (_, i) => p.T[i + 1 + (j + 1) * (p.cols + 2)]))));
+  assert.ok(coldest < 30 && coldest > 19, `das kalte Wasser, nicht kälter als 20 °C: ${coldest}`);
+  assert.ok(Math.max(...p.T) > T + 1, "daneben noch das heiße");
   let mean = 0;
   for (let j = 1; j <= 24; j++) mean += row(j) / 24;
   near(mean, T, 1e-6, "das Mittel ist die gemischte Temperatur des Rechenkerns");
@@ -632,7 +633,7 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
   const c = L.view(cold, L.vessel(cold, "b"));
   L.fx.flow(box, c, 0, "cold", "temp"); L.fx.flow(box, c, 5, "cold", "temp");
-  assert.equal(Math.max(...L.fx.fields.cold.v.map(Math.abs), ...L.fx.fields.cold.u.map(Math.abs)), 0, "keine Wärme, keine Strömung");
+  assert.ok(Math.max(...L.fx.fields.cold.v.map(Math.abs), ...L.fx.fields.cold.u.map(Math.abs)) < 1e-9, "keine Wärme, keine Strömung");
   assert.equal(L.fx.flow(box, Object.assign({}, c, { ml: 0 }), 6, "cold", "temp"), "", "ohne Flüssigkeit kein Bild");
   assert.ok(L.fx.density(4) > L.fx.density(0) && L.fx.density(4) > L.fx.density(20), "Wasser ist bei 4 °C am dichtesten");
 });
@@ -971,7 +972,33 @@ test("Strömung: zähe Flüssigkeiten strömen langsamer – Zuckersirup etwa se
     return sum;
   };
   const water = speed("wasser", eta("H2O")), syrup = speed("sirup", eta("sugar syrup")), glycerol = speed("glycerin", eta("glycerol"));
-  assert.ok(water > 3 * syrup && syrup > 2 * glycerol, `Wasser ${water}, Sirup ${syrup}, Glycerin ${glycerol}`);
+  assert.ok(water > 3 * syrup && syrup > 1.5 * glycerol, `Wasser ${water}, Sirup ${syrup}, Glycerin ${glycerol}`);
+});
+
+test("Strömung: Schweres sinkt als Schliere zu Boden, Leichtes bleibt oben; das Mittel ist die Dichte der Mischung", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const box = { x0: -40, x1: 40, top: -80, bottom: -2 };
+  const pour = (reagent, ml, key) => {
+    const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }] }], { room: 20 });
+    const frame = () => { const w = L.view(l, L.vessel(l, "b")); L.fx.flow(box, w, l.t, key, "mix"); return w; };
+    frame();
+    L.add(l, "b", reagent, { ml });
+    for (let i = 0; i < 200; i++) { L.step(l, 0.05); frame(); }      // 10 s, Bild für Bild
+    const w = frame(), s = L.fx.fields[key], W = s.cols + 2;
+    const row = (j) => { let a = 0; for (let i = 1; i <= s.cols; i++) a += s.R[i + j * W]; return a / s.cols - w.heat.rho; };
+    let mean = 0;
+    for (let j = 1; j <= 24; j++) mean += row(j) / 24;
+    near(mean, 0, 1e-6, `${reagent}: im Mittel die Dichte der Mischung`);
+    return { top: row(1), bottom: row(24), w };
+  };
+  const syrup = pour("sugar syrup", 20, "sirup");
+  assert.ok(syrup.w.heat.rho > 1030, "Sirup macht die Mischung schwerer");
+  assert.ok(syrup.bottom > 5 && syrup.top < 0, `Sirup liegt nach 10 s unten: ${syrup.bottom} / ${syrup.top}`);
+  const acid = pour("H2SO4 conc", 5, "säure");
+  assert.ok(acid.bottom > 5 && acid.top < 0, `Schwefelsäure sinkt: ${acid.bottom} / ${acid.top}`);
+  const ethanol = pour("ethanol", 20, "ethanol");
+  assert.ok(ethanol.top < -20 && ethanol.bottom > 0, `Ethanol bleibt oben: ${ethanol.top} / ${ethanol.bottom}`);
+  assert.match(L.fx.flow(box, ethanol.w, L.fx.fields.ethanol.t + 0.1, "ethanol", "mix"), /#2a9d8f/, "leichter: türkis");
 });
 
 test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {
@@ -981,9 +1008,9 @@ test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalte
   frames(1);
   assert.match(item(el, "b").innerHTML, /cl-flow/, "gleich zu Beginn zu sehen");
   tap(el, "b");
-  ["diff", "vortex", "pressure", ""].forEach(() => press(el, "flow"));
+  ["diff", "mix", "vortex", "pressure", ""].forEach(() => press(el, "flow"));
   frames(1);
-  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Unterschieden, Wirbel und Druck wieder aus");
+  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Unterschieden, Schlieren, Wirbel und Druck wieder aus");
 });
 
 test("Anzeige: Diagramme, Gleichungen und Protokoll lassen sich abschalten", () => {

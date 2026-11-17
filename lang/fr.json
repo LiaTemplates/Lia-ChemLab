@@ -62,6 +62,7 @@
     "flow": "Courants",
     "flow.temp": "température",
     "flow.diff": "écarts de température",
+    "flow.mix": "stries de mélange",
     "flow.vortex": "tourbillons",
     "flow.pressure": "pression",
     "lens": "Vue des particules",

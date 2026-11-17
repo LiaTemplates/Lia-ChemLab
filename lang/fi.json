@@ -62,6 +62,7 @@
     "flow": "Virtaukset",
     "flow.temp": "lämpötila",
     "flow.diff": "lämpötilaerot",
+    "flow.mix": "sekoittumisjuovat",
     "flow.vortex": "pyörteet",
     "flow.pressure": "paine",
     "lens": "Hiukkasnäkymä",

@@ -62,6 +62,7 @@
     "flow": "Áramlás",
     "flow.temp": "hőmérséklet",
     "flow.diff": "hőmérséklet-különbségek",
+    "flow.mix": "keveredési csíkok",
     "flow.vortex": "örvények",
     "flow.pressure": "nyomás",
     "lens": "Részecskenézet",

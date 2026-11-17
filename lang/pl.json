@@ -62,6 +62,7 @@
     "flow": "Prądy",
     "flow.temp": "temperatura",
     "flow.diff": "różnice temperatur",
+    "flow.mix": "smugi mieszania",
     "flow.vortex": "wiry",
     "flow.pressure": "ciśnienie",
     "lens": "Widok cząstek",

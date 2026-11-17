@@ -62,6 +62,7 @@
     "flow": "Strömung",
     "flow.temp": "Temperatur",
     "flow.diff": "Temperaturunterschiede",
+    "flow.mix": "Schlieren",
     "flow.vortex": "Wirbel",
     "flow.pressure": "Druck",
     "lens": "Teilchenlupe",

@@ -62,6 +62,7 @@
     "flow": "Correntes",
     "flow.temp": "temperatura",
     "flow.diff": "diferenças de temperatura",
+    "flow.mix": "estrias de mistura",
     "flow.vortex": "redemoinhos",
     "flow.pressure": "pressão",
     "lens": "Vista de partículas",

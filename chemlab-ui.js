@@ -112,7 +112,7 @@
     }
 
     var show = st.config.show;
-    var FLOWS = ["", "temp", "diff", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
+    var FLOWS = ["", "temp", "diff", "mix", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
     if (st.flow == null) st.flow = Math.max(0, FLOWS.indexOf(show.flow));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);

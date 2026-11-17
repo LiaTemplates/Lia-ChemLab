@@ -62,6 +62,7 @@
     "flow": "Stroming",
     "flow.temp": "temperatuur",
     "flow.diff": "temperatuurverschillen",
+    "flow.mix": "schlieren",
     "flow.vortex": "wervelingen",
     "flow.pressure": "druk",
     "lens": "Deeltjesloep",

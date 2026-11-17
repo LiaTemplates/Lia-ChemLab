@@ -62,6 +62,7 @@
     "flow": "Strujanje",
     "flow.temp": "temperatura",
     "flow.diff": "razlike temperature",
+    "flow.mix": "pruge miješanja",
     "flow.vortex": "vrtlozi",
     "flow.pressure": "tlak",
     "lens": "Prikaz čestica",

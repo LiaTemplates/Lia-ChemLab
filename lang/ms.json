@@ -62,6 +62,7 @@
     "flow": "Arus",
     "flow.temp": "suhu",
     "flow.diff": "perbezaan suhu",
+    "flow.mix": "jalur campuran",
     "flow.vortex": "pusaran",
     "flow.pressure": "tekanan",
     "lens": "Paparan zarah",

@@ -62,6 +62,7 @@
     "flow": "Akıntılar",
     "flow.temp": "sıcaklık",
     "flow.diff": "sıcaklık farkları",
+    "flow.mix": "karışma çizgileri",
     "flow.vortex": "girdaplar",
     "flow.pressure": "basınç",
     "lens": "Tanecik görünümü",

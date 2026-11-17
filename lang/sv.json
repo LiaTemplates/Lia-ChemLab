@@ -62,6 +62,7 @@
     "flow": "Strömning",
     "flow.temp": "temperatur",
     "flow.diff": "temperaturskillnader",
+    "flow.mix": "schlieren",
     "flow.vortex": "virvlar",
     "flow.pressure": "tryck",
     "lens": "Partikellupp",
