@@ -497,7 +497,8 @@
     "spinFlow": "Es fließt noch – erst abwarten.",
     "spinEmpty": "Erst ein Reagenzglas hineinstellen.",
     "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch.",
-    "part.electrode-Pb": "Blei-Elektrode"
+    "part.electrode-Pb": "Blei-Elektrode",
+    "say.mirror": "{vessel}: An der Glaswand bildet sich ein Spiegel aus {name}."
   },
   "names": {
     "H2O(l)": "Wasser",
@@ -733,6 +734,25 @@
     "Pb(s)": "Blei",
     "Pb^2+(aq)": "Blei(II)-Ion",
     "PbSO4(s)": "Blei(II)-sulfat",
-    "PbO2(s)": "Blei(IV)-oxid"
+    "PbO2(s)": "Blei(IV)-oxid",
+    "CH3CHO(aq)": "Ethanal (Acetaldehyd)",
+    "CH3COCH3(aq)": "Aceton (Propanon)",
+    "C6H12O6(aq)": "Glucose",
+    "C6H11O7-(aq)": "Gluconat-Ion",
+    "C4H4O6^2-(aq)": "Tartrat-Ion",
+    "Cu(C4H4O6)2^2-(aq)": "Kupfer-Tartrat-Komplex",
+    "Cu2O(s)": "Kupfer(I)-oxid",
+    "C6H12(aq)": "Hexen (Hex-1-en)",
+    "C6H14(aq)": "Hexan",
+    "C6H12Br2(aq)": "1,2-Dibromhexan",
+    "Fehling I": "Fehling I (Kupfersulfat-Lösung)",
+    "Fehling II": "Fehling II (alkalische Tartrat-Lösung)",
+    "Tollens": "Tollens-Reagenz (ammoniakalische Silbernitrat-Lösung)",
+    "ethanal": "Ethanal-Lösung (Acetaldehyd, 1 mol/L)",
+    "glucose": "Glucose-Lösung 5 %",
+    "acetone": "Aceton",
+    "hexene": "Hexen",
+    "hexane": "Hexan",
+    "bromine water": "Bromwasser (0,02 mol/L)"
   }
 }

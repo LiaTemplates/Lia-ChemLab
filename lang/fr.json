@@ -497,7 +497,8 @@
     "spinFlow": "Quelque chose coule encore : attendez d'abord.",
     "spinEmpty": "Placez d'abord un tube à essai.",
     "hint.centrifuge": "Toucher maintenant le tube à essai qui doit aller dans la centrifugeuse – ou la paillasse.",
-    "part.electrode-Pb": "électrode de plomb"
+    "part.electrode-Pb": "électrode de plomb",
+    "say.mirror": "{vessel} : un miroir de {name} se forme sur la paroi du verre."
   },
   "names": {
     "H2O(l)": "eau",
@@ -733,6 +734,25 @@
     "Pb(s)": "plomb",
     "Pb^2+(aq)": "ion plomb(II)",
     "PbSO4(s)": "sulfate de plomb(II)",
-    "PbO2(s)": "oxyde de plomb(IV)"
+    "PbO2(s)": "oxyde de plomb(IV)",
+    "CH3CHO(aq)": "éthanal (acétaldéhyde)",
+    "CH3COCH3(aq)": "acétone (propanone)",
+    "C6H12O6(aq)": "glucose",
+    "C6H11O7-(aq)": "ion gluconate",
+    "C4H4O6^2-(aq)": "ion tartrate",
+    "Cu(C4H4O6)2^2-(aq)": "complexe tartrate de cuivre",
+    "Cu2O(s)": "oxyde de cuivre(I)",
+    "C6H12(aq)": "hexène",
+    "C6H14(aq)": "hexane",
+    "C6H12Br2(aq)": "1,2-dibromohexane",
+    "Fehling I": "Fehling I (solution de sulfate de cuivre)",
+    "Fehling II": "Fehling II (solution alcaline de tartrate)",
+    "Tollens": "réactif de Tollens (nitrate d'argent ammoniacal)",
+    "ethanal": "solution d'éthanal (1 mol/L)",
+    "glucose": "solution de glucose 5 %",
+    "acetone": "acétone",
+    "hexene": "hexène",
+    "hexane": "hexane",
+    "bromine water": "eau de brome (0,02 mol/L)"
   }
 }

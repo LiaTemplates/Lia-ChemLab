@@ -497,7 +497,8 @@
     "spinFlow": "Vēl kaut kas plūst – vispirms pagaidiet.",
     "spinEmpty": "Vispirms ielieciet mēģeni.",
     "hint.centrifuge": "Tagad pieskarieties mēģenei, kurai jānonāk centrifūgā, – vai galdam.",
-    "part.electrode-Pb": "svina elektrods"
+    "part.electrode-Pb": "svina elektrods",
+    "say.mirror": "{vessel}: uz stikla sieniņas veidojas spogulis: {name}."
   },
   "names": {
     "H2O(l)": "ūdens",
@@ -733,6 +734,25 @@
     "Pb(s)": "svins",
     "Pb^2+(aq)": "svina(II) jons",
     "PbSO4(s)": "svina(II) sulfāts",
-    "PbO2(s)": "svina(IV) oksīds"
+    "PbO2(s)": "svina(IV) oksīds",
+    "CH3CHO(aq)": "etanāls (acetaldehīds)",
+    "CH3COCH3(aq)": "acetons (propanons)",
+    "C6H12O6(aq)": "glikoze",
+    "C6H11O7-(aq)": "glikonāta jons",
+    "C4H4O6^2-(aq)": "tartrāta jons",
+    "Cu(C4H4O6)2^2-(aq)": "vara tartrāta komplekss",
+    "Cu2O(s)": "vara(I) oksīds",
+    "C6H12(aq)": "heksēns",
+    "C6H14(aq)": "heksāns",
+    "C6H12Br2(aq)": "1,2-dibromheksāns",
+    "Fehling I": "Fēlinga I (vara sulfāta šķīdums)",
+    "Fehling II": "Fēlinga II (sārmains tartrāta šķīdums)",
+    "Tollens": "Tolensa reaģents (amonjakāls sudraba nitrāts)",
+    "ethanal": "etanāla šķīdums (1 mol/L)",
+    "glucose": "glikozes šķīdums 5 %",
+    "acetone": "acetons",
+    "hexene": "heksēns",
+    "hexane": "heksāns",
+    "bromine water": "broma ūdens (0,02 mol/L)"
   }
 }

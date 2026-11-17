@@ -497,7 +497,8 @@
     "spinFlow": "还有液体在流动——请先等待。",
     "spinEmpty": "请先放入一支试管。",
     "hint.centrifuge": "现在点击要放进离心机的试管——或点击实验台。",
-    "part.electrode-Pb": "铅电极"
+    "part.electrode-Pb": "铅电极",
+    "say.mirror": "{vessel}：玻璃壁上形成一层{name}镜。"
   },
   "names": {
     "H2O(l)": "水",
@@ -733,6 +734,25 @@
     "Pb(s)": "铅",
     "Pb^2+(aq)": "铅离子",
     "PbSO4(s)": "硫酸铅",
-    "PbO2(s)": "二氧化铅"
+    "PbO2(s)": "二氧化铅",
+    "CH3CHO(aq)": "乙醛",
+    "CH3COCH3(aq)": "丙酮",
+    "C6H12O6(aq)": "葡萄糖",
+    "C6H11O7-(aq)": "葡萄糖酸根离子",
+    "C4H4O6^2-(aq)": "酒石酸根离子",
+    "Cu(C4H4O6)2^2-(aq)": "酒石酸铜配合物",
+    "Cu2O(s)": "氧化亚铜",
+    "C6H12(aq)": "己烯",
+    "C6H14(aq)": "己烷",
+    "C6H12Br2(aq)": "1,2-二溴己烷",
+    "Fehling I": "斐林试剂 I（硫酸铜溶液）",
+    "Fehling II": "斐林试剂 II（碱性酒石酸盐溶液）",
+    "Tollens": "托伦试剂（银氨溶液）",
+    "ethanal": "乙醛溶液（1 mol/L）",
+    "glucose": "葡萄糖溶液 5 %",
+    "acetone": "丙酮",
+    "hexene": "己烯",
+    "hexane": "己烷",
+    "bromine water": "溴水（0.02 mol/L）"
   }
 }

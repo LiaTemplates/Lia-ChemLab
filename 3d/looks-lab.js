@@ -60,7 +60,7 @@
         }
         if (w.broken) return;
         level = opts.level(w, d);
-        u.inside.update(w, shape, level, d.ctx, !!opts.tall);
+        u.inside.update(w, shape, level, d.ctx, !!opts.tall, w.mirror ? opts.level(Object.assign({}, w, { ml: Math.max(0.01, w.mirror.ml) }), d) : null);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
         u.tag.position.set(0, 0.15 - kit.up(d.lift), (shape.front || shape.inner(shape.rim)) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist; front: weiteste Stelle
         if (opts.refresh) opts.refresh(group, d, shape);

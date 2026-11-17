@@ -353,6 +353,8 @@
           if ((next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
         });
         if (rate.surface) known(rate.surface);
+        // mirror: was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas (Silberspiegel der Tollens-Probe)
+        if (item.mirror != null && (item.mirror !== true || !Object.keys(eq.nu).some(function (id) { return eq.nu[id] > 0 && next.species[id].phase === "s"; }))) throw fail("rate", "mirror");
         // needs: was da sein muss, ohne verbraucht zu werden (nur bei sofortigen Reaktionen)
         Object.keys(rate.needs || {}).forEach(function (id) {
           known(id);
@@ -1570,6 +1572,7 @@
   var GROW = 0.5;                 // s: mit dieser Zeitkonstante wächst ein Niederschlag
   var MELT = 1.2;                 // s: so schnell löst sich ein frischer Niederschlag wieder
   var SINK = 25;                  // s: so schnell setzt er sich ab
+  var MIRROR = 5e-7;              // mol/cm²: so viel Silber (etwa 50 nm) gibt einen dichten Spiegel
   var SPUN = 60;                  // s: so schnell setzt sich ein Kolloid in der laufenden Zentrifuge ab (geschätzt; ohne sie gar nicht)
   var SEEN = 5e-5;                // mol/L: ab so viel ist ein Niederschlag als Trübung zu sehen
   var HAZE = 0.003;               // mol/L: so viel Schwebendes nimmt der Flüssigkeit 63 % ihrer Durchsicht
@@ -2264,11 +2267,13 @@
   }
 
   // Feststoff, der im Gefäß entsteht: ein Niederschlag. settled: der Anteil, der sich schon abgesetzt hat.
-  function growSolid(v, id, amount) {
+  // mirror: er legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit steht (wet, in mL); er schwebt nicht und bleibt beim Umgießen
+  function growSolid(v, id, amount, mirror) {
     var lump = null;
-    v.lumps.forEach(function (l) { if (l.id === id && l.made) lump = l; });
+    v.lumps.forEach(function (l) { if (l.id === id && l.made && !l.mirror === !mirror) lump = l; });
     if (!lump) v.lumps.push((lump = { id: id, n: 0, n0: 0, a0: 0, p: 2 / 3, made: true, settled: 0 }));
-    lump.settled = lump.n + amount > 0 ? lump.settled * lump.n / (lump.n + amount) : 0;     // der neue schwebt noch
+    if (mirror) { lump.mirror = true; lump.wet = Math.max(lump.wet || 0, volume(v) * 1000); }
+    lump.settled = mirror ? 1 : lump.n + amount > 0 ? lump.settled * lump.n / (lump.n + amount) : 0;     // der neue schwebt noch
     lump.n += amount;
     if (lump.n > lump.n0) { lump.n0 = lump.n; lump.a0 = 100 * lump.n0 * species(id).M; }
     v.n[id] = (v.n[id] || 0) + amount;
@@ -2390,7 +2395,7 @@
         delta = r.nu[id] * x; phase = L.db.species[id].phase;
         if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;     // aus der Luft
         else if (phase === "s" && delta < 0) takeSolid(v, id, -delta, emit);
-        else if (phase === "s") { growSolid(v, id, delta); grew[id] = true; }
+        else if (phase === "s") { growSolid(v, id, delta, r.mirror); grew[id] = r.mirror ? "mirror" : true; }
         else if ((v.n[id] = (v.n[id] || 0) + delta) < TRACE) delete v.n[id];
       }
       done[r.key] = (done[r.key] || 0) + x;
@@ -2399,7 +2404,7 @@
     if (vol > 0) for (made in grew) {
       if (v.flag.solid[made] || !(fresh(v, made) / vol > SEEN)) continue;        // was als Stück aus dem Regal daliegt, trübt nicht
       v.flag.solid[made] = true;
-      if (emit) emit({ key: "solid", vessel: v.id, species: made, color: solidColor(made), grown: false, colloid: !!L.db.species[made].colloid });
+      if (emit) emit({ key: "solid", vessel: v.id, species: made, color: solidColor(made), grown: false, colloid: !!L.db.species[made].colloid, mirror: grew[made] === "mirror" });
     }
     list.forEach(function (r) {
       var x = done[r.key], h;
@@ -2999,7 +3004,7 @@
     // alles in einen Trichter gegossen: Man schwenkt auf und spült den Bodensatz und die Stücke mit hinein
     var whole = L.parts[to.type].filter && share >= 1 - 1e-9;
     if (whole) from.lumps.forEach(function (l) {
-      if (!(l.n > 0)) return;
+      if (!(l.n > 0) || l.mirror) return;                      // ein Spiegel haftet am Glas
       to.lumps.push(Object.assign({}, l, { settled: 1 }));
       to.n[l.id] = (to.n[l.id] || 0) + l.n;
       from.n[l.id] -= l.n;
@@ -3007,7 +3012,7 @@
       l.n = 0;
     });
     from.lumps.forEach(function (l) {
-      var part = l.made && (!sieve || L.db.species[l.id].colloid) ? l.n * (1 - l.settled) * share : 0;
+      var part = l.made && !l.mirror && (!sieve || L.db.species[l.id].colloid) ? l.n * (1 - l.settled) * share : 0;
       if (!(part > 0)) return;
       l.settled = l.n - part > 0 ? Math.min(1, l.settled * l.n / (l.n - part)) : 1;
       l.n -= part;
@@ -4019,9 +4024,16 @@
     var paste = thick(v, vol);
     if (!(vol > 0) || paste) list.forEach(function (x) { if (x.phase === "aq") residue += x.n; });
     for (id in v.air) air[id] = cap > 0 ? Math.min(1, v.air[id] / cap) : 0;
+    var mirror = null, d = spec(v).d, coat;
     v.lumps.forEach(function (l) {                             // Niederschlag: was schwebt, trübt; was liegt, ist Bodensatz
       var color = rgbOf(l.id), down = vol > 0 ? l.settled : 1, k;   // ohne Flüssigkeit liegt alles am Boden
       if (!l.made) return;
+      if (l.mirror) {                                          // ein Spiegel am Glas: wie dicht er die benetzte Wand bedeckt
+        if (!(l.n > 0)) return;
+        coat = Math.PI * d * (l.wet / (Math.PI * d * d / 4)) + Math.PI * d * d / 4;      // Wand und Boden in cm², als Zylinder gerechnet
+        mirror = { rgb: color, ml: l.wet, share: Math.min(1, l.n / (MIRROR * coat)) };
+        return;
+      }
       // ein Kolloid streut das Licht: es trübt milchig, in einem blassen Ton seiner Farbe
       if (L.db.species[l.id].colloid) color = color.map(function (c) { return Math.round(c + (255 - c) * 0.6); });
       for (k = 0; k < 3; k++) {
@@ -4038,6 +4050,8 @@
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
       cloud: { rgb: cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), alpha: vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0 },
       sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: loose },
+      // mirror: ein Spiegel am Glas (Farbe, Füllhöhe in mL, bis zu der er reicht, und wie dicht er ist, 0 bis 1), sonst null
+      mirror: mirror,
       // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell
       pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,

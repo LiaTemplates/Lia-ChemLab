@@ -497,7 +497,8 @@
     "spinFlow": "Tá rud éigin fós ag sileadh – fan ar dtús.",
     "spinEmpty": "Cuir triaileadán isteach ar dtús.",
     "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse.",
-    "part.electrode-Pb": "leictreoid luaidhe"
+    "part.electrode-Pb": "leictreoid luaidhe",
+    "say.mirror": "{vessel}: Cruthaítear scáthán de {name} ar bhalla na gloine."
   },
   "names": {
     "H2O(l)": "uisce",
@@ -733,6 +734,25 @@
     "Pb(s)": "luaidhe",
     "Pb^2+(aq)": "ian luaidhe(II)",
     "PbSO4(s)": "sulfáit luaidhe(II)",
-    "PbO2(s)": "ocsaíd luaidhe(IV)"
+    "PbO2(s)": "ocsaíd luaidhe(IV)",
+    "CH3CHO(aq)": "eatánal (aicéataildéad)",
+    "CH3COCH3(aq)": "aicéatón (própánón)",
+    "C6H12O6(aq)": "glúcós",
+    "C6H11O7-(aq)": "ian glúcónáite",
+    "C4H4O6^2-(aq)": "ian tartráite",
+    "Cu(C4H4O6)2^2-(aq)": "coimpléasc tartráit chopair",
+    "Cu2O(s)": "ocsaíd chopair(I)",
+    "C6H12(aq)": "heicséin",
+    "C6H14(aq)": "heacsán",
+    "C6H12Br2(aq)": "1,2-dibrómaiheacsán",
+    "Fehling I": "Fehling I (tuaslagán sulfáit chopair)",
+    "Fehling II": "Fehling II (tuaslagán alcaileach tartráite)",
+    "Tollens": "imoibrí Tollens (níotráit airgid amóinia)",
+    "ethanal": "tuaslagán eatánail (1 mol/L)",
+    "glucose": "tuaslagán glúcóis 5 %",
+    "acetone": "aicéatón",
+    "hexene": "heicséin",
+    "hexane": "heacsán",
+    "bromine water": "uisce bróimín (0,02 mol/L)"
   }
 }

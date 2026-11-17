@@ -497,7 +497,8 @@
     "spinFlow": "Encara flueix alguna cosa: espera primer.",
     "spinEmpty": "Primer posa-hi un tub d'assaig.",
     "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell.",
-    "part.electrode-Pb": "elèctrode de plom"
+    "part.electrode-Pb": "elèctrode de plom",
+    "say.mirror": "{vessel}: A la paret del vidre es forma un mirall de {name}."
   },
   "names": {
     "H2O(l)": "aigua",
@@ -733,6 +734,25 @@
     "Pb(s)": "plom",
     "Pb^2+(aq)": "ió plom(II)",
     "PbSO4(s)": "sulfat de plom(II)",
-    "PbO2(s)": "òxid de plom(IV)"
+    "PbO2(s)": "òxid de plom(IV)",
+    "CH3CHO(aq)": "etanal (acetaldehid)",
+    "CH3COCH3(aq)": "acetona (propanona)",
+    "C6H12O6(aq)": "glucosa",
+    "C6H11O7-(aq)": "ió gluconat",
+    "C4H4O6^2-(aq)": "ió tartrat",
+    "Cu(C4H4O6)2^2-(aq)": "complex de tartrat de coure",
+    "Cu2O(s)": "òxid de coure(I)",
+    "C6H12(aq)": "hexè",
+    "C6H14(aq)": "hexà",
+    "C6H12Br2(aq)": "1,2-dibromohexà",
+    "Fehling I": "Fehling I (solució de sulfat de coure)",
+    "Fehling II": "Fehling II (solució alcalina de tartrat)",
+    "Tollens": "reactiu de Tollens (nitrat de plata amoniacal)",
+    "ethanal": "solució d'etanal (1 mol/L)",
+    "glucose": "solució de glucosa 5 %",
+    "acetone": "acetona",
+    "hexene": "hexè",
+    "hexane": "hexà",
+    "bromine water": "aigua de brom (0,02 mol/L)"
   }
 }

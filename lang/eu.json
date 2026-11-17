@@ -497,7 +497,8 @@
     "spinFlow": "Oraindik zerbait isurtzen ari da: itxaron lehenik.",
     "spinEmpty": "Jarri lehenik saiakuntza-hodi bat.",
     "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia.",
-    "part.electrode-Pb": "berunezko elektrodoa"
+    "part.electrode-Pb": "berunezko elektrodoa",
+    "say.mirror": "{vessel}: Beiraren hormari {name} ispilu bat sortzen zaio."
   },
   "names": {
     "H2O(l)": "ura",
@@ -733,6 +734,25 @@
     "Pb(s)": "beruna",
     "Pb^2+(aq)": "berun(II) ioia",
     "PbSO4(s)": "berun(II) sulfatoa",
-    "PbO2(s)": "berun(IV) oxidoa"
+    "PbO2(s)": "berun(IV) oxidoa",
+    "CH3CHO(aq)": "etanala (azetaldehidoa)",
+    "CH3COCH3(aq)": "azetona (propanona)",
+    "C6H12O6(aq)": "glukosa",
+    "C6H11O7-(aq)": "glukonato ioia",
+    "C4H4O6^2-(aq)": "tartrato ioia",
+    "Cu(C4H4O6)2^2-(aq)": "kobre tartratoaren konplexua",
+    "Cu2O(s)": "kobre(I) oxidoa",
+    "C6H12(aq)": "hexenoa",
+    "C6H14(aq)": "hexanoa",
+    "C6H12Br2(aq)": "1,2-dibromohexanoa",
+    "Fehling I": "Fehling I (kobre sulfato disoluzioa)",
+    "Fehling II": "Fehling II (tartrato disoluzio alkalinoa)",
+    "Tollens": "Tollens erreaktiboa (zilar nitrato amoniakaduna)",
+    "ethanal": "etanal disoluzioa (1 mol/L)",
+    "glucose": "glukosa disoluzioa % 5",
+    "acetone": "azetona",
+    "hexene": "hexenoa",
+    "hexane": "hexanoa",
+    "bromine water": "bromo-ura (0,02 mol/L)"
   }
 }

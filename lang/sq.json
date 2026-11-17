@@ -497,7 +497,8 @@
     "spinFlow": "Ende po rrjedh diçka – prisni së pari.",
     "spinEmpty": "Së pari vendosni një provëz.",
     "hint.centrifuge": "Tani prek provëzën që duhet të futet në centrifugë – ose tavolinën.",
-    "part.electrode-Pb": "elektrodë plumbi"
+    "part.electrode-Pb": "elektrodë plumbi",
+    "say.mirror": "{vessel}: Në murin e qelqit formohet një pasqyrë prej {name}."
   },
   "names": {
     "H2O(l)": "ujë",
@@ -733,6 +734,25 @@
     "Pb(s)": "plumb",
     "Pb^2+(aq)": "jon plumbi(II)",
     "PbSO4(s)": "sulfat plumbi(II)",
-    "PbO2(s)": "oksid plumbi(IV)"
+    "PbO2(s)": "oksid plumbi(IV)",
+    "CH3CHO(aq)": "etanal (acetaldehid)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukozë",
+    "C6H11O7-(aq)": "jon glukonat",
+    "C4H4O6^2-(aq)": "jon tartrat",
+    "Cu(C4H4O6)2^2-(aq)": "kompleks tartrat bakri",
+    "Cu2O(s)": "oksid bakri(I)",
+    "C6H12(aq)": "heksen",
+    "C6H14(aq)": "heksan",
+    "C6H12Br2(aq)": "1,2-dibromoheksan",
+    "Fehling I": "Fehling I (tretësirë sulfati bakri)",
+    "Fehling II": "Fehling II (tretësirë alkaline tartrati)",
+    "Tollens": "reagjenti i Tollensit (nitrat argjendi amoniakal)",
+    "ethanal": "tretësirë etanali (1 mol/L)",
+    "glucose": "tretësirë glukoze 5 %",
+    "acetone": "aceton",
+    "hexene": "heksen",
+    "hexane": "heksan",
+    "bromine water": "ujë bromi (0,02 mol/L)"
   }
 }

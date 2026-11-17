@@ -497,7 +497,8 @@
     "spinFlow": "Det renner fortsatt noe – vent først.",
     "spinEmpty": "Sett først inn et reagensrør.",
     "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken.",
-    "part.electrode-Pb": "blyelektrode"
+    "part.electrode-Pb": "blyelektrode",
+    "say.mirror": "{vessel}: Det dannes et speil av {name} på glassveggen."
   },
   "names": {
     "H2O(l)": "vann",
@@ -733,6 +734,25 @@
     "Pb(s)": "bly",
     "Pb^2+(aq)": "bly(II)-ion",
     "PbSO4(s)": "bly(II)sulfat",
-    "PbO2(s)": "bly(IV)oksid"
+    "PbO2(s)": "bly(IV)oksid",
+    "CH3CHO(aq)": "etanal (acetaldehyd)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukose",
+    "C6H11O7-(aq)": "glukonation",
+    "C4H4O6^2-(aq)": "tartration",
+    "Cu(C4H4O6)2^2-(aq)": "kobbertartratkompleks",
+    "Cu2O(s)": "kobber(I)oksid",
+    "C6H12(aq)": "heksen",
+    "C6H14(aq)": "heksan",
+    "C6H12Br2(aq)": "1,2-dibromheksan",
+    "Fehling I": "Fehling I (kobbersulfatløsning)",
+    "Fehling II": "Fehling II (basisk tartratløsning)",
+    "Tollens": "Tollens' reagens (ammoniakalsk sølvnitrat)",
+    "ethanal": "etanalløsning (1 mol/L)",
+    "glucose": "glukoseløsning 5 %",
+    "acetone": "aceton",
+    "hexene": "heksen",
+    "hexane": "heksan",
+    "bromine water": "bromvann (0,02 mol/L)"
   }
 }

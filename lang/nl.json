@@ -497,7 +497,8 @@
     "spinFlow": "Er stroomt nog iets – wacht eerst.",
     "spinEmpty": "Zet eerst een reageerbuis erin.",
     "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel.",
-    "part.electrode-Pb": "loodelektrode"
+    "part.electrode-Pb": "loodelektrode",
+    "say.mirror": "{vessel}: Op de glaswand vormt zich een spiegel van {name}."
   },
   "names": {
     "H2O(l)": "water",
@@ -733,6 +734,25 @@
     "Pb(s)": "lood",
     "Pb^2+(aq)": "lood(II)-ion",
     "PbSO4(s)": "lood(II)sulfaat",
-    "PbO2(s)": "lood(IV)oxide"
+    "PbO2(s)": "lood(IV)oxide",
+    "CH3CHO(aq)": "ethanal (aceetaldehyde)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glucose",
+    "C6H11O7-(aq)": "gluconaation",
+    "C4H4O6^2-(aq)": "tartraation",
+    "Cu(C4H4O6)2^2-(aq)": "kopertartraatcomplex",
+    "Cu2O(s)": "koper(I)oxide",
+    "C6H12(aq)": "hexeen",
+    "C6H14(aq)": "hexaan",
+    "C6H12Br2(aq)": "1,2-dibroomhexaan",
+    "Fehling I": "Fehling I (kopersulfaatoplossing)",
+    "Fehling II": "Fehling II (basische tartraatoplossing)",
+    "Tollens": "Tollens-reagens (ammoniakaal zilvernitraat)",
+    "ethanal": "ethanaloplossing (1 mol/L)",
+    "glucose": "glucoseoplossing 5 %",
+    "acetone": "aceton",
+    "hexene": "hexeen",
+    "hexane": "hexaan",
+    "bromine water": "broomwater (0,02 mol/L)"
   }
 }

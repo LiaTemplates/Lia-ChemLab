@@ -497,7 +497,8 @@
     "spinFlow": "Qualcosa scorre ancora: aspetta prima.",
     "spinEmpty": "Metti prima una provetta.",
     "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco.",
-    "part.electrode-Pb": "elettrodo di piombo"
+    "part.electrode-Pb": "elettrodo di piombo",
+    "say.mirror": "{vessel}: sulla parete del vetro si forma uno specchio di {name}."
   },
   "names": {
     "H2O(l)": "acqua",
@@ -733,6 +734,25 @@
     "Pb(s)": "piombo",
     "Pb^2+(aq)": "ione piombo(II)",
     "PbSO4(s)": "solfato di piombo(II)",
-    "PbO2(s)": "ossido di piombo(IV)"
+    "PbO2(s)": "ossido di piombo(IV)",
+    "CH3CHO(aq)": "etanale (acetaldeide)",
+    "CH3COCH3(aq)": "acetone (propanone)",
+    "C6H12O6(aq)": "glucosio",
+    "C6H11O7-(aq)": "ione gluconato",
+    "C4H4O6^2-(aq)": "ione tartrato",
+    "Cu(C4H4O6)2^2-(aq)": "complesso tartrato di rame",
+    "Cu2O(s)": "ossido di rame(I)",
+    "C6H12(aq)": "esene",
+    "C6H14(aq)": "esano",
+    "C6H12Br2(aq)": "1,2-dibromoesano",
+    "Fehling I": "Fehling I (soluzione di solfato di rame)",
+    "Fehling II": "Fehling II (soluzione alcalina di tartrato)",
+    "Tollens": "reattivo di Tollens (nitrato d'argento ammoniacale)",
+    "ethanal": "soluzione di etanale (1 mol/L)",
+    "glucose": "soluzione di glucosio 5 %",
+    "acetone": "acetone",
+    "hexene": "esene",
+    "hexane": "esano",
+    "bromine water": "acqua di bromo (0,02 mol/L)"
   }
 }

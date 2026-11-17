@@ -152,7 +152,7 @@
       "say.tap": "{vessel}: tap set to “{state}”", "say.tapOff": "{vessel}: tap closed",
       "say.tapFull": "{vessel}: The vessel below is full, the tap closes.",
       "say.solid": "{vessel}: A {color} precipitate forms.", "say.dissolved": "{vessel}: The precipitate dissolves.",
-      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
+      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the glass.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
       "say.crystals": "{vessel}: {color} crystals separate out.",
       "say.dissolvedOne": "{vessel}: The {color} precipitate dissolves.",
       "the.white": "white", "the.yellow": "yellow", "the.orange": "orange", "the.red": "red",
@@ -399,6 +399,7 @@
       case "gone": vars.name = nameOf(L.species(event.species), lang); break;
       case "solid":
         if (event.colloid) { vars.name = nameOf(L.species(event.species), lang); return text("say.haze", lang, vars); }
+        if (event.mirror) { vars.name = nameOf(L.species(event.species), lang); return text("say.mirror", lang, vars); }
         if (event.grown) { vars.color = text("the." + event.color, lang); return text("say.crystals", lang, vars); }
         vars.color = text("solid." + event.color, lang);
         break;
@@ -580,6 +581,13 @@
       out += '<path class="cl-crust" d="' + shape.fill(shape.bottom - layer) + '"/>';
     }
     out += solids(w, box, shape.tall, ctx, w.ml > 0.005 ? shape.top : null);
+    // ein Spiegel am Glas (Silberspiegel): bis zur Höhe, bei der er entstand, je dichter, desto deckender; mit einem Lichtstreif
+    if (w.mirror && w.mirror.share > 0.02 && L.parts[w.type] && L.parts[w.type].surface) {
+      layer = Math.min(shape.bottom - 2, L.parts[w.type].surface(Object.assign({}, w, { ml: w.mirror.ml })));
+      out += '<path class="cl-mirror" d="' + shape.fill(layer) + '" fill="' + css(w.mirror.rgb) + '" fill-opacity="' + Math.min(0.95, w.mirror.share).toFixed(2) + '"/>' +
+        '<line class="cl-mirror-shine" x1="' + f(shape.x0 + (shape.x1 - shape.x0) * 0.25) + '" x2="' + f(shape.x0 + (shape.x1 - shape.x0) * 0.25) + '" y1="' + f(layer + 3) + '" y2="' + f(shape.bottom - 4) +
+        '" stroke-opacity="' + (0.7 * Math.min(1, w.mirror.share)).toFixed(2) + '"/>';
+    }
     if (w.ml > 0.005) {
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf
       if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.bubbles(box, Math.max(w.gas, w.steam), ctx.t, ctx.seed || 1, ctx.still) + "</g>";

@@ -497,7 +497,8 @@
     "spinFlow": "Dar kažkas teka – pirmiausia palaukite.",
     "spinEmpty": "Pirmiausia įstatykite mėgintuvėlį.",
     "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą.",
-    "part.electrode-Pb": "švino elektrodas"
+    "part.electrode-Pb": "švino elektrodas",
+    "say.mirror": "{vessel}: ant stiklo sienelės susidaro veidrodis: {name}."
   },
   "names": {
     "H2O(l)": "vanduo",
@@ -733,6 +734,25 @@
     "Pb(s)": "švinas",
     "Pb^2+(aq)": "švino(II) jonas",
     "PbSO4(s)": "švino(II) sulfatas",
-    "PbO2(s)": "švino(IV) oksidas"
+    "PbO2(s)": "švino(IV) oksidas",
+    "CH3CHO(aq)": "etanalis (acetaldehidas)",
+    "CH3COCH3(aq)": "acetonas (propanonas)",
+    "C6H12O6(aq)": "gliukozė",
+    "C6H11O7-(aq)": "gliukonato jonas",
+    "C4H4O6^2-(aq)": "tartrato jonas",
+    "Cu(C4H4O6)2^2-(aq)": "vario tartrato kompleksas",
+    "Cu2O(s)": "vario(I) oksidas",
+    "C6H12(aq)": "heksenas",
+    "C6H14(aq)": "heksanas",
+    "C6H12Br2(aq)": "1,2-dibromheksanas",
+    "Fehling I": "Fehlingo I (vario sulfato tirpalas)",
+    "Fehling II": "Fehlingo II (šarminis tartrato tirpalas)",
+    "Tollens": "Tolenso reagentas (amoniakinis sidabro nitratas)",
+    "ethanal": "etanalio tirpalas (1 mol/L)",
+    "glucose": "gliukozės tirpalas 5 %",
+    "acetone": "acetonas",
+    "hexene": "heksenas",
+    "hexane": "heksanas",
+    "bromine water": "bromo vanduo (0,02 mol/L)"
   }
 }

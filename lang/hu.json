@@ -497,7 +497,8 @@
     "spinFlow": "Még folyik valami – előbb várjon.",
     "spinEmpty": "Előbb tegyen bele egy kémcsövet.",
     "hint.centrifuge": "Most koppints arra a kémcsőre, amely a centrifugába kerüljön – vagy az asztalra.",
-    "part.electrode-Pb": "ólomelektród"
+    "part.electrode-Pb": "ólomelektród",
+    "say.mirror": "{vessel}: Az üveg falán {name}tükör képződik."
   },
   "names": {
     "H2O(l)": "víz",
@@ -733,6 +734,25 @@
     "Pb(s)": "ólom",
     "Pb^2+(aq)": "ólom(II)-ion",
     "PbSO4(s)": "ólom(II)-szulfát",
-    "PbO2(s)": "ólom(IV)-oxid"
+    "PbO2(s)": "ólom(IV)-oxid",
+    "CH3CHO(aq)": "etanal (acetaldehid)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glükóz",
+    "C6H11O7-(aq)": "glükonátion",
+    "C4H4O6^2-(aq)": "tartarátion",
+    "Cu(C4H4O6)2^2-(aq)": "réz-tartarát-komplex",
+    "Cu2O(s)": "réz(I)-oxid",
+    "C6H12(aq)": "hexén",
+    "C6H14(aq)": "hexán",
+    "C6H12Br2(aq)": "1,2-dibrómhexán",
+    "Fehling I": "Fehling I (réz-szulfát-oldat)",
+    "Fehling II": "Fehling II (lúgos tartarátoldat)",
+    "Tollens": "Tollens-reagens (ammóniás ezüst-nitrát)",
+    "ethanal": "etanaloldat (1 mol/L)",
+    "glucose": "glükózoldat 5 %",
+    "acetone": "aceton",
+    "hexene": "hexén",
+    "hexane": "hexán",
+    "bromine water": "brómos víz (0,02 mol/L)"
   }
 }
