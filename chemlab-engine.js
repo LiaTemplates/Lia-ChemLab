@@ -663,6 +663,20 @@
   // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
   // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
   registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
+  // Messzylinder: hoch und schmal, mit feiner Skala; er wird nicht erhitzt (noHeat). tol: Fehlergrenze in mL, mit der sich eine Menge
+  // bis zur Marke einfüllen oder abmessen lässt, wenn die Anzeigen streuen (DIN ISO 4788, Klasse B)
+  registerPart("cylinder", {
+    kind: "vessel", size: 100, noHeat: true,
+    sizes: {
+      10: { cap: 10, d: 1.3, Cv: 10, loss: 0.04, heat: 0.06, tol: 0.2 },
+      25: { cap: 25, d: 1.9, Cv: 16, loss: 0.06, heat: 0.08, tol: 0.5 },
+      50: { cap: 50, d: 2.4, Cv: 24, loss: 0.08, heat: 0.10, tol: 1 },
+      100: { cap: 100, d: 3.0, Cv: 36, loss: 0.11, heat: 0.12, tol: 1 }
+    }
+  });
+  // Vollpipetten: eine Probe in der Hand; sie zieht aus einem Gefäß genau ihr Volumen auf und gibt es in ein anderes
+  var PIPETTE = 0.002;                                            // Fehlergrenze als Anteil (Klasse AS: 5 mL ±0,3 %, 25 mL ±0,12 %)
+  [5, 10, 20, 25].forEach(function (ml) { registerPart("pipette" + ml, { kind: "test", probe: "pipette", ml: ml, label: "pipette" }); });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
@@ -935,7 +949,7 @@
       var fits = !!(def && def.kind === "vessel" && !def.dispenser);       // in oder über einem Gefäß, nicht an einer Bürette
       // Elektroden und die Geräte eines Stromkreises gehören an ein Gefäß, in dem Elektroden Platz haben
       if (item.in != null && (!fits || ((own.electrode || own.circuit) && !def.electrodes))) throw fail("place", item.in);
-      if (item.in != null && def.insulated && (own.flames || own.bath)) throw fail("place", item.in);
+      if (item.in != null && (def.insulated || def.noHeat) && (own.flames || own.bath)) throw fail("place", item.in);
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
@@ -1250,13 +1264,41 @@
     return Math.max(0, ml);
   }
 
-  function pour(lab, fromId, toId, ml) {
-    var from = vessel(lab, fromId), to = vessel(lab, toId);
+  // Fehlergrenze in mL, mit der sich ml umgießen lassen: Ist ein Messzylinder beteiligt, misst man an ihm (bis zur Marke füllen
+  // oder ablesen) und es gilt seine Grenze, bei zweien die kleinere; sonst nach Augenmaß 5 % (pour: eigener Anteil eines Gefäßes)
+  function tolerance(from, to, ml) {
+    var a = spec(from).tol, b = spec(to).tol, share = L.parts[from.type].pour;
+    if (a != null || b != null) return Math.min(a != null ? a : Infinity, b != null ? b : Infinity);
+    return (share != null ? share : 0.05) * ml;
+  }
+
+  // Umgießen. Streuen die Anzeigen (scatter), trifft man eine eingestellte Menge nur so genau, wie die Gefäße es erlauben:
+  // am Messzylinder misst man ab (siehe tolerance); accuracy: Anteil, der das ersetzt
+  // (Pipette). Alles auszugießen gelingt immer; wer nur einen Teil abgießt, lässt immer einen Rest (so bleibt der Bodensatz im Glas)
+  function pour(lab, fromId, toId, ml, accuracy) {
+    var from = vessel(lab, fromId), to = vessel(lab, toId), most, whole;
     if (!from || !to || from === to || from.broken || to.broken) return false;
-    ml = Math.min(+ml || 0, pourable(lab, fromId), free(lab, to));
+    most = pourable(lab, fromId);
+    ml = +ml || 0;
+    whole = ml >= most - 1e-6;
+    if (lab.scatter != null && !whole) {
+      ml += (accuracy != null ? accuracy * ml : tolerance(from, to, ml)) * jitter(lab.scatter, fromId + ">" + toId, "pour" + lab.tick);
+      ml = Math.min(ml, most - 0.01);
+    }
+    ml = Math.min(ml, most, free(lab, to));
     if (!(ml > 1e-6)) return false;
     lab.flows.push({ from: fromId, to: toId, left: ml, rate: ml / duration(ml) });
     return true;
+  }
+
+  // Mit einer Vollpipette genau ml aus einem Gefäß in ein anderes: nur, wenn so viel darin ist und im Ziel Platz hat
+  // nicht aus einer Bürette oder einem Trichter (die hängen) und nicht durch einen Stopfen
+  function pipette(lab, fromId, toId, ml) {
+    var from = vessel(lab, fromId), to = vessel(lab, toId);
+    if (!from || !to || from === to || from.broken || to.broken || L.parts[from.type].dispenser) return false;
+    if (stoppered(lab, from) || stoppered(lab, to)) return false;
+    if (pourable(lab, fromId) < ml - 1e-9 || free(lab, to) < ml - 1e-9) return false;
+    return pour(lab, fromId, toId, ml, PIPETTE);
   }
 
   function empty(lab, vesselId) {
@@ -1288,7 +1330,7 @@
     })) host = null;                                           // dort steht schon einer
     if (host && def.electrode && (!L.parts[host.type].electrodes || electrodesIn(lab, host.id).length >= 2)) host = null;      // kein Platz für eine Elektrode
     if (host && def.circuit && !L.parts[host.type].electrodes) host = null;        // ein Stromkreis braucht ein Gefäß für Elektroden
-    if (host && L.parts[host.type].insulated && (def.flames || def.bath)) host = null;      // das Kalorimeter kommt nicht auf Brenner oder Wasserbad
+    if (host && (L.parts[host.type].insulated || L.parts[host.type].noHeat) && (def.flames || def.bath)) host = null;      // Kalorimeter und Messzylinder werden nicht erhitzt
     if (host && def.bridge && bridged(lab, host.id)) host = null;                  // dort hängt schon eine Salzbrücke
     if (host && def.duct && toolAt(lab, host, function (d) { return d.duct; })) host = null;      // dort steckt schon ein Kühler oder Rohr
     if (host && def.stopper && toolAt(lab, host, function (d) { return d.stopper; })) host = null;      // dort sitzt schon ein Stopfen
@@ -4265,7 +4307,7 @@
       if (e.key === "added") keep(e.vessel, e);
       else if (e.key === "emptied" || e.key === "disposed") put[e.vessel] = [];
       else if (e.key === "removed") delete put[e.part];
-      else if (e.key === "poured") {
+      else if (e.key === "poured" || e.key === "pipetted") {
         from = put[e.from] || [];
         total = from.reduce(function (sum, c) { return sum + liquid(c); }, 0);
         share = total > 0 ? Math.min(1, e.ml / total) : 0;
@@ -4385,6 +4427,7 @@
   L.view = view;
   L.reading = reading;
   L.hazards = hazards;
+  L.pipette = pipette;
   L.waste = waste;
   L.dispose = dispose;
   L.BINS = BINS;

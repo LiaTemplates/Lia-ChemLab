@@ -147,6 +147,43 @@
     }
   }));
 
+  // ------------------------------------------------------------------ Messzylinder
+
+  function cylShape(d) {
+    var s = S.cylinder[d.data.size || d.data.cap] || S.cylinder[100], r = cm(s[0] / 2 - 2);
+    return { id: "cylinder" + s[0], floor: cm(S.cylFoot + 2), rim: cm(s[1] + S.cylFoot), size: s, inner: function () { return r; } };
+  }
+
+  L.registerLook("cylinder", "lab", vessel({
+    tall: true, thick: 0.05, lip: 0.06,
+    shape: cylShape,
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.cylinder.surface(w)) : cm(S.cylFoot + 2); },
+    // der sechseckige Fuß
+    extra: function (group, kit, d, shape) {
+      var foot = new THREE.Mesh(new THREE.CylinderGeometry(cm(shape.size[0] / 2 + 10), cm(shape.size[0] / 2 + 10), cm(S.cylFoot), 6), fx.glass());
+      foot.position.y = cm(S.cylFoot) / 2;
+      foot.renderOrder = 2;
+      group.add(foot);
+      group.userData.marks = null;
+    },
+    // Skala: kleine Striche, an den großen die Zahl, wenn Zahlen gezeigt werden
+    refresh: function (group, d, shape) {
+      var u = group.userData, key = shape.id + (d.ctx.numbers ? "#" : ""), s = shape.size, cap = d.data.cap, list = [], ml, major;
+      if (u.marksKey === key) return;
+      u.marksKey = key;
+      if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); u.marks = null; }
+      if (fx.style.marks == null) return;
+      for (ml = s[2]; ml <= cap + 1e-9; ml += s[2]) {
+        major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
+        list.push({ y: cm(S.cylFoot + 2 + ml / cap * (s[1] - 14)), long: major, text: d.ctx.numbers && major ? String(Math.round(ml * 10) / 10) : "" });
+      }
+      u.marks = scale(cm(s[0] / 2) + 0.012, shape.rim, list, 1);
+      u.marks.position.y = shape.rim / 2;
+      u.marks.renderOrder = 3;
+      group.add(u.marks);
+    }
+  }));
+
   // ------------------------------------------------------------------ Abdampfschale
 
   var dishShape = {
