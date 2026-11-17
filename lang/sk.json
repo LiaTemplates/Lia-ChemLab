@@ -35,7 +35,7 @@
     "pipetteShort": "Nie je tam dosť pre pipetu.",
     "pipetteFull": "V tej nádobe na to nie je miesto.",
     "pipetteDrawn": "Nasaté z {vessel}.",
-    "noHeat": "Odmerný valec sa nezohrieva.",
+    "noHeat": "Odmerné a plynové valce sa nezahrievajú.",
     "pipetteSame": "Pipeta vypúšťa do inej nádoby.",
     "hint.funnel": "Teraz ťukni na nádobu, nad ktorou má lievik visieť.",
     "notHere.funnel": "Pri lieviku to nejde.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Teraz ťukni na skúmavku, ktorá má ísť do centrifúgy – alebo na stôl.",
     "part.electrode-Pb": "olovená elektróda",
     "say.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo z látky {name}.",
-    "hidden.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo."
+    "hidden.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo.",
+    "part.jar": "plynový valec",
+    "bin.oxidize": "najprv peroxidom vodíka zoxidovať na síran",
+    "why.oxidize": "Siričitan uvoľňuje s kyselinami oxid siričitý.",
+    "why.silver": "Amoniakálny roztok striebra tvorí pri státí výbušný nitrid striebra; učiteľ ho hneď zneškodní."
   },
   "names": {
     "H2O(l)": "voda",

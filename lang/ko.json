@@ -35,7 +35,7 @@
     "pipetteShort": "피펫에 부족하다.",
     "pipetteFull": "그 용기에는 자리가 없다.",
     "pipetteDrawn": "{vessel}에서 빨아들였다.",
-    "noHeat": "눈금실린더는 가열하지 않는다.",
+    "noHeat": "눈금실린더와 기체 실린더는 가열하지 않습니다.",
     "pipetteSame": "피펫은 다른 용기에 옮긴다.",
     "hint.funnel": "이제 깔때기를 걸 용기를 누르세요.",
     "notHere.funnel": "깔때기에서는 그렇게 할 수 없다.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "이제 원심분리기에 넣을 시험관을 누르세요. 또는 실험대를 누르세요.",
     "part.electrode-Pb": "납 전극",
     "say.mirror": "{vessel}: 용기 벽에 {name} 거울이 생깁니다.",
-    "hidden.mirror": "{vessel}: 용기 벽에 거울이 생깁니다."
+    "hidden.mirror": "{vessel}: 용기 벽에 거울이 생깁니다.",
+    "part.jar": "기체 실린더",
+    "bin.oxidize": "먼저 과산화수소로 황산염까지 산화하세요",
+    "why.oxidize": "아황산염은 산과 만나 이산화황을 냅니다.",
+    "why.silver": "암모니아성 은 용액은 오래 두면 폭발성 질화은이 생깁니다. 선생님이 바로 처리합니다."
   },
   "names": {
     "H2O(l)": "물",

@@ -35,7 +35,7 @@
     "pipetteShort": "Ez dago nahikoa pipetarako.",
     "pipetteFull": "Ontzi horretan ez dago tokirik.",
     "pipetteDrawn": "{vessel} ontzitik xurgatua.",
-    "noHeat": "Neurketa-probeta ez da berotzen.",
+    "noHeat": "Probeta graduatuak eta gas-probetak ez dira berotzen.",
     "pipetteSame": "Pipetak beste ontzi batean husten du.",
     "hint.funnel": "Ukitu orain inbutua gainean izan behar duen ontzia.",
     "notHere.funnel": "Inbutu batean ezin da hori egin.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia.",
     "part.electrode-Pb": "berunezko elektrodoa",
     "say.mirror": "{vessel}: Ontziaren hormari {name} ispilu bat sortzen zaio.",
-    "hidden.mirror": "{vessel}: Ontziaren hormari ispilu bat sortzen zaio."
+    "hidden.mirror": "{vessel}: Ontziaren hormari ispilu bat sortzen zaio.",
+    "part.jar": "gas-probeta",
+    "bin.oxidize": "oxidatu lehenik sulfatora hidrogeno peroxidoarekin",
+    "why.oxidize": "Sulfitoak sufre dioxidoa askatzen du azidoekin.",
+    "why.silver": "Zilar disoluzio amoniakadunak, egonean, zilar nitruro lehergarria sortzen du; irakasleak berehala suntsitzen du."
   },
   "names": {
     "H2O(l)": "ura",

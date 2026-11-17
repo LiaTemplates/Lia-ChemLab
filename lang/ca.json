@@ -35,7 +35,7 @@
     "pipetteShort": "No n'hi ha prou per a la pipeta.",
     "pipetteFull": "En aquest recipient no hi cap.",
     "pipetteDrawn": "Xuclat de {vessel}.",
-    "noHeat": "Una proveta no s'escalfa.",
+    "noHeat": "Les provetes graduades i les de gasos no s'escalfen.",
     "pipetteSame": "La pipeta aboca en un altre recipient.",
     "hint.funnel": "Toca ara el recipient sobre el qual ha de penjar l'embut.",
     "notHere.funnel": "En un embut això no es pot fer.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell.",
     "part.electrode-Pb": "elèctrode de plom",
     "say.mirror": "{vessel}: A la paret del recipient es forma un mirall de {name}.",
-    "hidden.mirror": "{vessel}: A la paret del recipient es forma un mirall."
+    "hidden.mirror": "{vessel}: A la paret del recipient es forma un mirall.",
+    "part.jar": "proveta de gasos",
+    "bin.oxidize": "oxida-ho primer a sulfat amb peròxid d'hidrogen",
+    "why.oxidize": "El sulfit allibera diòxid de sofre amb els àcids.",
+    "why.silver": "La solució amoniacal de plata forma, en repòs, nitrur de plata explosiu; el professorat la destrueix de seguida."
   },
   "names": {
     "H2O(l)": "aigua",

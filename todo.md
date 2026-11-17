@@ -21,11 +21,7 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
 
 ## Kleinere Punkte
 
-- [ ] **Stand-Zeile in der README** ist veraltet („Meilenstein 6 von 7“). Sie zählt Zentrifuge, Messzylinder, Pipette, Trichter, Brennstoffzelle, Bleiakku, organische Nachweise usw. nicht auf.
-- [ ] **Standzylinder** als Gefäß. Die Knallgas-Folie nutzt ersatzweise ein 600-mL-Becherglas mit Gummistopfen.
-- [ ] **Stark gefärbte Lösungen in 3D** prüfen (etwa Permanganat), seit die Flüssigkeit dünner gebrochen wird; sie könnten blasser wirken.
-- [ ] **Tollens-Reste**: Übrig gebliebenes Reagenz geht zu den Schwermetallen. Im Labor macht man es vorher unschädlich (Gefahr von explosivem Silbernitrid).
-- [ ] Angebote aus früheren Schritten, noch unbeantwortet: Sulfit bei der Entsorgung und die pH-Regel bei der GHS-Kennzeichnung (beides unter „Grenzen“ vermerkt).
+Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nutzt ihn), stark gefärbte Lösungen in 3D geprüft (sie bleiben kräftig), Tollens-Reste zur Lehrkraft, Sulfit erst oxidieren, pH-Regel der CLP für Ammoniak.
 
 ## Bekannte Grenzen, die man später angehen könnte
 

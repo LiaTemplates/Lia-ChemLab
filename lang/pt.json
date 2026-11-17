@@ -35,7 +35,7 @@
     "pipetteShort": "Não há o suficiente para a pipeta.",
     "pipetteFull": "Esse recipiente não tem espaço.",
     "pipetteDrawn": "Aspirado de {vessel}.",
-    "noHeat": "Uma proveta não se aquece.",
+    "noHeat": "As provetas graduadas e de gases não se aquecem.",
     "pipetteSame": "A pipeta verte noutro recipiente.",
     "hint.funnel": "Toca agora no recipiente sobre o qual o funil deve ficar.",
     "notHere.funnel": "Num funil isso não é possível.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Agora tocar no tubo de ensaio que deve ir para a centrífuga – ou na bancada.",
     "part.electrode-Pb": "elétrodo de chumbo",
     "say.mirror": "{vessel}: forma-se um espelho de {name} na parede do recipiente.",
-    "hidden.mirror": "{vessel}: forma-se um espelho na parede do recipiente."
+    "hidden.mirror": "{vessel}: forma-se um espelho na parede do recipiente.",
+    "part.jar": "proveta de gases",
+    "bin.oxidize": "oxidar primeiro a sulfato com peróxido de hidrogénio",
+    "why.oxidize": "O sulfito liberta dióxido de enxofre com ácidos.",
+    "why.silver": "A solução amoniacal de prata forma, em repouso, nitreto de prata explosivo; o professor destrói-a logo."
   },
   "names": {
     "H2O(l)": "água",

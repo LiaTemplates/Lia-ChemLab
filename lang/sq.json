@@ -35,7 +35,7 @@
     "pipetteShort": "Nuk mjafton për pipetën.",
     "pipetteFull": "Në atë enë nuk ka vend.",
     "pipetteDrawn": "U thith nga {vessel}.",
-    "noHeat": "Cilindri matës nuk nxehet.",
+    "noHeat": "Cilindrat matës dhe cilindrat për gaze nuk ngrohen.",
     "pipetteSame": "Pipeta derdh në një enë tjetër.",
     "hint.funnel": "Prek tani enën mbi të cilën duhet të varet hinka.",
     "notHere.funnel": "Te hinka kjo nuk bëhet.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Tani prek provëzën që duhet të futet në centrifugë – ose tavolinën.",
     "part.electrode-Pb": "elektrodë plumbi",
     "say.mirror": "{vessel}: Në murin e enës formohet një pasqyrë prej {name}.",
-    "hidden.mirror": "{vessel}: Në murin e enës formohet një pasqyrë."
+    "hidden.mirror": "{vessel}: Në murin e enës formohet një pasqyrë.",
+    "part.jar": "cilindër për gaze",
+    "bin.oxidize": "oksidoje së pari në sulfat me peroksid hidrogjeni",
+    "why.oxidize": "Sulfiti çliron dioksid squfuri me acidet.",
+    "why.silver": "Tretësira amoniakale e argjendit, kur qëndron, formon nitrur argjendi shpërthyes; mësuesi e asgjëson menjëherë."
   },
   "names": {
     "H2O(l)": "ujë",

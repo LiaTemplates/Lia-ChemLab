@@ -35,7 +35,7 @@
     "pipetteShort": "Pipeti jaoks ei jätku.",
     "pipetteFull": "Sellesse anumasse ei mahu.",
     "pipetteDrawn": "Imetud anumast {vessel}.",
-    "noHeat": "Mõõtsilindrit ei kuumutata.",
+    "noHeat": "Mõõtsilindreid ja gaasisilindreid ei kuumutata.",
     "pipetteSame": "Pipett tühjendatakse teise anumasse.",
     "hint.funnel": "Puuduta nüüd anumat, mille kohale lehter riputada.",
     "notHere.funnel": "Lehtri juures see ei käi.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda.",
     "part.electrode-Pb": "pliielektrood",
     "say.mirror": "{vessel}: Anuma seinale tekib {name} peegel.",
-    "hidden.mirror": "{vessel}: Anuma seinale tekib peegel."
+    "hidden.mirror": "{vessel}: Anuma seinale tekib peegel.",
+    "part.jar": "gaasisilinder",
+    "bin.oxidize": "oksüdeeri enne vesinikperoksiidiga sulfaadiks",
+    "why.oxidize": "Sulfit eraldab hapetega vääveldioksiidi.",
+    "why.silver": "Ammoniaakne hõbedalahus moodustab seistes plahvatusohtlikku hõbenitriidi; õpetaja muudab selle kohe kahjutuks."
   },
   "names": {
     "H2O(l)": "vesi",

@@ -550,6 +550,18 @@
   }
 
   // Ob die Gefahrstoffangaben eines Reagenzes die Form haben, die hazards() erwartet
+  // ob die Lösung einer Flasche einen extremen pH-Wert hat (≤ 2 oder ≥ 11,5); gerechnet einmal je Flasche und Datenstand
+  var extremes = {};
+  function extreme(id) {
+    var key = id + "|" + L.db.version, l, pH;
+    if (!(key in extremes)) {
+      l = createLab(normalize({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: id, ml: 50 }] }] }));
+      pH = view(l, vessel(l, "b")).pH;
+      extremes[key] = pH != null && (pH <= 2 || pH >= 11.5);
+    }
+    return extremes[key];
+  }
+
   function ghsValid(g) {
     var code = /^GHS0[1-9]$/, num = function (x) { return typeof x === "number" && isFinite(x) && x >= 0; };
     var opt = function (x) { return x == null || num(x); }, codes = function (x) { return Array.isArray(x) && x.every(function (c) { return code.test(c); }); };
@@ -563,7 +575,7 @@
       (g.cmr == null || (Array.isArray(g.cmr) && (g.cmr[0] === 1 || g.cmr[0] === 2) && num(g.cmr[1]))) &&
       (g.stot == null || (Array.isArray(g.stot[0]) ? g.stot.every(stot) : stot(g.stot))) &&
       (g.aq == null || (typeof g.aq === "object" && opt(g.aq.acute) && (g.aq.chronic == null || (Array.isArray(g.aq.chronic) && [1, 2, 3].indexOf(g.aq.chronic[0]) >= 0 && opt(g.aq.chronic[1]))))) &&
-      (g.pure == null || codes(g.pure)) &&
+      (g.pure == null || codes(g.pure)) && (g.xph == null || g.xph === true) &&
       (g.high == null || (Array.isArray(g.high) && g.high.every(function (h) { return Array.isArray(h) && num(h[0]) && code.test(h[1]); }))) &&
       (g.per == null || (typeof g.per === "object" && typeof g.per.species === "string" && num(g.per.M)));
   }
@@ -587,6 +599,8 @@
   //   met: korrosiv gegenüber Metallen ab (H290; dafür gibt es keine Gemisch-Regel, die Grenze folgt der Praxis der Lieferanten): Ätzsymbol mit „Achtung“
   //   pure: Piktogramme nur des reinen Stoffs (entzündbar, brandfördernd …), pureDanger: mit Signalwort „Gefahr“
   //   fixed: die Piktogramme einer Fertiglösung, wie auf ihrem Etikett, signal: "danger" oder "warning"
+  //   xph: eine Säure oder Base ohne spezifische Grenze für Hautätzung: ab 1 % hautätzend, wenn die Lösung pH ≤ 2 oder ≥ 11,5 hat
+  //        (Anhang I, Tabelle 3.2.4); der pH-Wert ist der, den das Labor für die Flasche rechnet
   // Zurück: { pictograms: ["GHS05", …], signal: "danger" | "warning" | null }
   function hazards(id) {
     var r = reagent(id), g = r.ghs, pct, pics = {}, why = {}, danger = false, any = false, cat, limit, out;
@@ -602,6 +616,7 @@
       if (g.corr[0] != null) { if (pct >= g.corr[0]) mark("GHS05", true); else if (pct >= g.corr[1]) mark("GHS07", false, "skin"); }
       if (pct >= g.corr[2]) mark("GHS05", true); else if (pct >= g.corr[3]) mark("GHS07", false, "skin");
     }
+    if (g.xph && pct >= 1 && extreme(id)) mark("GHS05", true);
     if (g.irrit != null && pct >= g.irrit) mark("GHS07", false, "skin");
     if (g.met != null && pct >= g.met) mark("GHS05", false);
     if (g.ate != null && pct > 0) {
@@ -676,6 +691,15 @@
       25: { cap: 25, d: 1.9, Cv: 16, loss: 0.06, heat: 0.08, tol: 0.5 },
       50: { cap: 50, d: 2.4, Cv: 24, loss: 0.08, heat: 0.10, tol: 1 },
       100: { cap: 100, d: 3.0, Cv: 36, loss: 0.11, heat: 0.12, tol: 1 }
+    }
+  });
+  // Standzylinder (Gaszylinder) ohne Skala, zum Auffangen von Gasen; wird nicht erhitzt
+  registerPart("jar", {
+    kind: "vessel", size: 500, noHeat: true,
+    sizes: {
+      250: { cap: 250, d: 5.0, Cv: 60, loss: 0.16, heat: 0.18 },
+      500: { cap: 500, d: 6.2, Cv: 95, loss: 0.22, heat: 0.24 },
+      1000: { cap: 1000, d: 7.8, Cv: 150, loss: 0.3, heat: 0.32 }
     }
   });
   // Vollpipetten: eine Probe in der Hand; sie zieht aus einem Gefäß genau ihr Volumen auf und gibt es in ein anderes
@@ -1422,8 +1446,10 @@
     v.lumps.forEach(function (l) { if (!l.made) solid += l.n * L.db.species[l.id].M; });
     if (!any && !(vol > 0)) return { bin: null };
     if (alkali) return { bin: "teacher" };
+    if ((v.n["Ag(NH3)2+(aq)"] || 0) > 1e-6) return { bin: "teacher", why: "silver" };      // ammoniakalische Silberlösung
     if (heavy) return { bin: "heavy" };
     if (oxid > 1e-5) return { bin: "reduce" };
+    if ((v.n["SO3^2-(aq)"] || 0) + (v.n["HSO3-(aq)"] || 0) + (v.n["SO2(aq)"] || 0) > 1e-5) return { bin: "oxidize" };      // Sulfit: erst zu Sulfat oxidieren
     if (vol > 0 && organic / vol >= 0.15) return { bin: "organic" };
     if (vol > 0.0005 && harsh(v, vol)) return { bin: "acid" };
     if (solid > 0.01 || (!(vol > 0.0005) && v.lumps.length)) return { bin: "solid" };
@@ -1437,6 +1463,7 @@
     if (!w || w.bin == null || BINS.indexOf(bin) < 0 || spinning(lab, vessel(lab, vesselId))) return null;
     empty(lab, vesselId);
     out = { vessel: vesselId, bin: bin, want: w.bin, right: w.bin === bin || (w.bin === "sink" && bin !== "sink") };
+    if (w.why) out.why = w.why;
     if (w.bin === "sink" && bin !== "sink") out.spare = true;
     return out;
   }

@@ -35,7 +35,7 @@
     "pipetteShort": "Níl go leor ann don phíobán.",
     "pipetteFull": "Níl spás sa soitheach sin.",
     "pipetteDrawn": "Tarraingthe as {vessel}.",
-    "noHeat": "Ní théitear sorcóir tomhais.",
+    "noHeat": "Ní théitear sorcóirí tomhais ná próifeadáin gháis.",
     "pipetteSame": "Scaoileann an píobán isteach i soitheach eile.",
     "hint.funnel": "Tapáil anois an soitheach ar cheart don tonnadóir a bheith os a chionn.",
     "notHere.funnel": "Ní oibríonn sé sin ar thonnadóir.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse.",
     "part.electrode-Pb": "leictreoid luaidhe",
     "say.mirror": "{vessel}: Cruthaítear scáthán de {name} ar bhalla an tsoithigh.",
-    "hidden.mirror": "{vessel}: Cruthaítear scáthán ar bhalla an tsoithigh."
+    "hidden.mirror": "{vessel}: Cruthaítear scáthán ar bhalla an tsoithigh.",
+    "part.jar": "próifeadán gáis",
+    "bin.oxidize": "ocsaídigh go sulfáit le sárocsaíd hidrigine ar dtús",
+    "why.oxidize": "Scaoileann sulfít dé-ocsaíd sulfair le haigéid.",
+    "why.silver": "Déanann tuaslagán airgid amóinia nítríd airgid phléascach nuair a fhágtar é; scriosann an múinteoir é láithreach."
   },
   "names": {
     "H2O(l)": "uisce",

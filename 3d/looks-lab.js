@@ -154,7 +154,7 @@
     return { id: "cylinder" + s[0], floor: cm(S.cylFoot + 2), rim: cm(s[1] + S.cylFoot), size: s, inner: function () { return r; } };
   }
 
-  L.registerLook("cylinder", "lab", vessel({
+  var cylinderLook = vessel({
     tall: true, thick: 0.05, lip: 0.06,
     shape: cylShape,
     level: function (w) { return w.ml > 0.005 ? cm(-L.parts.cylinder.surface(w)) : cm(S.cylFoot + 2); },
@@ -172,7 +172,7 @@
       if (u.marksKey === key) return;
       u.marksKey = key;
       if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); u.marks = null; }
-      if (fx.style.marks == null) return;
+      if (fx.style.marks == null || !s[2]) return;            // der Standzylinder hat keine Skala
       for (ml = s[2]; ml <= cap + 1e-9; ml += s[2]) {
         major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
         list.push({ y: cm(S.cylFoot + 2 + ml / cap * (s[1] - 14)), long: major, text: d.ctx.numbers && major ? String(Math.round(ml * 10) / 10) : "" });
@@ -182,7 +182,9 @@
       u.marks.renderOrder = 3;
       group.add(u.marks);
     }
-  }));
+  });
+  L.registerLook("cylinder", "lab", cylinderLook);
+  L.registerLook("jar", "lab", cylinderLook);              // der Standzylinder: dieselbe Form, ohne Skala
 
   // ------------------------------------------------------------------ Abdampfschale
 

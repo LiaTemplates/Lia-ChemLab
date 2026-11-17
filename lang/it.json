@@ -35,7 +35,7 @@
     "pipetteShort": "Non ce n'è abbastanza per la pipetta.",
     "pipetteFull": "In quel recipiente non c'è posto.",
     "pipetteDrawn": "Prelevato da {vessel}.",
-    "noHeat": "Un cilindro graduato non si riscalda.",
+    "noHeat": "I cilindri graduati e per gas non si riscaldano.",
     "pipetteSame": "La pipetta versa in un altro recipiente.",
     "hint.funnel": "Ora tocca il recipiente sopra cui deve stare l'imbuto.",
     "notHere.funnel": "Con un imbuto non si può.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco.",
     "part.electrode-Pb": "elettrodo di piombo",
     "say.mirror": "{vessel}: sulla parete del recipiente si forma uno specchio di {name}.",
-    "hidden.mirror": "{vessel}: sulla parete del recipiente si forma uno specchio."
+    "hidden.mirror": "{vessel}: sulla parete del recipiente si forma uno specchio.",
+    "part.jar": "cilindro per gas",
+    "bin.oxidize": "ossidare prima a solfato con perossido di idrogeno",
+    "why.oxidize": "Il solfito libera anidride solforosa con gli acidi.",
+    "why.silver": "La soluzione ammoniacale d'argento, lasciata a riposo, forma nitruro d'argento esplosivo; l'insegnante la distrugge subito."
   },
   "names": {
     "H2O(l)": "acqua",

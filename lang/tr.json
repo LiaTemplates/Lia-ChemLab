@@ -35,7 +35,7 @@
     "pipetteShort": "Pipet için yeterli değil.",
     "pipetteFull": "O kapta yer yok.",
     "pipetteDrawn": "{vessel} kabından çekildi.",
-    "noHeat": "Dereceli silindir ısıtılmaz.",
+    "noHeat": "Dereceli silindirler ve gaz silindirleri ısıtılmaz.",
     "pipetteSame": "Pipet başka bir kaba boşaltır.",
     "hint.funnel": "Şimdi hunin üstünde duracağı kaba dokun.",
     "notHere.funnel": "Hunide bu olmaz.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha.",
     "part.electrode-Pb": "kurşun elektrot",
     "say.mirror": "{vessel}: Kabın çeperinde {name} aynası oluşuyor.",
-    "hidden.mirror": "{vessel}: Kabın çeperinde bir ayna oluşuyor."
+    "hidden.mirror": "{vessel}: Kabın çeperinde bir ayna oluşuyor.",
+    "part.jar": "gaz silindiri",
+    "bin.oxidize": "önce hidrojen peroksitle sülfata yükseltgeyin",
+    "why.oxidize": "Sülfit asitlerle kükürt dioksit açığa çıkarır.",
+    "why.silver": "Amonyaklı gümüş çözeltisi bekletilince patlayıcı gümüş nitrür oluşturur; öğretmen onu hemen zararsız hale getirir."
   },
   "names": {
     "H2O(l)": "su",
