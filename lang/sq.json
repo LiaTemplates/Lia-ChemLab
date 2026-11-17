@@ -484,7 +484,16 @@
     "seen.plated": "Depozitohet një metal",
     "seen.lamp": "Llamba ndizet",
     "seen.broken": "Qelqi thyhet",
-    "err.other": "Montimi nuk mund të shfaqet"
+    "err.other": "Montimi nuk mund të shfaqet",
+    "part.centrifuge": "centrifugë",
+    "spin": "Rotori",
+    "spin.0": "e ndalur",
+    "spin.1": "në punë",
+    "say.spinOn": "{part}: u ndez",
+    "say.spinOff": "{part}: u fik",
+    "spinning": "Centrifuga është në punë – fikeni së pari.",
+    "tubesOnly": "Në centrifugë futen vetëm epruveta.",
+    "spinFree": "Së pari nxirrni gjithçka nga epruveta; mund të mbetet vetëm një tapë."
   },
   "names": {
     "H2O(l)": "ujë",

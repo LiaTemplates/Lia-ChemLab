@@ -484,7 +484,16 @@
     "seen.plated": "Et metall felles ut",
     "seen.lamp": "Lyspæren lyser",
     "seen.broken": "Glasset sprekker",
-    "err.other": "Oppsettet kan ikke vises"
+    "err.other": "Oppsettet kan ikke vises",
+    "part.centrifuge": "sentrifuge",
+    "spin": "Rotor",
+    "spin.0": "står stille",
+    "spin.1": "går",
+    "say.spinOn": "{part}: slått på",
+    "say.spinOff": "{part}: slått av",
+    "spinning": "Sentrifugen går – slå den av først.",
+    "tubesOnly": "Bare reagensrør passer i sentrifugen.",
+    "spinFree": "Ta først alt ut av reagensrøret; bare en kork kan bli."
   },
   "names": {
     "H2O(l)": "vann",

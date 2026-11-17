@@ -484,7 +484,16 @@
     "seen.plated": "Izgulsnējas metāls",
     "seen.lamp": "Spuldzīte iedegas",
     "seen.broken": "Stikls saplīst",
-    "err.other": "Iekārtu nevar parādīt"
+    "err.other": "Iekārtu nevar parādīt",
+    "part.centrifuge": "centrifūga",
+    "spin": "Rotors",
+    "spin.0": "stāv",
+    "spin.1": "darbojas",
+    "say.spinOn": "{part}: ieslēgta",
+    "say.spinOff": "{part}: izslēgta",
+    "spinning": "Centrifūga darbojas – vispirms izslēdziet to.",
+    "tubesOnly": "Centrifūgā ietilpst tikai mēģenes.",
+    "spinFree": "Vispirms izņemiet visu no mēģenes; drīkst palikt tikai korķis."
   },
   "names": {
     "H2O(l)": "ūdens",

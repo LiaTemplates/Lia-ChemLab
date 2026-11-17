@@ -484,7 +484,16 @@
     "seen.plated": "Un métal se dépose",
     "seen.lamp": "La lampe s'allume",
     "seen.broken": "Le verre se brise",
-    "err.other": "Le montage ne peut pas être affiché"
+    "err.other": "Le montage ne peut pas être affiché",
+    "part.centrifuge": "centrifugeuse",
+    "spin": "Rotor",
+    "spin.0": "à l'arrêt",
+    "spin.1": "en marche",
+    "say.spinOn": "{part} : mise en marche",
+    "say.spinOff": "{part} : arrêtée",
+    "spinning": "La centrifugeuse tourne : arrêtez-la d'abord.",
+    "tubesOnly": "Seuls les tubes à essai entrent dans la centrifugeuse.",
+    "spinFree": "Retirez d'abord tout du tube à essai ; seul un bouchon peut rester."
   },
   "names": {
     "H2O(l)": "eau",

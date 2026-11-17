@@ -484,7 +484,16 @@
     "seen.plated": "Vylučuje sa kov",
     "seen.lamp": "Žiarovka svieti",
     "seen.broken": "Sklo praskne",
-    "err.other": "Zostavu sa nedá zobraziť"
+    "err.other": "Zostavu sa nedá zobraziť",
+    "part.centrifuge": "centrifúga",
+    "spin": "Rotor",
+    "spin.0": "stojí",
+    "spin.1": "beží",
+    "say.spinOn": "{part}: zapnutá",
+    "say.spinOff": "{part}: vypnutá",
+    "spinning": "Centrifúga beží – najprv ju vypnite.",
+    "tubesOnly": "Do centrifúgy sa zmestia len skúmavky.",
+    "spinFree": "Najprv zo skúmavky všetko vyberte; smie zostať len zátka."
   },
   "names": {
     "H2O(l)": "voda",

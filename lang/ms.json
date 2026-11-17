@@ -484,7 +484,16 @@
     "seen.plated": "Logam terenap",
     "seen.lamp": "Mentol menyala",
     "seen.broken": "Kaca pecah",
-    "err.other": "Susunan tidak dapat dipaparkan"
+    "err.other": "Susunan tidak dapat dipaparkan",
+    "part.centrifuge": "pengempar",
+    "spin": "Rotor",
+    "spin.0": "berhenti",
+    "spin.1": "sedang berputar",
+    "say.spinOn": "{part}: dihidupkan",
+    "say.spinOff": "{part}: dimatikan",
+    "spinning": "Pengempar sedang berputar – matikan dahulu.",
+    "tubesOnly": "Hanya tabung uji muat dalam pengempar.",
+    "spinFree": "Keluarkan semuanya dari tabung uji dahulu; hanya penyumbat boleh kekal."
   },
   "names": {
     "H2O(l)": "air",

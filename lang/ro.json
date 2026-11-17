@@ -484,7 +484,16 @@
     "seen.plated": "Se depune un metal",
     "seen.lamp": "Becul se aprinde",
     "seen.broken": "Sticla se sparge",
-    "err.other": "Montajul nu poate fi afișat"
+    "err.other": "Montajul nu poate fi afișat",
+    "part.centrifuge": "centrifugă",
+    "spin": "Rotor",
+    "spin.0": "oprită",
+    "spin.1": "în funcțiune",
+    "say.spinOn": "{part}: pornită",
+    "say.spinOff": "{part}: oprită",
+    "spinning": "Centrifuga funcționează – opriți-o mai întâi.",
+    "tubesOnly": "În centrifugă încap doar eprubete.",
+    "spinFree": "Scoateți mai întâi totul din eprubetă; poate rămâne doar un dop."
   },
   "names": {
     "H2O(l)": "apă",

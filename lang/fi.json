@@ -484,7 +484,16 @@
     "seen.plated": "Metallia saostuu",
     "seen.lamp": "Lamppu syttyy",
     "seen.broken": "Lasi halkeaa",
-    "err.other": "Kokoonpanoa ei voi näyttää"
+    "err.other": "Kokoonpanoa ei voi näyttää",
+    "part.centrifuge": "sentrifugi",
+    "spin": "Roottori",
+    "spin.0": "pysähdyksissä",
+    "spin.1": "käynnissä",
+    "say.spinOn": "{part}: käynnistetty",
+    "say.spinOff": "{part}: pysäytetty",
+    "spinning": "Sentrifugi on käynnissä – pysäytä se ensin.",
+    "tubesOnly": "Sentrifugiin mahtuvat vain koeputket.",
+    "spinFree": "Ota ensin kaikki pois koeputkesta; vain tulppa saa jäädä."
   },
   "names": {
     "H2O(l)": "vesi",

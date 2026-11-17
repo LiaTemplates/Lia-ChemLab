@@ -484,7 +484,16 @@
     "seen.plated": "Metal bi ka ho",
     "seen.lamp": "Kanea no hyerɛn",
     "seen.broken": "Glass no bɔ",
-    "err.other": "Wɔntumi nkyerɛ nhyehyɛeɛ no"
+    "err.other": "Wɔntumi nkyerɛ nhyehyɛeɛ no",
+    "part.centrifuge": "mfiri a ɛtwa kyinkyin",
+    "spin": "Rotɔ",
+    "spin.0": "agyina",
+    "spin.1": "ɛreyɛ adwuma",
+    "say.spinOn": "{part}: wɔasɔ no",
+    "say.spinOff": "{part}: wɔadum no",
+    "spinning": "Mfiri a ɛtwa kyinkyin no reyɛ adwuma – dum no kan.",
+    "tubesOnly": "Sɔhwɛ dorobɛn nkutoo na ɛkɔ mfiri a ɛtwa kyinkyin no mu.",
+    "spinFree": "Yi biribiara fi sɔhwɛ dorobɛn no mu kan; nsɛmmɔ nkutoo na ɛtumi ka hɔ."
   },
   "names": {
     "H2O(l)": "nsuo",

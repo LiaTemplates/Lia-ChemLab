@@ -484,7 +484,16 @@
     "seen.plated": "En metall fälls ut",
     "seen.lamp": "Lampan tänds",
     "seen.broken": "Glaset spricker",
-    "err.other": "Uppställningen kan inte visas"
+    "err.other": "Uppställningen kan inte visas",
+    "part.centrifuge": "centrifug",
+    "spin": "Rotor",
+    "spin.0": "står still",
+    "spin.1": "går",
+    "say.spinOn": "{part}: påslagen",
+    "say.spinOff": "{part}: avslagen",
+    "spinning": "Centrifugen går – stäng av den först.",
+    "tubesOnly": "Bara provrör får plats i centrifugen.",
+    "spinFree": "Ta först ut allt ur provröret; bara en propp får sitta kvar."
   },
   "names": {
     "H2O(l)": "vatten",

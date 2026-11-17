@@ -165,6 +165,34 @@
     }
   });
 
+  // ------------------------------------------------------------------ Zentrifuge
+
+  // place: { lift, half } aus stand(), wie bei der Waage: Gehäuse mit gewölbtem Deckel, in dem das Reagenzglas steckt;
+  // vorn die Scheibe, die sich dreht, solange sie läuft, und ein Lämpchen
+  L.registerLook("centrifuge", "lab", {
+    build: function () {
+      var group = new THREE.Group(), rotor = new THREE.Group(), led = mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshStandardMaterial({ color: 0x8f9aa5 }));
+      rotor.add(mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.2, 24), fx.matte(0xf7f9fb, 0.4)).rotateX(Math.PI / 2));
+      rotor.add(mesh(new THREE.BoxGeometry(1.8, 0.25, 0.3), fx.matte(0xd8322c, 0.4)), mesh(new THREE.BoxGeometry(0.25, 1.8, 0.3), fx.matte(0xd8322c, 0.4)));
+      group.add(rotor, led);
+      group.userData = { rotor: rotor, led: led };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, p = d.place || { lift: 25, half: 34 }, a = cm(p.half), body = kit.up(p.lift) + cm(-L.shapes.tube.floor - 1) - 0.35, deep = Math.max(6, 1.6 * a);      // der Deckel endet am Boden des Glases
+      fx.rebuild(group, "body", [a, body].join("|"), function (sub) {      // der Deckel oben, darin die Öffnung für das Glas
+        sub.add(mesh(new THREE.BoxGeometry(2 * a, body, deep), fx.matte(fx.style.device, 0.45), 0, body / 2));
+        sub.add(mesh(new THREE.BoxGeometry(2 * a - 0.6, 0.3, deep - 0.6), fx.matte(0xf7f9fb, 0.4), 0, body + 0.15));
+        sub.add(mesh(new THREE.CylinderGeometry(cm(15), cm(15), 0.05, 24), fx.matte(0x2c3036, 0.6), 0, body + 0.32));
+      });
+      u.rotor.position.set(-a + 1.6, body / 2, deep / 2 + 0.12);
+      u.rotor.rotation.z = d.data.spin ? -(d.ctx.still ? 0.5 : d.ctx.t * 5.2) : 0;
+      u.led.position.set(a - 1, body * 0.7, deep / 2 + 0.05);
+      u.led.material.color.set(d.data.spin ? 0x2fae4f : 0x8f9aa5);
+      u.led.material.emissive.set(d.data.spin ? 0x1c8a3a : 0x000000);
+    }
+  });
+
   // ------------------------------------------------------------------ Thermometer
 
   var thermoGlass = function () {   // lichtbrechend und beidseitig: so bleibt es auch unter Wasser sichtbar (siehe Demo)

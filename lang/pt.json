@@ -484,7 +484,16 @@
     "seen.plated": "Deposita-se um metal",
     "seen.lamp": "A lâmpada acende-se",
     "seen.broken": "O vidro parte-se",
-    "err.other": "Não é possível mostrar a montagem"
+    "err.other": "Não é possível mostrar a montagem",
+    "part.centrifuge": "centrífuga",
+    "spin": "Rotor",
+    "spin.0": "parada",
+    "spin.1": "a funcionar",
+    "say.spinOn": "{part}: ligada",
+    "say.spinOff": "{part}: desligada",
+    "spinning": "A centrífuga está a funcionar – desligue-a primeiro.",
+    "tubesOnly": "Na centrífuga só cabem tubos de ensaio.",
+    "spinFree": "Retire primeiro tudo do tubo de ensaio; só pode ficar uma rolha."
   },
   "names": {
     "H2O(l)": "água",

@@ -484,7 +484,16 @@
     "seen.plated": "금속이 석출됨",
     "seen.lamp": "꼬마전구가 켜짐",
     "seen.broken": "유리가 깨짐",
-    "err.other": "장치를 표시할 수 없습니다"
+    "err.other": "장치를 표시할 수 없습니다",
+    "part.centrifuge": "원심분리기",
+    "spin": "로터",
+    "spin.0": "정지",
+    "spin.1": "작동 중",
+    "say.spinOn": "{part}: 켬",
+    "say.spinOff": "{part}: 끔",
+    "spinning": "원심분리기가 작동 중입니다. 먼저 끄세요.",
+    "tubesOnly": "원심분리기에는 시험관만 들어갑니다.",
+    "spinFree": "먼저 시험관에서 모두 꺼내세요. 마개만 남겨도 됩니다."
   },
   "names": {
     "H2O(l)": "물",

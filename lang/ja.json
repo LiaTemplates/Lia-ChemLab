@@ -484,7 +484,16 @@
     "seen.plated": "金属が析出する",
     "seen.lamp": "豆電球が点灯する",
     "seen.broken": "ガラスが割れる",
-    "err.other": "装置を表示できません"
+    "err.other": "装置を表示できません",
+    "part.centrifuge": "遠心分離機",
+    "spin": "ローター",
+    "spin.0": "停止中",
+    "spin.1": "回転中",
+    "say.spinOn": "{part}：スイッチを入れた",
+    "say.spinOff": "{part}：スイッチを切った",
+    "spinning": "遠心分離機が回っている。先に止めること。",
+    "tubesOnly": "遠心分離機に入るのは試験管だけ。",
+    "spinFree": "先に試験管から全部取り出すこと。栓だけは残してよい。"
   },
   "names": {
     "H2O(l)": "水",

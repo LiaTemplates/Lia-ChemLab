@@ -484,7 +484,16 @@
     "seen.plated": "Metal bat metatzen da",
     "seen.lamp": "Bonbilla pizten da",
     "seen.broken": "Beira apurtu egiten da",
-    "err.other": "Ezin da muntaia erakutsi"
+    "err.other": "Ezin da muntaia erakutsi",
+    "part.centrifuge": "zentrifugagailua",
+    "spin": "Errotorea",
+    "spin.0": "geldirik",
+    "spin.1": "martxan",
+    "say.spinOn": "{part}: piztuta",
+    "say.spinOff": "{part}: itzalita",
+    "spinning": "Zentrifugagailua martxan dago: itzali lehenik.",
+    "tubesOnly": "Zentrifugagailuan saiakuntza-hodiak bakarrik sartzen dira.",
+    "spinFree": "Atera lehenik dena saiakuntza-hoditik; tapoi bat bakarrik gera daiteke."
   },
   "names": {
     "H2O(l)": "ura",

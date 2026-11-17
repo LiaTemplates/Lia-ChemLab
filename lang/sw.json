@@ -484,7 +484,16 @@
     "seen.plated": "Metali inajiweka",
     "seen.lamp": "Taa inawaka",
     "seen.broken": "Kioo kinavunjika",
-    "err.other": "Mpangilio hauwezi kuonyeshwa"
+    "err.other": "Mpangilio hauwezi kuonyeshwa",
+    "part.centrifuge": "kitenganishi kizunguko",
+    "spin": "Rota",
+    "spin.0": "imesimama",
+    "spin.1": "inafanya kazi",
+    "say.spinOn": "{part}: imewashwa",
+    "say.spinOff": "{part}: imezimwa",
+    "spinning": "Kitenganishi kizunguko kinafanya kazi – kizime kwanza.",
+    "tubesOnly": "Mirija ya majaribio pekee ndiyo inayoingia kwenye kitenganishi kizunguko.",
+    "spinFree": "Kwanza toa kila kitu kwenye mrija wa majaribio; kizibo pekee kinaweza kubaki."
   },
   "names": {
     "H2O(l)": "maji",

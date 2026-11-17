@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, pipetted: 1, emptied: 1, disposed: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, spin: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -418,9 +418,17 @@
       return result;
     }
 
+    // ob ein Gefäß in der laufenden Zentrifuge steckt; dann sagt die Statuszeile, warum nichts geht
+    function spun(id) {
+      if (!st.run.lab.tools.some(function (t) { return t.in === id && t.spin; })) return false;
+      status(T("spinning"));
+      return true;
+    }
+
     function give(id) {
       var lab = st.run.lab, h = st.hand, p, def, over, kind;
       if (L.vessel(lab, id).broken) { status(T("brokenGlass")); return; }
+      if (spun(id) || (h.from && spun(h.from))) return;
       if (h.test && L.parts[h.id].probe === "pipette") {       // Vollpipette: erst aufziehen, dann abgeben
         p = L.parts[h.id].ml;
         if (L.parts[L.vessel(lab, id).type].dispenser && !h.from) { status(T(L.parts[L.vessel(lab, id).type].filter ? "notHere.funnel" : "notHere")); return; }
@@ -458,6 +466,7 @@
         } else if (def.circuit && !L.parts[L.vessel(lab, id).type].electrodes) { status(T("noCircuit")); return; }
         else if ((def.flames || def.bath) && L.parts[L.vessel(lab, id).type].insulated) { status(T("insulated")); return; }
         else if ((def.flames || def.bath) && L.parts[L.vessel(lab, id).type].noHeat) { status(T("noHeat")); return; }
+        else if (def.fits && L.vessel(lab, id).type !== def.fits) { status(T("tubesOnly")); return; }
         else if (def.bridge && lab.tools.some(function (t) { return L.parts[t.type].bridge && (t.in === id || t.to === id); })) { status(T("occupied")); return; }      // an jedem Gefäß hängt nur ein Ende
         // Kühler und Rohr: aus jedem Gefäß führt einer, in jedes zweite Gefäß einer; in einem Stopfen steckt nur ein Gerät
         else if (def.duct && lab.tools.some(function (t) { return L.parts[t.type].duct && (h.from ? t.to : t.in) === id; })) { status(T("occupied")); return; }
@@ -516,12 +525,20 @@
     function pourOut() {
       var lab = st.run.lab, from = L.vessel(lab, st.sel), toId = ui.panel.querySelector(".cl-pour-to").value;
       var to = L.vessel(lab, toId), ml = parseFloat(String(ui.panel.querySelector(".cl-pour-ml").value).replace(",", "."));
-      if (!from || !to) return;
+      if (!from || !to || spun(from.id) || spun(toId)) return;
       if (!(ml > 0) || !isFinite(ml)) { status(T("badAmount")); return; }
       if (!(L.pourable(lab, from.id) > 1e-6)) { status(T("nothing")); return; }
       ml = Math.min(ml, L.pourable(lab, from.id), L.free(lab, to));
       if (!(ml > 1e-6)) { status(T("full")); return; }
       change(function (l) { return L.pour(l, from.id, toId, ml); }, { key: "poured", from: from.id, vessel: toId, ml: ml });
+    }
+
+    // Zentrifuge an- oder ausschalten; anlaufen kann sie nur mit einem freien Reagenzglas (ein Stopfen darf bleiben)
+    function spin(id, on) {
+      var t = L.tool(st.run.lab, id);
+      if (!t || t.spin === on) return;
+      if (on && !L.spinFree(st.run.lab, id)) { status(T("spinFree")); return; }
+      change(function (l) { return L.setSpin(l, id, on); }, { key: "spin", part: id, level: on });
     }
 
     // Spannung einstellen. Wer den Regler in kleinen Schritten dreht (Pfeiltasten), stellt in Wahrheit einmal ein:
@@ -820,7 +837,7 @@
           // Anschlüsse in den Koordinaten der Fläche, für die Leitungen
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
-          content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) })
+          content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) }) : def.spin ? T("spin." + (r.spin ? 1 : 0))
             : def.bridge || def.duct || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length && !veiled(r.in)) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
@@ -968,6 +985,10 @@
           (L.parts[t.type].flames ? '<div class="cl-tap" role="group" aria-label="' + esc(T("flame")) + '"><span>' + esc(T("flame")) + ":</span> " +
             [0, 1, 2].map(function (level) {
               return '<button type="button" class="cl-btn" data-act="flame" data-id="' + level + '" aria-pressed="false">' + esc(T("flame." + level)) + "</button>";
+            }).join(" ") + "</div>" : "") +
+          (L.parts[t.type].spin ? '<div class="cl-tap" role="group" aria-label="' + esc(T("spin")) + '"><span>' + esc(T("spin")) + ":</span> " +
+            [0, 1].map(function (level) {
+              return '<button type="button" class="cl-btn" data-act="spin" data-id="' + level + '" aria-pressed="' + (level === t.spin ? "true" : "false") + '">' + esc(T("spin." + level)) + "</button>";
             }).join(" ") + "</div>" : "") +
           // Netzgerät: die Spannung an einem Schieber (übernommen wird sie beim Loslassen), dazu ein Knopf zum Umpolen
           (L.parts[t.type].circuit === "supply" ? '<div class="cl-tap"><label>' + esc(T("volts")) + ' <input class="cl-volts" type="range" role="slider" data-act="volts" min="0" max="' +
@@ -1136,6 +1157,11 @@
               (show.numbers ? esc(T("panel.shows")) + " " + esc(shownValue(w)) +
                 (w.value == null ? "" : " · " + esc(T("transmission")) + " " + (w.over ? "< " + L.num(0.1, 1, lang) : L.num(100 * Math.pow(10, -w.value), 1, lang)) + " %") : "") + "</p>";
           }
+        } else if (L.parts[t.type].spin) {                      // ob sie läuft, an den Knöpfen vermerken
+          [0, 1].forEach(function (level) {
+            ui.panel.querySelector('[data-act="spin"][data-id="' + level + '"]').setAttribute("aria-pressed", level === t.spin ? "true" : "false");
+          });
+          box.innerHTML = "";
         } else if (L.parts[t.type].flames) {                    // die gewählte Flamme an den Knöpfen vermerken
           [0, 1, 2].forEach(function (level) {
             ui.panel.querySelector('[data-act="flame"][data-id="' + level + '"]').setAttribute("aria-pressed", level === t.flame ? "true" : "false");
@@ -1569,6 +1595,7 @@
         v = L.vessel(lab, cmd.to);
         if (!v || !known(cmd.add)) return;
         if (v.broken) { status(T("brokenGlass")); return; }
+        if (spun(cmd.to)) return;
         amount = cmd.ml != null ? { ml: +cmd.ml } : cmd.drops != null ? { drops: +cmd.drops } : { g: +cmd.g };
         ml = amount.ml != null ? amount.ml : amount.drops != null ? amount.drops * L.DROP : 0;
         if (ml > L.free(lab, v) + 1e-9) { status(T("full")); return; }
@@ -1583,6 +1610,7 @@
         if (cmd.flame != null && t.flame !== undefined && +cmd.flame !== t.flame) {
           change(function (l) { return L.setFlame(l, cmd.set, +cmd.flame); }, { key: "flame", part: cmd.set, level: +cmd.flame });
         }
+        if (cmd.spin != null && t.spin !== undefined && (cmd.spin ? 1 : 0) !== t.spin) spin(cmd.set, cmd.spin ? 1 : 0);
       }
     }
 
@@ -1708,6 +1736,7 @@
         id = st.sel;
         change(function (l) { return L.setFlame(l, id, r); }, { key: "flame", part: id, level: r });
       }
+      else if (act === "spin" && L.tool(lab, st.sel)) spin(st.sel, id === "1" ? 1 : 0);
       else if (act === "tare" && L.tool(lab, st.sel)) {
         id = st.sel;
         change(function (l) { return L.tare(l, id); }, { key: "tare", part: id });
@@ -1741,10 +1770,12 @@
       else if (act === "pour") pourOut();
       else if (act === "dispose" && L.vessel(lab, st.sel) && L.BINS.indexOf(id) >= 0) {
         r = st.sel;
+        if (spun(r)) return;
         if (!(L.waste(lab, r) || {}).bin) { status(T("panel.empty")); return; }      // ein leeres Glas: nichts zu entsorgen
         change(function (l) { return L.dispose(l, r, id); }, function (out) { return Object.assign({ key: "disposed" }, out); });
       } else if (act === "remove" && st.sel && !st.config.lock) {
         id = st.sel;
+        if (spun(id) || (L.tool(lab, id) || {}).spin) { status(T("spinning")); return; }      // die laufende Zentrifuge und ihr Glas bleiben stehen
         st.sel = null;
         change(function (l) { return L.remove(l, id); }, { key: "removed", part: id, label: names()[id] });
       }

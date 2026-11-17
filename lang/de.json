@@ -484,7 +484,16 @@
     "seen.plated": "Metall scheidet sich ab",
     "seen.lamp": "Das Lämpchen leuchtet",
     "seen.broken": "Das Glas zerspringt",
-    "err.other": "Der Aufbau lässt sich nicht anzeigen"
+    "err.other": "Der Aufbau lässt sich nicht anzeigen",
+    "part.centrifuge": "Zentrifuge",
+    "spin": "Rotor",
+    "spin.0": "steht",
+    "spin.1": "läuft",
+    "say.spinOn": "{part}: eingeschaltet",
+    "say.spinOff": "{part}: ausgeschaltet",
+    "spinning": "Die Zentrifuge läuft – erst ausschalten.",
+    "tubesOnly": "Nur Reagenzgläser passen in die Zentrifuge.",
+    "spinFree": "Erst alles aus dem Reagenzglas nehmen; nur ein Stopfen darf bleiben."
   },
   "names": {
     "H2O(l)": "Wasser",

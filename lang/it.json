@@ -484,7 +484,16 @@
     "seen.plated": "Si deposita un metallo",
     "seen.lamp": "La lampadina si accende",
     "seen.broken": "Il vetro si rompe",
-    "err.other": "L'apparato non può essere mostrato"
+    "err.other": "L'apparato non può essere mostrato",
+    "part.centrifuge": "centrifuga",
+    "spin": "Rotore",
+    "spin.0": "ferma",
+    "spin.1": "in funzione",
+    "say.spinOn": "{part}: accesa",
+    "say.spinOff": "{part}: spenta",
+    "spinning": "La centrifuga è in funzione: spegnila prima.",
+    "tubesOnly": "Nella centrifuga entrano solo provette.",
+    "spinFree": "Togli prima tutto dalla provetta; può restare solo un tappo."
   },
   "names": {
     "H2O(l)": "acqua",

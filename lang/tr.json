@@ -484,7 +484,16 @@
     "seen.plated": "Bir metal birikiyor",
     "seen.lamp": "Lamba yanıyor",
     "seen.broken": "Cam kırılıyor",
-    "err.other": "Düzenek gösterilemiyor"
+    "err.other": "Düzenek gösterilemiyor",
+    "part.centrifuge": "santrifüj",
+    "spin": "Rotor",
+    "spin.0": "duruyor",
+    "spin.1": "çalışıyor",
+    "say.spinOn": "{part}: açıldı",
+    "say.spinOff": "{part}: kapatıldı",
+    "spinning": "Santrifüj çalışıyor – önce kapatın.",
+    "tubesOnly": "Santrifüje yalnızca deney tüpleri sığar.",
+    "spinFree": "Önce deney tüpünden her şeyi çıkarın; yalnızca tıpa kalabilir."
   },
   "names": {
     "H2O(l)": "su",

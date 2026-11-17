@@ -484,7 +484,16 @@
     "seen.plated": "Metall ladestub",
     "seen.lamp": "Lambike süttib",
     "seen.broken": "Klaas puruneb",
-    "err.other": "Katseseadet ei saa kuvada"
+    "err.other": "Katseseadet ei saa kuvada",
+    "part.centrifuge": "tsentrifuug",
+    "spin": "Rootor",
+    "spin.0": "seisab",
+    "spin.1": "töötab",
+    "say.spinOn": "{part}: sisse lülitatud",
+    "say.spinOff": "{part}: välja lülitatud",
+    "spinning": "Tsentrifuug töötab – lülita see enne välja.",
+    "tubesOnly": "Tsentrifuugi mahuvad ainult katseklaasid.",
+    "spinFree": "Võta enne katseklaasist kõik välja; jääda võib ainult kork."
   },
   "names": {
     "H2O(l)": "vesi",

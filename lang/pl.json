@@ -484,7 +484,16 @@
     "seen.plated": "Wydziela się metal",
     "seen.lamp": "Żarówka świeci",
     "seen.broken": "Szkło pęka",
-    "err.other": "Nie można wyświetlić układu"
+    "err.other": "Nie można wyświetlić układu",
+    "part.centrifuge": "wirówka",
+    "spin": "Wirnik",
+    "spin.0": "stoi",
+    "spin.1": "pracuje",
+    "say.spinOn": "{part}: włączona",
+    "say.spinOff": "{part}: wyłączona",
+    "spinning": "Wirówka pracuje – najpierw ją wyłącz.",
+    "tubesOnly": "Do wirówki pasują tylko probówki.",
+    "spinFree": "Najpierw wyjmij wszystko z probówki; może zostać tylko korek."
   },
   "names": {
     "H2O(l)": "woda",

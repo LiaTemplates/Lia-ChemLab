@@ -484,7 +484,16 @@
     "seen.plated": "Et metal udfældes",
     "seen.lamp": "Pæren lyser",
     "seen.broken": "Glasset går i stykker",
-    "err.other": "Opstillingen kan ikke vises"
+    "err.other": "Opstillingen kan ikke vises",
+    "part.centrifuge": "centrifuge",
+    "spin": "Rotor",
+    "spin.0": "står stille",
+    "spin.1": "kører",
+    "say.spinOn": "{part}: tændt",
+    "say.spinOff": "{part}: slukket",
+    "spinning": "Centrifugen kører – sluk den først.",
+    "tubesOnly": "Kun reagensglas passer i centrifugen.",
+    "spinFree": "Tag først alt ud af reagensglasset; kun en prop må blive."
   },
   "names": {
     "H2O(l)": "vand",
