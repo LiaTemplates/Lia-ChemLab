@@ -61,6 +61,7 @@
     "lens.residue": "容器に液体がありません。底に蒸発後の残留物があります。",
     "flow": "流れ",
     "flow.temp": "温度",
+    "flow.diff": "温度差",
     "flow.vortex": "渦",
     "flow.pressure": "圧力",
     "lens": "粒子ビュー",

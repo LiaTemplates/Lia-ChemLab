@@ -61,6 +61,7 @@
     "lens.residue": "Pas de liquide dans le récipient ; un résidu d'évaporation se trouve au fond.",
     "flow": "Courants",
     "flow.temp": "température",
+    "flow.diff": "écarts de température",
     "flow.vortex": "tourbillons",
     "flow.pressure": "pression",
     "lens": "Vue des particules",

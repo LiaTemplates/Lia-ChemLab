@@ -61,6 +61,7 @@
     "lens.residue": "W naczyniu nie ma cieczy; na dnie leży pozostałość po odparowaniu.",
     "flow": "Prądy",
     "flow.temp": "temperatura",
+    "flow.diff": "różnice temperatur",
     "flow.vortex": "wiry",
     "flow.pressure": "ciśnienie",
     "lens": "Widok cząstek",

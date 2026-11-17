@@ -61,6 +61,7 @@
     "lens.residue": "በዕቃው ውስጥ ፈሳሽ የለም፤ ከትነት የቀረ ቅሪት ከታች ይገኛል።",
     "flow": "ፍሰት",
     "flow.temp": "ሙቀት",
+    "flow.diff": "የሙቀት ልዩነቶች",
     "flow.vortex": "ሽክርክሪቶች",
     "flow.pressure": "ግፊት",
     "lens": "የቅንጣት እይታ",

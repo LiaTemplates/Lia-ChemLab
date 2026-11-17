@@ -61,6 +61,7 @@
     "lens.residue": "容器中没有液体；底部有蒸干后留下的残渣。",
     "flow": "流动",
     "flow.temp": "温度",
+    "flow.diff": "温差",
     "flow.vortex": "涡流",
     "flow.pressure": "压强",
     "lens": "粒子视图",

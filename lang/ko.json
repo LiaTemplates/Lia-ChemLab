@@ -61,6 +61,7 @@
     "lens.residue": "용기에 액체가 없습니다. 바닥에 증발하고 남은 찌꺼기가 있습니다.",
     "flow": "흐름",
     "flow.temp": "온도",
+    "flow.diff": "온도 차이",
     "flow.vortex": "소용돌이",
     "flow.pressure": "압력",
     "lens": "입자 보기",

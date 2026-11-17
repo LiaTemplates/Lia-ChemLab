@@ -61,6 +61,7 @@
     "lens.residue": "Geen vloeistof in het vat; op de bodem ligt een ingedampt residu.",
     "flow": "Stroming",
     "flow.temp": "temperatuur",
+    "flow.diff": "temperatuurverschillen",
     "flow.vortex": "wervelingen",
     "flow.pressure": "druk",
     "lens": "Deeltjesloep",

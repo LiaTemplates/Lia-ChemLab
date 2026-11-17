@@ -61,6 +61,7 @@
     "lens.residue": "Traukā nav šķidruma; apakšā ir iztvaicēšanas atlikums.",
     "flow": "Straumes",
     "flow.temp": "temperatūra",
+    "flow.diff": "temperatūras atšķirības",
     "flow.vortex": "virpuļi",
     "flow.pressure": "spiediens",
     "lens": "Daļiņu lupa",

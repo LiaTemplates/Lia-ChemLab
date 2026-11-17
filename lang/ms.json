@@ -61,6 +61,7 @@
     "lens.residue": "Tiada cecair dalam bekas; baki penyejatan tertinggal di dasar.",
     "flow": "Arus",
     "flow.temp": "suhu",
+    "flow.diff": "perbezaan suhu",
     "flow.vortex": "pusaran",
     "flow.pressure": "tekanan",
     "lens": "Paparan zarah",

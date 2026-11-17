@@ -38,7 +38,7 @@
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
       "lens.residue": "No liquid in the vessel; a residue from evaporation lies at the bottom.",
-      "flow": "Currents", "flow.temp": "temperature", "flow.vortex": "eddies", "flow.pressure": "pressure",
+      "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
       "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",

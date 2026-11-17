@@ -61,6 +61,7 @@
     "lens.residue": "Anumas pole vedelikku; põhjas on aurustumisjääk.",
     "flow": "Voolud",
     "flow.temp": "temperatuur",
+    "flow.diff": "temperatuurierinevused",
     "flow.vortex": "keerised",
     "flow.pressure": "rõhk",
     "lens": "Osakeste vaade",

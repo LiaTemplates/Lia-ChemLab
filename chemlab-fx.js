@@ -189,8 +189,18 @@
     });
   }
 
+  // Feste Farbe je Temperatur in °C: kalt dunkelblau, 20 °C hellblau, dann gelb, orange, rot, ab 100 °C violett
+  var HEAT = [[0, [40, 70, 200]], [20, [90, 170, 230]], [40, [240, 215, 70]], [60, [245, 150, 40]], [80, [220, 50, 40]], [100, [150, 40, 170]], [120, [90, 20, 120]]];
+  function heatColor(T) {
+    var i = 1;
+    while (i < HEAT.length - 1 && T > HEAT[i][0]) i++;
+    var a = HEAT[i - 1], b = HEAT[i], u = Math.max(0, Math.min(1, (T - a[0]) / (b[0] - a[0])));
+    return a[1].map(function (c, k) { return Math.round(c + (b[1][k] - c) * u); });
+  }
+  fx.heatColor = heatColor;
+
   // Strömung in der Flüssigkeit als SVG. box: { x0, x1, top, bottom } der Flüssigkeit, w aus L.view (ml, T, heat), t Zeit in s,
-  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur), "vortex" (Wirbel) oder "pressure" (Druck)
+  // key: je Gefäß und Fläche verschieden, mode: "temp" (Temperatur mit fester Farbskala), "diff" (Unterschiede zum Mittel), "vortex" (Wirbel) oder "pressure" (Druck)
   fx.flow = function (box, w, t, key, mode, still) {
     var heat = w.heat, s = fields[key], width = box.x1 - box.x0, height = box.bottom - box.top, deep, size, cols, cell, dt, n, i, W, out = "", span = 0, cw, ch, id;
     if (!heat || !(w.ml > 0.005) || !(width > 2 && height > 2)) { delete fields[key]; return ""; }
@@ -210,20 +220,20 @@
 
     W = cols + 2; cw = width / cols; ch = height / ROWS;
     function curl(k) { return (s.v[k + 1] - s.v[k - 1] - s.u[k + W] + s.u[k - W]) / 2; }      // positiv: dreht im Uhrzeigersinn
-    function level(k, j) { return mode === "pressure" ? j / ROWS : mode === "vortex" ? curl(k) : s.T[k] - w.T; }
-    if (mode !== "pressure") each(s, function (k, i, j) { span = Math.max(span, Math.abs(level(k, j))); });
-    span = mode === "pressure" ? 1 : Math.max(mode === "vortex" ? 0.3 : 2, span);     // eine ruhige Flüssigkeit bleibt blass
+    function level(k, j) { return mode === "pressure" ? j / ROWS : mode === "vortex" ? curl(k) : mode === "temp" ? s.T[k] : s.T[k] - w.T; }
+    if (mode === "vortex" || mode === "diff") each(s, function (k, i, j) { span = Math.max(span, Math.abs(level(k, j))); });
+    span = mode === "vortex" ? Math.max(0.3, span) : mode === "diff" ? Math.max(2, span) : 1;     // eine ruhige Flüssigkeit bleibt blass
     // gezeichnet in Blöcken von 2×2 Zellen: nach dem Weichzeichnen sieht man keinen Unterschied, das Bild ist ein Viertel so lang
     cw *= 2; ch *= 2;
     for (var j = 1; j <= ROWS; j += 2) for (i = 1; i <= cols; i += 2) {
       var r = Math.min(i + 1, cols);                             // bei ungerader Breite zählt die letzte Spalte doppelt
       var a = (level(i + j * W, j) + level(r + j * W, j) + level(i + (j + 1) * W, j + 1) + level(r + (j + 1) * W, j + 1)) / 4 / span;
       var x = box.x0 + (i - 1) / 2 * cw, y = box.top + (j - 1) / 2 * ch, last = i + 2 > cols;
-      if (Math.abs(a) < 0.03) continue;
+      if (mode !== "temp" && Math.abs(a) < 0.03) continue;
       // die äußeren Blöcke reichen über den Rand hinaus, damit das Weichzeichnen dort nicht ausbleicht
       out += '<rect x="' + f(i === 1 ? x - cw : x) + '" y="' + f(j === 1 ? y - ch : y) + '" width="' + f(cw * (1 + (i === 1) + last) + 0.3) +
-        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + (mode === "pressure" ? "#2b5fb3" : a > 0 ? "#d9452b" : "#2b6fd9") +
-        '" fill-opacity="' + (Math.abs(a) * (mode === "pressure" ? 0.45 : 0.6)).toFixed(2) + '"/>';
+        '" height="' + f(ch * (1 + (j === 1) + (j + 2 > ROWS)) + 0.3) + '" fill="' + (mode === "temp" ? css(heatColor(a)) : mode === "pressure" ? "#2b5fb3" : a > 0 ? "#d9452b" : "#2b6fd9") +
+        '" fill-opacity="' + (mode === "temp" ? "0.55" : (Math.abs(a) * (mode === "pressure" ? 0.45 : 0.6)).toFixed(2)) + '"/>';
     }
     cw /= 2; ch /= 2;
     id = key + "-flow";

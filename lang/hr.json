@@ -61,6 +61,7 @@
     "lens.residue": "U posudi nema tekućine; na dnu je ostatak nakon isparavanja.",
     "flow": "Strujanje",
     "flow.temp": "temperatura",
+    "flow.diff": "razlike temperature",
     "flow.vortex": "vrtlozi",
     "flow.pressure": "tlak",
     "lens": "Prikaz čestica",

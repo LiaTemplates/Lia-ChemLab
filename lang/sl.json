@@ -61,6 +61,7 @@
     "lens.residue": "V posodi ni tekočine; na dnu je ostanek po izparevanju.",
     "flow": "Tokovi",
     "flow.temp": "temperatura",
+    "flow.diff": "temperaturne razlike",
     "flow.vortex": "vrtinci",
     "flow.pressure": "tlak",
     "lens": "Pogled na delce",

@@ -61,6 +61,7 @@
     "lens.residue": "Ingen vätska i kärlet; på botten ligger en indunstad återstod.",
     "flow": "Strömning",
     "flow.temp": "temperatur",
+    "flow.diff": "temperaturskillnader",
     "flow.vortex": "virvlar",
     "flow.pressure": "tryck",
     "lens": "Partikellupp",

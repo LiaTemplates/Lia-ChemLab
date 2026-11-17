@@ -61,6 +61,7 @@
     "lens.residue": "Ez dago likidorik ontzian; lurruntzearen hondakin bat dago hondoan.",
     "flow": "Korronteak",
     "flow.temp": "tenperatura",
+    "flow.diff": "tenperatura-aldeak",
     "flow.vortex": "zurrunbiloak",
     "flow.pressure": "presioa",
     "lens": "Partikula-ikuspegia",

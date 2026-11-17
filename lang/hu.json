@@ -61,6 +61,7 @@
     "lens.residue": "Nincs folyadék az edényben; az alján bepárlási maradék van.",
     "flow": "Áramlás",
     "flow.temp": "hőmérséklet",
+    "flow.diff": "hőmérséklet-különbségek",
     "flow.vortex": "örvények",
     "flow.pressure": "nyomás",
     "lens": "Részecskenézet",

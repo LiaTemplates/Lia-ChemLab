@@ -61,6 +61,7 @@
     "lens.residue": "V nádobe nie je žiadna kvapalina; na dne leží odparok.",
     "flow": "Prúdenie",
     "flow.temp": "teplota",
+    "flow.diff": "rozdiely teplôt",
     "flow.vortex": "víry",
     "flow.pressure": "tlak",
     "lens": "Časticový pohľad",

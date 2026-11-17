@@ -61,6 +61,7 @@
     "lens.residue": "Niciun lichid în vas; pe fund se află un reziduu de la evaporare.",
     "flow": "Curenți",
     "flow.temp": "temperatură",
+    "flow.diff": "diferențe de temperatură",
     "flow.vortex": "vârtejuri",
     "flow.pressure": "presiune",
     "lens": "Vederea particulelor",

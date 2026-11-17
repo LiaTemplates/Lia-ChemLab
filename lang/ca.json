@@ -61,6 +61,7 @@
     "lens.residue": "No hi ha líquid al recipient; al fons hi ha un residu de l'evaporació.",
     "flow": "Corrents",
     "flow.temp": "temperatura",
+    "flow.diff": "diferències de temperatura",
     "flow.vortex": "remolins",
     "flow.pressure": "pressió",
     "lens": "Vista de partícules",

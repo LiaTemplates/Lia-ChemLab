@@ -61,6 +61,7 @@
     "lens.residue": "Keine Flüssigkeit im Gefäß; am Boden liegt ein eingedampfter Rückstand.",
     "flow": "Strömung",
     "flow.temp": "Temperatur",
+    "flow.diff": "Temperaturunterschiede",
     "flow.vortex": "Wirbel",
     "flow.pressure": "Druck",
     "lens": "Teilchenlupe",

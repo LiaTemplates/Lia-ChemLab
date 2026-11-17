@@ -61,6 +61,7 @@
     "lens.residue": "Kapta sıvı yok; dipte buharlaşmadan kalan bir kalıntı var.",
     "flow": "Akıntılar",
     "flow.temp": "sıcaklık",
+    "flow.diff": "sıcaklık farkları",
     "flow.vortex": "girdaplar",
     "flow.pressure": "basınç",
     "lens": "Tanecik görünümü",

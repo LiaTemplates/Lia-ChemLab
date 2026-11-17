@@ -598,7 +598,14 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   assert.ok(at(s.T, mid, rows) > at(s.T, 1, rows) + 1, "über der Flamme ist es wärmer als am Rand");
   assert.ok(at(s.v, mid, rows / 2) < -1, "in der Mitte steigt es auf (y zeigt nach unten)");
   assert.ok(at(s.v, 2, rows / 2) > 0, "an der Wand sinkt es ab");
-  for (const mode of ["vortex", "pressure"]) assert.match(L.fx.flow(box, w, 5.1, "warm", mode), /<rect/, mode);
+  for (const mode of ["diff", "vortex", "pressure"]) assert.match(L.fx.flow(box, w, 5.1, "warm", mode), /<rect/, mode);
+  assert.deepEqual(L.fx.heatColor(20), [90, 170, 230], "20 °C hellblau");
+  assert.deepEqual(L.fx.heatColor(100), [150, 40, 170], "100 °C violett");
+  assert.deepEqual(L.fx.heatColor(-5), [40, 70, 200], "kälter als 0 °C bleibt dunkelblau");
+  assert.deepEqual(L.fx.heatColor(70), [233, 100, 40], "zwischen orange und rot");
+  const colors = (svg) => new Set(svg.match(/fill="rgb\([^)]*\)"/g));
+  assert.notDeepEqual(colors(L.fx.flow(box, Object.assign({}, w, { T: 25 }), 6, "farbe", "temp")), colors(L.fx.flow(box, Object.assign({}, w, { T: 90 }), 6, "heiss", "temp")),
+    "die Farbe zeigt die Temperatur selbst, nicht nur die Unterschiede");
 
   const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
   const c = L.view(cold, L.vessel(cold, "b"));
@@ -933,9 +940,9 @@ test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalte
   frames(1);
   assert.match(item(el, "b").innerHTML, /cl-flow/, "gleich zu Beginn zu sehen");
   tap(el, "b");
-  ["vortex", "pressure", ""].forEach(() => press(el, "flow"));
+  ["diff", "vortex", "pressure", ""].forEach(() => press(el, "flow"));
   frames(1);
-  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Wirbel und Druck wieder aus");
+  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Unterschieden, Wirbel und Druck wieder aus");
 });
 
 test("Anzeige: Diagramme, Gleichungen und Protokoll lassen sich abschalten", () => {

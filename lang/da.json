@@ -61,6 +61,7 @@
     "lens.residue": "Ingen væske i beholderen; på bunden ligger en inddampet rest.",
     "flow": "Strømning",
     "flow.temp": "temperatur",
+    "flow.diff": "temperaturforskelle",
     "flow.vortex": "hvirvler",
     "flow.pressure": "tryk",
     "lens": "Partikellup",

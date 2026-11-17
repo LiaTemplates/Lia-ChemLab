@@ -61,6 +61,7 @@
     "lens.residue": "Astiassa ei ole nestettä; pohjalla on haihdutusjäännös.",
     "flow": "Virtaukset",
     "flow.temp": "lämpötila",
+    "flow.diff": "lämpötilaerot",
     "flow.vortex": "pyörteet",
     "flow.pressure": "paine",
     "lens": "Hiukkasnäkymä",

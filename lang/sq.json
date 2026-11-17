@@ -61,6 +61,7 @@
     "lens.residue": "Nuk ka lëng në enë; në fund ka një mbetje nga avullimi.",
     "flow": "Rrymat",
     "flow.temp": "temperatura",
+    "flow.diff": "ndryshimet e temperaturës",
     "flow.vortex": "vorbullat",
     "flow.pressure": "presioni",
     "lens": "Pamja e grimcave",
