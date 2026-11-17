@@ -35,7 +35,7 @@
     "pipetteShort": "Det er ikke nok til pipetten.",
     "pipetteFull": "Det er ikke plass i det karet.",
     "pipetteDrawn": "Sugd opp fra {vessel}.",
-    "noHeat": "En målesylinder varmes ikke opp.",
+    "noHeat": "Målesylindre og gassylindre varmes ikke opp.",
     "pipetteSame": "Pipetten tømmes i et annet kar.",
     "hint.funnel": "Trykk nå på karet trakten skal henge over.",
     "notHere.funnel": "Det går ikke ved en trakt.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken.",
     "part.electrode-Pb": "blyelektrode",
     "say.mirror": "{vessel}: Det dannes et speil av {name} på karets vegg.",
-    "hidden.mirror": "{vessel}: Det dannes et speil på karets vegg."
+    "hidden.mirror": "{vessel}: Det dannes et speil på karets vegg.",
+    "part.jar": "gassylinder",
+    "bin.oxidize": "oksider først til sulfat med hydrogenperoksid",
+    "why.oxidize": "Sulfitt frigjør svoveldioksid med syrer.",
+    "why.silver": "Ammoniakalsk sølvløsning danner eksplosivt sølvnitrid når den står; læreren uskadeliggjør den straks."
   },
   "names": {
     "H2O(l)": "vann",

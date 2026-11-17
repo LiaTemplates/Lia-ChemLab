@@ -35,7 +35,7 @@
     "pipetteShort": "Il n'y en a pas assez pour la pipette.",
     "pipetteFull": "Ce récipient n'a pas assez de place.",
     "pipetteDrawn": "Prélevé dans {vessel}.",
-    "noHeat": "Une éprouvette graduée ne se chauffe pas.",
+    "noHeat": "Les éprouvettes graduées et à gaz ne se chauffent pas.",
     "pipetteSame": "La pipette verse dans un autre récipient.",
     "hint.funnel": "Touche maintenant le récipient au-dessus duquel l'entonnoir doit être placé.",
     "notHere.funnel": "Ce n'est pas possible sur un entonnoir.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Toucher maintenant le tube à essai qui doit aller dans la centrifugeuse – ou la paillasse.",
     "part.electrode-Pb": "électrode de plomb",
     "say.mirror": "{vessel} : un miroir de {name} se forme sur la paroi du récipient.",
-    "hidden.mirror": "{vessel} : un miroir se forme sur la paroi du récipient."
+    "hidden.mirror": "{vessel} : un miroir se forme sur la paroi du récipient.",
+    "part.jar": "éprouvette à gaz",
+    "bin.oxidize": "oxyder d'abord en sulfate avec du peroxyde d'hydrogène",
+    "why.oxidize": "Le sulfite libère du dioxyde de soufre avec les acides.",
+    "why.silver": "La solution ammoniacale d'argent forme en vieillissant du nitrure d'argent explosif ; l'enseignant la détruit tout de suite."
   },
   "names": {
     "H2O(l)": "eau",

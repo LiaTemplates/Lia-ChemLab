@@ -18,10 +18,10 @@
       "card.give": "Add {amount}", "card.pick": "Choose a substance, then add it.", "card.again": "Or tap the vessel once more.",
       "card.place": "Put on the bench:", "card.none": "No substance matches the search.", "hand.drop": "Back to the shelf", "hand": "In hand",
       "out.tabs": "Results", "out.eq": "Equations", "out.charts": "Charts", "out.log": "Log",
-      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.cylinder": "measuring cylinder", "part.pipette": "volumetric pipette {ml} mL",
+      "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.cylinder": "measuring cylinder", "part.jar": "gas jar", "part.pipette": "volumetric pipette {ml} mL",
       "hint.pipette1": "Now tap the vessel the pipette should draw from.", "hint.pipette2": "Now tap the vessel it should deliver into.",
       "say.pipetted": "{ml} mL transferred with the pipette from {from} into {vessel}", "pipetteShort": "There is not enough in it for the pipette.", "pipetteFull": "There is no room for it in that vessel.", "pipetteDrawn": "Drawn up from {vessel}.",
-      "noHeat": "A measuring cylinder is not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "noHeat": "Measuring cylinders and gas jars are not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
@@ -127,11 +127,13 @@
       "panel.contents": "Contents", "panel.empty": "empty", "panel.volume": "Liquid", "panel.strength": "ionic strength", "panel.shows": "shows",
       "panel.given": "delivered:",
       "panel.pour": "Pour into", "panel.pourGo": "Pour", "panel.dispose": "Dispose of:", "panel.remove": "Put away",
-      "bin.sink": "sink", "bin.acid": "acids and bases", "bin.heavy": "heavy metal salts", "bin.organic": "organic solvents", "bin.solid": "solids", "bin.reduce": "reduce with sodium thiosulfate first", "bin.teacher": "back to the teacher",
+      "bin.sink": "sink", "bin.acid": "acids and bases", "bin.heavy": "heavy metal salts", "bin.organic": "organic solvents", "bin.solid": "solids", "bin.reduce": "reduce with sodium thiosulfate first", "bin.teacher": "back to the teacher", "bin.oxidize": "oxidise to sulfate with hydrogen peroxide first",
       "say.disposed": "{vessel}: disposed of – {bin}. Correct.", "say.disposedWrong": "{vessel}: disposed of – {bin}. Better: {want}. {why}",
       "say.disposedSpare": "{vessel}: disposed of – {bin}. Fine, but the sink would have done.", "say.disposedHidden": "{vessel}: disposed of – {bin}. That was not the right container.",
       "why.reduce": "Oxidising agents such as bleach or iodine would release chlorine with acids or harm the waste water.",
       "why.teacher": "Remains of alkali metals go back under paraffin oil; the teacher destroys them.",
+      "why.oxidize": "Sulfite releases sulfur dioxide with acids.",
+      "why.silver": "Ammoniacal silver solution forms explosive silver nitride on standing; the teacher destroys it right away.",
       "why.sink": "Neutral solutions without heavy metals may go down the sink with plenty of water.",
       "why.acid": "Neutralise acidic and alkaline solutions first (pH 6 to 9) or collect them with the acids and bases.",
       "why.heavy": "Heavy metal ions must not get into the waste water.", "why.organic": "Organic solvents are collected separately.",
@@ -369,7 +371,7 @@
         if (event.right) return text("say.disposed", lang, vars);
         if (veiled) return text("say.disposedHidden", lang, vars);      // eine Probe verrät ihren Inhalt nicht
         vars.want = text("bin." + event.want, lang);
-        vars.why = text("why." + event.want, lang);
+        vars.why = text("why." + (event.why || event.want), lang);
         return text("say.disposedWrong", lang, vars);
       case "plated":
         vars.name = nameOf(L.species(event.species), lang);
@@ -1347,13 +1349,14 @@
   // ------------------------------------------------------------------ Messzylinder
 
   // Breite und Höhe der Röhre in Bildpunkten, Teilung (klein, mit Zahl) in mL
-  var CYL = { 10: [16, 150, 0.5, 2], 25: [22, 165, 1, 5], 50: [28, 180, 1, 10], 100: [36, 200, 2, 20] }, CYL_FOOT = 8;
+  // Messzylinder: [Breite, Höhe, kleiner Strich, großer Strich]; Standzylinder (250, 500) ohne Skala
+  var CYL = { 10: [16, 150, 0.5, 2], 25: [22, 165, 1, 5], 50: [28, 180, 1, 10], 100: [36, 200, 2, 20], 250: [56, 175], 500: [68, 205], 1000: [84, 235] }, CYL_FOOT = 8;
 
   function cylSize(w) { return CYL[w.size || w.cap] || CYL[100]; }
   // die Skala reicht vom Boden der Röhre bis 12 Bildpunkte unter den Rand
   function cylSurface(w) { var s = cylSize(w); return -CYL_FOOT - 2 - Math.min(1.05, w.ml / w.cap) * (s[1] - 14); }
 
-  L.registerPart("cylinder", {
+  var cylinderPart = {
     width: function (v) { return cylSize(v)[0] + 60; },
     bounds: function (v) { var s = cylSize(v); return { x0: -s[0] / 2 - 14, x1: s[0] / 2 + 14, top: -s[1] - CYL_FOOT - 6 }; },
     surface: cylSurface,
@@ -1375,7 +1378,7 @@
       // oben der Meniskus: am Rand hochgezogen, abgelesen wird der tiefste Punkt (level)
       var fill = function (level) { return "M" + (-a + 2) + "," + f(level - 2.5) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level - 2.5) + "Q0," + f(level + 2.5) + " " + (-a + 2) + "," + f(level - 2.5) + "Z"; };
       if (w.broken) return shards(a + 4, ctx);
-      for (ml = s[2]; ml <= w.cap + 1e-9; ml += s[2]) {
+      for (ml = s[2]; s[2] && ml <= w.cap + 1e-9; ml += s[2]) {
         major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
         my = -CYL_FOOT - 2 - ml / w.cap * (h - 14);
         marks += '<line class="cl-mark" x1="' + (a - (major ? 9 : 5)) + '" x2="' + a + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
@@ -1389,7 +1392,9 @@
         '<path class="cl-glass" d="M' + (-a - 10) + ",0L" + (-a) + "," + (-CYL_FOOT) + "L" + a + "," + (-CYL_FOOT) + "L" + (a + 10) + ',0Z"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
-  });
+  };
+  L.registerPart("cylinder", cylinderPart);
+  L.registerPart("jar", cylinderPart);                         // der Standzylinder: dieselbe Form, ohne Skala
 
   // ------------------------------------------------------------------ Trichter mit Filterpapier
 
@@ -1508,6 +1513,7 @@
     if (def) {
       body = id === "testtube" ? '<path class="cl-glass" d="M9,3L9,22A5,5 0 0 0 19,22L19,3"/>'
         : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
+        : id === "jar" ? '<path class="cl-glass" d="M8,3L8,24M20,24L20,3M5,27L8,24L20,24L23,27Z"/>'
         : id === "cylinder" ? '<path class="cl-glass" d="M10,3L10,24M18,24L18,3M6,27L10,24L18,24L22,27Z"/><line class="cl-mark" x1="14" x2="18" y1="9" y2="9"/><line class="cl-mark" x1="14" x2="18" y1="15" y2="15"/>'
         : L.parts[id] && L.parts[id].probe === "pipette" ? '<path class="cl-glass" d="M14,2L14,9M12,9Q8,14 12,19L14,19L14,27M14,19L16,19Q20,14 16,9Z"/><line class="cl-mark" x1="12" x2="16" y1="5" y2="5"/>'
         : id === "funnel" ? '<path class="cl-filter" d="M7,7L21,7L14,16Z"/><path class="cl-glass" d="M3,5L12,17L12,27M16,27L16,17L25,5"/>'

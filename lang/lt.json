@@ -35,7 +35,7 @@
     "pipetteShort": "Pipetei neužtenka.",
     "pipetteFull": "Tame inde nėra vietos.",
     "pipetteDrawn": "Įtraukta iš {vessel}.",
-    "noHeat": "Matavimo cilindras nekaitinamas.",
+    "noHeat": "Matavimo ir dujų cilindrai nešildomi.",
     "pipetteSame": "Pipetė išleidžia į kitą indą.",
     "hint.funnel": "Dabar paliesk indą, virš kurio turi kabėti piltuvėlis.",
     "notHere.funnel": "Prie piltuvėlio taip negalima.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą.",
     "part.electrode-Pb": "švino elektrodas",
     "say.mirror": "{vessel}: ant indo sienelės susidaro veidrodis: {name}.",
-    "hidden.mirror": "{vessel}: ant indo sienelės susidaro veidrodis."
+    "hidden.mirror": "{vessel}: ant indo sienelės susidaro veidrodis.",
+    "part.jar": "dujų cilindras",
+    "bin.oxidize": "pirmiausia vandenilio peroksidu oksiduoti iki sulfato",
+    "why.oxidize": "Sulfitas su rūgštimis išskiria sieros dioksidą.",
+    "why.silver": "Amoniakinis sidabro tirpalas stovėdamas sudaro sprogų sidabro nitridą; mokytojas jį tuoj pat sunaikina."
   },
   "names": {
     "H2O(l)": "vanduo",

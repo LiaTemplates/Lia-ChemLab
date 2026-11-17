@@ -35,7 +35,7 @@
     "pipetteShort": "Nu e destul pentru pipetă.",
     "pipetteFull": "În acel vas nu e loc.",
     "pipetteDrawn": "Aspirat din {vessel}.",
-    "noHeat": "Un cilindru gradat nu se încălzește.",
+    "noHeat": "Cilindrii gradați și cei pentru gaze nu se încălzesc.",
     "pipetteSame": "Pipeta golește în alt vas.",
     "hint.funnel": "Atinge acum vasul deasupra căruia trebuie să stea pâlnia.",
     "notHere.funnel": "La o pâlnie nu merge.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa.",
     "part.electrode-Pb": "electrod de plumb",
     "say.mirror": "{vessel}: pe peretele vasului se formează o oglindă de {name}.",
-    "hidden.mirror": "{vessel}: pe peretele vasului se formează o oglindă."
+    "hidden.mirror": "{vessel}: pe peretele vasului se formează o oglindă.",
+    "part.jar": "cilindru pentru gaze",
+    "bin.oxidize": "oxidează mai întâi la sulfat cu apă oxigenată",
+    "why.oxidize": "Sulfitul eliberează dioxid de sulf cu acizii.",
+    "why.silver": "Soluția amoniacală de argint formează la stat nitrură de argint explozivă; profesorul o distruge imediat."
   },
   "names": {
     "H2O(l)": "apă",

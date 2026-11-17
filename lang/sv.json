@@ -35,7 +35,7 @@
     "pipetteShort": "Det räcker inte till pipetten.",
     "pipetteFull": "Det får inte plats i det kärlet.",
     "pipetteDrawn": "Uppsuget från {vessel}.",
-    "noHeat": "En mätcylinder värms inte.",
+    "noHeat": "Mätcylindrar och gascylindrar värms inte.",
     "pipetteSame": "Pipetten töms i ett annat kärl.",
     "hint.funnel": "Tryck nu på kärlet som tratten ska hänga över.",
     "notHere.funnel": "Det går inte vid en tratt.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Tryck nu på provröret som ska in i centrifugen – eller på bänken.",
     "part.electrode-Pb": "blyelektrod",
     "say.mirror": "{vessel}: En spegel av {name} bildas på kärlets vägg.",
-    "hidden.mirror": "{vessel}: En spegel bildas på kärlets vägg."
+    "hidden.mirror": "{vessel}: En spegel bildas på kärlets vägg.",
+    "part.jar": "gascylinder",
+    "bin.oxidize": "oxidera först till sulfat med väteperoxid",
+    "why.oxidize": "Sulfit frigör svaveldioxid med syror.",
+    "why.silver": "Ammoniakalisk silverlösning bildar explosiv silvernitrid när den får stå; läraren oskadliggör den genast."
   },
   "names": {
     "H2O(l)": "vatten",

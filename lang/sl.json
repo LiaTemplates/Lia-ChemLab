@@ -35,7 +35,7 @@
     "pipetteShort": "Ni dovolj za pipeto.",
     "pipetteFull": "V tej posodi ni prostora.",
     "pipetteDrawn": "Vsrkano iz {vessel}.",
-    "noHeat": "Merilnega valja ne segrevamo.",
+    "noHeat": "Merilnih in plinskih valjev ne segrevamo.",
     "pipetteSame": "Pipeta izpusti v drugo posodo.",
     "hint.funnel": "Zdaj tapni posodo, nad katero naj visi lij.",
     "notHere.funnel": "Pri liju to ne gre.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo.",
     "part.electrode-Pb": "svinčeva elektroda",
     "say.mirror": "{vessel}: Na steni posode nastane zrcalo iz snovi {name}.",
-    "hidden.mirror": "{vessel}: Na steni posode nastane zrcalo."
+    "hidden.mirror": "{vessel}: Na steni posode nastane zrcalo.",
+    "part.jar": "plinski valj",
+    "bin.oxidize": "najprej z vodikovim peroksidom oksidiraj v sulfat",
+    "why.oxidize": "Sulfit s kislinami sprošča žveplov dioksid.",
+    "why.silver": "Amoniakalna raztopina srebra ob stanju tvori eksploziven srebrov nitrid; učitelj jo takoj uniči."
   },
   "names": {
     "H2O(l)": "voda",

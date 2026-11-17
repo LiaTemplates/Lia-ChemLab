@@ -35,7 +35,7 @@
     "pipetteShort": "Nema dovoljno za pipetu.",
     "pipetteFull": "U toj posudi nema mjesta.",
     "pipetteDrawn": "Uzeto iz {vessel}.",
-    "noHeat": "Menzura se ne zagrijava.",
+    "noHeat": "Menzure i plinski cilindri se ne zagrijavaju.",
     "pipetteSame": "Pipeta ispušta u drugu posudu.",
     "hint.funnel": "Sada dodirni posudu iznad koje treba visjeti lijevak.",
     "notHere.funnel": "Kod lijevka to ne ide.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol.",
     "part.electrode-Pb": "olovna elektroda",
     "say.mirror": "{vessel}: Na stijenci posude nastaje zrcalo od tvari {name}.",
-    "hidden.mirror": "{vessel}: Na stijenci posude nastaje zrcalo."
+    "hidden.mirror": "{vessel}: Na stijenci posude nastaje zrcalo.",
+    "part.jar": "plinski cilindar",
+    "bin.oxidize": "najprije oksidirati u sulfat vodikovim peroksidom",
+    "why.oxidize": "Sulfit s kiselinama oslobađa sumporov dioksid.",
+    "why.silver": "Amonijakalna otopina srebra stajanjem stvara eksplozivni srebrov nitrid; nastavnik je odmah uništava."
   },
   "names": {
     "H2O(l)": "voda",

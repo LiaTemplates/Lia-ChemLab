@@ -35,7 +35,7 @@
     "pipetteShort": "Pipetille ei riitä.",
     "pipetteFull": "Siihen astiaan ei mahdu.",
     "pipetteDrawn": "Imetty astiasta {vessel}.",
-    "noHeat": "Mittalasia ei lämmitetä.",
+    "noHeat": "Mittalaseja ja kaasusylintereitä ei kuumenneta.",
     "pipetteSame": "Pipetti tyhjennetään toiseen astiaan.",
     "hint.funnel": "Napauta nyt astiaa, jonka yläpuolelle suppilo tulee.",
     "notHere.funnel": "Suppilossa se ei onnistu.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää.",
     "part.electrode-Pb": "lyijyelektrodi",
     "say.mirror": "{vessel}: Astian seinään muodostuu peili: {name}.",
-    "hidden.mirror": "{vessel}: Astian seinään muodostuu peili."
+    "hidden.mirror": "{vessel}: Astian seinään muodostuu peili.",
+    "part.jar": "kaasusylinteri",
+    "bin.oxidize": "hapeta ensin vetyperoksidilla sulfaatiksi",
+    "why.oxidize": "Sulfiitti vapauttaa happojen kanssa rikkidioksidia.",
+    "why.silver": "Ammoniakaalinen hopealiuos muodostaa seistessään räjähtävää hopeanitridiä; opettaja tekee sen heti vaarattomaksi."
   },
   "names": {
     "H2O(l)": "vesi",

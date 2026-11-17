@@ -695,7 +695,7 @@
     "H2SO4 conc": { corr: [15, 5, 15, 5], src: "CLP Annex VI 016-020-00-8" },
     "CH3COOH": { corr: [25, 10, 25, 10], high: [[90, "GHS02"]], src: "CLP Annex VI 607-002-00-6 (SCL); Flam. Liq. 3 of the concentrated acid from 90 % (estimated from the flash point)" },
     "NaOH": { corr: [2, 0.5, 2, 0.5], met: 0.2, src: "CLP Annex VI 011-002-00-6 (SCL); H290 as suppliers label it" },
-    "NH3": { corr: [5, 1, 3, 1], stot: [3, 5], aq: { acute: 1 }, vm: 24, src: "CLP Annex VI 007-001-01-2 (SCL STOT SE 3)" },
+    "NH3": { corr: [5, 1, 3, 1], xph: true, stot: [3, 5], aq: { acute: 1 }, vm: 24, src: "CLP Annex VI 007-001-01-2 (SCL STOT SE 3); no SCL for skin corrosion, so the rule for bases with pH ≥ 11.5 applies from 1 % (Annex I, Table 3.2.4)" },
     "limewater": { corr: [null, null, 3, 1], irrit: 10, stot: [3], src: "self-classification of calcium hydroxide (ECHA C&L)" },
     "KBr": { irrit: 10, src: "self-classification (ECHA C&L): Eye Irrit. 2" },
     "KI": { stot: [1], src: "self-classification (Neofroxx SDS): STOT RE 1" },

@@ -35,7 +35,7 @@
     "pipetteShort": "Ɛnnɔɔso mma pipette no.",
     "pipetteFull": "Baabi nni ade no mu.",
     "pipetteDrawn": "Wɔatwe afi {vessel} mu.",
-    "noHeat": "Wɔnnhyɛ susuo silinda ɔhyew.",
+    "noHeat": "Wɔnhyew measuring cylinder ne gas jar.",
     "pipetteSame": "Pipette no hwie gu ade foforo mu.",
     "hint.funnel": "Afei mia ade a funnel no bɛsensɛn so no so.",
     "notHere.funnel": "Ɛrentumi nyɛ saa wɔ funnel ho.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Afei mia test tube a ɛsɛ sɛ ɛkɔ mfiri a ɛtwa kyinkyin no mu no so – anaa pon no.",
     "part.electrode-Pb": "lead electrode",
     "say.mirror": "{vessel}: {name} ahwehwɛ bi yɛ wɔ adekorade no fasu ho.",
-    "hidden.mirror": "{vessel}: Ahwehwɛ bi yɛ wɔ adekorade no fasu ho."
+    "hidden.mirror": "{vessel}: Ahwehwɛ bi yɛ wɔ adekorade no fasu ho.",
+    "part.jar": "gas jar",
+    "bin.oxidize": "fa hydrogen peroxide dan no sulfate kan",
+    "why.oxidize": "Sulfite yi sulfur dioxide adi wɔ acid mu.",
+    "why.silver": "Ammonia silver nsu a ɛtena hɔ yɛ silver nitride a ɛpae; ɔkyerɛkyerɛfo sɛe no ntɛm ara."
   },
   "names": {
     "H2O(l)": "nsuo",

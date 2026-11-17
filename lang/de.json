@@ -35,7 +35,7 @@
     "pipetteShort": "Darin ist nicht genug für die Pipette.",
     "pipetteFull": "In diesem Gefäß ist dafür kein Platz.",
     "pipetteDrawn": "Aus {vessel} aufgezogen.",
-    "noHeat": "Ein Messzylinder wird nicht erhitzt.",
+    "noHeat": "Messzylinder und Standzylinder werden nicht erhitzt.",
     "pipetteSame": "Die Pipette gibt in ein anderes Gefäß ab.",
     "hint.funnel": "Jetzt das Gefäß antippen, über dem der Trichter hängen soll.",
     "notHere.funnel": "Am Trichter geht das nicht.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch.",
     "part.electrode-Pb": "Blei-Elektrode",
     "say.mirror": "{vessel}: An der Gefäßwand bildet sich ein Spiegel aus {name}.",
-    "hidden.mirror": "{vessel}: An der Gefäßwand bildet sich ein Spiegel."
+    "hidden.mirror": "{vessel}: An der Gefäßwand bildet sich ein Spiegel.",
+    "part.jar": "Standzylinder",
+    "bin.oxidize": "erst mit Wasserstoffperoxid zu Sulfat oxidieren",
+    "why.oxidize": "Sulfit setzt mit Säuren Schwefeldioxid frei.",
+    "why.silver": "Ammoniakalische Silberlösung bildet beim Stehen explosives Silbernitrid; die Lehrkraft macht sie gleich unschädlich."
   },
   "names": {
     "H2O(l)": "Wasser",

@@ -35,7 +35,7 @@
     "pipetteShort": "Der er ikke nok til pipetten.",
     "pipetteFull": "Der er ikke plads i den beholder.",
     "pipetteDrawn": "Suget op fra {vessel}.",
-    "noHeat": "Et måleglas opvarmes ikke.",
+    "noHeat": "Måleglas og gascylindre opvarmes ikke.",
     "pipetteSame": "Pipetten tømmes i en anden beholder.",
     "hint.funnel": "Tryk nu på den beholder, tragten skal hænge over.",
     "notHere.funnel": "Det går ikke ved en tragt.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Tryk nu på det reagensglas, der skal i centrifugen – eller på bordet.",
     "part.electrode-Pb": "blyelektrode",
     "say.mirror": "{vessel}: Der dannes et spejl af {name} på beholderens væg.",
-    "hidden.mirror": "{vessel}: Der dannes et spejl på beholderens væg."
+    "hidden.mirror": "{vessel}: Der dannes et spejl på beholderens væg.",
+    "part.jar": "gascylinder",
+    "bin.oxidize": "oxidér først til sulfat med hydrogenperoxid",
+    "why.oxidize": "Sulfit frigiver svovldioxid med syrer.",
+    "why.silver": "Ammoniakalsk sølvopløsning danner ved henstand eksplosivt sølvnitrid; læreren uskadeliggør den straks."
   },
   "names": {
     "H2O(l)": "vand",

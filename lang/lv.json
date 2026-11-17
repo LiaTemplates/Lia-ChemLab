@@ -35,7 +35,7 @@
     "pipetteShort": "Pipetei nepietiek.",
     "pipetteFull": "Tajā traukā nav vietas.",
     "pipetteDrawn": "Iesūkts no {vessel}.",
-    "noHeat": "Mērcilindru nekarsē.",
+    "noHeat": "Mērcilindrus un gāzes cilindrus nekarsē.",
     "pipetteSame": "Pipete iztukšojas citā traukā.",
     "hint.funnel": "Tagad pieskaries traukam, virs kura jākarājas piltuvei.",
     "notHere.funnel": "Pie piltuves tas nedarbojas.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Tagad pieskarieties mēģenei, kurai jānonāk centrifūgā, – vai galdam.",
     "part.electrode-Pb": "svina elektrods",
     "say.mirror": "{vessel}: uz trauka sieniņas veidojas spogulis: {name}.",
-    "hidden.mirror": "{vessel}: uz trauka sieniņas veidojas spogulis."
+    "hidden.mirror": "{vessel}: uz trauka sieniņas veidojas spogulis.",
+    "part.jar": "gāzes cilindrs",
+    "bin.oxidize": "vispirms ar ūdeņraža peroksīdu oksidēt līdz sulfātam",
+    "why.oxidize": "Sulfīts ar skābēm izdala sēra dioksīdu.",
+    "why.silver": "Amonjakāls sudraba šķīdums stāvot veido sprādzienbīstamu sudraba nitrīdu; skolotājs to tūlīt iznīcina."
   },
   "names": {
     "H2O(l)": "ūdens",

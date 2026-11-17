@@ -35,7 +35,7 @@
     "pipetteShort": "Er zit niet genoeg in voor de pipet.",
     "pipetteFull": "In dat vat is er geen plaats voor.",
     "pipetteDrawn": "Opgezogen uit {vessel}.",
-    "noHeat": "Een maatcilinder wordt niet verwarmd.",
+    "noHeat": "Maatcilinders en gascilinders worden niet verwarmd.",
     "pipetteSame": "De pipet geeft af in een ander vat.",
     "hint.funnel": "Tik nu op het vat waarboven de trechter moet hangen.",
     "notHere.funnel": "Bij een trechter kan dat niet.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel.",
     "part.electrode-Pb": "loodelektrode",
     "say.mirror": "{vessel}: Op de wand van het vat vormt zich een spiegel van {name}.",
-    "hidden.mirror": "{vessel}: Op de wand van het vat vormt zich een spiegel."
+    "hidden.mirror": "{vessel}: Op de wand van het vat vormt zich een spiegel.",
+    "part.jar": "gascilinder",
+    "bin.oxidize": "eerst met waterstofperoxide tot sulfaat oxideren",
+    "why.oxidize": "Sulfiet geeft met zuren zwaveldioxide vrij.",
+    "why.silver": "Ammoniakale zilveroplossing vormt bij staan explosief zilvernitride; de docent maakt haar meteen onschadelijk."
   },
   "names": {
     "H2O(l)": "water",

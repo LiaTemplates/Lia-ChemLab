@@ -35,7 +35,7 @@
     "pipetteShort": "Hakitoshi kwa pipeti.",
     "pipetteFull": "Hakuna nafasi katika chombo hicho.",
     "pipetteDrawn": "Imevutwa kutoka {vessel}.",
-    "noHeat": "Silinda ya kupimia haipashwi moto.",
+    "noHeat": "Silinda za kupimia na silinda za gesi hazipashwi moto.",
     "pipetteSame": "Pipeti humimina kwenye chombo kingine.",
     "hint.funnel": "Sasa gusa chombo ambacho faneli itaning'inia juu yake.",
     "notHere.funnel": "Hilo haliwezekani kwenye faneli.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi.",
     "part.electrode-Pb": "elektrodi ya risasi",
     "say.mirror": "{vessel}: Kioo cha {name} kinajitokeza kwenye ukuta wa chombo.",
-    "hidden.mirror": "{vessel}: Kioo kinajitokeza kwenye ukuta wa chombo."
+    "hidden.mirror": "{vessel}: Kioo kinajitokeza kwenye ukuta wa chombo.",
+    "part.jar": "silinda ya gesi",
+    "bin.oxidize": "kwanza oksidisha hadi salfeti kwa haidrojeni peroksaidi",
+    "why.oxidize": "Salfaiti hutoa salfa dioksidi pamoja na asidi.",
+    "why.silver": "Myeyusho wa fedha wenye amonia hutengeneza nitraidi ya fedha inayolipuka ukikaa; mwalimu huiharibu mara moja."
   },
   "names": {
     "H2O(l)": "maji",

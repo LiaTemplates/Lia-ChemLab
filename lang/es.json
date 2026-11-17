@@ -35,7 +35,7 @@
     "pipetteShort": "No hay suficiente para la pipeta.",
     "pipetteFull": "En ese recipiente no cabe.",
     "pipetteDrawn": "Tomado de {vessel}.",
-    "noHeat": "Una probeta no se calienta.",
+    "noHeat": "Las probetas graduadas y las de gases no se calientan.",
     "pipetteSame": "La pipeta vierte en otro recipiente.",
     "hint.funnel": "Toca ahora el recipiente sobre el que debe colgar el embudo.",
     "notHere.funnel": "Eso no se puede en un embudo.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Ahora tocar el tubo de ensayo que debe ir a la centrífuga, o la mesa.",
     "part.electrode-Pb": "electrodo de plomo",
     "say.mirror": "{vessel}: En la pared del recipiente se forma un espejo de {name}.",
-    "hidden.mirror": "{vessel}: En la pared del recipiente se forma un espejo."
+    "hidden.mirror": "{vessel}: En la pared del recipiente se forma un espejo.",
+    "part.jar": "probeta de gases",
+    "bin.oxidize": "oxidar primero a sulfato con peróxido de hidrógeno",
+    "why.oxidize": "El sulfito libera dióxido de azufre con los ácidos.",
+    "why.silver": "La disolución amoniacal de plata forma al reposar nitruro de plata explosivo; el profesorado la destruye enseguida."
   },
   "names": {
     "H2O(l)": "agua",

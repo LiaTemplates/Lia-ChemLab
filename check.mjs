@@ -4742,6 +4742,23 @@ test("Filtrieren: der Trichter hält den Niederschlag zurück, das Filtrat läuf
   assert.match(L.icon("funnel"), /<svg/);
 });
 
+test("Kleine Punkte: pH-Regel der CLP für Ammoniak, Sulfit erst oxidieren, ammoniakalische Silberlösung zur Lehrkraft", () => {
+  const h = (id) => { const x = L.hazards(id); return x.pictograms.join(" ") + (x.signal ? " " + x.signal : ""); };
+  assert.equal(h("NH3 1M"), "GHS05 danger", "pH über 11,5 und ab 1 %: ätzend (CLP Anhang I, Tabelle 3.2.4)");
+  assert.equal(h("NH3 0.5M"), "", "unter 1 % gilt die Regel nicht");
+  assert.equal(h("HCl 0.1M"), "GHS05 warning", "eine Säure mit eigener Grenze bleibt bei ihrer Grenze (nur korrosiv gegenüber Metallen)");
+  const waste = (contains) => L.waste(lab([{ type: "beaker", id: "b", contains }], { room: 20 }), "b");
+  assert.deepEqual(waste([{ reagent: "Na2SO3 1M", ml: 10 }]), { bin: "oxidize" }, "Sulfit setzt mit Säuren Schwefeldioxid frei");
+  const silver = waste([{ reagent: "AgNO3 0.1M", ml: 5 }, { reagent: "NH3 2M", ml: 10 }]);
+  assert.deepEqual(silver, { bin: "teacher", why: "silver" }, "ammoniakalische Silberlösung bildet beim Stehen explosives Silbernitrid");
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "AgNO3 0.1M", ml: 5 }, { reagent: "NH3 2M", ml: 10 }] }], { room: 20 });
+  const out = L.dispose(l, "b", "heavy");
+  assert.deepEqual([out.want, out.why, out.right], ["teacher", "silver", false]);
+  assert.match(L.say(Object.assign({ key: "disposed" }, out), { lang: "de", names: { b: "Becherglas 1" } }), /Silbernitrid/);
+  assert.match(L.say({ key: "disposed", vessel: "b", bin: "sink", want: "oxidize", right: false }, { lang: "de", names: { b: "Becherglas 1" } }), /Wasserstoffperoxid/);
+  assert.match(L.text("part.jar", "de"), /Standzylinder/);
+});
+
 test("Entsorgen: das Labor kennt den richtigen Behälter, leert das Glas und meldet, ob der gewählte passt", () => {
   const want = (contains, more) => { const l = lab([{ type: "beaker", id: "b", contains }], Object.assign({ room: 20 }, more)); L.step(l, 30); return L.waste(l, "b").bin; };
   assert.equal(want([{ reagent: "NaCl 0.1M", ml: 20 }]), "sink", "Kochsalzlösung: Ausguss");
@@ -4937,7 +4954,7 @@ test("GHS: Schulchemikalien tragen die Kennzeichnung, die auch die Lieferanten a
   for (const [id, want] of [
     ["HCl 0.01M", ""], ["HCl 0.1M", "GHS05 warning"], ["HCl 2M", "GHS05 warning"], ["HCl 12M", "GHS05 GHS07 danger"],
     ["H2SO4 1M", "GHS05 warning"], ["H2SO4 conc", "GHS05 danger"], ["NaOH 0.01M", ""], ["NaOH 1M", "GHS05 danger"],
-    ["NH3 1M", "GHS07 warning"], ["NH3 2M", "GHS05 danger"], ["CH3COOH 1M", ""], ["CH3COOH 2M", "GHS07 warning"],
+    ["NH3 1M", "GHS05 danger"], ["NH3 2M", "GHS05 danger"], ["CH3COOH 1M", ""], ["CH3COOH 2M", "GHS07 warning"],
     ["AgNO3 0.1M", "GHS07 GHS09 warning"], ["BaCl2 1M", "GHS07 warning"], ["CuSO4 1M", "GHS07 GHS09 warning"],
     ["CoCl2 0.1M", "GHS08 GHS09 danger"], ["NaOCl 1M", "GHS05 GHS09 danger"],
     ["H2O2 1M", ""], ["NaCl 1M", ""], ["PP", "GHS02 GHS07 danger"], ["Mg ribbon", "GHS02 danger"], ["NaOH pellets", "GHS05 danger"],

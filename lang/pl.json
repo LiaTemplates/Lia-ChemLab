@@ -35,7 +35,7 @@
     "pipetteShort": "Jest za mało na pipetę.",
     "pipetteFull": "W tym naczyniu nie ma na to miejsca.",
     "pipetteDrawn": "Pobrano z {vessel}.",
-    "noHeat": "Cylindra miarowego się nie ogrzewa.",
+    "noHeat": "Cylindrów miarowych i cylindrów na gazy się nie ogrzewa.",
     "pipetteSame": "Pipeta oddaje do innego naczynia.",
     "hint.funnel": "Teraz dotknij naczynia, nad którym ma wisieć lejek.",
     "notHere.funnel": "Przy lejku to nie działa.",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół.",
     "part.electrode-Pb": "elektroda ołowiana",
     "say.mirror": "{vessel}: na ściance naczynia tworzy się lustro: {name}.",
-    "hidden.mirror": "{vessel}: na ściance naczynia tworzy się lustro."
+    "hidden.mirror": "{vessel}: na ściance naczynia tworzy się lustro.",
+    "part.jar": "cylinder na gazy",
+    "bin.oxidize": "najpierw utlenić do siarczanu nadtlenkiem wodoru",
+    "why.oxidize": "Siarczyn z kwasami wydziela ditlenek siarki.",
+    "why.silver": "Amoniakalny roztwór srebra podczas stania tworzy wybuchowy azotek srebra; nauczyciel od razu go unieszkodliwia."
   },
   "names": {
     "H2O(l)": "woda",

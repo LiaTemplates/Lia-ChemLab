@@ -35,7 +35,7 @@
     "pipetteShort": "ピペットに足りない。",
     "pipetteFull": "その容器には入らない。",
     "pipetteDrawn": "{vessel} から吸い取った。",
-    "noHeat": "メスシリンダーは加熱しない。",
+    "noHeat": "メスシリンダーとガス捕集びんは加熱しない。",
     "pipetteSame": "ピペットは別の容器に注ぐ。",
     "hint.funnel": "漏斗をのせる容器をタップしてください。",
     "notHere.funnel": "漏斗ではそれはできない。",
@@ -499,7 +499,11 @@
     "hint.centrifuge": "次に、遠心分離機に入れる試験管をタップしてください。または実験台をタップしてください。",
     "part.electrode-Pb": "鉛電極",
     "say.mirror": "{vessel}：容器の壁に{name}の鏡ができる。",
-    "hidden.mirror": "{vessel}：容器の壁に鏡ができる。"
+    "hidden.mirror": "{vessel}：容器の壁に鏡ができる。",
+    "part.jar": "ガス捕集びん",
+    "bin.oxidize": "先に過酸化水素で硫酸塩に酸化する",
+    "why.oxidize": "亜硫酸塩は酸と反応して二酸化硫黄を出す。",
+    "why.silver": "アンモニア性銀溶液は放置すると爆発性の窒化銀を生じる。先生がすぐに処理する。"
   },
   "names": {
     "H2O(l)": "水",
