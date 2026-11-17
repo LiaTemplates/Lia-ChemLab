@@ -1,0 +1,143 @@
+{
+  "about": "Ionen: Vanadium und seine Oxidationsstufen; weitere Übergangsmetalle und der Trennungsgang folgen",
+  "species": {
+    "VO2+(aq)": {
+      "name": {
+        "de": "Dioxovanadium(V)-Ion",
+        "en": "dioxovanadium(V) ion"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          360,
+          110,
+          900
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption band estimated from the usual colour of an acidic vanadate solution (pale yellow)"
+    },
+    "VO^2+(aq)": {
+      "name": {
+        "de": "Vanadyl-Ion (Vanadium(IV))",
+        "en": "vanadyl ion (vanadium(IV))"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          765,
+          200,
+          17
+        ],
+        [
+          625,
+          100,
+          7
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption bands estimated from the usual colour of vanadyl sulfate solution (blue)"
+    },
+    "V^3+(aq)": {
+      "name": {
+        "de": "Vanadium(III)-Ion",
+        "en": "vanadium(III) ion"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          410,
+          100,
+          10
+        ],
+        [
+          600,
+          110,
+          6
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption bands estimated from the usual colour of vanadium(III) solution (green)"
+    },
+    "V^2+(aq)": {
+      "name": {
+        "de": "Vanadium(II)-Ion",
+        "en": "vanadium(II) ion"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          560,
+          100,
+          5
+        ],
+        [
+          850,
+          150,
+          4
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption bands estimated from the usual colour of vanadium(II) solution (violet)"
+    }
+  },
+  "couples": [
+    {
+      "eq": "VO2+(aq) + 2 H+(aq) + e- <=> VO^2+(aq) + H2O(l)",
+      "E0": 1.0,
+      "src": "minteq.v4.dat (USGS): VO2+ + e- + 2 H+ = VO+2 + H2O, log_k 16.903"
+    },
+    {
+      "eq": "VO^2+(aq) + 2 H+(aq) + e- <=> V^3+(aq) + H2O(l)",
+      "E0": 0.337,
+      "src": "minteq.v4.dat (USGS): VO+2 + e- + 2 H+ = V+3 + H2O, log_k 5.696"
+    },
+    {
+      "eq": "V^3+(aq) + e- <=> V^2+(aq)",
+      "E0": -0.255,
+      "src": "minteq.v4.dat (USGS): V+3 + e- = V+2, log_k -4.31"
+    }
+  ],
+  "reagents": {
+    "NH4VO3 acidic": {
+      "ghs": {
+        "fixed": [
+          "GHS07"
+        ],
+        "signal": "warning",
+        "src": "mixture rules by hand: sulfuric acid 1 mol/L (about 9 %) is Skin Irrit. 2 and Eye Irrit. 2 (CLP Annex VI 016-020-00-8, SCL); ammonium metavanadate 0.6 % stays below the limits of its Acute Tox. 3 and Muta. 2 (supplier SDS)"
+      },
+      "name": {
+        "de": "Ammoniumvanadat in Schwefelsäure (0,05 mol/L)",
+        "en": "ammonium vanadate in sulfuric acid (0.05 mol/L)"
+      },
+      "solution": {
+        "NH4+(aq)": 0.05,
+        "VO2+(aq)": 0.05,
+        "H+(aq)": 0.9,
+        "HSO4-(aq)": 1.0
+      },
+      "group": "salt",
+      "src": "5.85 g ammonium metavanadate per litre of sulfuric acid 1 mol/L; the vanadate takes up two H+ per vanadium and is VO2+"
+    }
+  },
+  "reactions": [
+    {
+      "eq": "VO2+(aq) + V^3+(aq) -> 2 VO^2+(aq)",
+      "rate": {
+        "fast": true
+      },
+      "src": "textbook: neighbouring oxidation states of vanadium comproportionate quickly; so each colour shows on its own while zinc reduces step by step"
+    },
+    {
+      "eq": "VO^2+(aq) + V^2+(aq) + 2 H+(aq) -> 2 V^3+(aq) + H2O(l)",
+      "rate": {
+        "fast": true
+      },
+      "src": "textbook: comproportionation of vanadium(IV) and vanadium(II)"
+    },
+    {
+      "eq": "VO2+(aq) + V^2+(aq) + 2 H+(aq) -> VO^2+(aq) + V^3+(aq) + H2O(l)",
+      "rate": {
+        "fast": true
+      },
+      "src": "textbook: comproportionation of vanadium(V) and vanadium(II)"
+    }
+  ]
+}

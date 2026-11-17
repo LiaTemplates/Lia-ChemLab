@@ -176,6 +176,8 @@
         src: NONE + "; absorption bands estimated from usual table values (maxima around 690 and 625 nm, about 600 L/(mol cm))" },
       "MnO4-(aq)": { name: name("permanganate ion"), Hf: -541.41, D: 1.632, bands: [[526, 70, 2400]],
         src: LLNL + "MnO4-, Enthalpy of formation -129.4 kcal/mol" + DL + "; absorption band estimated from usual table values (around 525 nm, about 2400 L/(mol cm))" },
+      "MnO4^2-(aq)": { name: name("manganate ion"), Hf: -652.70, bands: [[606, 90, 1710], [439, 70, 1380]],
+        src: LLNL + "MnO4-2, Enthalpy of formation -156 kcal/mol; absorption bands: usual table values (606 nm, 1710 L/(mol cm); 439 nm, 1380 L/(mol cm)), widths estimated" },
       "Mn^2+(aq)": { name: name("manganese(II) ion"), Hf: -220.60, D: 0.688, src: LLNL + "Mn+2, Enthalpy of formation -52.724 kcal/mol" + DW },
       // Kristallviolett: das farbige Kation und das farblose Carbinol, das mit Lauge daraus entsteht
       "C25H30N3+(aq)": { name: name("crystal violet (cation)"), symbol: "CV", Hf: null, bands: [[590, 80, 87000]],
@@ -248,7 +250,7 @@
       // colloid: entsteht er in einer Lösung, ist er so fein verteilt, dass er in der Schwebe bleibt und sich nicht absetzt
       "S(s)": { name: name("sulfur"), Hf: 0, S: 32.054, color: "#e8d44a", colloid: true, src: CODATA + "; " + LOOK },
       "C(s)": { name: name("carbon (charcoal, graphite)"), Hf: 0, S: 5.74, color: "#2a2a2a", src: CODATA + " (graphite); " + LOOK },
-      "MnO2(s)": { name: name("manganese dioxide"), Hf: null, color: "#2b2622", src: LOOK },
+      "MnO2(s)": { name: name("manganese dioxide"), Hf: null, color: "#4a3020", colloid: true, src: LOOK + " (black-brown powder); formed in a solution it stays as a brown colloid" },
       // Salze für die Lösungswärme
       "NH4NO3(s)": { name: name("ammonium nitrate"), Hf: -365.56, S: 151.08, color: WHITE, src: NBS + "; " + LOOK },
       "NaOH(s)": { name: name("sodium hydroxide"), Hf: -425.609, S: 64.455, color: WHITE, flame: "#ffd21f", shine: 30, src: NBS + "; " + LOOK + GLOW },
@@ -506,6 +508,23 @@
       {
         eq: "2 MnO4-(aq) + 5 H2O2(aq) + 6 H+(aq) -> 2 Mn^2+(aq) + 5 O2(g) + 8 H2O(l)", rate: { fast: true },
         src: "textbook value: permanganate oxidises hydrogen peroxide in acidic solution instantly to oxygen"
+      },
+      // Chamäleon: Zucker reduziert Permanganat in Lauge erst zu grünem Manganat, dann zu braunem Braunstein.
+      // Vereinfacht bis zum Carbonat oxidiert; der Zucker liegt im Versuch weit im Überschuss vor
+      {
+        eq: "C12H22O11(aq) + 48 MnO4-(aq) + 72 OH-(aq) -> 48 MnO4^2-(aq) + 12 CO3^2-(aq) + 47 H2O(l)",
+        rate: { k: 0.003, Ea: 60, order: { "C12H22O11(aq)": 1, "MnO4-(aq)": 1, "OH-(aq)": 1 } },
+        src: "estimated from the usual school experiment (chameleon): with sugar in sodium hydroxide solution 1 mol/L violet turns green within about a minute"
+      },
+      {
+        eq: "C12H22O11(aq) + 24 MnO4^2-(aq) + H2O(l) -> 24 MnO2(s) + 12 CO3^2-(aq) + 24 OH-(aq)",
+        rate: { k: 0.002, Ea: 60, order: { "C12H22O11(aq)": 1, "MnO4^2-(aq)": 1 } },
+        src: "estimated from the usual school experiment (chameleon): the green solution turns brown over some minutes"
+      },
+      {
+        eq: "3 MnO4^2-(aq) + 4 H+(aq) -> 2 MnO4-(aq) + MnO2(s) + 2 H2O(l)", rate: { fast: true }, logK: 57.3,
+        src: "textbook: manganate keeps only in strongly alkaline solution and otherwise disproportionates. logK from the standard potentials " +
+          "MnO4^2-/MnO2 2.26 V and MnO4-/MnO4^2- 0.564 V (CRC Handbook of Chemistry and Physics, Electrochemical Series): 2 · (2.26 − 0.564) / 0.05916"
       },
       {
         eq: "2 Cu^2+(aq) + 5 I-(aq) -> 2 CuI(s) + I3-(aq)", rate: { fast: true }, logK: 11.17,

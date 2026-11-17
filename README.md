@@ -1241,7 +1241,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1436,6 +1436,24 @@ Im Scheidetrichter liegt Hexan auf Lugol-Lösung. So trennt man die Schichten na
   {"type":"separator","id":"trichter","over":"unten","contains":[{"reagent":"H2O","ml":40},{"reagent":"Lugol","drops":60},{"reagent":"hexane","ml":20}]}
  ],
  "shelf":["Lugol","hexane","H2O","beaker","separator"],
+ "show":{"charts":false}}
+```
+
+## Farben der Oxidationsstufen
+
+@[ChemLab.pack](packs/ionen.json)
+
+Viele Übergangsmetalle zeigen ihre Oxidationsstufe an der Farbe. Zwei klassische Versuche, beide mit Stoffen, die viele Schulen nicht mehr in der Sammlung haben:
+
+- **Vanadium-Regenbogen** (links): Die gelbe Lösung enthält Vanadium(V). Gib 2 g Zinkpulver dazu. Zink reduziert das Vanadium Stufe für Stufe: über Grün (Gelb und Blau gemischt) zum blauen Vanadium(IV), dann zum grünen Vanadium(III) und schließlich zum violetten Vanadium(II). Das dauert einige Minuten; benachbarte Stufen gleichen sich in der Lösung sofort aus, darum zeigt sich jede Farbe für sich.
+- **Chamäleon** (rechts): Natronlauge mit Zuckerlösung. Gib 2 mL Kaliumpermanganat-Lösung dazu. Der Zucker reduziert das violette Permanganat (Mangan(VII)) zum grünen Manganat (Mangan(VI)), auf dem Weg dorthin sieht die Mischung blau aus. Danach wird das Manganat zu Braunstein (Mangan(IV)), der fein verteilt in der Schwebe bleibt. Ohne Lauge geschieht nichts. Und gibst du zur grünen Lösung Säure, wird sie wieder violett: Manganat hält sich nur in Lauge.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"v","contains":[{"reagent":"NH4VO3 acidic","ml":50}]},
+  {"type":"beaker","id":"mn","contains":[{"reagent":"NaOH 1M","ml":40},{"reagent":"sugar 1M","ml":10}]}
+ ],
+ "shelf":["Zn powder","KMnO4 0.01M","H2SO4 1M","NH4VO3 acidic","NaOH 1M","sugar 1M","beaker"],
  "show":{"charts":false}}
 ```
 

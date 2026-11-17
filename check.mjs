@@ -1355,7 +1355,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
   assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "todo.md", "tools", "vendor"]);
-  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "organic.json"], "Erweiterungspakete");
+  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "ionen.json", "organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
   const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
@@ -10261,4 +10261,57 @@ test("Speichern: die Fläche lädt den eigenen Versuch wieder und zeigt fremde z
   } finally {
     delete globalThis.LIA;
   }
+});
+
+// ---------------------------------------------------------------- Farben der Oxidationsstufen (Paket ionen.json, Chamäleon im Kern)
+
+const ionen = () => JSON.parse(fs.readFileSync(new URL("packs/ionen.json", here), "utf8"));
+const colors = (seen) => seen.filter((e) => e.key === "color").map((e) => e.name).filter((name, i, all) => name !== all[i - 1]);
+
+test("Vanadium: Zinkpulver färbt die gelbe Lösung nacheinander grün, blau, grün und violett", () => {
+  L.register(ionen());
+  const l = beaker([{ reagent: "NH4VO3 acidic", ml: 50 }]), seen = [];
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(look(l).color.name, "yellow", "Vanadium(V) ist gelb");
+  L.add(l, "b", "Zn powder", { g: 2 });
+  const before = totals(l);
+  until(l, () => amount(l, "V^2+(aq)") > 0.9 * 2.5e-3, 900, seen);
+  const order = colors(seen), at = (name, from) => order.indexOf(name, from);
+  const green = at("green"), blue = at("blue", green), green2 = at("green", blue), violet = at("violet", green2);
+  assert.ok(green >= 0 && blue > green && green2 > blue && violet > green2, order.join(" → "));
+  assert.ok(amount(l, "V^2+(aq)") > 0.9 * 2.5e-3, "am Ende Vanadium(II)");
+  const after = totals(l);
+  near(after.charge, before.charge, 1e-9, "Ladung");
+  near(after.mass, before.mass, 1e-6, "Masse");
+});
+
+test("Chamäleon: Zucker in Natronlauge macht Permanganat erst blau und grün, dann trüb von Braunstein; ohne Lauge bleibt es violett", () => {
+  const start = (base) => {
+    const l = beaker([{ reagent: base, ml: 40 }, { reagent: "sugar 1M", ml: 10 }]), seen = [];
+    L.add(l, "b", "KMnO4 0.01M", { ml: 2 });
+    return { l, seen };
+  };
+  const { l, seen } = start("NaOH 1M");
+  until(l, () => false, 240, seen);
+  const order = colors(seen);
+  assert.ok(order.indexOf("blue") >= 0 && order.indexOf("green") > order.indexOf("blue"), order.join(" → "));
+  until(l, () => false, 600, seen);
+  assert.ok(amount(l, "MnO2(s)") > 0.9 * 2e-5, "das Mangan ist zu Braunstein geworden");
+  assert.ok(L.vessel(l, "b").lumps.some((p) => p.id === "MnO2(s)" && p.settled === 0), "der Braunstein bleibt in der Schwebe");
+  const water = start("H2O");
+  until(water.l, () => false, 240, water.seen);
+  assert.equal(look(water.l).color.name, "pink", "ohne Lauge bleibt das Permanganat");
+  assert.ok(amount(water.l, "MnO4^2-(aq)") < 1e-9, "kein Manganat");
+});
+
+test("Chamäleon: grünes Manganat wird mit Säure wieder violett, Braunstein fällt dabei", () => {
+  const l = beaker([{ reagent: "NaOH 1M", ml: 40 }, { reagent: "sugar 1M", ml: 10 }]);
+  L.add(l, "b", "KMnO4 0.01M", { ml: 2 });
+  L.step(l, 150);
+  const manganate = amount(l, "MnO4^2-(aq)"), permanganate = amount(l, "MnO4-(aq)");
+  assert.ok(manganate > 5e-6, "grün: Manganat ist da");
+  L.add(l, "b", "H2SO4 1M", { ml: 30 });
+  L.step(l, 1);
+  assert.ok(amount(l, "MnO4^2-(aq)") < 0.01 * manganate, "Manganat zerfällt in Säure");
+  near(amount(l, "MnO4-(aq)") - permanganate, 2 / 3 * manganate, 0.1 * manganate, "zwei Drittel werden wieder Permanganat");
 });
