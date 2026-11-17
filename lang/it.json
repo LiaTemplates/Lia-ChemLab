@@ -481,7 +481,7 @@
     "seen.smell": "Odore",
     "seen.ignite": "Qualcosa brucia",
     "seen.flame": "Colorazione della fiamma",
-    "seen.plated": "Si deposita un metallo",
+    "seen.plated": "Si deposita un rivestimento",
     "seen.lamp": "La lampadina si accende",
     "seen.broken": "Il vetro si rompe",
     "err.other": "L'apparato non può essere mostrato",
@@ -496,7 +496,8 @@
     "spinFree": "Togli prima tutto dalla provetta; niente deve pendere sopra o entrarvi, può restare solo un tappo.",
     "spinFlow": "Qualcosa scorre ancora: aspetta prima.",
     "spinEmpty": "Metti prima una provetta.",
-    "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco."
+    "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco.",
+    "part.electrode-Pb": "elettrodo di piombo"
   },
   "names": {
     "H2O(l)": "acqua",

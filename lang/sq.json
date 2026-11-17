@@ -481,7 +481,7 @@
     "seen.smell": "Erë",
     "seen.ignite": "Diçka digjet",
     "seen.flame": "Ngjyra e flakës",
-    "seen.plated": "Depozitohet një metal",
+    "seen.plated": "Depozitohet një shtresë",
     "seen.lamp": "Llamba ndizet",
     "seen.broken": "Qelqi thyhet",
     "err.other": "Montimi nuk mund të shfaqet",
@@ -496,7 +496,8 @@
     "spinFree": "Së pari nxirrni gjithçka nga provëza; asgjë nuk duhet të varet sipër saj ose të çojë brenda, mund të mbetet vetëm një tapë.",
     "spinFlow": "Ende po rrjedh diçka – prisni së pari.",
     "spinEmpty": "Së pari vendosni një provëz.",
-    "hint.centrifuge": "Tani prek provëzën që duhet të futet në centrifugë – ose tavolinën."
+    "hint.centrifuge": "Tani prek provëzën që duhet të futet në centrifugë – ose tavolinën.",
+    "part.electrode-Pb": "elektrodë plumbi"
   },
   "names": {
     "H2O(l)": "ujë",

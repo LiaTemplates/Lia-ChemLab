@@ -4054,7 +4054,7 @@ test("Bleiakku: zwei Bleiplatten in Schwefelsäure laden; am Pluspol braunes Ble
   near(totalsE(l).charge, before.charge, 1e-12, "Ladung");
 });
 
-test("Ein dichter Salzbelag deckt das Metall ab: Blei und Silber am Pluspol bilden Bleisulfat und Silberchlorid nur bis zu einer Schicht", () => {
+test("Ein dichter Belag deckt das Metall ab: Blei am Pluspol bildet Bleisulfat nur bis zu einer Schicht; Silberchlorid wächst weiter", () => {
   const pb = cell([{ reagent: "H2SO4 2M", ml: 80 }], "Pb", "C", 1.5);
   L.step(pb, 120);
   const sulfate = (L.reading(pb, "e1").coat.find((c) => c.id === "PbSO4(s)") || { n: 0 }).n;
@@ -4066,7 +4066,39 @@ test("Ein dichter Salzbelag deckt das Metall ab: Blei und Silber am Pluspol bild
   L.step(ag, 120);
   const chloride = L.reading(ag, "e1").coat.find((c) => c.id === "AgCl(s)").n;
   L.step(ag, 120);
-  near(L.reading(ag, "e1").coat.find((c) => c.id === "AgCl(s)").n, chloride, 0.02 * chloride, "Silberchlorid wächst nicht beliebig");
+  assert.ok(L.reading(ag, "e1").coat.find((c) => c.id === "AgCl(s)").n > 1.5 * chloride, "Silberchlorid ist kein dichter Belag: es wächst weiter (siehe Grenzen)");
+});
+
+test("Bleiakku: geladen entlädt er sich kaum von selbst; entladen kommt er zur Ruhe; Silber unter dickem Silberchlorid behält sein Potential", () => {
+  const l = cell([{ reagent: "H2SO4 2M", ml: 80 }], "Pb", "Pb", 3);
+  L.step(l, 60);
+  L.setVolts(l, "n", 0);
+  L.remove(l, "a");
+  const oxide = () => (L.reading(l, "e1").coat.find((c) => c.id === "PbO2(s)") || { n: 0 }).n, full = oxide();
+  L.step(l, 600);
+  assert.ok(oxide() > 0.98 * full, `nach zehn Minuten noch ${oxide() / full} des Bleidioxids`);
+  const open = L.reading(l, "u").value;
+  assert.ok(open > 1.9 && open < 2.2, `gut 2 V: ${open}`);
+  L.place(l, { type: "lamp", id: "lp", in: "b" });
+  L.step(l, 600);
+  assert.ok(Math.abs(L.circuit(l, "b").I) < 1e-5, `entladen fließt nur noch ein Hauch durch die dichte Schicht: ${L.circuit(l, "b").I} A`);
+  L.step(l, 600);
+  assert.ok(L.atRest(l), "und alles kommt zur Ruhe");
+  L.remove(l, "lp");
+  L.step(l, 5);
+  const rest = L.reading(l, "u").value;                       // unter dem dichten Bleisulfat hat das Blei kein festes Potential (siehe Grenzen)
+  assert.ok(rest > 0.5 && rest < 2.0, `entladen, ohne Last: ${rest} V`);
+  assert.ok(!(L.vessel(l, "b").n["PbSO4(s)"] > 1e-6), "kein Bleisulfat als Niederschlag im Glas: es bleibt auf den Platten");
+  // Silber, in Salzsäure dick mit Silberchlorid überzogen, gegen Kupfer in Kupfersulfat: 0,34 − 0,22 V und Nernst
+  const ag = lab([{ type: "beaker", id: "l", contains: [{ reagent: "HCl 1M", ml: 80 }] }, { type: "electrode-Ag", id: "e1", in: "l" }, { type: "electrode-C", id: "e2", in: "l" },
+    { type: "supply", id: "n", in: "l", volts: 3 }, { type: "beaker", id: "r", contains: [{ reagent: "CuSO4 0.5M", ml: 80 }] }, { type: "electrode-Cu", id: "e3", in: "r" }], { room: 25 });
+  L.step(ag, 10);
+  assert.ok(L.reading(ag, "e1").coat[0].n > 2.5e-5, "dicker Belag");
+  L.remove(ag, "n"); L.remove(ag, "e2");
+  L.place(ag, { type: "bridge", in: "l", to: "r" });
+  L.place(ag, { type: "voltmeter", id: "u", in: "l" });
+  L.step(ag, 2);
+  near(Math.abs(L.reading(ag, "u").value), 0.076, 0.03, "das Potential von Silber/Silberchlorid bleibt");
 });
 
 test("Brennstoffzelle: Gas an Platin oder Graphit haftet zum Teil; abgeschaltet gibt es gut 1 V und liefert Strom, bis es verbraucht ist; ohne Verbraucher verliert es sich in Minuten", () => {
@@ -5570,7 +5602,7 @@ test("Zink in Natronlauge: als Pulver entwickelt es langsam Wasserstoff und geht
 
 test("Silber am Pluspol in Kochsalzlösung: es überzieht sich mit Silberchlorid und wird schwerer; umgepolt wird der Belag wieder zu Silber", () => {
   const l = cell([{ reagent: "NaCl 1M", ml: 80 }], "Ag", "Ag", 3), before = totalsE(l), seen = [];
-  const q = (() => { let sum = 0; for (let i = 0; i < 100; i++) { L.step(l, 0.05, (e) => seen.push(e)); sum += L.circuit(l, "b").I * 0.05; } return sum; })();      // bevor die Schicht dicht ist
+  const q = (() => { let sum = 0; for (let i = 0; i < 1200; i++) { L.step(l, 0.05, (e) => seen.push(e)); sum += L.circuit(l, "b").I * 0.05; } return sum; })();
   const coat = L.reading(l, "e1").coat;
   assert.deepEqual(coat.map((c) => c.id), ["AgCl(s)"], "der Belag ist Silberchlorid");
   // bis auf den winzigen Anteil, der als Silber-Ion in Lösung geht und dort ausfällt
@@ -5583,7 +5615,7 @@ test("Silber am Pluspol in Kochsalzlösung: es überzieht sich mit Silberchlorid
   near(totalsE(l).mass, before.mass, 1e-9, "Masse");
   near(totalsE(l).charge, before.charge, 1e-12, "Ladung");
   L.setPole(l, "n", true);
-  L.step(l, 1);
+  L.step(l, 5);
   assert.ok(L.reading(l, "e1").coat[0].n < coat[0].n, "umgepolt wird der Belag weniger");
   assert.equal(L.reading(l, "e2").coat[0].id, "AgCl(s)", "und die andere Elektrode überzieht sich");
   assert.ok(halves(l).includes("e1: AgCl(s) + e- -> Ag(s) + Cl-(aq)"));
@@ -5672,10 +5704,10 @@ test("Klang: der laute Knall ist lauter als der pfeifende, und der lauter als da
 test("Gleichungen: ein Nebenvorgang, der neben dem Hauptvorgang derselben Elektrode nicht ins Gewicht fällt, steht nicht in der Liste", () => {
   // Am Silber geht neben dem Silberchlorid eine Spur als Silber-Ion in Lösung: ein Hunderttausendstel. Gebucht wird sie, gezeigt nicht.
   const l = cell([{ reagent: "NaCl 1M", ml: 80 }], "Ag", "Ag", 3);
-  L.step(l, 10);                                              // bevor das Silberchlorid das Silber abdeckt
+  L.step(l, 120);
   const list = L.reactions(l, "b").filter((r) => r.at);
   assert.deepEqual(list.map((r) => r.at + ": " + r.eq), ["e1: Ag(s) + Cl-(aq) -> AgCl(s) + e-", "e2: 2 H2O(l) + 2 e- -> H2(g) + 2 OH-(aq)"]);
-  assert.ok(Object.keys(L.vessel(l, "b").half).some((key) => /^ox e1 .*Ag\+\(aq\)/.test(key) && L.vessel(l, "b").half[key] > 1e-12), "die Spur ist trotzdem gebucht");
+  assert.ok(Object.keys(L.vessel(l, "b").half).some((key) => /^ox e1 .*Ag\+\(aq\)/.test(key) && L.vessel(l, "b").half[key] > 1e-9), "die Spur ist trotzdem gebucht");
   // ein zweiter Vorgang, der wirklich mitläuft, bleibt stehen: Kupfer und Wasserstoff am Minuspol
   const two = cell([{ reagent: "CuSO4 0.01M", ml: 80 }, { reagent: "H2SO4 1M", ml: 10 }], "C", "C", 6);
   L.step(two, 120);
@@ -9045,7 +9077,7 @@ test("README: die Folie zum Bleiakku hält, was ihr Text verspricht", () => {
   L.setVolts(l, supply, 0);
   L.step(l, 2);
   const open = L.reading(l, volts).value;
-  assert.ok(open > 2.0 && open < 2.2, `etwa 2,1 V: ${open}`);
+  assert.ok(open > 1.9 && open < 2.05, `knapp 2 V: ${open}`);
   const lamp = L.place(l, { type: "lamp", in: "akku" });
   const seen = [];
   L.step(l, 120, (e) => seen.push(e));

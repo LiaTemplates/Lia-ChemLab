@@ -481,7 +481,7 @@
     "seen.smell": "Hua",
     "seen.ignite": "Biribi rehyew",
     "seen.flame": "Ogya kɔla",
-    "seen.plated": "Metal bi ka ho",
+    "seen.plated": "Biribi bi ka ho",
     "seen.lamp": "Kanea no hyerɛn",
     "seen.broken": "Glass no bɔ",
     "err.other": "Wɔntumi nkyerɛ nhyehyɛeɛ no",
@@ -496,7 +496,8 @@
     "spinFree": "Yi biribiara fi test tube no mu kan; biribiara nsɛ sɛ ɛsensɛn ne so anaa ɛkɔ mu, rubber stopper nkutoo na ɛtumi ka hɔ.",
     "spinFlow": "Biribi da so resen – twɛn kan.",
     "spinEmpty": "Fa test tube hyɛ mu kan.",
-    "hint.centrifuge": "Afei mia test tube a ɛsɛ sɛ ɛkɔ mfiri a ɛtwa kyinkyin no mu no so – anaa pon no."
+    "hint.centrifuge": "Afei mia test tube a ɛsɛ sɛ ɛkɔ mfiri a ɛtwa kyinkyin no mu no so – anaa pon no.",
+    "part.electrode-Pb": "lead electrode"
   },
   "names": {
     "H2O(l)": "nsuo",

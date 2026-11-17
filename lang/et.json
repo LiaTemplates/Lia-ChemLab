@@ -481,7 +481,7 @@
     "seen.smell": "Lõhn",
     "seen.ignite": "Midagi põleb",
     "seen.flame": "Leegi värvus",
-    "seen.plated": "Metall ladestub",
+    "seen.plated": "Ladestub kate",
     "seen.lamp": "Lambike süttib",
     "seen.broken": "Klaas puruneb",
     "err.other": "Katseseadet ei saa kuvada",
@@ -496,7 +496,8 @@
     "spinFree": "Võta enne katseklaasist kõik välja; selle kohal ei tohi midagi rippuda ega sinna midagi viia, jääda võib ainult kork.",
     "spinFlow": "Midagi voolab veel – oota enne.",
     "spinEmpty": "Pane enne katseklaas sisse.",
-    "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda."
+    "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda.",
+    "part.electrode-Pb": "pliielektrood"
   },
   "names": {
     "H2O(l)": "vesi",

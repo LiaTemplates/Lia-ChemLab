@@ -56,8 +56,9 @@
   var OVER_H = { default: 0.60, "Pt(s)": 0.09, "C(s)": 0.47, "Cu(s)": 0.50, "Fe(s)": 0.30, "Ag(s)": 0.59, "Zn(s)": 0.36, "Pb(s)": 0.95 };
   // Wasserstoff aus Wasser statt aus H+: läuft überall gehemmter
   var OVER_W = { default: 0.90, "Pt(s)": 0.35, "C(s)": 0.75, "Cu(s)": 0.80, "Fe(s)": 0.80, "Ag(s)": 0.85, "Zn(s)": 1.0, "Mg(s)": 1.6, "Pb(s)": 1.2 };
-  // Blei hemmt Wasserstoff stark, Bleidioxid Sauerstoff: deshalb lässt sich ein Bleiakku laden, ohne dass gleich alles Gas wird
-  var OVER_O = { default: 0.60, "Pt(s)": 0.45, "C(s)": 0.50, "Cu(s)": 0.58, "Fe(s)": 0.41, "Ag(s)": 0.61, "PbO2(s)": 0.55 };
+  // Blei hemmt Wasserstoff stark, Bleidioxid Sauerstoff: deshalb lässt sich ein Bleiakku laden, ohne dass gleich alles Gas wird,
+  // und er entlädt sich kaum von selbst
+  var OVER_O = { default: 0.60, "Pt(s)": 0.45, "C(s)": 0.50, "Cu(s)": 0.58, "Fe(s)": 0.41, "Ag(s)": 0.61, "PbO2(s)": 0.80 };
   var OVER = "; overpotentials estimated from usual tables (at 1 mA/cm²)";
 
   function name(en) { return { en: en }; }        // deutsch und die übrigen Sprachen: lang/<code>.json
@@ -219,10 +220,12 @@
       "Cu(s)": { name: name("copper"), Hf: 0, S: 33.15, cp: 24.4, rho: 8.96, color: "#b5653a", settle: 4, src: CODATA + TABLE + "; " + LOOK },
       "Ag(s)": { name: name("silver"), Hf: 0, S: 42.55, cp: 25.4, rho: 10.49, color: "#c3c7cc", settle: 4, src: CODATA + TABLE + "; " + LOOK },
       "Fe(s)": { name: name("iron"), Hf: 0, cp: 25.1, rho: 7.87, color: "#6f747b", settle: 4, src: ELEMENT + "heat capacity and density: usual table values; " + LOOK },
-      "Pb(s)": { name: name("lead"), Hf: 0, S: 64.80, cp: 26.4, rho: 11.34, color: "#6b6f76", src: CODATA + TABLE + "; " + LOOK },
+      "Pb(s)": { name: name("lead"), Hf: 0, S: 64.80, cp: 26.4, rho: 11.34, color: "#6b6f76", settle: 4, src: CODATA + TABLE + "; " + LOOK },
       // Bleiakku: Bleisulfat und Bleidioxid entstehen als Belag auf Bleiplatten
-      "PbSO4(s)": { name: name("lead(II) sulfate"), Hf: -919.94, S: 148.57, color: WHITE, src: NBS + "; " + LOOK },
-      "PbO2(s)": { name: name("lead(IV) oxide"), Hf: -277.4, S: 68.6, color: "#4a2a17", src: NBS + "; " + LOOK },
+      // dense: als Belag deckt es die Platte ab (darunter reagiert das Blei nicht mehr); conducts: der Belag leitet den Strom (Bleidioxid),
+      // ein nichtleitender dichter Belag sperrt alles andere an der Elektrode
+      "PbSO4(s)": { name: name("lead(II) sulfate"), Hf: -919.94, S: 148.57, cp: 103.2, rho: 6.29, color: WHITE, dense: true, src: NBS + TABLE + "; " + LOOK },
+      "PbO2(s)": { name: name("lead(IV) oxide"), Hf: -277.4, S: 68.6, cp: 64.6, rho: 9.38, color: "#4a2a17", dense: true, conducts: true, src: NBS + TABLE + "; " + LOOK },
       "Pt(s)": { name: name("platinum"), Hf: 0, cp: 25.9, rho: 21.45, color: "#d3d6da", src: ELEMENT + "heat capacity and density: usual table values; " + LOOK },
       "I2(s)": { name: name("iodine"), Hf: 0, S: 116.14, cp: 54.4, rho: 4.93, color: "#3a3340", src: CODATA + TABLE + "; " + LOOK },
       "Zn(OH)2(s)": { name: name("zinc hydroxide"), Hf: null, color: WHITE, settle: 60, src: LOOK },
@@ -442,9 +445,9 @@
       { eq: "AgCl(s) + e- <=> Ag(s) + Cl-(aq)", E0: 0.22219,
         src: "converted from the couple Ag+/Ag with the solubility product (" + MINTEQ + "Cerargyrite, AgCl = Ag+ + Cl-, log_k -9.75)" },
       // Bleiakku: Blei wird am Minuspol zu Bleisulfat, Bleidioxid am Pluspol ebenso; geladen wird umgekehrt
-      { eq: "Pb^2+(aq) + 2 e- <=> Pb(s)", E0: -0.1262, src: "standard potential (CRC Handbook of Chemistry and Physics, Electrochemical Series)" },
+      // (kein Paar Pb²⁺/Pb: was an der Platte in Lösung ginge, fiele dort gleich als Bleisulfat aus)
       { eq: "PbSO4(s) + 2 e- <=> Pb(s) + SO4^2-(aq)", E0: -0.3566,
-        src: "converted from the couple Pb2+/Pb with the solubility product (" + MINTEQ + "Anglesite, PbSO4 = Pb+2 + SO4-2, log_k -7.79); table value -0.3588 V" },
+        src: "converted from the couple Pb2+/Pb (E0 -0.1262 V, CRC Handbook of Chemistry and Physics) with the solubility product (" + MINTEQ + "Anglesite, PbSO4 = Pb+2 + SO4-2, log_k -7.79); table value -0.3588 V" },
       { eq: "PbO2(s) + SO4^2-(aq) + 4 H+(aq) + 2 e- <=> PbSO4(s) + 2 H2O(l)", E0: 1.6913, src: "standard potential (CRC Handbook of Chemistry and Physics, Electrochemical Series)" },
       { eq: "Cu^2+(aq) + 2 e- <=> Cu(s)", E0: 0.3386, src: MINTEQ + "Cumetal, Cu = Cu+ + e-, log_k -8.756, and Cu+2 + e- = Cu+, log_k 2.69; added together" },
       { eq: "I3-(aq) + 2 e- <=> 3 I-(aq)", E0: 0.5405, over: 0.02, src: LLNL + "3 I- + 2 H+ + 0.5 O2 = I3- + H2O, log_k 24.7278. Overpotential estimated" },

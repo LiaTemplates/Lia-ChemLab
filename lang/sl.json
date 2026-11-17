@@ -481,7 +481,7 @@
     "seen.smell": "Vonj",
     "seen.ignite": "Nekaj gori",
     "seen.flame": "Barva plamena",
-    "seen.plated": "Izloča se kovina",
+    "seen.plated": "Izloča se prevleka",
     "seen.lamp": "Žarnica sveti",
     "seen.broken": "Steklo poči",
     "err.other": "Postavitve ni mogoče prikazati",
@@ -496,7 +496,8 @@
     "spinFree": "Najprej vse vzemite iz epruvete; nič ne sme viseti nad njo ali voditi vanjo, ostane lahko le zamašek.",
     "spinFlow": "Nekaj še teče – najprej počakajte.",
     "spinEmpty": "Najprej vstavite epruveto.",
-    "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo."
+    "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo.",
+    "part.electrode-Pb": "svinčeva elektroda"
   },
   "names": {
     "H2O(l)": "voda",

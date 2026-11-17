@@ -481,7 +481,7 @@
     "seen.smell": "Olor",
     "seen.ignite": "Algo arde",
     "seen.flame": "Coloración de la llama",
-    "seen.plated": "Se deposita un metal",
+    "seen.plated": "Se deposita un recubrimiento",
     "seen.lamp": "La bombilla se enciende",
     "seen.broken": "El vidrio se rompe",
     "err.other": "No se puede mostrar el montaje",
@@ -496,7 +496,8 @@
     "spinFree": "Primero saca todo del tubo de ensayo; nada puede colgar encima ni entrar en él, solo puede quedar un tapón.",
     "spinFlow": "Todavía fluye algo: espera primero.",
     "spinEmpty": "Primero coloca un tubo de ensayo.",
-    "hint.centrifuge": "Ahora tocar el tubo de ensayo que debe ir a la centrífuga, o la mesa."
+    "hint.centrifuge": "Ahora tocar el tubo de ensayo que debe ir a la centrífuga, o la mesa.",
+    "part.electrode-Pb": "electrodo de plomo"
   },
   "names": {
     "H2O(l)": "agua",

@@ -481,7 +481,7 @@
     "seen.smell": "Smarža",
     "seen.ignite": "Kaut kas deg",
     "seen.flame": "Liesmas krāsojums",
-    "seen.plated": "Izgulsnējas metāls",
+    "seen.plated": "Izgulsnējas pārklājums",
     "seen.lamp": "Spuldzīte iedegas",
     "seen.broken": "Stikls saplīst",
     "err.other": "Iekārtu nevar parādīt",
@@ -496,7 +496,8 @@
     "spinFree": "Vispirms izņemiet visu no mēģenes; virs tās nekas nedrīkst karāties un tajā nekas nedrīkst ievadīt, drīkst palikt tikai korķis.",
     "spinFlow": "Vēl kaut kas plūst – vispirms pagaidiet.",
     "spinEmpty": "Vispirms ielieciet mēģeni.",
-    "hint.centrifuge": "Tagad pieskarieties mēģenei, kurai jānonāk centrifūgā, – vai galdam."
+    "hint.centrifuge": "Tagad pieskarieties mēģenei, kurai jānonāk centrifūgā, – vai galdam.",
+    "part.electrode-Pb": "svina elektrods"
   },
   "names": {
     "H2O(l)": "ūdens",

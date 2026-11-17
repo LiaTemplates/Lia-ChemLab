@@ -481,7 +481,7 @@
     "seen.smell": "Olor",
     "seen.ignite": "Alguna cosa crema",
     "seen.flame": "Coloració de la flama",
-    "seen.plated": "Es diposita un metall",
+    "seen.plated": "Es diposita un recobriment",
     "seen.lamp": "La bombeta s'encén",
     "seen.broken": "El vidre es trenca",
     "err.other": "No es pot mostrar el muntatge",
@@ -496,7 +496,8 @@
     "spinFree": "Primer treu-ho tot del tub d'assaig; no hi pot penjar ni entrar-hi res, només hi pot quedar un tap.",
     "spinFlow": "Encara flueix alguna cosa: espera primer.",
     "spinEmpty": "Primer posa-hi un tub d'assaig.",
-    "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell."
+    "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell.",
+    "part.electrode-Pb": "elèctrode de plom"
   },
   "names": {
     "H2O(l)": "aigua",

@@ -481,7 +481,7 @@
     "seen.smell": "Odeur",
     "seen.ignite": "Quelque chose brûle",
     "seen.flame": "Coloration de flamme",
-    "seen.plated": "Un métal se dépose",
+    "seen.plated": "Un dépôt se forme",
     "seen.lamp": "La lampe s'allume",
     "seen.broken": "Le verre se brise",
     "err.other": "Le montage ne peut pas être affiché",
@@ -496,7 +496,8 @@
     "spinFree": "Retirez d'abord tout du tube à essai ; rien ne doit pendre au-dessus ni y mener, seul un bouchon peut rester.",
     "spinFlow": "Quelque chose coule encore : attendez d'abord.",
     "spinEmpty": "Placez d'abord un tube à essai.",
-    "hint.centrifuge": "Toucher maintenant le tube à essai qui doit aller dans la centrifugeuse – ou la paillasse."
+    "hint.centrifuge": "Toucher maintenant le tube à essai qui doit aller dans la centrifugeuse – ou la paillasse.",
+    "part.electrode-Pb": "électrode de plomb"
   },
   "names": {
     "H2O(l)": "eau",

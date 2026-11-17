@@ -481,7 +481,7 @@
     "seen.smell": "Geruch",
     "seen.ignite": "Es brennt",
     "seen.flame": "Flammenfärbung",
-    "seen.plated": "Metall scheidet sich ab",
+    "seen.plated": "Ein Belag scheidet sich ab",
     "seen.lamp": "Das Lämpchen leuchtet",
     "seen.broken": "Das Glas zerspringt",
     "err.other": "Der Aufbau lässt sich nicht anzeigen",
@@ -496,7 +496,8 @@
     "spinFree": "Erst alles aus dem Reagenzglas nehmen; nichts darf darüber hängen oder hineinführen, nur ein Stopfen darf bleiben.",
     "spinFlow": "Es fließt noch – erst abwarten.",
     "spinEmpty": "Erst ein Reagenzglas hineinstellen.",
-    "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch."
+    "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch.",
+    "part.electrode-Pb": "Blei-Elektrode"
   },
   "names": {
     "H2O(l)": "Wasser",

@@ -481,7 +481,7 @@
     "seen.smell": "Boladh",
     "seen.ignite": "Tá rud éigin ag dó",
     "seen.flame": "Dath lasrach",
-    "seen.plated": "Leagtar miotal síos",
+    "seen.plated": "Leagtar sraith síos",
     "seen.lamp": "Lasann an lampa",
     "seen.broken": "Briseann an ghloine",
     "err.other": "Ní féidir an socrú a thaispeáint",
@@ -496,7 +496,8 @@
     "spinFree": "Bain gach rud as an triaileadán ar dtús; ní féidir le haon rud a bheith crochta os a chionn ná dul isteach ann, ní féidir ach stopallán a fhágáil.",
     "spinFlow": "Tá rud éigin fós ag sileadh – fan ar dtús.",
     "spinEmpty": "Cuir triaileadán isteach ar dtús.",
-    "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse."
+    "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse.",
+    "part.electrode-Pb": "leictreoid luaidhe"
   },
   "names": {
     "H2O(l)": "uisce",

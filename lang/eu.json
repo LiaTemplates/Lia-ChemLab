@@ -481,7 +481,7 @@
     "seen.smell": "Usaina",
     "seen.ignite": "Zerbait erretzen ari da",
     "seen.flame": "Garraren kolorea",
-    "seen.plated": "Metal bat metatzen da",
+    "seen.plated": "Estaldura bat metatzen da",
     "seen.lamp": "Bonbilla pizten da",
     "seen.broken": "Beira apurtu egiten da",
     "err.other": "Ezin da muntaia erakutsi",
@@ -496,7 +496,8 @@
     "spinFree": "Atera lehenik dena saiakuntza-hoditik; ezer ezin da gainean zintzilik egon edo barrura sartu, tapoi bat bakarrik gera daiteke.",
     "spinFlow": "Oraindik zerbait isurtzen ari da: itxaron lehenik.",
     "spinEmpty": "Jarri lehenik saiakuntza-hodi bat.",
-    "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia."
+    "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia.",
+    "part.electrode-Pb": "berunezko elektrodoa"
   },
   "names": {
     "H2O(l)": "ura",

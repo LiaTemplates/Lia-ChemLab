@@ -467,7 +467,7 @@
     next.couples.forEach(function (a) {
       a.red.forEach(function (t) {
         var metal;
-        if (next.species[t.id].phase !== "s") return;
+        if (next.species[t.id].phase !== "s" || Object.keys(next.species[t.id].atoms).length !== 1) return;      // ein Metall, kein Salz (Bleisulfat)
         metal = next.metals[t.id] = next.metals[t.id] || { skip: {} };
         next.couples.forEach(function (c) {
           var pair = next.pairs[a.key + ">" + c.key];
@@ -2459,6 +2459,8 @@
           (L.db.carriers[t.id] || []).forEach(function (y) { supply += y.n * reach(y.id); });
           lim = Math.min(lim, c.n / t.n * feed * supply);
         });
+        // an einem nichtleitenden dichten Belag läuft, was ihn nicht selbst umsetzt, nur als Hauch
+        if (face.blind && !c.ox.concat(c.red).some(function (t) { return face.coat[t.id] > 1e-12; })) lim = Math.min(lim, face.area * SEEP);
         if (!ok || !(lim > 0)) return;
         entry[dir[1]] = { q: q - Math.log(lim), lim: lim };
         lacks[dir[1]] = ghost;
@@ -2678,7 +2680,8 @@
 
   var PLATE = { w: 2, len: 6, gap: 0.5 };     // Elektrode: Breite und Länge der Platte, Abstand zum Gefäßboden, in cm
   var COAT = 5e-7;            // mol/cm²: ab so viel sieht man einen Belag auf einer Elektrode
-  var SHUT = 2e-6;            // mol/cm²: ab so viel Salz oder Oxid (etwa 1 µm) ist das Metall darunter abgedeckt und reagiert nicht mehr (geschätzt)
+  var SHUT = 2e-6;            // mol/cm²: ab so viel dichtem Belag (dense: Bleisulfat, Bleidioxid; etwa 1 µm) ist das Metall abgedeckt (geschätzt)
+  var SEEP = 1e-7;            // A/cm²: so viel lässt ein nichtleitender dichter Belag noch für andere Vorgänge durch (geschätzt)
   // Gas an Platin und Graphit (geschätzt): Von dem Gas, das an der Elektrode entsteht, haftet der Anteil STICK an ihrer Oberfläche, bis
   // FILM mol/cm² erreicht sind. Es steht dann als Ausgangsstoff bereit (Brennstoffzelle, Polarisationsspannung), mit dem Anteil an FILM
   // hoch FILM_K als Druck in bar (je leerer die Elektrode, desto fester hält sie den Rest: so fällt die Spannung nach und nach), höchstens so
@@ -2719,13 +2722,17 @@
 
   // Die Elektrode t im Gefäß v als Oberfläche: ihr Material und was sich darauf abgeschieden hat
   function electrodeFace(v, t, dry) {
-    var body = L.parts[t.type].electrode, size = t.n > 0 ? 2 * PLATE.w * dip(v) : 0, top = body, most = COAT * size, id, salt = 0;
+    var body = L.parts[t.type].electrode, size = t.n > 0 ? 2 * PLATE.w * dip(v) : 0, top = body, most = COAT * size, id, salt = 0, dull = 0;
     for (id in t.coat) if (t.coat[id] > most) { most = t.coat[id]; top = id; }     // ein dichter Belag bestimmt, wie sich die Oberfläche verhält
-    for (id in t.coat) if (Object.keys(L.db.species[id].atoms).length > 1) salt += t.coat[id];
-    var shut = size > 0 && salt > SHUT * size;                   // ein dichter Salz- oder Oxidbelag deckt das Metall ab (ein Metallbelag nicht)
+    for (id in t.coat) if (L.db.species[id].dense) {          // ein Belag, der die Platte abdeckt (Bleisulfat, Bleidioxid)
+      salt += t.coat[id];
+      if (!L.db.species[id].conducts) dull += t.coat[id];
+    }
     return {
-      id: t.id, tool: t, top: top, area: size, skip: (L.db.metals[body] || {}).skip,
-      has: function (x) { return (x === body && t.n > 0 && !shut) || t.coat[x] > 1e-12; },
+      id: t.id, tool: t, top: top, area: size, skip: (L.db.metals[body] || {}).skip, coat: t.coat,
+      blind: size > 0 && dull > SHUT * size,                     // ist der Belag kein Leiter, läuft an ihm nur noch, was ihn selbst umsetzt
+      // ein dichter Belag deckt das Metall ab: es zählt nur noch als Gegenspieler (wie ein fehlender Feststoff), der Belag wächst nicht weiter
+      has: function (x) { return (x === body && t.n > 0 && !(size > 0 && salt > SHUT * size)) || t.coat[x] > 1e-12; },
       amount: function (x) { return (x === body ? t.n : 0) + (t.coat[x] > 1e-12 ? t.coat[x] : 0) + (t.film[x] || 0); },
       held: function (x) { return size > 0 && t.film[x] > 0 ? t.film[x] : 0; },       // haftendes Gas in mol
       cap: L.parts[t.type].hold && top === body ? FILM * size : 0,

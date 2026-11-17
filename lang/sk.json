@@ -481,7 +481,7 @@
     "seen.smell": "Zápach",
     "seen.ignite": "Niečo horí",
     "seen.flame": "Farbenie plameňa",
-    "seen.plated": "Vylučuje sa kov",
+    "seen.plated": "Vylučuje sa povlak",
     "seen.lamp": "Žiarovka svieti",
     "seen.broken": "Sklo praskne",
     "err.other": "Zostavu sa nedá zobraziť",
@@ -496,7 +496,8 @@
     "spinFree": "Najprv zo skúmavky všetko vyberte; nič nad ňou nesmie visieť ani do nej viesť, smie zostať len zátka.",
     "spinFlow": "Ešte niečo tečie – najprv počkajte.",
     "spinEmpty": "Najprv vložte skúmavku.",
-    "hint.centrifuge": "Teraz ťukni na skúmavku, ktorá má ísť do centrifúgy – alebo na stôl."
+    "hint.centrifuge": "Teraz ťukni na skúmavku, ktorá má ísť do centrifúgy – alebo na stôl.",
+    "part.electrode-Pb": "olovená elektróda"
   },
   "names": {
     "H2O(l)": "voda",

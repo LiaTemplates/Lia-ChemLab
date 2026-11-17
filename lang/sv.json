@@ -481,7 +481,7 @@
     "seen.smell": "Lukt",
     "seen.ignite": "Något brinner",
     "seen.flame": "Flamfärg",
-    "seen.plated": "En metall fälls ut",
+    "seen.plated": "En beläggning fälls ut",
     "seen.lamp": "Lampan tänds",
     "seen.broken": "Glaset spricker",
     "err.other": "Uppställningen kan inte visas",
@@ -496,7 +496,8 @@
     "spinFree": "Ta först ut allt ur provröret; ingenting får hänga över det eller leda in i det, bara en propp får sitta kvar.",
     "spinFlow": "Något rinner fortfarande – vänta först.",
     "spinEmpty": "Sätt först i ett provrör.",
-    "hint.centrifuge": "Tryck nu på provröret som ska in i centrifugen – eller på bänken."
+    "hint.centrifuge": "Tryck nu på provröret som ska in i centrifugen – eller på bänken.",
+    "part.electrode-Pb": "blyelektrod"
   },
   "names": {
     "H2O(l)": "vatten",

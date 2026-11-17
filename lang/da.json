@@ -481,7 +481,7 @@
     "seen.smell": "Lugt",
     "seen.ignite": "Noget brænder",
     "seen.flame": "Flammefarve",
-    "seen.plated": "Et metal udfældes",
+    "seen.plated": "Der dannes en belægning",
     "seen.lamp": "Pæren lyser",
     "seen.broken": "Glasset går i stykker",
     "err.other": "Opstillingen kan ikke vises",
@@ -496,7 +496,8 @@
     "spinFree": "Tag først alt ud af reagensglasset; intet må hænge over det eller føre ind i det, kun en prop må blive.",
     "spinFlow": "Der løber stadig noget – vent først.",
     "spinEmpty": "Sæt først et reagensglas i.",
-    "hint.centrifuge": "Tryk nu på det reagensglas, der skal i centrifugen – eller på bordet."
+    "hint.centrifuge": "Tryk nu på det reagensglas, der skal i centrifugen – eller på bordet.",
+    "part.electrode-Pb": "blyelektrode"
   },
   "names": {
     "H2O(l)": "vand",
