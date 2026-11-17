@@ -583,6 +583,31 @@ test("Blasen: Zahl nach der Gasmenge, Ort nach der Zeit, rückwärts wie vorwär
   assert.equal(L.fx.bubbles(box, 2e-5, 3, 1, true), L.fx.bubbles(box, 2e-5, 9, 1, true), "ohne Bewegung: stehendes Bild");
 });
 
+test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sinkt an den Wänden; ohne Heizung bleibt alles still", () => {
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", id: "br", under: "b", flame: 2 }], { room: 20 });
+  L.step(l, 30);
+  const w = L.view(l, L.vessel(l, "b")), box = { x0: -30, x1: 30, top: -60, bottom: -2 };
+  assert.ok(w.heat.q > 100 && w.heat.k > 0 && w.heat.room === 20, "der Rechenkern nennt Flamme, Verlust und Raum");
+  L.fx.flow(box, w, 0, "warm", "temp");
+  const svg = L.fx.flow(box, w, 5, "warm", "temp");
+  assert.match(svg, /<filter[\s\S]*<rect[\s\S]*cl-flow-dot/, "Wärmebild und Spurteilchen");
+  const s = L.fx.fields.warm, W = s.cols + 2, rows = s.T.length / W - 2, at = (x, i, j) => x[i + j * W], mid = Math.round((s.cols + 1) / 2);
+  let sum = 0;
+  for (let j = 1; j <= rows; j++) for (let i = 1; i <= s.cols; i++) sum += at(s.T, i, j);
+  near(sum / (s.cols * rows), w.T, 1e-6, "das Mittel ist die Temperatur des Rechenkerns");
+  assert.ok(at(s.T, mid, rows) > at(s.T, 1, rows) + 1, "über der Flamme ist es wärmer als am Rand");
+  assert.ok(at(s.v, mid, rows / 2) < -1, "in der Mitte steigt es auf (y zeigt nach unten)");
+  assert.ok(at(s.v, 2, rows / 2) > 0, "an der Wand sinkt es ab");
+  for (const mode of ["vortex", "pressure"]) assert.match(L.fx.flow(box, w, 5.1, "warm", mode), /<rect/, mode);
+
+  const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
+  const c = L.view(cold, L.vessel(cold, "b"));
+  L.fx.flow(box, c, 0, "cold", "temp"); L.fx.flow(box, c, 5, "cold", "temp");
+  assert.equal(Math.max(...L.fx.fields.cold.v.map(Math.abs), ...L.fx.fields.cold.u.map(Math.abs)), 0, "keine Wärme, keine Strömung");
+  assert.equal(L.fx.flow(box, Object.assign({}, c, { ml: 0 }), 6, "cold", "temp"), "", "ohne Flüssigkeit kein Bild");
+  assert.ok(L.fx.density(4) > L.fx.density(0) && L.fx.density(4) > L.fx.density(20), "Wasser ist bei 4 °C am dichtesten");
+});
+
 test("Beobachtungen: als Satz in der Sprache des Kurses", () => {
   const say = (event, more) => L.say(event, Object.assign({ lang: "de", numbers: true, names: { b: "Reagenzglas 1", c: "Becherglas 1" } }, more));
   assert.equal(say({ key: "gas", vessel: "b", species: ["H2(g)"] }), "Reagenzglas 1: Gasblasen steigen auf.");

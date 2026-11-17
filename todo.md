@@ -6,6 +6,9 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
 
 - [x] **Gasgesetze** (17.11.2026): Der Kolbenprober folgt der Temperatur (Gay-Lussac), lässt sich halten (Boyle) und hat ein Manometer.
   - Offen: Druck im Diagramm, Aufgabenziel `measure: p` mit dem Kolbenprober, `hold` im Aufbau (`bench`), Wasserdampf im Kolbenprober.
+- [x] **Strömung im Gefäß** (17.11.2026, Branch `stroemung`): Temperatur, Wirbel und Druck als Bild in der Flüssigkeit (2D). Der Löser folgt Stam, „Stable Fluids“, mit Auftrieb aus der Dichte. Das Bild ist nur in eine Richtung gekoppelt: Der Rechenkern bleibt gut durchmischt.
+  - Offen: 3D (dasselbe Feld als Textur auf einer senkrechten Schnittebene), Zellmaske für schräge Wände, Rührer und Strömung beim Eingießen, eigene Dichten für andere Flüssigkeiten.
+  - Danach möglich: Öl und Wasser als Phasenfeld, sobald es die „Zweite flüssige Phase“ gibt.
 - [ ] **Chromatographie** (mittel bis groß, eigenes Teilmodell)
   - Papierstreifen im Becherglas, Laufmittelfront steigt mit der Zeit, Flecken wandern nach ihrem Rf-Wert.
   - Daten je Farbstoff (etwa Filzstiftfarben, die sich auftrennen), Zeichnung in 2D und 3D.

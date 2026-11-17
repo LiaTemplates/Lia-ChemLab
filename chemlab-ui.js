@@ -206,6 +206,8 @@
     var bench = BENCH, items = [], nodes = {}, shape = null, raf = 0, last = 0, slowAt = 0, pending = 0, playFrom = 0, stopped = false, down = null;
     var dragging = null;            // ein Schieber (Spannung, Temperatur, Wellenlänge) wird gerade bewegt: der Wert, auf dem er steht
     var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
+    var FLOWS = ["", "temp", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
+    function flowLabel() { return T("flow") + (st.flow ? ": " + T("flow." + FLOWS[st.flow]) : ""); }
     var lensKey = null, lensColors = {};      // was die Legende der Teilchenlupe gerade zeigt, und die Farben ihrer Teilchen
     var shown = [];                 // die Beobachtungen, die gerade in der Liste stehen
     var three = null;               // die 3D-Bühne, solange sie gezeigt wird; sonst zeichnet das SVG
@@ -853,7 +855,7 @@
       }
       items.forEach(function (item, index) {
         var g = nodes[item.id], def = L.parts[item.type];
-        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
+        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
           sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
         var v, w, r, host, place, b, content, hang, aria;
@@ -1034,6 +1036,7 @@
           '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
           (sampleOf(v.id) && lab.samples[sampleOf(v.id)].names.length ? '<label class="cl-guess">' + esc(T("identify")) + ' <select data-act="guess"><option value="">' + esc(T("identify.pick")) + "</option>" +
             lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '"' + (lab.samples[sampleOf(v.id)].said === n ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
+          '<button type="button" class="cl-btn" data-act="flow" aria-pressed="' + (st.flow ? "true" : "false") + '">' + esc(flowLabel()) + "</button> " +
           (show.particles && !v.veiled ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
@@ -1795,6 +1798,12 @@
       else if (act === "out") setOut(id);
       else if (act === "jumpto") jump(Math.max(parseFloat(id) || 0, 1e-6));      // gleich nach dem Ereignis; t = 0 allein wäre der Aufbau davor
       else if (act === "bench") { if (st.hand && st.hand.tool) alone(); }
+      else if (act === "flow") {                               // Strömung: aus, Temperatur, Wirbel, Druck, wieder aus
+        st.flow = ((st.flow || 0) + 1) % FLOWS.length;
+        b.setAttribute("aria-pressed", st.flow ? "true" : "false");
+        b.textContent = flowLabel();
+        paint();
+      }
       else if (act === "lens") {                               // Teilchenlupe auf und zu
         st.lens = !st.lens;
         ui.panel.querySelector('[data-act="lens"]').setAttribute("aria-pressed", st.lens ? "true" : "false");      // der Knopf bleibt stehen und behält den Fokus

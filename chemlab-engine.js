@@ -3614,8 +3614,15 @@
     dry(v, emit);
   }
 
+  // Wärmeströme eines Gefäßes: q Leistung der Flamme darunter in W, k Verlust in W/K an room (Raum oder Wasserbad: bath), d Durchmesser in cm
+  function warmth(lab, v) {
+    var burner = toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; }), bath = toolAt(lab, v, function (def) { return def.bath; });
+    return { q: burner ? spec(v).heat * (L.parts[burner.type].flames[burner.flame] - v.T) : 0, k: spec(v).loss + (bath ? spec(v).heat * L.parts[bath.type].gain : 0),
+      room: bath ? bath.temp : lab.room, bath: !!bath, d: spec(v).d || 3 };
+  }
+
   function advanceVessel(lab, v, emit) {
-    var id, gases = [], gas = 0, moving = false, vol, dissolved, burner, meter, room, bath;
+    var id, gases = [], gas = 0, moving = false, vol, dissolved, meter, room, bath;
     if (v.broken) return;
     boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
@@ -3629,8 +3636,7 @@
     dissolved = above(v, vol);
     dissolved.forEach(function (g) { if (g.p > P_AIR * OVER) fizz(v, g, vol); });
 
-    burner = toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; });
-    if (burner) v.q += spec(v).heat * (L.parts[burner.type].flames[burner.flame] - v.T) * DT;      // die Flamme heizt
+    v.q += warmth(lab, v).q * DT;                              // die Flamme heizt
     if (v.q) v.T += v.q / heatCapacity(v);
     v.q = 0;
 
@@ -3677,9 +3683,9 @@
     if (v.broken) return;
 
     // Wärmeabgabe an den Raum; im Wasserbad an das Bad, und das viel schneller
-    bath = toolAt(lab, v, function (def) { return def.bath; });
-    room = bath ? bath.temp : lab.room;
-    v.T = room + (v.T - room) * Math.exp(-(spec(v).loss + (bath ? spec(v).heat * L.parts[bath.type].gain : 0)) * DT / heatCapacity(v));
+    room = warmth(lab, v);
+    v.T = room.room + (v.T - room.room) * Math.exp(-room.k * DT / heatCapacity(v));
+    bath = room.bath;
     var wet = volume(v) > 0, spun = toolAt(lab, v, function (def, t) { return def.spin && t.spin; });
     v.lumps.forEach(function (l) {                             // Niederschlag setzt sich ab, in der Zentrifuge viel schneller
       var colloid = L.db.species[l.id].colloid;
@@ -4128,6 +4134,7 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
+      heat: warmth(lab, v),                                    // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser
       // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
       blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab

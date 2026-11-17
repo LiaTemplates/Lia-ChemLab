@@ -38,6 +38,7 @@
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
       "lens.residue": "No liquid in the vessel; a residue from evaporation lies at the bottom.",
+      "flow": "Currents", "flow.temp": "temperature", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
       "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
@@ -598,6 +599,8 @@
         '" stroke-opacity="' + (0.7 * Math.min(1, w.mirror.share)).toFixed(2) + '"/>';
     }
     if (w.ml > 0.005) {
+      // Strömung: Temperatur, Wirbel oder Druck im Querschnitt, über der Flüssigkeit und unter den Blasen
+      if (ctx.flow && w.heat && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.flow(box, w, ctx.t, esc(clip), ctx.flow, ctx.still) + "</g>";
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf
       if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.bubbles(box, Math.max(w.gas, w.steam), ctx.t, ctx.seed || 1, ctx.still) + "</g>";
       out += '<line class="cl-surface" x1="' + f(shape.x0) + '" x2="' + f(shape.x1) + '" y1="' + f(shape.top) + '" y2="' + f(shape.top) + '"/>';
