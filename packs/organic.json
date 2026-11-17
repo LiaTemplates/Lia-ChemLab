@@ -1,10 +1,14 @@
 {
-  "about": "Organik: Ethanol, Eisessig und Ethylacetat – Veresterung und Destillation; Nachweise mit Fehling, Tollens und Bromwasser",
+  "about": "Organik: Ethanol, Eisessig und Ethylacetat – Veresterung und Destillation; Nachweise mit Fehling, Tollens und Bromwasser; Glycerin und Zuckersirup als zähe Flüssigkeiten",
   "species": {
     "C2H5OH(aq)": {
       "name": { "de": "Ethanol", "en": "ethanol" }, "Hf": null,
-      "Vm": 58.37, "Tb": 78.24, "Hvap": 42.32, "mix": [1.6798, 0.9227], "cp": 112.4,
-      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,7893 g/cm³ bei 20 °C (Vm = 46,07/0,7893), Siedepunkt 78,24 °C, Verdampfungsenthalpie 42,32 kJ/mol bei 25 °C. Van-Laar-Konstanten mit Wasser A12 = 1,6798, A21 = 0,9227: Gmehling u. a., Vapor-Liquid Equilibrium Data Collection, DECHEMA Chemistry Data Series I (zitiert im Wikipedia-Artikel Van Laar equation). Wärmekapazität der Flüssigkeit 112,4 J/(mol K) bei 298,15 K: NIST Chemistry WebBook (Petrov u. a., 1989)"
+      "Vm": 58.37, "Tb": 78.24, "Hvap": 42.32, "mix": [1.6798, 0.9227], "cp": 112.4, "eta": [1.074, 0.694],
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,7893 g/cm³ bei 20 °C (Vm = 46,07/0,7893), Siedepunkt 78,24 °C, Verdampfungsenthalpie 42,32 kJ/mol bei 25 °C. Van-Laar-Konstanten mit Wasser A12 = 1,6798, A21 = 0,9227: Gmehling u. a., Vapor-Liquid Equilibrium Data Collection, DECHEMA Chemistry Data Series I (zitiert im Wikipedia-Artikel Van Laar equation). Wärmekapazität der Flüssigkeit 112,4 J/(mol K) bei 298,15 K: NIST Chemistry WebBook (Petrov u. a., 1989). Zähigkeit 1,074 mPa·s bei 25 °C und 0,694 mPa·s bei 50 °C: CRC Handbook of Chemistry and Physics, 99. Auflage (2018), Viscosity of Liquids"
+    },
+    "C3H8O3(aq)": {
+      "name": { "de": "Glycerin (Propan-1,2,3-triol)", "en": "glycerol (propane-1,2,3-triol)" }, "Hf": null, "Vm": 73.03, "eta": [934, 152],
+      "src": "Dichte 1,261 g/cm³ bei 20 °C (Vm = 92,09/1,261): PubChem, Hazardous Substances Data Bank (gemeinfrei). Zähigkeit 934 mPa·s bei 25 °C und 152 mPa·s bei 50 °C: CRC Handbook of Chemistry and Physics, 99. Auflage (2018), Viscosity of Liquids (nach Segur und Oberstar, Ind. Eng. Chem. 43, 2117, 1951)"
     },
     "CH3COOC2H5(aq)": {
       "name": { "de": "Ethylacetat (Essigsäureethylester)", "en": "ethyl acetate" }, "Hf": null,
@@ -103,6 +107,8 @@
     "Tollens": {"ghs": {"fixed": ["GHS09"], "signal": "warning", "src": "Silbernitrat 0,85 %: Aquatic Acute 1 mit M-Faktor 1000 (wie Silbernitrat-Lösung im Grundpaket); ätzend erst ab höheren Gehalten, Ammoniak und Natronlauge liegen unter den Grenzen"}, "name": {"de": "Tollens-Reagenz (ammoniakalische Silbernitrat-Lösung)", "en": "Tollens' reagent (ammoniacal silver nitrate)"}, "solution": {"Ag(NH3)2+(aq)": 0.05, "NH3(aq)": 0.2, "Na+(aq)": 0.05, "OH-(aq)": 0.05, "NO3-(aq)": 0.05}, "group": "other", "src": "Silbernitrat 0,05 mol/L, mit Natronlauge gefällt und in Ammoniak gelöst; der Überschuss an Ammoniak hält das Silberoxid in Lösung"},
     "ethanal": {"ghs": {"fixed": ["GHS08"], "signal": "warning", "src": "verdünnte Ethanal-Lösung 4,4 %: Carc. 2 von Ethanal (CLP Annex VI 605-003-00-6) ab 1 %; Eye Irrit. 2 und STOT SE 3 erst ab 10 % (allgemeine Grenzen)"}, "name": {"de": "Ethanal-Lösung (Acetaldehyd, 1 mol/L)", "en": "ethanal solution (acetaldehyde, 1 mol/L)"}, "solution": {"CH3CHO(aq)": 1}, "group": "other"},
     "glucose": {"name": {"de": "Glucose-Lösung 5 %", "en": "glucose solution 5 %"}, "solution": {"C6H12O6(aq)": 0.28}, "group": "other"},
+    "glycerol": {"name": {"de": "Glycerin 99,5 %", "en": "glycerol 99.5 %"}, "solution": {"C3H8O3(aq)": 13.54}, "group": "other", "src": "99,5 % Glycerin (Massenanteil), ideal gemischt aus den Dichten 1,261 und 0,998 g/cm³"},
+    "sugar syrup": {"name": {"de": "Zuckersirup (Saccharose 60 %)", "en": "sugar syrup (sucrose 60 %)"}, "solution": {"C12H22O11(aq)": 2.255}, "group": "other", "src": "771,9 g Saccharose je Liter (60 % bei der Dichte 1,2865 g/cm³)"},
     "acetone": {"ghs": {"fixed": ["GHS02", "GHS07"], "signal": "danger", "src": "CLP Annex VI 606-001-00-8: Flam. Liq. 2, Eye Irrit. 2, STOT SE 3"}, "name": {"de": "Aceton", "en": "acetone"}, "solution": {"CH3COCH3(aq)": 13.6}, "group": "other"},
     "hexene": {"ghs": {"fixed": ["GHS02", "GHS08"], "signal": "danger", "src": "Hex-1-en, Lieferanten (ECHA C&L): Flam. Liq. 2, Asp. Tox. 1"}, "name": {"de": "Hexen", "en": "hexene"}, "solution": {"C6H12(aq)": 7.99}, "group": "other"},
     "hexane": {"ghs": {"fixed": ["GHS02", "GHS07", "GHS08", "GHS09"], "signal": "danger", "src": "CLP Annex VI 601-037-00-0: Flam. Liq. 2, Repr. 2, Asp. Tox. 1, STOT RE 2, Skin Irrit. 2, STOT SE 3, Aquatic Chronic 2"}, "name": {"de": "Hexan", "en": "hexane"}, "solution": {"C6H14(aq)": 7.64}, "group": "other"},

@@ -772,6 +772,9 @@
     "acetone": "acetone",
     "hexene": "esene",
     "hexane": "esano",
-    "bromine water": "acqua di bromo (0,02 mol/L)"
+    "bromine water": "acqua di bromo (0,02 mol/L)",
+    "C3H8O3(aq)": "glicerolo",
+    "glycerol": "glicerolo 99,5 %",
+    "sugar syrup": "sciroppo di zucchero (saccarosio 60 %)"
   }
 }

@@ -772,6 +772,9 @@
     "acetone": "aseton",
     "hexene": "hekzen",
     "hexane": "hekzan",
-    "bromine water": "bromlu su (0,02 mol/L)"
+    "bromine water": "bromlu su (0,02 mol/L)",
+    "C3H8O3(aq)": "gliserol",
+    "glycerol": "gliserol 99,5 %",
+    "sugar syrup": "şeker şurubu (sakaroz 60 %)"
   }
 }

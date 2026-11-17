@@ -110,8 +110,10 @@
   // Anders als die übrigen Effekte hat es einen Zustand je Gefäß. Der wird nicht gespeichert und nach einem Sprung der Uhr neu eingeschwungen.
   // shortcut: rückwärts abgespielt zeigt es eine neu gerechnete Strömung, nicht die damalige; aufrüsten, wenn das im Unterricht stört.
   // shortcut: ein rechteckiges Gitter, schräge Wände (Erlenmeyer, Kolben) schneidet nur das Bild ab; eine Zellmaske, wenn es dort falsch aussieht.
-  var ROWS = 24, STEP = 0.05, GRAV = 9.81, MIX = 0.3, fields = {};
-  var SUPER = 3;                  // so viel K über dem Siedepunkt wird es am heißen Boden höchstens; was darüber geht, verdampft      // MIX: Ausgleich in Zellen²/s, verstärkt durch Wirbel, die das grobe Gitter nicht auflöst
+  var ROWS = 24, STEP = 0.05, GRAV = 9.81, fields = {};
+  var SUPER = 3;                  // so viel K über dem Siedepunkt wird es am heißen Boden höchstens; was darüber geht, verdampft
+  var ALPHA = 1.4e-7;             // Temperaturleitfähigkeit von Wasser in m²/s; shortcut: für jede Flüssigkeit dieselbe
+  var EDDY = 0.03;                // Wirbel, die das grobe Gitter nicht auflöst, mischen mit 0,03 Zellen mal Geschwindigkeit: wo nichts strömt, auch nichts
   fx.fields = fields;
 
   // Dichte von Wasser in kg/m³ nach Thiesen; mit ihrem Höchstwert bei 4 °C.
@@ -149,10 +151,13 @@
     return out;
   }
 
-  function spread(s, b, x, dt) {   // Ausgleich mit den Nachbarn: Wärmeleitung und Zähigkeit
-    var W = s.cols + 2, y = x.slice(), a = MIX * dt;
-    each(s, function (k) { x[k] = y[k] + a * (y[k - 1] + y[k + 1] + y[k - W] + y[k + W] - 4 * y[k]); });
-    bound(s, b, x);
+  // Ausgleich mit den Nachbarn (Wärmeleitung, Zähigkeit), rate in Zellen²/s je Zelle; implizit gerechnet, damit es auch bei Glycerin stabil bleibt
+  function spread(s, b, x, rate, dt) {
+    var W = s.cols + 2, y = x.slice(), it;
+    for (it = 0; it < 10; it++) {
+      each(s, function (k) { var a = rate[k] * dt; x[k] = (y[k] + a * (x[k - 1] + x[k + 1] + x[k - W] + x[k + W])) / (1 + 4 * a); });
+      bound(s, b, x);
+    }
   }
 
   function project(s) {            // Wasser lässt sich nicht zusammendrücken: was in eine Zelle fließt, fließt auch hinaus
@@ -175,12 +180,24 @@
       x[k] -= heat.k / rim * (x[k] - heat.room) * dt / cell;
     }
     each(s, function (k) { s.v[k] -= GRAV * (rho - fx.density(x[k])) / rho / size * dt; });      // leichter steigt auf (y zeigt nach unten)
-    spread(s, 1, s.u, dt); spread(s, 2, s.v, dt);
+    // Zähigkeit je Zelle nach ihrer Temperatur (zwischen 25 und 50 °C linear in 1/T, nach Andrade), als Zellen²/s
+    var eta = heat.eta || [0.890, 0.5465], low = Math.log(eta[0]), slope = (Math.log(eta[1]) - low) / (1 / 323.15 - 1 / 298.15);
+    var visc = new Float64Array(x.length), cond = new Float64Array(x.length);
+    each(s, function (k) {
+      var eddy = EDDY * Math.sqrt(s.u[k] * s.u[k] + s.v[k] * s.v[k]);
+      visc[k] = Math.exp(low + slope * (1 / (x[k] + 273.15) - 1 / 298.15)) / 1000 / fx.density(x[k]) / (size * size) + eddy;
+      cond[k] = ALPHA / (size * size) + eddy;
+    });
+    spread(s, 1, s.u, visc, dt); spread(s, 2, s.v, visc, dt);
+    // spread glättet nur kleine Wirbel. Die warme Fahne bremst die Zähigkeit wie nach Stokes: Vom Radius r steigt sie mit 2/9·g′·r²/ν,
+    // also eine Bremse mit der Rate 4,5·ν/r², hier implizit. r = 3 Zellen, geschätzt: Damit strömt Zuckersirup (60 %) etwa sechsmal und reines Glycerin
+    // gut zwanzigmal langsamer als Wasser, wie es die Skalierung der Konvektion zäher Flüssigkeiten (v ∝ ν^−1/2) ungefähr erwarten lässt
+    each(s, function (k) { var d = 1 + visc[k] * 4.5 / 9 * dt; s.u[k] /= d; s.v[k] /= d; });
     project(s);
     nu = advect(s, 1, s.u, dt); nv = advect(s, 2, s.v, dt); s.u = nu; s.v = nv;
     project(s);
     s.T = x = advect(s, 0, x, dt);
-    spread(s, 0, x, dt);
+    spread(s, 0, x, cond, dt);
     each(s, function (k) { sum += x[k]; });
     sum /= s.cols * ROWS;
     if (inflow > 1e-6) {           // der Rechenkern mischt Zugegossenes sofort; im Bild kommt es oben an und mischt sich erst dort ein

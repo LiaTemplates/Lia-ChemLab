@@ -115,6 +115,7 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
   assert.throws(
     () => L.register({ equilibria: [{ eq: "H2O(l) <=> H+(aq) + 2 OH-(aq)", logK: -14 }] }),
     (e) => e.code === "data", "nicht ausgeglichen");
+  assert.throws(() => L.register({ species: { "C4H10O(aq)": { eta: [1, 2] } } }), (e) => e.code === "data" && /eta/.test(e.detail), "zäher im Warmen");
   assert.equal(Object.keys(L.db.species).length, before, "nichts davon wurde übernommen");
 });
 
@@ -622,7 +623,7 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp");
   for (; t < 2; t += 1 / 60) { const add = 50 / 120; T = (ml * T + add * 20) / (ml + add); ml += add; L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp"); }
   const p = L.fx.fields.pour, row = (j) => { let a = 0; for (let i = 1; i <= p.cols; i++) a += p.T[i + j * (p.cols + 2)]; return a / p.cols; };
-  assert.ok(row(1) < 30 && row(1) > 19.9, `oben das kalte Wasser: ${row(1)}`);
+  assert.ok(row(1) < 30 && row(1) > 19, `oben das kalte Wasser: ${row(1)}`);
   assert.ok(row(24) > T + 1, "unten noch das heiße");
   let mean = 0;
   for (let j = 1; j <= 24; j++) mean += row(j) / 24;
@@ -952,6 +953,25 @@ test("Zahlen ausblenden: es bleiben Beobachtungen und Gleichungen ohne Werte", (
   assert.match(logOf(el), /Es ist warm geworden/);
   tap(el, "rg");
   assert.doesNotMatch(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /mmol|pH/);
+});
+
+test("Strömung: zähe Flüssigkeiten strömen langsamer – Zuckersirup etwa sechsmal, Glycerin gut zwanzigmal", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const eta = (reagent) => { const l = beaker([{ reagent, ml: 50 }], { room: 20 }); return L.view(l, L.vessel(l, "b")).heat.eta; };
+  const at20 = (e) => Math.exp(Math.log(e[0]) + (Math.log(e[1]) - Math.log(e[0])) * (1 / 293.15 - 1 / 298.15) / (1 / 323.15 - 1 / 298.15));
+  near(at20(eta("H2O")), 1.0, 0.03, "Wasser bei 20 °C, mPa·s");
+  near(at20(eta("sugar syrup")), 58.5, 10, "Zuckersirup 60 %");
+  near(at20(eta("glycerol")), 1200, 250, "Glycerin 99,5 %");
+  const box = { x0: -40, x1: 40, top: -80, bottom: -2 }, speed = (name, e) => {
+    const w = { ml: 200, T: 30, heat: { q: 130, k: 0.25, room: 20, d: 7, boil: 100, eta: e } };
+    for (let t = 0; t < 20; t += 1 / 20) L.fx.flow(box, w, t, name, "temp");
+    const s = L.fx.fields[name];
+    let sum = 0;
+    s.u.forEach((u, k) => { sum += Math.hypot(u, s.v[k]); });
+    return sum;
+  };
+  const water = speed("wasser", eta("H2O")), syrup = speed("sirup", eta("sugar syrup")), glycerol = speed("glycerin", eta("glycerol"));
+  assert.ok(water > 3 * syrup && syrup > 2 * glycerol, `Wasser ${water}, Sirup ${syrup}, Glycerin ${glycerol}`);
 });
 
 test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {

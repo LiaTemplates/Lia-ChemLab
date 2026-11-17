@@ -772,6 +772,9 @@
     "acetone": "acetonas",
     "hexene": "heksenas",
     "hexane": "heksanas",
-    "bromine water": "bromo vanduo (0,02 mol/L)"
+    "bromine water": "bromo vanduo (0,02 mol/L)",
+    "C3H8O3(aq)": "glicerolis",
+    "glycerol": "glicerolis 99,5 %",
+    "sugar syrup": "cukraus sirupas (sacharozė 60 %)"
   }
 }

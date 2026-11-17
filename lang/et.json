@@ -772,6 +772,9 @@
     "acetone": "atsetoon",
     "hexene": "hekseen",
     "hexane": "heksaan",
-    "bromine water": "broomivesi (0,02 mol/L)"
+    "bromine water": "broomivesi (0,02 mol/L)",
+    "C3H8O3(aq)": "glütserool",
+    "glycerol": "glütserool 99,5 %",
+    "sugar syrup": "suhkrusiirup (sahharoos 60 %)"
   }
 }

@@ -772,6 +772,9 @@
     "acetone": "アセトン",
     "hexene": "ヘキセン",
     "hexane": "ヘキサン",
-    "bromine water": "臭素水（0.02 mol/L）"
+    "bromine water": "臭素水（0.02 mol/L）",
+    "C3H8O3(aq)": "グリセリン",
+    "glycerol": "グリセリン 99.5 %",
+    "sugar syrup": "砂糖シロップ（スクロース 60 %）"
   }
 }

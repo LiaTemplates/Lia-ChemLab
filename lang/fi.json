@@ -772,6 +772,9 @@
     "acetone": "asetoni",
     "hexene": "hekseeni",
     "hexane": "heksaani",
-    "bromine water": "bromivesi (0,02 mol/L)"
+    "bromine water": "bromivesi (0,02 mol/L)",
+    "C3H8O3(aq)": "glyseroli",
+    "glycerol": "glyseroli 99,5 %",
+    "sugar syrup": "sokerisiirappi (sakkaroosi 60 %)"
   }
 }

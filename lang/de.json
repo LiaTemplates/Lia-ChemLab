@@ -772,6 +772,9 @@
     "acetone": "Aceton",
     "hexene": "Hexen",
     "hexane": "Hexan",
-    "bromine water": "Bromwasser (0,02 mol/L)"
+    "bromine water": "Bromwasser (0,02 mol/L)",
+    "C3H8O3(aq)": "Glycerin (Propan-1,2,3-triol)",
+    "glycerol": "Glycerin 99,5 %",
+    "sugar syrup": "Zuckersirup (Saccharose 60 %)"
   }
 }

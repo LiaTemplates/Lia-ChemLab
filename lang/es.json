@@ -772,6 +772,9 @@
     "acetone": "acetona",
     "hexene": "hexeno",
     "hexane": "hexano",
-    "bromine water": "agua de bromo (0,02 mol/L)"
+    "bromine water": "agua de bromo (0,02 mol/L)",
+    "C3H8O3(aq)": "glicerol",
+    "glycerol": "glicerol 99,5 %",
+    "sugar syrup": "jarabe de azúcar (sacarosa 60 %)"
   }
 }

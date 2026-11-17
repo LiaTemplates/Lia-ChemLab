@@ -288,6 +288,9 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
+        // eta: Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, für die Strömungsansicht
+        if (data.eta != null && !((phase === "aq" || phase === "l") && Array.isArray(data.eta) && data.eta.length === 2 &&
+          data.eta[0] > 0 && data.eta[1] > 0 && data.eta[0] >= data.eta[1] && isFinite(data.eta[0]))) throw fail("species", id + " eta");
         // solvent: ein organisches Lösungsmittel, das in den Behälter für organische Abfälle gehört, auch wenn es nicht verdampft (kein Tb)
         if (data.solvent != null && !(data.solvent === true && phase === "aq" && data.Vm != null)) throw fail("species", id + " solvent");
         var gamma = pack.species[id] && pack.species[id].gamma;
@@ -3622,6 +3625,20 @@
       room: bath ? bath.temp : lab.room, bath: !!bath, d: spec(v).d || 3 };
   }
 
+  // Zähigkeit der Flüssigkeit in mPa·s bei 25 und 50 °C, für die Strömungsansicht: ln η gemischt nach den Stoffmengenanteilen,
+  // was keine eigene hat (Ionen, gelöste Gase), zählt wie Wasser.
+  // shortcut: ideale Mischungsregel, Glycerin-Wasser-Gemische werden damit etwa halb so zäh wie gemessen; ein Wechselwirkungsglied, wenn das stört
+  function viscosity(v) {
+    var water = L.db.species[WATER].eta || [0.890, 0.5465], total = 0, a = 0, b = 0, id, s, e;
+    for (id in v.n) {
+      s = L.db.species[id];
+      if (s.phase !== "aq" && s.phase !== "l") continue;
+      e = s.eta || water;
+      total += v.n[id]; a += v.n[id] * Math.log(e[0]); b += v.n[id] * Math.log(e[1]);
+    }
+    return total > 0 ? [Math.exp(a / total), Math.exp(b / total)] : null;
+  }
+
   function advanceVessel(lab, v, emit) {
     var id, gases = [], gas = 0, moving = false, vol, dissolved, meter, room, bath;
     if (v.broken) return;
@@ -4135,8 +4152,8 @@
       color: colorOf(v), gas: v.gas, species: list,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
-      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser und Siedetemperatur (null: nichts, was siedet)
-      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null }),
+      // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet) und Zähigkeit
+      heat: Object.assign(warmth(lab, v), { boil: boils ? bubble(boils) : null, eta: viscosity(v) }),
       // blocked: ein Trichter, unter dem kein Platz (oder kein Gefäß) ist, läuft nicht ab
       blocked: !!L.parts[v.type].filter && !(vessel(lab, v.over) && !vessel(lab, v.over).broken && free(lab, vessel(lab, v.over)) > 1e-6),
       torch: v.flag.torch != null && lab.t - v.flag.torch < 0.2,      // an der Öffnung brennt Gas ab

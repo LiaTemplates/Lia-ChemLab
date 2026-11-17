@@ -8,6 +8,8 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - Offen: Druck im Diagramm, Aufgabenziel `measure: p` mit dem Kolbenprober, `hold` im Aufbau (`bench`), Wasserdampf im Kolbenprober.
 - [x] **Strömung im Gefäß** (17.11.2026, Branch `stroemung`): Temperatur, Wirbel und Druck als Bild in der Flüssigkeit (2D). Der Löser folgt Stam, „Stable Fluids“, mit Auftrieb aus der Dichte. Das Bild ist nur in eine Richtung gekoppelt: Der Rechenkern bleibt gut durchmischt.
   - Offen: 3D (dasselbe Feld als Textur auf einer senkrechten Schnittebene), Zellmaske für schräge Wände, Rührer und Strömung beim Eingießen, eigene Dichten für andere Flüssigkeiten.
+  - Zähigkeit (17.11.2026): je Stoff bei 25 und 50 °C (`eta`), Glycerin 99,5 % und Zuckersirup 60 % im Organik-Paket. Offen: Wechselwirkungsglied für Glycerin-Wasser (die einfache Regel macht 85 % halb so zäh), Ausdehnung und Wärmeleitung je Flüssigkeit (bisher die des Wassers), Temperaturgang der Zuckerlösung gemessen statt geschätzt.
+  - Nächste Stufe: Konzentrationsfeld im Bild, damit Zugegossenes mit eigener Dichte und Zähigkeit als Schlieren absinkt (Schwefelsäure, Sirup, Salzlösung).
   - Danach möglich: Öl und Wasser als Phasenfeld, sobald es die „Zweite flüssige Phase“ gibt.
 - [ ] **Chromatographie** (mittel bis groß, eigenes Teilmodell)
   - Papierstreifen im Becherglas, Laufmittelfront steigt mit der Zeit, Flecken wandern nach ihrem Rf-Wert.

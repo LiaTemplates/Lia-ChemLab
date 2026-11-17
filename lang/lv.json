@@ -772,6 +772,9 @@
     "acetone": "acetons",
     "hexene": "heksēns",
     "hexane": "heksāns",
-    "bromine water": "broma ūdens (0,02 mol/L)"
+    "bromine water": "broma ūdens (0,02 mol/L)",
+    "C3H8O3(aq)": "glicerīns",
+    "glycerol": "glicerīns 99,5 %",
+    "sugar syrup": "cukura sīrups (saharoze 60 %)"
   }
 }

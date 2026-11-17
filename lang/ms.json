@@ -772,6 +772,9 @@
     "acetone": "aseton",
     "hexene": "heksena",
     "hexane": "heksana",
-    "bromine water": "air bromin (0.02 mol/L)"
+    "bromine water": "air bromin (0.02 mol/L)",
+    "C3H8O3(aq)": "gliserol",
+    "glycerol": "gliserol 99.5 %",
+    "sugar syrup": "sirap gula (sukrosa 60 %)"
   }
 }

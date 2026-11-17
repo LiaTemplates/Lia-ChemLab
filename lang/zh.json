@@ -772,6 +772,9 @@
     "acetone": "丙酮",
     "hexene": "己烯",
     "hexane": "己烷",
-    "bromine water": "溴水（0.02 mol/L）"
+    "bromine water": "溴水（0.02 mol/L）",
+    "C3H8O3(aq)": "甘油（丙三醇）",
+    "glycerol": "甘油 99.5 %",
+    "sugar syrup": "糖浆（蔗糖 60 %）"
   }
 }

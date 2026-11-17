@@ -1238,7 +1238,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1345,6 +1345,31 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
  ],
  "shelf":["ethanal","glucose","acetone","hexene","hexane","Fehling I","Fehling II","Tollens","bromine water","testtube","bath"],
  "show":{"charts":false}}
+```
+
+## Zähe Flüssigkeiten
+
+@[ChemLab.pack](packs/organic.json)
+
+Drei Bechergläser auf gleichen Flammen: Wasser, Zuckersirup und Glycerin. Die Strömung ist eingeschaltet, mit fester Farbe je Temperatur.
+
+- **Wasser** ist dünnflüssig. Die warme Fahne steigt schnell auf, und die Wärme verteilt sich bald im ganzen Glas.
+- **Zuckersirup** (60 % Zucker) ist etwa sechzigmal so zäh wie Wasser und strömt etwa sechsmal langsamer. Das Warme sammelt sich oben, unten bleibt es kühl: Die Schichten mischen sich kaum.
+- **Glycerin** (99,5 %) ist über tausendmal so zäh wie Wasser. Über der Flamme bildet sich eine heiße Blase, die nur langsam aufsteigt.
+
+Wird eine Flüssigkeit wärmer, wird sie dünnflüssiger: Glycerin ist bei 50 °C sechsmal weniger zäh als bei 25 °C. Die Zähigkeit einer Mischung folgt aus der ihrer Bestandteile. Mit Wasser verdünntes Glycerin trifft diese einfache Regel nur ungefähr: Glycerin 85 % wird etwa halb so zäh, wie es ist.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":80}]},
+  {"type":"burner","under":"wasser","flame":1},
+  {"type":"beaker","id":"sirup","contains":[{"reagent":"sugar syrup","ml":80}]},
+  {"type":"burner","under":"sirup","flame":1},
+  {"type":"beaker","id":"glycerin","contains":[{"reagent":"glycerol","ml":80}]},
+  {"type":"burner","under":"glycerin","flame":1}
+ ],
+ "shelf":["H2O","sugar syrup","glycerol","beaker","burner","thermometer"],
+ "show":{"charts":false,"flow":"temp"}}
 ```
 
 ## 3D-Ansicht
@@ -1584,6 +1609,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
+| `eta` | Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, `[η25, η50]`, für die Strömungsansicht (Glycerin: `[934, 152]`). Dazwischen und darüber hinaus folgt sie der Temperatur nach Andrade; eine Mischung mischt den Logarithmus nach den Stoffmengenanteilen. Ohne Angabe zählt ein Stoff wie Wasser |
 | `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
