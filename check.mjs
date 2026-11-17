@@ -9195,6 +9195,29 @@ test("README: die Folie zu den organischen Nachweisen hält, was ihr Text verspr
   assert.ok(!(amount(ketone, "Cu2O(s)", "fehling") > 1e-9) && look(ketone, "tollens").mirror === null && look(ketone, "brom").color.name !== "colorless", "Aceton und Hexan: nichts");
 });
 
+test("README: die Folie zum Knallgas hält, was ihr Text verspricht", () => {
+  const raw = JSON.parse(slide("Knallgas: nur in kleinen Mengen")[0]);
+  const run = (wait) => {
+    const l = L.createLab(L.normalize(raw)), seen = [];
+    const stopper = l.tools.find((t) => t.type === "stopper").id;
+    L.step(l, 60, (e) => seen.push(e));                       // knapp eine Minute, bis keine Blasen mehr aufsteigen
+    assert.ok(!seen.some((e) => e.key === "popped"), "der Stopfen hält");
+    assert.ok(look(l, "gross").gas < 1e-7, "keine Blasen mehr");
+    L.remove(l, stopper);
+    L.step(l, wait);
+    return { result: L.probe(l, "gross", "flame", (e) => seen.push(e)), broken: seen.some((e) => e.key === "broken") };
+  };
+  const quick = run(3), late = run(12);
+  assert.deepEqual([quick.result.level, quick.broken], [3, true], "gleich gezündet: lauter Knall, das Glas zerspringt");
+  assert.equal(late.broken, false, "nach einigen Sekunden ist so viel entwichen, dass es nur noch knallt");
+  assert.ok(late.result.level >= 2, "aber es knallt noch");
+  const l = L.createLab(L.normalize(raw));
+  L.add(l, "klein", "Mg ribbon", { g: 0.02 });
+  L.step(l, 3);
+  const small = L.probe(l, "klein", "flame");
+  assert.ok(small.result === "pop" && small.level < 3, `im Reagenzglas nur ein Plopp: ${JSON.stringify(small)}`);
+});
+
 test("README: die Folie zum Bleiakku hält, was ihr Text verspricht", () => {
   const l = L.createLab(L.normalize(JSON.parse(slide("Bleiakku")[0])));
   const supply = l.tools.find((t) => t.type === "supply").id, volts = l.tools.find((t) => t.type === "voltmeter").id;

@@ -368,6 +368,23 @@ Der Span zeigt, was gerade im Gasraum über der Lösung steht. Wasserstoff ist l
  "show":{"charts":false}}
 ```
 
+## Knallgas: nur in kleinen Mengen
+
+Wasserstoff prüft man nur in kleinen Mengen im Reagenzglas, die Öffnung von sich weg. Warum, zeigt das große Becherglas: Darin reagieren 0,2 g Magnesium mit Salzsäure, und ein Gummistopfen hält den Wasserstoff zurück, gut 200 mL. Warte, bis keine Blasen mehr aufsteigen, knapp eine Minute. Nimm dann den Stopfen weg (antippen, „Wegräumen“) und halte sofort den brennenden Span an die Öffnung: Das Gemisch aus Wasserstoff und Luft explodiert mit lautem Knall, und das Glas zerspringt. Wartest du nach dem Öffnen länger als einige Sekunden, ist schon so viel Wasserstoff entwichen, dass es nur noch knallt.
+
+Zum Vergleich das Reagenzglas: Gib ein Stückchen Magnesium in die Salzsäure und halte den Span daran. Es gibt nur ein „Plopp“, die Knallgasprobe.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"klein","contains":[{"reagent":"HCl 1M","ml":8}]},
+  {"type":"beaker","id":"gross","ml":600,"contains":[{"reagent":"HCl 2M","ml":30},{"reagent":"Mg ribbon","g":0.2}]},
+  {"type":"stopper","in":"gross"}
+ ],
+ "shelf":["splint","Mg ribbon"],
+ "room":20,
+ "show":{"charts":false}}
+```
+
 ## Ammonium nachweisen
 
 Feuchtes **Indikatorpapier** zeigt, was als Gas über einer Lösung steht. In beide Gläser Natronlauge geben und das Papier an die Öffnung halten, ohne die Lösung zu berühren. Über dem Ammoniumchlorid färbt es sich blauviolett: Die Lauge setzt Ammoniak frei, und Ammoniak macht den Wasserfilm des Papiers alkalisch. Über der Kochsalzlösung bleibt es grün. Sie ist die **Blindprobe**: Sie zeigt, dass die Natronlauge allein das Papier nicht färbt.
