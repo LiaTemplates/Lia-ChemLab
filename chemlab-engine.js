@@ -3816,13 +3816,13 @@
   // Zähigkeit der Flüssigkeit in mPa·s bei 25 und 50 °C, für die Strömungsansicht: ln η gemischt nach den Stoffmengenanteilen,
   // was keine eigene hat (Ionen, gelöste Gase), zählt wie Wasser.
   // shortcut: ideale Mischungsregel, Glycerin-Wasser-Gemische werden damit etwa halb so zäh wie gemessen; ein Wechselwirkungsglied, wenn das stört
-  function viscosity(v) {
-    var water = L.db.species[WATER].eta || [0.890, 0.5465], total = 0, a = 0, b = 0, id, s, e;
-    for (id in v.n) {
+  function viscosity(v, store) {      // store: statt der wässrigen Lösung eine andere Mischung (die Ölschicht)
+    var water = L.db.species[WATER].eta || [0.890, 0.5465], total = 0, a = 0, b = 0, id, s, e, n = store || v.n;
+    for (id in n) {
       s = L.db.species[id];
       if (s.phase !== "aq" && s.phase !== "l") continue;
       e = s.eta || water;
-      total += v.n[id]; a += v.n[id] * Math.log(e[0]); b += v.n[id] * Math.log(e[1]);
+      total += n[id]; a += n[id] * Math.log(e[0]); b += n[id] * Math.log(e[1]);
     }
     return total > 0 ? [Math.exp(a / total), Math.exp(b / total)] : null;
   }
@@ -4294,12 +4294,17 @@
     return (samples[key] = tint(conc, r.drops ? 0.2 : 3).rgb);
   }
 
-  // ml: was als Schicht liegt (ohne die Tropfen), drops: Anteil des Öls, der als Tropfen im Wasser schwebt
-  function oilLayer(v) {
-    var vol = oilVolume(v), conc = {}, main = null, id;
+  // ml: was als Schicht liegt (ohne die Tropfen), all: das ganze Öl, drops: Anteil des Öls, der als Tropfen im Wasser schwebt, r: ihr Radius in m,
+  // stir: es wird gerade geschüttelt oder gemixt; rho: Dichte in kg/m³ und eta: Zähigkeit bei 25 und 50 °C, für die Strömungsansicht
+  function oilLayer(v, lab) {
+    var vol = oilVolume(v), conc = {}, main = null, g = 0, id;
     if (!(vol > 0)) return null;
-    for (id in v.org) { conc[id] = v.org[id] / vol; if (L.db.species[id].oil && (!main || v.org[id] * L.db.species[id].Vm > v.org[main] * L.db.species[main].Vm)) main = id; }
-    return { ml: vol * 1000 * (1 - (v.drop ? v.drop.share : 0)), top: oilOnTop(v), color: tint(conc, spec(v).d, true), main: main, drops: v.drop ? v.drop.share : 0 };
+    for (id in v.org) {
+      conc[id] = v.org[id] / vol; g += v.org[id] * L.db.species[id].M;
+      if (L.db.species[id].oil && (!main || v.org[id] * L.db.species[id].Vm > v.org[main] * L.db.species[main].Vm)) main = id;
+    }
+    return { ml: vol * 1000 * (1 - (v.drop ? v.drop.share : 0)), all: vol * 1000, top: oilOnTop(v), color: tint(conc, spec(v).d, true), main: main,
+      drops: v.drop ? v.drop.share : 0, r: v.drop ? v.drop.r : 0, stir: !!(v.drop && lab && lab.t < v.drop.until), rho: g / vol, eta: viscosity(v, v.org) };
   }
 
   // Trübung durch Schwebendes: der Niederschlag (rgb, alpha) und dazu die Öltropfen, milchig in einem Hauch der Farbe des Öls
@@ -4361,7 +4366,7 @@
     return {
       id: v.id, type: v.type, cap: spec(v).cap, ml: filled(v) * 1000, T: v.T,
       // oil: die Ölschicht (mL, oben oder unten, Farbe, ihr Hauptstoff), sonst null; ml oben ist alles zusammen
-      oil: oilLayer(v),
+      oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
       cloud: cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),

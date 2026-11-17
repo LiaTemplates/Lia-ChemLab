@@ -40,6 +40,23 @@
     return out;
   };
 
+  // Öltropfen im Wasser nach dem Schütteln oder Mixen. box: der trübe Teil der wässrigen Schicht ({ x0, x1, top, bottom }), share: Anteil des Öls
+  // in Tropfen, r: ihr Radius in m, up: sie steigen (sonst sinken sie), rgb: Farbe des Öls. Grobe Tropfen steigen sichtbar, feine stehen fast.
+  fx.droplets = function (box, share, r, t, seed, still, rgb, up) {
+    var n = Math.round(Math.min(40, 6 + 34 * share)), out = "", height = box.bottom - box.top, width = box.x1 - box.x0, size = r > 5e-5 ? 1.6 : 0.9, i, speed, phase, x, y;
+    var fill = "rgb(" + rgb.join(",") + ")";
+    if (!(share > 0) || !(height > 2)) return "";
+    for (i = 0; i < n; i++) {
+      speed = (r > 5e-5 ? 10 : 0.4) * (0.6 + 0.8 * pseudo(seed + 13, i));      // Bildpunkte je Sekunde
+      phase = pseudo(seed + 17, i) + (still ? 0 : t * speed / height);
+      phase -= Math.floor(phase);
+      x = box.x0 + size + (0.05 + 0.9 * pseudo(seed + 19, i)) * Math.max(0, width - 2 * size);
+      y = up ? box.bottom - size - phase * (height - 2 * size) : box.top + size + phase * (height - 2 * size);
+      out += '<circle class="cl-droplet" cx="' + f(x) + '" cy="' + f(y) + '" r="' + size + '" fill="' + fill + '"/>';
+    }
+    return out;
+  };
+
   function hash(text) {            // feste Zahl zu einem Namen: jedes Teilchen behält seinen Weg, auch wenn andere dazukommen
     var h = 7, i;
     for (i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) % 9973;
@@ -198,9 +215,27 @@
     bound(s, 0, x);
   }
 
+  // Die Ölschicht im Feld: P je Zelle, 0 Wasser, 1 Öl. Ihre Menge folgt dem Rechenkern (share: Anteil der Flüssigkeit, der als Schicht liegt):
+  // Was fehlt, kommt an der Ölseite dazu (oben, wenn das Öl oben schwimmt), was zu viel ist, geht zuerst auf der Wasserseite weg,
+  // so bleibt aus jedem verirrten Rest und der Schicht wieder eine Schicht.
+  function layer(s, P, share, top) {
+    var W = s.cols + 2, need = share * s.cols * ROWS, i, j, jj, k, d;
+    each(s, function (k) { need -= P[k]; });
+    for (jj = 1; jj <= ROWS && Math.abs(need) > 1e-9; jj++) {
+      j = need > 0 === top ? jj : ROWS + 1 - jj;
+      for (i = 1; i <= s.cols && Math.abs(need) > 1e-9; i++) {
+        k = i + j * W;
+        d = need > 0 ? Math.min(1 - P[k], need) : -Math.min(P[k], -need);
+        P[k] += d; need -= d;
+      }
+    }
+    bound(s, 0, P);
+  }
+
   // Ein Schritt um dt Sekunden. heat: { q, k, room, boil } aus dem Rechenkern; cell: Wärmekapazität einer Zelle in J/K, size: Kantenlänge in m;
   // inflow: welcher Anteil der Flüssigkeit eben zugeflossen ist (er kommt oben an), sonst 0
-  function advance(s, heat, T, cell, size, dt, still, inflow) {
+  // oil: die Ölschicht aus der Ansicht des Rechenkerns ({ share, top, rho, eta, stir }), sonst null
+  function advance(s, heat, T, cell, size, dt, still, inflow, oil) {
     var W = s.cols + 2, x = s.T, rho = fx.density(T), lo = Math.round(s.cols * 0.2), hi = s.cols + 1 - lo, rim = 2 * ROWS + s.cols, i, j, k, nu, nv;
     for (i = lo; i <= hi; i++) x[i + ROWS * W] += heat.q * dt / ((hi - lo + 1) * cell);      // die Flamme heizt die Mitte des Bodens
     if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });
@@ -210,15 +245,27 @@
     }
     // schwerer sinkt (y zeigt nach unten): aus der Temperatur und aus dem, was in der Zelle gelöst ist. Was überall gleich ist,
     // trägt der Schweredruck; abgezogen, damit Rundungsreste ein ruhendes Glas nicht bewegen
-    var mass = heat.rho || 1000, lift = new Float64Array(x.length), even = 0;
-    each(s, function (k) { lift[k] = fx.density(x[k]) - rho + s.R[k] - mass; even += lift[k] / (s.cols * ROWS); });
+    // Im Öl zählt dessen Dichte, mit der Wärmeausdehnung des Wassers (shortcut: eigene Ausdehnung des Öls, wenn es stört)
+    var mass = heat.rho || 1000, lift = new Float64Array(x.length), even = 0, P = s.P, oilRho = oil ? oil.rho : mass;
+    if (oil && !P) P = s.P = new Float64Array(x.length);
+    if (!oil) P = s.P = null;
+    each(s, function (k) {
+      var p = P ? P[k] : 0;
+      lift[k] = (1 - p) * (fx.density(x[k]) - rho + s.R[k] - mass) + p * (oilRho * fx.density(x[k]) / rho - mass);
+      even += lift[k] / (s.cols * ROWS);
+    });
     each(s, function (k) { s.v[k] += GRAV * (lift[k] - even) / mass / size * dt; });
-    // Zähigkeit je Zelle nach ihrer Temperatur (zwischen 25 und 50 °C linear in 1/T, nach Andrade), als Zellen²/s
+    if (oil && oil.stir) each(s, function (k) {                 // geschüttelt oder gemixt: kräftige, wechselnde Stöße
+      s.u[k] += (pseudo(s.kick = (s.kick || 0) + 1, k) - 0.5) * 800 * dt;
+      s.v[k] += (pseudo(s.kick + 0.5, k) - 0.5) * 800 * dt;
+    });
+    // Zähigkeit je Zelle nach ihrer Temperatur (zwischen 25 und 50 °C linear in 1/T, nach Andrade), als Zellen²/s; im Öl die des Öls
     var eta = heat.eta || [0.890, 0.5465], slope = (Math.log(eta[1]) - Math.log(eta[0])) / (1 / 323.15 - 1 / 298.15);
+    var oilEta = oil && oil.eta ? oil.eta : eta, oilLow = Math.log(oilEta[0]), oilSlope = (Math.log(oilEta[1]) - oilLow) / (1 / 323.15 - 1 / 298.15);
     var visc = new Float64Array(x.length), cond = new Float64Array(x.length), stir = new Float64Array(x.length);
     each(s, function (k) {
-      var eddy = EDDY * Math.sqrt(s.u[k] * s.u[k] + s.v[k] * s.v[k]);
-      visc[k] = Math.exp(s.N[k] + slope * (1 / (x[k] + 273.15) - 1 / 298.15)) / 1000 / (s.R[k] || mass) / (size * size) + eddy;
+      var eddy = EDDY * Math.sqrt(s.u[k] * s.u[k] + s.v[k] * s.v[k]), p = P ? P[k] : 0, warm = 1 / (x[k] + 273.15) - 1 / 298.15;
+      visc[k] = Math.exp((1 - p) * (s.N[k] + slope * warm) + p * (oilLow + oilSlope * warm)) / 1000 / ((1 - p) * (s.R[k] || mass) + p * oilRho) / (size * size) + eddy;
       cond[k] = ALPHA / (size * size) + eddy;
       stir[k] = DIFFUSE / (size * size) + eddy;
     });
@@ -234,6 +281,11 @@
     spread(s, 0, x, cond, dt);
     s.R = advect(s, 0, s.R, dt); spread(s, 0, s.R, stir, dt);
     s.N = advect(s, 0, s.N, dt); spread(s, 0, s.N, stir, dt);
+    if (P) {                                                     // mitgetragen, dann geschärft: Zwischenwerte wandern nach 0 oder 1
+      P = s.P = advect(s, 0, P, dt);
+      each(s, function (k) { P[k] = Math.max(0, Math.min(1, P[k] + 0.8 * P[k] * (1 - P[k]) * (2 * P[k] - 1))); });
+      layer(s, P, oil.share, oil.top);
+    }
     var at = s.at || { T: T, R: mass, N: Math.log(eta[0]) };
     settle(s, x, T, inflow, at.T);
     settle(s, s.R, mass, inflow, at.R);
@@ -267,17 +319,18 @@
     size = deep / ROWS;
     cols = Math.max(3, Math.min(40, Math.round(heat.d / 100 / size)));      // Zellen etwa quadratisch
     cell = w.ml * 4.18 / (cols * ROWS);
+    var oil = w.oil ? { share: w.oil.ml / w.ml, top: w.oil.top, rho: w.oil.rho, eta: w.oil.eta, stir: w.oil.stir } : null;
     // neu, nach einem Sprung der Uhr oder bei ganz anderer Form: unter den jetzigen Bedingungen einschwingen.
     // Nach dem Zugießen bleibt das Gitter, damit man sieht, wohin das Zugegossene läuft; die Zellen werden dabei etwas höher.
     if (!s || s.cols > 2 * cols || cols > 2 * s.cols || t < s.t - 1e-9 || t - s.t > 30) {
       s = fields[key] = field(cols, w.T, heat.rho || 1000, Math.log((heat.eta || [0.890])[0]));
-      for (i = 0; i < 60; i++) advance(s, heat, w.T, cell, size, STEP, true, 0);      // 3 s: so lange braucht die Fahne, um sich zu bilden
+      for (i = 0; i < 60; i++) advance(s, heat, w.T, cell, size, STEP, true, 0, oil);      // 3 s: so lange braucht die Fahne, um sich zu bilden
       s.t = t; s.ml = w.ml;
     }
     cols = s.cols; cell = w.ml * 4.18 / (cols * ROWS);
     dt = still ? 0 : t - s.t;
     n = Math.min(40, Math.ceil(dt / STEP));
-    for (i = 0; i < n; i++) advance(s, heat, w.T, cell, size, Math.min(0.5, dt / n), false, i ? 0 : Math.max(0, (w.ml - s.ml) / w.ml));
+    for (i = 0; i < n; i++) advance(s, heat, w.T, cell, size, Math.min(0.5, dt / n), false, i ? 0 : Math.max(0, (w.ml - s.ml) / w.ml), oil);
     if (n) { s.t = t; s.ml = w.ml; }
 
     W = cols + 2; cw = width / cols; ch = height / ROWS;
@@ -303,6 +356,14 @@
     id = key + "-flow";
     out = '<filter id="' + id + '" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + f(Math.min(cw, ch) * 0.8) + '"/></filter>' +
       '<g class="cl-flow" filter="url(#' + id + ')">' + out + "</g>";
+    if (s.P) {                                                   // die Grenze der Ölschicht: je Spalte die Höhe, an der P die Hälfte kreuzt
+      var edge = [], c, r;
+      for (c = 1; c <= cols; c++) {
+        for (r = 1; r < ROWS && (s.P[c + r * W] > 0.5) === (s.P[c + (r + 1) * W] > 0.5); r++);
+        if (r < ROWS) edge.push(f(box.x0 + (c - 0.5) * cw) + "," + f(box.top + r * ch));
+      }
+      if (edge.length > 1) out += '<polyline class="cl-flow-edge" points="' + edge.join(" ") + '"/>';
+    }
     s.dots.forEach(function (d) { out += '<circle class="cl-flow-dot" cx="' + f(box.x0 + (d[0] - 0.5) * cw) + '" cy="' + f(box.top + (d[1] - 0.5) * ch) + '" r="1"/>'; });
     return out;
   };

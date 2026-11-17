@@ -610,6 +610,13 @@
         '" stroke-opacity="' + (0.7 * Math.min(1, w.mirror.share)).toFixed(2) + '"/>';
     }
     if (w.ml > 0.005) {
+      // Öltropfen: nur im noch trüben Teil der wässrigen Schicht, der beim Aufrahmen von unten (oder oben) her klar wird
+      if (w.oil && w.oil.drops > 0 && L.fx && (shape.level || L.parts[w.type].surface)) {
+        var edge = w.oil.top ? w.ml - w.oil.all : w.oil.all, line = edge > 0.005 ? Math.min(shape.bottom, shape.level ? shape.level(edge) : L.parts[w.type].surface(Object.assign({}, w, { ml: edge }))) : shape.bottom;
+        var water = w.oil.top ? { top: line, bottom: shape.bottom } : { top: shape.top, bottom: line }, deep = (water.bottom - water.top) * Math.min(1, w.oil.drops);
+        out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.droplets({ x0: shape.x0, x1: shape.x1, top: w.oil.top ? water.top : water.bottom - deep, bottom: w.oil.top ? water.top + deep : water.bottom },
+          w.oil.drops, w.oil.r, ctx.t, ctx.seed || 1, ctx.still, w.oil.color.rgb, w.oil.top) + "</g>";
+      }
       // Strömung: Temperatur, Wirbel oder Druck im Querschnitt, über der Flüssigkeit und unter den Blasen
       if (ctx.flow && w.heat && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.flow(box, w, ctx.t, esc(clip), ctx.flow, ctx.still) + "</g>";
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf

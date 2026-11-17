@@ -48,8 +48,8 @@
       "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,673 g/cm³ bei 20 °C (Vm = 84,16/0,673); Löslichkeit in Wasser 50 mg/L bei 20 °C (5,9·10⁻⁴ mol/L)"
     },
     "C6H14(aq)": {
-      "name": {"de": "Hexan", "en": "hexane"}, "Hf": null, "Vm": 130.8, "solvent": true, "Tb": 68.73, "Hvap": 31.56, "cp": 195.6, "oil": {"sol": 1.1e-4},
-      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,659 g/cm³ bei 20 °C (Vm = 86,18/0,659); Löslichkeit in Wasser 9,5 mg/L bei 25 °C (1,1·10⁻⁴ mol/L). NIST Chemistry WebBook: Siedepunkt 68,73 °C, Verdampfungsenthalpie 31,56 kJ/mol bei 25 °C (damit trifft der Dampfdruck bei 25 °C die gemessenen 151 mmHg auf 2 %), Wärmekapazität der Flüssigkeit 195,6 J/(mol K)"
+      "name": {"de": "Hexan", "en": "hexane"}, "Hf": null, "Vm": 130.8, "solvent": true, "Tb": 68.73, "Hvap": 31.56, "cp": 195.6, "oil": {"sol": 1.1e-4}, "eta": [0.300, 0.240],
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,659 g/cm³ bei 20 °C (Vm = 86,18/0,659); Löslichkeit in Wasser 9,5 mg/L bei 25 °C (1,1·10⁻⁴ mol/L). NIST Chemistry WebBook: Siedepunkt 68,73 °C, Verdampfungsenthalpie 31,56 kJ/mol bei 25 °C (damit trifft der Dampfdruck bei 25 °C die gemessenen 151 mmHg auf 2 %), Wärmekapazität der Flüssigkeit 195,6 J/(mol K). Zähigkeit 0,300 mPa·s bei 25 °C und 0,240 mPa·s bei 50 °C: CRC Handbook of Chemistry and Physics, Viscosity of Liquids"
     },
     "C57H104O6(aq)": {
       "name": {"de": "Olivenöl (als Triolein)", "en": "olive oil (as triolein)"}, "Hf": null, "Vm": 969.1, "cp": 1744, "eta": [67, 29], "oil": {"sol": 0}, "color": "#f5eab0", "at": 1.03,

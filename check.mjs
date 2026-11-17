@@ -1102,6 +1102,32 @@ test("Scheidetrichter: schütteln, absetzen lassen, die untere Schicht ablassen;
   assert.match(L.parts.separator.draw(L.view(l, s()), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }, L.parts.beaker.mount(L.view(l, b()))), /cl-cock[\s\S]*cl-stopper|cl-stopper[\s\S]*cl-cock/);
 });
 
+test("Strömung mit Ölschicht: das Phasenfeld liegt scharf oben, so viel wie der Rechenkern zählt; beim Schütteln Tropfen, danach wieder eine Schicht", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 120 }, { reagent: "olive oil", ml: 50 }] }, { type: "burner", under: "b", flame: 1 }], { room: 20 });
+  const box = { x0: -40, x1: 40, top: -100, bottom: -2 }, view = () => L.view(l, L.vessel(l, "b"));
+  const run = (seconds) => { let svg; for (let i = 0; i < seconds * 20; i++) { L.step(l, 0.05); svg = L.fx.flow(box, view(), l.t, "öl", "temp"); } return svg; };
+  const P = () => L.fx.fields["öl"].P, cols = () => L.fx.fields["öl"].cols;
+  const share = () => { let a = 0; for (let j = 1; j <= 24; j++) for (let i = 1; i <= cols(); i++) a += P()[i + j * (cols() + 2)]; return a / (24 * cols()); };
+  L.step(l, 0.05); L.fx.flow(box, view(), l.t, "öl", "temp");
+  let svg = run(20);
+  near(share(), view().oil.ml / view().ml, 1e-6, "so viel Öl im Feld, wie als Schicht liegt");
+  let sharp = 0;
+  for (let j = 1; j <= 24; j++) for (let i = 1; i <= cols(); i++) { const p = P()[i + j * (cols() + 2)]; if (p < 0.05 || p > 0.95) sharp++; }
+  assert.ok(sharp > 0.9 * 24 * cols(), "die Grenze bleibt scharf");
+  assert.ok(P()[Math.round(cols() / 2) + 1 * (cols() + 2)] > 0.95 && P()[Math.round(cols() / 2) + 24 * (cols() + 2)] < 0.05, "geheizt bleibt das Öl oben, das Wasser unten");
+  assert.match(svg, /cl-flow-edge/, "die Grenze ist eingezeichnet");
+  const plain = (w) => L.parts.beaker.draw(w, { lang: "de", uid: "u", t: l.t, still: true, seed: 1 });
+  assert.doesNotMatch(plain(view()), /cl-droplet/, "ruhig: keine Tropfen");
+  L.shake(l, "b", "shake");
+  run(5);
+  near(share(), 0, 1e-6, "beim Schütteln ist alles Öl in Tropfen");
+  assert.match(plain(view()), /cl-droplet/, "Tropfen in der Zeichnung");
+  run(60);
+  near(share(), view().oil.ml / view().ml, 1e-6, "danach wieder eine Schicht");
+  assert.equal(view().oil.drops, 0, "alle Tropfen sind oben");
+});
+
 test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein Öl ohne Volumen wird abgelehnt", () => {
   L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
   const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "olive oil", ml: 20 }] }], { room: 20 });
