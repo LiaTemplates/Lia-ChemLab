@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "kolore zuritua (kolorgabea)",
     "C15H15N3O3(aq)": "kolore zuritua (kolorgabea)",
     "C15H14N3O3-(aq)": "kolore zuritua (kolorgabea)",
-    "C25H30N3O+(aq)": "kolore zuritua (kolorgabea)"
+    "C25H30N3O+(aq)": "kolore zuritua (kolorgabea)",
+    "Pb(s)": "beruna",
+    "Pb^2+(aq)": "berun(II) ioia",
+    "PbSO4(s)": "berun(II) sulfatoa",
+    "PbO2(s)": "berun(IV) oxidoa"
   }
 }

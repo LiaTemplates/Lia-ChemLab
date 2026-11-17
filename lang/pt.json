@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "corante branqueado (incolor)",
     "C15H15N3O3(aq)": "corante branqueado (incolor)",
     "C15H14N3O3-(aq)": "corante branqueado (incolor)",
-    "C25H30N3O+(aq)": "corante branqueado (incolor)"
+    "C25H30N3O+(aq)": "corante branqueado (incolor)",
+    "Pb(s)": "chumbo",
+    "Pb^2+(aq)": "ião chumbo(II)",
+    "PbSO4(s)": "sulfato de chumbo(II)",
+    "PbO2(s)": "óxido de chumbo(IV)"
   }
 }

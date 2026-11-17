@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "pewarna dilunturkan (tidak berwarna)",
     "C15H15N3O3(aq)": "pewarna dilunturkan (tidak berwarna)",
     "C15H14N3O3-(aq)": "pewarna dilunturkan (tidak berwarna)",
-    "C25H30N3O+(aq)": "pewarna dilunturkan (tidak berwarna)"
+    "C25H30N3O+(aq)": "pewarna dilunturkan (tidak berwarna)",
+    "Pb(s)": "plumbum",
+    "Pb^2+(aq)": "ion plumbum(II)",
+    "PbSO4(s)": "plumbum(II) sulfat",
+    "PbO2(s)": "plumbum(IV) oksida"
   }
 }

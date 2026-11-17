@@ -723,7 +723,7 @@
   registerPart("paper", { kind: "test", probe: "paper" });         // feuchtes Universalindikatorpapier für den Gasraum
   // Elektroden: electrode: Material, g: Masse in g. Angezeigt und aufgezeichnet wird ihre Masse.
   // hold: an Platin und Graphit haftet ein Teil des Gases, das an ihnen entsteht (siehe FILM)
-  ["C", "Pt", "Cu", "Zn", "Fe", "Ag"].forEach(function (el) {
+  ["C", "Pt", "Cu", "Zn", "Fe", "Ag", "Pb"].forEach(function (el) {
     registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7, hold: el === "C" || el === "Pt" });
   });
   // circuit: Glied eines Stromkreises. Der Stromkreis gehört zu dem Gefäß, an dem das Gerät steht, und führt über dessen zwei Elektroden.
@@ -2678,6 +2678,7 @@
 
   var PLATE = { w: 2, len: 6, gap: 0.5 };     // Elektrode: Breite und Länge der Platte, Abstand zum Gefäßboden, in cm
   var COAT = 5e-7;            // mol/cm²: ab so viel sieht man einen Belag auf einer Elektrode
+  var SHUT = 2e-6;            // mol/cm²: ab so viel Salz oder Oxid (etwa 1 µm) ist das Metall darunter abgedeckt und reagiert nicht mehr (geschätzt)
   // Gas an Platin und Graphit (geschätzt): Von dem Gas, das an der Elektrode entsteht, haftet der Anteil STICK an ihrer Oberfläche, bis
   // FILM mol/cm² erreicht sind. Es steht dann als Ausgangsstoff bereit (Brennstoffzelle, Polarisationsspannung), mit dem Anteil an FILM
   // hoch FILM_K als Druck in bar (je leerer die Elektrode, desto fester hält sie den Rest: so fällt die Spannung nach und nach), höchstens so
@@ -2718,11 +2719,13 @@
 
   // Die Elektrode t im Gefäß v als Oberfläche: ihr Material und was sich darauf abgeschieden hat
   function electrodeFace(v, t, dry) {
-    var body = L.parts[t.type].electrode, size = t.n > 0 ? 2 * PLATE.w * dip(v) : 0, top = body, most = COAT * size, id;
+    var body = L.parts[t.type].electrode, size = t.n > 0 ? 2 * PLATE.w * dip(v) : 0, top = body, most = COAT * size, id, salt = 0;
     for (id in t.coat) if (t.coat[id] > most) { most = t.coat[id]; top = id; }     // ein dichter Belag bestimmt, wie sich die Oberfläche verhält
+    for (id in t.coat) if (Object.keys(L.db.species[id].atoms).length > 1) salt += t.coat[id];
+    var shut = size > 0 && salt > SHUT * size;                   // ein dichter Salz- oder Oxidbelag deckt das Metall ab (ein Metallbelag nicht)
     return {
       id: t.id, tool: t, top: top, area: size, skip: (L.db.metals[body] || {}).skip,
-      has: function (x) { return (x === body && t.n > 0) || t.coat[x] > 1e-12; },
+      has: function (x) { return (x === body && t.n > 0 && !shut) || t.coat[x] > 1e-12; },
       amount: function (x) { return (x === body ? t.n : 0) + (t.coat[x] > 1e-12 ? t.coat[x] : 0) + (t.film[x] || 0); },
       held: function (x) { return size > 0 && t.film[x] > 0 ? t.film[x] : 0; },       // haftendes Gas in mol
       cap: L.parts[t.type].hold && top === body ? FILM * size : 0,

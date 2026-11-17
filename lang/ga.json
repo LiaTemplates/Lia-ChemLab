@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "ruaimneach tuartha (gan dath)",
     "C15H15N3O3(aq)": "ruaimneach tuartha (gan dath)",
     "C15H14N3O3-(aq)": "ruaimneach tuartha (gan dath)",
-    "C25H30N3O+(aq)": "ruaimneach tuartha (gan dath)"
+    "C25H30N3O+(aq)": "ruaimneach tuartha (gan dath)",
+    "Pb(s)": "luaidhe",
+    "Pb^2+(aq)": "ian luaidhe(II)",
+    "PbSO4(s)": "sulfáit luaidhe(II)",
+    "PbO2(s)": "ocsaíd luaidhe(IV)"
   }
 }

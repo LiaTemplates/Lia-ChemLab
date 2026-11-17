@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "bleached dye (colourless)",
     "C15H15N3O3(aq)": "bleached dye (colourless)",
     "C15H14N3O3-(aq)": "bleached dye (colourless)",
-    "C25H30N3O+(aq)": "bleached dye (colourless)"
+    "C25H30N3O+(aq)": "bleached dye (colourless)",
+    "Pb(s)": "lead",
+    "Pb^2+(aq)": "lead(II) ion",
+    "PbSO4(s)": "lead(II) sulfate",
+    "PbO2(s)": "lead(IV) oxide"
   }
 }

@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "kifehérített festék (színtelen)",
     "C15H15N3O3(aq)": "kifehérített festék (színtelen)",
     "C15H14N3O3-(aq)": "kifehérített festék (színtelen)",
-    "C25H30N3O+(aq)": "kifehérített festék (színtelen)"
+    "C25H30N3O+(aq)": "kifehérített festék (színtelen)",
+    "Pb(s)": "ólom",
+    "Pb^2+(aq)": "ólom(II)-ion",
+    "PbSO4(s)": "ólom(II)-szulfát",
+    "PbO2(s)": "ólom(IV)-oxid"
   }
 }

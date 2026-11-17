@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "rangi iliyopauka (isiyo na rangi)",
     "C15H15N3O3(aq)": "rangi iliyopauka (isiyo na rangi)",
     "C15H14N3O3-(aq)": "rangi iliyopauka (isiyo na rangi)",
-    "C25H30N3O+(aq)": "rangi iliyopauka (isiyo na rangi)"
+    "C25H30N3O+(aq)": "rangi iliyopauka (isiyo na rangi)",
+    "Pb(s)": "risasi",
+    "Pb^2+(aq)": "ioni ya risasi(II)",
+    "PbSO4(s)": "risasi(II) salfeti",
+    "PbO2(s)": "risasi(IV) oksidi"
   }
 }

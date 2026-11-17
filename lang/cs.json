@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "vybělené barvivo (bezbarvé)",
     "C15H15N3O3(aq)": "vybělené barvivo (bezbarvé)",
     "C15H14N3O3-(aq)": "vybělené barvivo (bezbarvé)",
-    "C25H30N3O+(aq)": "vybělené barvivo (bezbarvé)"
+    "C25H30N3O+(aq)": "vybělené barvivo (bezbarvé)",
+    "Pb(s)": "olovo",
+    "Pb^2+(aq)": "olovnatý kation",
+    "PbSO4(s)": "síran olovnatý",
+    "PbO2(s)": "oxid olovičitý"
   }
 }

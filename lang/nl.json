@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "gebleekte kleurstof (kleurloos)",
     "C15H15N3O3(aq)": "gebleekte kleurstof (kleurloos)",
     "C15H14N3O3-(aq)": "gebleekte kleurstof (kleurloos)",
-    "C25H30N3O+(aq)": "gebleekte kleurstof (kleurloos)"
+    "C25H30N3O+(aq)": "gebleekte kleurstof (kleurloos)",
+    "Pb(s)": "lood",
+    "Pb^2+(aq)": "lood(II)-ion",
+    "PbSO4(s)": "lood(II)sulfaat",
+    "PbO2(s)": "lood(IV)oxide"
   }
 }

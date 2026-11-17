@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "blekt färgämne (färglöst)",
     "C15H15N3O3(aq)": "blekt färgämne (färglöst)",
     "C15H14N3O3-(aq)": "blekt färgämne (färglöst)",
-    "C25H30N3O+(aq)": "blekt färgämne (färglöst)"
+    "C25H30N3O+(aq)": "blekt färgämne (färglöst)",
+    "Pb(s)": "bly",
+    "Pb^2+(aq)": "bly(II)jon",
+    "PbSO4(s)": "bly(II)sulfat",
+    "PbO2(s)": "bly(IV)oxid"
   }
 }

@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "išbalintas dažiklis (bespalvis)",
     "C15H15N3O3(aq)": "išbalintas dažiklis (bespalvis)",
     "C15H14N3O3-(aq)": "išbalintas dažiklis (bespalvis)",
-    "C25H30N3O+(aq)": "išbalintas dažiklis (bespalvis)"
+    "C25H30N3O+(aq)": "išbalintas dažiklis (bespalvis)",
+    "Pb(s)": "švinas",
+    "Pb^2+(aq)": "švino(II) jonas",
+    "PbSO4(s)": "švino(II) sulfatas",
+    "PbO2(s)": "švino(IV) oksidas"
   }
 }

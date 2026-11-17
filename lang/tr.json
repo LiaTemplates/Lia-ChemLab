@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "ağartılmış boya (renksiz)",
     "C15H15N3O3(aq)": "ağartılmış boya (renksiz)",
     "C15H14N3O3-(aq)": "ağartılmış boya (renksiz)",
-    "C25H30N3O+(aq)": "ağartılmış boya (renksiz)"
+    "C25H30N3O+(aq)": "ağartılmış boya (renksiz)",
+    "Pb(s)": "kurşun",
+    "Pb^2+(aq)": "kurşun(II) iyonu",
+    "PbSO4(s)": "kurşun(II) sülfat",
+    "PbO2(s)": "kurşun(IV) oksit"
   }
 }

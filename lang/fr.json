@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "colorant blanchi (incolore)",
     "C15H15N3O3(aq)": "colorant blanchi (incolore)",
     "C15H14N3O3-(aq)": "colorant blanchi (incolore)",
-    "C25H30N3O+(aq)": "colorant blanchi (incolore)"
+    "C25H30N3O+(aq)": "colorant blanchi (incolore)",
+    "Pb(s)": "plomb",
+    "Pb^2+(aq)": "ion plomb(II)",
+    "PbSO4(s)": "sulfate de plomb(II)",
+    "PbO2(s)": "oxyde de plomb(IV)"
   }
 }

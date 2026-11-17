@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "balināta krāsviela (bezkrāsaina)",
     "C15H15N3O3(aq)": "balināta krāsviela (bezkrāsaina)",
     "C15H14N3O3-(aq)": "balināta krāsviela (bezkrāsaina)",
-    "C25H30N3O+(aq)": "balināta krāsviela (bezkrāsaina)"
+    "C25H30N3O+(aq)": "balināta krāsviela (bezkrāsaina)",
+    "Pb(s)": "svins",
+    "Pb^2+(aq)": "svina(II) jons",
+    "PbSO4(s)": "svina(II) sulfāts",
+    "PbO2(s)": "svina(IV) oksīds"
   }
 }

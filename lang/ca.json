@@ -728,6 +728,10 @@
     "C27H28O6S^2-(aq)": "colorant blanquejat (incolor)",
     "C15H15N3O3(aq)": "colorant blanquejat (incolor)",
     "C15H14N3O3-(aq)": "colorant blanquejat (incolor)",
-    "C25H30N3O+(aq)": "colorant blanquejat (incolor)"
+    "C25H30N3O+(aq)": "colorant blanquejat (incolor)",
+    "Pb(s)": "plom",
+    "Pb^2+(aq)": "ió plom(II)",
+    "PbSO4(s)": "sulfat de plom(II)",
+    "PbO2(s)": "òxid de plom(IV)"
   }
 }
