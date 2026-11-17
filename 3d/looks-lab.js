@@ -218,6 +218,7 @@
       var arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m), arm2 = arm1.clone();
       var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
       var drops = new THREE.InstancedMesh(new THREE.SphereGeometry(cm(1.6), 10, 8), flow.material, 3);
+      drops.frustumCulled = false;                             // count wechselt: nah herangezoomt fehlten sonst die Tropfen
       var tag = kit.label(0.75);
       for (i = 0; i <= B.cap; i += 5) marks.push({ y: cm(B.length) * (1 - i / B.cap), long: i % 10 === 0, text: "" });
       glass.renderOrder = tip.renderOrder = body.renderOrder = 2;
@@ -297,6 +298,7 @@
       var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
       var ring = new THREE.Mesh(new THREE.TorusGeometry(R + 0.12, 0.08, 8, 32).rotateX(Math.PI / 2), m);
       var drops = new THREE.InstancedMesh(new THREE.SphereGeometry(cm(1.6), 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }), 3);
+      drops.frustumCulled = false;                             // count wechselt: nah herangezoomt fehlten sonst die Tropfen
       var tag = kit.label(0.75);
       paper.material.side = THREE.DoubleSide;
       glass.renderOrder = stem.renderOrder = 2;
