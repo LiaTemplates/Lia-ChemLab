@@ -211,6 +211,8 @@
     "aria.at": "მიერთებულია: {vessel}",
     "aria.flame": "ალი: {state}",
     "aria.boiling": "დუღს",
+    "aria.oilTop": "ზემოთ {name}-ის ფენა",
+    "aria.oilBottom": "ქვემოთ {name}-ის ფენა",
     "aria.residue": "ნაშთი",
     "aria.broken": "გატეხილი",
     "aria.burning": "იწვის",
@@ -776,6 +778,8 @@
     "bromine water": "ბრომიანი წყალი (0,02 mol/L)",
     "C3H8O3(aq)": "გლიცერინი",
     "glycerol": "გლიცერინი 99,5 %",
-    "sugar syrup": "შაქრის სიროფი (საქაროზა 60 %)"
+    "sugar syrup": "შაქრის სიროფი (საქაროზა 60 %)",
+    "C57H104O6(aq)": "ზეითუნის ზეთი (ტრიოლეინი)",
+    "olive oil": "ზეითუნის ზეთი"
   }
 }

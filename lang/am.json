@@ -211,6 +211,8 @@
     "aria.at": "ከ{vessel} ጋር የተገናኘ",
     "aria.flame": "ነበልባል {state}",
     "aria.boiling": "እየፈላ",
+    "aria.oilTop": "ከላይ የ{name} ንብርብር",
+    "aria.oilBottom": "ከታች የ{name} ንብርብር",
     "aria.residue": "ቅሪት",
     "aria.broken": "ተሰባብሯል",
     "aria.burning": "እየነደደ",
@@ -776,6 +778,8 @@
     "bromine water": "የብሮሚን ውሃ (0.02 mol/L)",
     "C3H8O3(aq)": "ግሊሰሪን",
     "glycerol": "ግሊሰሪን 99.5 %",
-    "sugar syrup": "የስኳር ሽሮፕ (ሱክሮስ 60 %)"
+    "sugar syrup": "የስኳር ሽሮፕ (ሱክሮስ 60 %)",
+    "C57H104O6(aq)": "የወይራ ዘይት (ትሪኦሊን)",
+    "olive oil": "የወይራ ዘይት"
   }
 }

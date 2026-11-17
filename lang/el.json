@@ -211,6 +211,8 @@
     "aria.at": "συνδεδεμένο με: {vessel}",
     "aria.flame": "φλόγα {state}",
     "aria.boiling": "βράζει",
+    "aria.oilTop": "από πάνω στρώμα {name}",
+    "aria.oilBottom": "από κάτω στρώμα {name}",
     "aria.residue": "υπόλειμμα",
     "aria.broken": "σπασμένο",
     "aria.burning": "καίγεται",
@@ -776,6 +778,8 @@
     "bromine water": "βρωμιούχο νερό (0,02 mol/L)",
     "C3H8O3(aq)": "γλυκερόλη",
     "glycerol": "γλυκερόλη 99,5 %",
-    "sugar syrup": "σιρόπι ζάχαρης (σακχαρόζη 60 %)"
+    "sugar syrup": "σιρόπι ζάχαρης (σακχαρόζη 60 %)",
+    "C57H104O6(aq)": "ελαιόλαδο (τριελαΐνη)",
+    "olive oil": "ελαιόλαδο"
   }
 }

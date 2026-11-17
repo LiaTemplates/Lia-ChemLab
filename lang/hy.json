@@ -211,6 +211,8 @@
     "aria.at": "միացված է {vessel} անոթին",
     "aria.flame": "բոց՝ {state}",
     "aria.boiling": "եռում է",
+    "aria.oilTop": "վերևում {name}-ի շերտ",
+    "aria.oilBottom": "ներքևում {name}-ի շերտ",
     "aria.residue": "մնացորդ",
     "aria.broken": "ջարդված",
     "aria.burning": "այրվում է",
@@ -776,6 +778,8 @@
     "bromine water": "բրոմաջուր (0,02 mol/L)",
     "C3H8O3(aq)": "գլիցերին",
     "glycerol": "գլիցերին 99,5 %",
-    "sugar syrup": "շաքարային օշարակ (սախարոզ 60 %)"
+    "sugar syrup": "շաքարային օշարակ (սախարոզ 60 %)",
+    "C57H104O6(aq)": "ձիթապտղի յուղ (տրիոլեին)",
+    "olive oil": "ձիթապտղի յուղ"
   }
 }

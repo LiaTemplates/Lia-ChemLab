@@ -211,6 +211,8 @@
     "aria.at": "connectat a {vessel}",
     "aria.flame": "flama {state}",
     "aria.boiling": "bullint",
+    "aria.oilTop": "a dalt una capa de {name}",
+    "aria.oilBottom": "a baix una capa de {name}",
     "aria.residue": "residu",
     "aria.broken": "trencat",
     "aria.burning": "cremant",
@@ -776,6 +778,8 @@
     "bromine water": "aigua de brom (0,02 mol/L)",
     "C3H8O3(aq)": "glicerol",
     "glycerol": "glicerol 99,5 %",
-    "sugar syrup": "xarop de sucre (sacarosa 60 %)"
+    "sugar syrup": "xarop de sucre (sacarosa 60 %)",
+    "C57H104O6(aq)": "oli d'oliva (trioleïna)",
+    "olive oil": "oli d'oliva"
   }
 }

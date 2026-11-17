@@ -211,6 +211,8 @@
     "aria.at": "forbundet til {vessel}",
     "aria.flame": "flamme {state}",
     "aria.boiling": "koger",
+    "aria.oilTop": "øverst et lag {name}",
+    "aria.oilBottom": "nederst et lag {name}",
     "aria.residue": "rest",
     "aria.broken": "gået i stykker",
     "aria.burning": "det brænder",
@@ -776,6 +778,8 @@
     "bromine water": "bromvand (0,02 mol/L)",
     "C3H8O3(aq)": "glycerol",
     "glycerol": "glycerol 99,5 %",
-    "sugar syrup": "sukkersirup (saccharose 60 %)"
+    "sugar syrup": "sukkersirup (saccharose 60 %)",
+    "C57H104O6(aq)": "olivenolie (triolein)",
+    "olive oil": "olivenolie"
   }
 }

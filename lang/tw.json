@@ -211,6 +211,8 @@
     "aria.at": "aka {vessel} ho",
     "aria.flame": "ogya {state}",
     "aria.boiling": "ɛrehuru",
+    "aria.oilTop": "atifi so {name} ntoaso",
+    "aria.oilBottom": "ase {name} ntoaso",
     "aria.residue": "residue",
     "aria.broken": "abɔ",
     "aria.burning": "ɛrehyew",
@@ -776,6 +778,8 @@
     "bromine water": "bromine water (0.02 mol/L)",
     "C3H8O3(aq)": "glycerol",
     "glycerol": "glycerol 99.5 %",
-    "sugar syrup": "asikyire nsuo a ɛkɔ (sucrose 60 %)"
+    "sugar syrup": "asikyire nsuo a ɛkɔ (sucrose 60 %)",
+    "C57H104O6(aq)": "ngo a ɛfiri olive (triolein)",
+    "olive oil": "ngo a ɛfiri olive"
   }
 }

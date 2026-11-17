@@ -211,6 +211,8 @@
     "aria.at": "{vessel} kabına bağlı",
     "aria.flame": "alev {state}",
     "aria.boiling": "kaynıyor",
+    "aria.oilTop": "üstte bir {name} tabakası",
+    "aria.oilBottom": "altta bir {name} tabakası",
     "aria.residue": "kalıntı",
     "aria.broken": "kırık",
     "aria.burning": "yanıyor",
@@ -776,6 +778,8 @@
     "bromine water": "bromlu su (0,02 mol/L)",
     "C3H8O3(aq)": "gliserol",
     "glycerol": "gliserol 99,5 %",
-    "sugar syrup": "şeker şurubu (sakaroz 60 %)"
+    "sugar syrup": "şeker şurubu (sakaroz 60 %)",
+    "C57H104O6(aq)": "zeytinyağı (triolein)",
+    "olive oil": "zeytinyağı"
   }
 }

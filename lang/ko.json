@@ -211,6 +211,8 @@
     "aria.at": "{vessel}에 연결됨",
     "aria.flame": "불꽃: {state}",
     "aria.boiling": "끓는 중",
+    "aria.oilTop": "위에 {name} 층",
+    "aria.oilBottom": "아래에 {name} 층",
     "aria.residue": "찌꺼기",
     "aria.broken": "깨짐",
     "aria.burning": "불이 붙음",
@@ -776,6 +778,8 @@
     "bromine water": "브로민수 (0.02 mol/L)",
     "C3H8O3(aq)": "글리세롤",
     "glycerol": "글리세롤 99.5 %",
-    "sugar syrup": "설탕 시럽 (수크로스 60 %)"
+    "sugar syrup": "설탕 시럽 (수크로스 60 %)",
+    "C57H104O6(aq)": "올리브유 (트라이올레인)",
+    "olive oil": "올리브유"
   }
 }

@@ -211,6 +211,8 @@
     "aria.at": "ühendatud anumaga {vessel}",
     "aria.flame": "leek: {state}",
     "aria.boiling": "keeb",
+    "aria.oilTop": "peal kiht: {name}",
+    "aria.oilBottom": "all kiht: {name}",
     "aria.residue": "jääk",
     "aria.broken": "purunenud",
     "aria.burning": "põleb",
@@ -776,6 +778,8 @@
     "bromine water": "broomivesi (0,02 mol/L)",
     "C3H8O3(aq)": "glütserool",
     "glycerol": "glütserool 99,5 %",
-    "sugar syrup": "suhkrusiirup (sahharoos 60 %)"
+    "sugar syrup": "suhkrusiirup (sahharoos 60 %)",
+    "C57H104O6(aq)": "oliiviõli (trioleiin)",
+    "olive oil": "oliiviõli"
   }
 }

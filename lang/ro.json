@@ -211,6 +211,8 @@
     "aria.at": "conectat la {vessel}",
     "aria.flame": "flacără {state}",
     "aria.boiling": "fierbe",
+    "aria.oilTop": "deasupra un strat de {name}",
+    "aria.oilBottom": "dedesubt un strat de {name}",
     "aria.residue": "reziduu",
     "aria.broken": "spart",
     "aria.burning": "arde",
@@ -776,6 +778,8 @@
     "bromine water": "apă de brom (0,02 mol/L)",
     "C3H8O3(aq)": "glicerol",
     "glycerol": "glicerol 99,5 %",
-    "sugar syrup": "sirop de zahăr (zaharoză 60 %)"
+    "sugar syrup": "sirop de zahăr (zaharoză 60 %)",
+    "C57H104O6(aq)": "ulei de măsline (trioleină)",
+    "olive oil": "ulei de măsline"
   }
 }

@@ -211,6 +211,8 @@
     "aria.at": "وصل به {vessel}",
     "aria.flame": "شعله {state}",
     "aria.boiling": "در حال جوشیدن",
+    "aria.oilTop": "در بالا لایه‌ای از {name}",
+    "aria.oilBottom": "در پایین لایه‌ای از {name}",
     "aria.residue": "باقی‌مانده",
     "aria.broken": "شکسته",
     "aria.burning": "در حال سوختن",
@@ -776,6 +778,8 @@
     "bromine water": "آب برم (0.02 mol/L)",
     "C3H8O3(aq)": "گلیسرول",
     "glycerol": "گلیسرول 99.5 %",
-    "sugar syrup": "شربت شکر (ساکارز 60 %)"
+    "sugar syrup": "شربت شکر (ساکارز 60 %)",
+    "C57H104O6(aq)": "روغن زیتون (تری‌اولئین)",
+    "olive oil": "روغن زیتون"
   }
 }

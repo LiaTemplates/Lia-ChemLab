@@ -211,6 +211,8 @@
     "aria.at": "ceangailte le {vessel}",
     "aria.flame": "lasair {state}",
     "aria.boiling": "ag fiuchadh",
+    "aria.oilTop": "ar barr sraith de {name}",
+    "aria.oilBottom": "ag an mbun sraith de {name}",
     "aria.residue": "iarmhar",
     "aria.broken": "briste",
     "aria.burning": "trí thine",
@@ -776,6 +778,8 @@
     "bromine water": "uisce bróimín (0,02 mol/L)",
     "C3H8O3(aq)": "glicrin",
     "glycerol": "glicrin 99.5 %",
-    "sugar syrup": "síoróip siúcra (siúcrós 60 %)"
+    "sugar syrup": "síoróip siúcra (siúcrós 60 %)",
+    "C57H104O6(aq)": "ola olóige (trí-oiléin)",
+    "olive oil": "ola olóige"
   }
 }

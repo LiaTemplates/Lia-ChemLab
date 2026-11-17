@@ -18,7 +18,10 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - Gelöster Luftsauerstoff mit Austausch zur Luft, seine Reduktion an Metallen, Rost, langsame Geschwindigkeiten.
   - Gewinn: Das Volta-Element zeigt 0,9 V statt 0,5 V.
   - Preis: Jeder Versuch mit Metall in Wasser ändert sich ein wenig; viele Tests müssen neu kalibriert werden.
-- [ ] **Zweite flüssige Phase** (sehr groß, eigenes Projekt mit eigener Planung)
+- [ ] **Zweite flüssige Phase** (Plan: ~/.claude/plans/2026-11-17-zweite-fluessige-phase.md, Branch `zweite-phase`)
+  - [x] 3a (17.11.2026): Ölschicht `v.org` neben der wässrigen Lösung, Stoffdaten `oil`, Hexan und Olivenöl, Abgießen oben, Pipette und Hahn unten, gemeinsames Sieden (Wasserdampfdestillation), Zeichnung in 2D.
+  - [ ] 3b Verteilen und Ausschütteln (`kd`, Knopf „Schütteln“, Reaktionen in der Ölschicht, Hexen und Bromwasser); 3c Scheidetrichter; 3d Phasenfeld im Strömungsbild; 3e 3D.
+  - Offen aus 3a: Ethylacetat als Schicht (braucht eine Regel für Mitlöser wie Ethanol).
   - Schichten mit eigener Zusammensetzung, Verteilung zwischen den Phasen, Ausschütteln, nur die obere Schicht abgießen, Zeichnung der Schichten.
   - Dann schwimmen Hexan und Hexen obenauf; Iod in Hexan (violett), Brom ausschütteln.
 

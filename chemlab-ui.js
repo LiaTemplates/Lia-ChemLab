@@ -869,6 +869,7 @@
             ? (show.numbers && show.volumes ? T("aria.liquid", { ml: L.trim(Math.round(w.ml * 10) / 10, lang), color: L.colorWord(w.color.name, w.color.pale, lang) })
               : L.colorWord(w.color.name, w.color.pale, lang)) + (w.cloud.alpha > 0.3 ? ", " + T("aria.cloudy") : "") + (w.steam > 0 ? ", " + T("aria.boiling") : "")
             : T(w.sediment.ml > 0.002 ? "aria.sediment" : w.residue > 1e-7 ? "aria.residue" : "aria.empty");
+          if (w.oil && !v.veiled) content += ", " + T(w.oil.top ? "aria.oilTop" : "aria.oilBottom", { name: L.nameOf(L.species(w.oil.main), lang) });
           if (w.fire.length || w.torch) content += ", " + T("aria.burning");
           if (def.dispenser && !def.filter) {
             content += ", " + T("aria.tap", { state: T("tap." + L.tapKey(w.tap)) }) +

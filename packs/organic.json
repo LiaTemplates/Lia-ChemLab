@@ -48,8 +48,12 @@
       "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,673 g/cm³ bei 20 °C (Vm = 84,16/0,673)"
     },
     "C6H14(aq)": {
-      "name": {"de": "Hexan", "en": "hexane"}, "Hf": null, "Vm": 130.8, "solvent": true,
-      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,659 g/cm³ bei 20 °C (Vm = 86,18/0,659)"
+      "name": {"de": "Hexan", "en": "hexane"}, "Hf": null, "Vm": 130.8, "solvent": true, "Tb": 68.73, "Hvap": 31.56, "cp": 195.6, "oil": {"sol": 1.1e-4},
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,659 g/cm³ bei 20 °C (Vm = 86,18/0,659); Löslichkeit in Wasser 9,5 mg/L bei 25 °C (1,1·10⁻⁴ mol/L). NIST Chemistry WebBook: Siedepunkt 68,73 °C, Verdampfungsenthalpie 31,56 kJ/mol bei 25 °C (damit trifft der Dampfdruck bei 25 °C die gemessenen 151 mmHg auf 2 %), Wärmekapazität der Flüssigkeit 195,6 J/(mol K)"
+    },
+    "C57H104O6(aq)": {
+      "name": {"de": "Olivenöl (als Triolein)", "en": "olive oil (as triolein)"}, "Hf": null, "Vm": 969.1, "cp": 1744, "eta": [67, 29], "oil": {"sol": 0}, "color": "#f5eab0", "at": 1.03,
+      "src": "Olivenöl besteht zum größten Teil aus Triolein und wird hier als reines Triolein gerechnet (M = 885,4 g/mol). Dichte 0,9137 g/cm³ bei 20 °C (Aceite de las Valdesas, Herstellertabelle), Vm = 885,4/0,9137. Wärmekapazität 1,97 kJ/(kg K) (Engineering ToolBox, Specific Heat of Liquids; andere Tabellen nennen 1,67 bis 1,79). Zähigkeit nach Andrade aus 80,8 mPa·s bei 20 °C (Flottweg) und 40 mPa·s bei 40 °C (Bürkle) auf 25 und 50 °C umgerechnet; je nach Öl streuen die Werte um etwa 20 %. Unlöslich in Wasser. Farbe: goldgelb im Becherglas (geschätzt)"
     },
     "C6H12Br2(aq)": {
       "name": {"de": "1,2-Dibromhexan", "en": "1,2-dibromohexane"}, "Hf": null, "Vm": 154.4, "solvent": true,
@@ -111,6 +115,7 @@
     "sugar syrup": {"name": {"de": "Zuckersirup (Saccharose 60 %)", "en": "sugar syrup (sucrose 60 %)"}, "solution": {"C12H22O11(aq)": 2.255}, "group": "other", "src": "771,9 g Saccharose je Liter (60 % bei der Dichte 1,2865 g/cm³)"},
     "acetone": {"ghs": {"fixed": ["GHS02", "GHS07"], "signal": "danger", "src": "CLP Annex VI 606-001-00-8: Flam. Liq. 2, Eye Irrit. 2, STOT SE 3"}, "name": {"de": "Aceton", "en": "acetone"}, "solution": {"CH3COCH3(aq)": 13.6}, "group": "other"},
     "hexene": {"ghs": {"fixed": ["GHS02", "GHS08"], "signal": "danger", "src": "Hex-1-en, Lieferanten (ECHA C&L): Flam. Liq. 2, Asp. Tox. 1"}, "name": {"de": "Hexen", "en": "hexene"}, "solution": {"C6H12(aq)": 7.99}, "group": "other"},
+    "olive oil": {"name": {"de": "Olivenöl", "en": "olive oil"}, "solution": {"C57H104O6(aq)": 1.031}, "group": "other", "src": "reines Öl: 1/Vm = 1/0,9691 L, abgerundet"},
     "hexane": {"ghs": {"fixed": ["GHS02", "GHS07", "GHS08", "GHS09"], "signal": "danger", "src": "CLP Annex VI 601-037-00-0: Flam. Liq. 2, Repr. 2, Asp. Tox. 1, STOT RE 2, Skin Irrit. 2, STOT SE 3, Aquatic Chronic 2"}, "name": {"de": "Hexan", "en": "hexane"}, "solution": {"C6H14(aq)": 7.64}, "group": "other"},
     "bromine water": {"ghs": {"corr": [5, 1, 3, 1], "src": "Brom (CLP Annex VI 035-001-00-5): Skin Corr. 1A, Acute Tox. 2 (Einatmen), Aquatic Acute 1. Mit 0,32 % liegt Bromwasser 0,02 mol/L unter allen allgemeinen Grenzen und wird nicht gekennzeichnet; Bromdämpfe trotzdem nicht einatmen"}, "name": {"de": "Bromwasser (0,02 mol/L)", "en": "bromine water (0.02 mol/L)"}, "solution": {"Br2(aq)": 0.02}, "group": "other"}
   }

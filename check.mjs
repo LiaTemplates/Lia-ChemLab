@@ -22,7 +22,7 @@ const amount = (l, species, id) => L.vessel(l, id || "b").n[species] || 0;
 const totals = (l) => {
   let mass = 0, charge = 0;
   for (const v of l.vessels)
-    for (const [store, sign] of [[v.n, 1], [v.out, 1], [v.air || {}, 1], [v.taken || {}, -1]])      // taken: was aus der Luft kam
+    for (const [store, sign] of [[v.n, 1], [v.org || {}, 1], [v.out, 1], [v.air || {}, 1], [v.taken || {}, -1]])      // taken: was aus der Luft kam, org: die Ölschicht
       for (const [id, n] of Object.entries(store)) {
         mass += sign * n * L.species(id).M;
         charge += sign * n * L.species(id).charge;
@@ -999,6 +999,72 @@ test("Strömung: Schweres sinkt als Schliere zu Boden, Leichtes bleibt oben; das
   const ethanol = pour("ethanol", 20, "ethanol");
   assert.ok(ethanol.top < -20 && ethanol.bottom > 0, `Ethanol bleibt oben: ${ethanol.top} / ${ethanol.bottom}`);
   assert.match(L.fx.flow(box, ethanol.w, L.fx.fields.ethanol.t + 0.1, "ethanol", "mix"), /#2a9d8f/, "leichter: türkis");
+});
+
+test("Zwei Schichten: Hexan und Olivenöl schwimmen auf Wasser, Abgießen nimmt die obere, die Pipette die untere", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const two = (more) => lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }, { type: "beaker", id: "c", ml: 250 }].concat(more || []), { room: 20 });
+  let l = two(), w;
+  const before = totals(l);
+  L.step(l, 1);
+  w = L.view(l, L.vessel(l, "b"));
+  near(w.ml, 70, 0.1, "zusammen 70 mL");
+  near(w.oil.ml, 20, 0.1, "davon 20 mL Hexan als Schicht");
+  assert.equal(w.oil.top, true, "Hexan ist leichter und liegt oben");
+  assert.equal(w.oil.main, "C6H14(aq)");
+  near(amount(l, "C6H14(aq)") / 0.05, 1.1e-4, 2e-5, "im Wasser gelöst nur, so viel es aufnimmt (mol/L)");
+  near(L.free(l, L.vessel(l, "b")), 180, 0.1, "Platz ist für beides zusammen");
+  // abgießen: zuerst die obere Schicht
+  assert.ok(L.pour(l, "b", "c", 15));
+  L.step(l, 10);
+  near(L.view(l, L.vessel(l, "c")).oil.ml, 15, 0.1, "15 mL Hexan sind drüben, als Ölschicht ohne Wasser");
+  near(L.view(l, L.vessel(l, "b")).oil.ml, 5, 0.1, "5 mL Hexan bleiben auf dem Wasser");
+  near(L.view(l, L.vessel(l, "b")).ml, 55, 0.1);
+  near(totals(l).mass, before.mass, 1e-6, "keine Masse geht verloren");
+  // die Pipette saugt unten an: Wasser
+  l = two();
+  L.step(l, 1);
+  assert.ok(L.pipette(l, "b", "c", 10));
+  L.step(l, 10);
+  assert.equal(L.view(l, L.vessel(l, "c")).oil, null, "nur Wasser in der Pipette");
+  near(L.view(l, L.vessel(l, "b")).oil.ml, 20, 0.1, "das Hexan blieb oben");
+  // Olivenöl auf Kupfersulfat-Lösung: die Lösung bleibt, wie sie ist
+  l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "CuSO4 0.1M", ml: 50 }, { reagent: "olive oil", ml: 30 }] }], { room: 20 });
+  L.step(l, 1);
+  w = L.view(l, L.vessel(l, "b"));
+  near(w.oil.ml, 30, 0.1, "Öl als Schicht");
+  const plain = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "CuSO4 0.1M", ml: 50 }] }], { room: 20 });
+  L.step(plain, 1);
+  const cu = (v) => v.species.find((s) => s.id === "Cu^2+(aq)").c;
+  near(cu(w), cu(L.view(plain, L.vessel(plain, "b"))), 2e-5, "Kupfer-Ionen wie ohne Öl (bis auf die Spur Wasser aus der Ölflasche): das Öl verdünnt nichts");
+  assert.equal(w.oil.color.name, "yellow");
+  assert.equal(L.waste(l, "b").bin, "heavy", "Kupfer geht vor");
+  l = two();
+  L.step(l, 1);
+  assert.equal(L.waste(l, "b").bin, "organic", "Wasser mit Hexan: organische Abfälle");
+});
+
+test("Zwei Schichten: Hexan und Wasser sieden zusammen bei 62 °C, bis das Hexan fort ist (Wasserdampfdestillation)", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }, { type: "burner", under: "b", flame: 1 }], { room: 20 });
+  let top = 0;
+  for (let i = 0; i < 600 && L.view(l, L.vessel(l, "b")).oil; i++) { L.step(l, 1); if (L.view(l, L.vessel(l, "b")).steam > 0) top = Math.max(top, L.vessel(l, "b").T); }
+  near(top, 61.6, 1.5, "siedet unter beiden Siedepunkten (Hexan 68,7 °C, Wasser 100 °C)");
+  assert.equal(L.view(l, L.vessel(l, "b")).oil, null, "das Hexan ist verdampft");
+  near(L.view(l, L.vessel(l, "b")).ml, 50, 2, "das Wasser ist fast ganz noch da");
+  L.step(l, 240);
+  near(L.vessel(l, "b").T, 100, 0.5, "danach siedet das Wasser allein");
+});
+
+test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein Öl ohne Volumen wird abgelehnt", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "olive oil", ml: 20 }] }], { room: 20 });
+  L.step(l, 1);
+  assert.match(L.parts.beaker.draw(L.view(l, L.vessel(l, "b")), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }), /cl-boundary/);
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "hexane", ml: 20 }] }] });
+  frames(1);
+  assert.match(item(el, "b").attributes["aria-label"], /oben eine Schicht Hexan/);
+  assert.throws(() => L.register({ species: { "C7H16(aq)": { oil: { sol: 0 } } } }), (e) => e.code === "data" && /oil/.test(e.detail));
 });
 
 test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {

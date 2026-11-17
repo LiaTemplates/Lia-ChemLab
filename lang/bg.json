@@ -211,6 +211,8 @@
     "aria.at": "свързано към {vessel}",
     "aria.flame": "пламък: {state}",
     "aria.boiling": "кипи",
+    "aria.oilTop": "отгоре слой {name}",
+    "aria.oilBottom": "отдолу слой {name}",
     "aria.residue": "остатък",
     "aria.broken": "спукан",
     "aria.burning": "гори",
@@ -776,6 +778,8 @@
     "bromine water": "бромна вода (0,02 mol/L)",
     "C3H8O3(aq)": "глицерол",
     "glycerol": "глицерол 99,5 %",
-    "sugar syrup": "захарен сироп (захароза 60 %)"
+    "sugar syrup": "захарен сироп (захароза 60 %)",
+    "C57H104O6(aq)": "зехтин (триолеин)",
+    "olive oil": "зехтин"
   }
 }

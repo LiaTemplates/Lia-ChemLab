@@ -102,7 +102,7 @@
       "say.flameTest": "Rod from {vessel} held in the flame: it glows {color}.",
       "say.flameNone": "Rod from {vessel} held in the flame: no colour.",
       "say.broken": "{vessel} is shattered!", "say.syringeFull": "{part} is full.",
-      "aria.under": "under {vessel}", "aria.at": "connected to {vessel}", "aria.flame": "flame {state}", "aria.boiling": "boiling",
+      "aria.under": "under {vessel}", "aria.at": "connected to {vessel}", "aria.flame": "flame {state}", "aria.boiling": "boiling", "aria.oilTop": "on top a layer of {name}", "aria.oilBottom": "at the bottom a layer of {name}",
       "aria.residue": "residue", "aria.broken": "shattered", "aria.burning": "on fire",
       "amount": "Amount", "less": "less", "more": "more",
       "ghs.GHS01": "explosive", "ghs.GHS02": "flammable", "ghs.GHS03": "oxidising", "ghs.GHS04": "gas under pressure", "ghs.GHS05": "corrosive",
@@ -568,7 +568,16 @@
     var layer;
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
-        '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor(w.color.rgb) + '"/>';
+        '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';
+      // zwei Schichten: die obere füllt alles, die untere bis zu ihrer eigenen Höhe, dazwischen die Grenze
+      if (w.oil && L.parts[w.type].surface) {
+        layer = w.oil.top ? w.ml - w.oil.ml : w.oil.ml;
+        if (layer > 0.005) {
+          layer = Math.min(shape.bottom, L.parts[w.type].surface(Object.assign({}, w, { ml: layer })));
+          out += '<path class="cl-liquid" d="' + shape.fill(layer) + '" fill="' + liquidColor((w.oil.top ? w.color : w.oil.color).rgb) + '"/>' +
+            '<line class="cl-boundary" clip-path="url(#' + esc(clip) + ')" x1="' + f(shape.x0 - 30) + '" x2="' + f(shape.x1 + 30) + '" y1="' + f(layer) + '" y2="' + f(layer) + '"/>';
+        }
+      }
       // Niederschlag: was schwebt, trübt die Flüssigkeit in seiner Farbe; was sich abgesetzt hat, liegt als Schicht am Boden
       if (w.cloud && w.cloud.alpha > 0.02) {
         // etwas abgedunkelt, damit auch ein weißer Niederschlag vor der hellen Wand als milchige Trübung zu sehen ist

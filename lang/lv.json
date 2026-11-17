@@ -211,6 +211,8 @@
     "aria.at": "pievienots: {vessel}",
     "aria.flame": "liesma: {state}",
     "aria.boiling": "vārās",
+    "aria.oilTop": "augšā slānis: {name}",
+    "aria.oilBottom": "apakšā slānis: {name}",
     "aria.residue": "atlikums",
     "aria.broken": "saplīsis",
     "aria.burning": "deg",
@@ -776,6 +778,8 @@
     "bromine water": "broma ūdens (0,02 mol/L)",
     "C3H8O3(aq)": "glicerīns",
     "glycerol": "glicerīns 99,5 %",
-    "sugar syrup": "cukura sīrups (saharoze 60 %)"
+    "sugar syrup": "cukura sīrups (saharoze 60 %)",
+    "C57H104O6(aq)": "olīveļļa (trioleīns)",
+    "olive oil": "olīveļļa"
   }
 }

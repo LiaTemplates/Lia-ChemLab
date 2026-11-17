@@ -211,6 +211,8 @@
     "aria.at": "raccordé à {vessel}",
     "aria.flame": "flamme {state}",
     "aria.boiling": "en ébullition",
+    "aria.oilTop": "en haut une couche de {name}",
+    "aria.oilBottom": "en bas une couche de {name}",
     "aria.residue": "résidu",
     "aria.broken": "brisé",
     "aria.burning": "en feu",
@@ -776,6 +778,8 @@
     "bromine water": "eau de brome (0,02 mol/L)",
     "C3H8O3(aq)": "glycérol",
     "glycerol": "glycérol 99,5 %",
-    "sugar syrup": "sirop de sucre (saccharose 60 %)"
+    "sugar syrup": "sirop de sucre (saccharose 60 %)",
+    "C57H104O6(aq)": "huile d'olive (trioléine)",
+    "olive oil": "huile d'olive"
   }
 }

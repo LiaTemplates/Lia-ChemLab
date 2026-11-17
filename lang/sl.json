@@ -211,6 +211,8 @@
     "aria.at": "pri posodi {vessel}",
     "aria.flame": "plamen {state}",
     "aria.boiling": "vre",
+    "aria.oilTop": "zgoraj plast: {name}",
+    "aria.oilBottom": "spodaj plast: {name}",
     "aria.residue": "ostanek",
     "aria.broken": "počena",
     "aria.burning": "gori",
@@ -776,6 +778,8 @@
     "bromine water": "bromovica (0,02 mol/L)",
     "C3H8O3(aq)": "glicerol",
     "glycerol": "glicerol 99,5 %",
-    "sugar syrup": "sladkorni sirup (saharoza 60 %)"
+    "sugar syrup": "sladkorni sirup (saharoza 60 %)",
+    "C57H104O6(aq)": "oljčno olje (triolein)",
+    "olive oil": "oljčno olje"
   }
 }

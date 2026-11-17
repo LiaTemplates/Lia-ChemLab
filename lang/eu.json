@@ -211,6 +211,8 @@
     "aria.at": "konektatua: {vessel}",
     "aria.flame": "garra {state}",
     "aria.boiling": "irakiten",
+    "aria.oilTop": "goian {name} geruza bat",
+    "aria.oilBottom": "behean {name} geruza bat",
     "aria.residue": "hondakina",
     "aria.broken": "apurtuta",
     "aria.burning": "sutan",
@@ -776,6 +778,8 @@
     "bromine water": "bromo-ura (0,02 mol/L)",
     "C3H8O3(aq)": "glizerola",
     "glycerol": "glizerola 99,5 %",
-    "sugar syrup": "azukre-almibarra (sakarosa 60 %)"
+    "sugar syrup": "azukre-almibarra (sakarosa 60 %)",
+    "C57H104O6(aq)": "oliba-olioa (trioleina)",
+    "olive oil": "oliba-olioa"
   }
 }

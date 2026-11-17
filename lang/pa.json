@@ -211,6 +211,8 @@
     "aria.at": "{vessel} ਨਾਲ ਜੁੜਿਆ",
     "aria.flame": "ਲਾਟ {state}",
     "aria.boiling": "ਉਬਲ ਰਿਹਾ ਹੈ",
+    "aria.oilTop": "ਉੱਪਰ {name} ਦੀ ਪਰਤ",
+    "aria.oilBottom": "ਹੇਠਾਂ {name} ਦੀ ਪਰਤ",
     "aria.residue": "ਰਹਿੰਦ",
     "aria.broken": "ਟੁੱਟਿਆ ਹੋਇਆ",
     "aria.burning": "ਅੱਗ ਲੱਗੀ ਹੋਈ",
@@ -776,6 +778,8 @@
     "bromine water": "ਬ੍ਰੋਮੀਨ ਪਾਣੀ (0.02 mol/L)",
     "C3H8O3(aq)": "ਗਲਿਸਰੋਲ",
     "glycerol": "ਗਲਿਸਰੋਲ 99.5 %",
-    "sugar syrup": "ਖੰਡ ਦਾ ਸ਼ਰਬਤ (ਸੁਕਰੋਜ਼ 60 %)"
+    "sugar syrup": "ਖੰਡ ਦਾ ਸ਼ਰਬਤ (ਸੁਕਰੋਜ਼ 60 %)",
+    "C57H104O6(aq)": "ਜੈਤੂਨ ਦਾ ਤੇਲ (ਟ੍ਰਾਈਓਲੀਨ)",
+    "olive oil": "ਜੈਤੂਨ ਦਾ ਤੇਲ"
   }
 }

@@ -183,6 +183,7 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-glass { fill: none; stroke: var(--cl-glass); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
 .lia-chemlab .cl-shine { stroke: var(--cl-shine); stroke-width: 2.5; stroke-linecap: round; opacity: 0.45; }
 .lia-chemlab .cl-surface { stroke: var(--cl-glass); stroke-width: 1; opacity: 0.55; }
+.lia-chemlab .cl-boundary { stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.7; }
 .lia-chemlab .cl-solid { stroke: #4a5059; }
 .lia-chemlab polyline.cl-solid { stroke-opacity: 1; }
 .lia-chemlab .cl-solid-edge { stroke: #4a5059; }

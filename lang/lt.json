@@ -211,6 +211,8 @@
     "aria.at": "prijungta prie: {vessel}",
     "aria.flame": "liepsna: {state}",
     "aria.boiling": "verda",
+    "aria.oilTop": "viršuje sluoksnis: {name}",
+    "aria.oilBottom": "apačioje sluoksnis: {name}",
     "aria.residue": "likutis",
     "aria.broken": "sudužęs",
     "aria.burning": "dega",
@@ -776,6 +778,8 @@
     "bromine water": "bromo vanduo (0,02 mol/L)",
     "C3H8O3(aq)": "glicerolis",
     "glycerol": "glicerolis 99,5 %",
-    "sugar syrup": "cukraus sirupas (sacharozė 60 %)"
+    "sugar syrup": "cukraus sirupas (sacharozė 60 %)",
+    "C57H104O6(aq)": "alyvuogių aliejus (trioleinas)",
+    "olive oil": "alyvuogių aliejus"
   }
 }

@@ -211,6 +211,8 @@
     "aria.at": "已连接到{vessel}",
     "aria.flame": "火焰{state}",
     "aria.boiling": "沸腾中",
+    "aria.oilTop": "上面一层{name}",
+    "aria.oilBottom": "下面一层{name}",
     "aria.residue": "残渣",
     "aria.broken": "已破裂",
     "aria.burning": "着火了",
@@ -776,6 +778,8 @@
     "bromine water": "溴水（0.02 mol/L）",
     "C3H8O3(aq)": "甘油（丙三醇）",
     "glycerol": "甘油 99.5 %",
-    "sugar syrup": "糖浆（蔗糖 60 %）"
+    "sugar syrup": "糖浆（蔗糖 60 %）",
+    "C57H104O6(aq)": "橄榄油（三油酸甘油酯）",
+    "olive oil": "橄榄油"
   }
 }

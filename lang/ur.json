@@ -211,6 +211,8 @@
     "aria.at": "{vessel} سے جڑا ہوا",
     "aria.flame": "شعلہ: {state}",
     "aria.boiling": "ابل رہا ہے",
+    "aria.oilTop": "اوپر {name} کی تہہ",
+    "aria.oilBottom": "نیچے {name} کی تہہ",
     "aria.residue": "باقیات",
     "aria.broken": "ٹوٹا ہوا",
     "aria.burning": "آگ لگی ہے",
@@ -776,6 +778,8 @@
     "bromine water": "برومین پانی (0.02 mol/L)",
     "C3H8O3(aq)": "گلیسرول",
     "glycerol": "گلیسرول 99.5 %",
-    "sugar syrup": "چینی کا شربت (سکروز 60 %)"
+    "sugar syrup": "چینی کا شربت (سکروز 60 %)",
+    "C57H104O6(aq)": "زیتون کا تیل (ٹرائی اولین)",
+    "olive oil": "زیتون کا تیل"
   }
 }

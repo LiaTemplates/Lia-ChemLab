@@ -1239,7 +1239,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1373,6 +1373,29 @@ Wird eine Flüssigkeit wärmer, wird sie dünnflüssiger: Glycerin ist bei 50 °
  ],
  "shelf":["H2O","sugar syrup","glycerol","beaker","burner","thermometer"],
  "show":{"charts":false,"flow":"temp"}}
+```
+
+## Öl und Wasser
+
+@[ChemLab.pack](packs/organic.json)
+
+Olivenöl und Hexan mischen sich nicht mit Wasser: Sie bilden eine eigene Schicht, und weil sie leichter sind, schwimmt sie oben. Im Becherglas liegt goldgelbes Öl auf blauer Kupfersulfat-Lösung, im Reagenzglas farbloses Hexan auf Wasser.
+
+- **Abgießen** nimmt zuerst die obere Schicht: Gieß aus dem Reagenzglas etwas ins leere Glas, dann kommt erst das Hexan.
+- **Die Pipette** saugt unten an und holt Wasser, auch unter einer Ölschicht.
+- **Das Öl verdünnt nichts:** Die Kupfersulfat-Lösung bleibt so blau und so konzentriert wie ohne Öl. pH-Wert, Leitfähigkeit und alle Messgeräte gelten der wässrigen Schicht.
+- **Zusammen sieden** Hexan und Wasser schon bei etwa 62 °C, früher als jedes für sich (Hexan 69 °C, Wasser 100 °C), denn ihre Dampfdrücke addieren sich: Das ist die Wasserdampfdestillation. Stell das rechte Glas auf die Flamme: Das Thermometer bleibt bei 62 °C stehen, bis das Hexan verdampft ist, dann steigt es auf 100 °C.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"oel","ml":250,"contains":[{"reagent":"CuSO4 0.1M","ml":80},{"reagent":"olive oil","ml":30}]},
+  {"type":"testtube","id":"hexan","contains":[{"reagent":"H2O","ml":8},{"reagent":"hexane","ml":5}]},
+  {"type":"beaker","id":"leer"},
+  {"type":"beaker","id":"sieden","contains":[{"reagent":"H2O","ml":40},{"reagent":"hexane","ml":20}]},
+  {"type":"thermometer","in":"sieden"}
+ ],
+ "shelf":["olive oil","hexane","H2O","beaker","testtube","burner","thermometer"],
+ "show":{"charts":["T"]}}
 ```
 
 ## 3D-Ansicht
@@ -1612,6 +1635,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
+| `oil` | `{"sol": …}`: eine Flüssigkeit, die sich nicht mit Wasser mischt (Hexan, Öl). Über ihrer Löslichkeit `sol` in mol je Liter Wasser bildet sie eine eigene Schicht, die leichtere liegt oben; ohne Wasser ist sie die Flüssigkeit allein. Braucht `Vm` |
 | `eta` | Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, `[η25, η50]`, für die Strömungsansicht (Glycerin: `[934, 152]`). Dazwischen und darüber hinaus folgt sie der Temperatur nach Andrade; eine Mischung mischt den Logarithmus nach den Stoffmengenanteilen. Ohne Angabe zählt ein Stoff wie Wasser |
 | `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
@@ -1793,7 +1817,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
-- Jedes Gefäß gilt als durchmischt; Schlieren und Schichten gibt es nicht.
+- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Gelöste Stoffe wie Iod und Brom bleiben in der wässrigen Schicht. In 3D und in der Strömungsansicht erscheint die Ölschicht noch nicht.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.

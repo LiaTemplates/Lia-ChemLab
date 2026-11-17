@@ -211,6 +211,8 @@
     "aria.at": "{vessel}-এর সঙ্গে যুক্ত",
     "aria.flame": "শিখা {state}",
     "aria.boiling": "ফুটছে",
+    "aria.oilTop": "উপরে {name}-এর স্তর",
+    "aria.oilBottom": "নিচে {name}-এর স্তর",
     "aria.residue": "অবশেষ",
     "aria.broken": "ভাঙা",
     "aria.burning": "জ্বলছে",
@@ -776,6 +778,8 @@
     "bromine water": "ব্রোমিন জল (0.02 mol/L)",
     "C3H8O3(aq)": "গ্লিসারল",
     "glycerol": "গ্লিসারল 99.5 %",
-    "sugar syrup": "চিনির সিরাপ (সুক্রোজ 60 %)"
+    "sugar syrup": "চিনির সিরাপ (সুক্রোজ 60 %)",
+    "C57H104O6(aq)": "জলপাই তেল (ট্রাইওলিন)",
+    "olive oil": "জলপাই তেল"
   }
 }

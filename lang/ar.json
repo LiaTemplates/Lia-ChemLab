@@ -211,6 +211,8 @@
     "aria.at": "موصول بـ{vessel}",
     "aria.flame": "اللهب {state}",
     "aria.boiling": "يغلي",
+    "aria.oilTop": "في الأعلى طبقة من {name}",
+    "aria.oilBottom": "في الأسفل طبقة من {name}",
     "aria.residue": "بقايا",
     "aria.broken": "محطَّم",
     "aria.burning": "مشتعل",
@@ -776,6 +778,8 @@
     "bromine water": "ماء البروم (0.02 mol/L)",
     "C3H8O3(aq)": "الغليسرين",
     "glycerol": "الغليسرين 99.5 %",
-    "sugar syrup": "شراب السكر (سكروز 60 %)"
+    "sugar syrup": "شراب السكر (سكروز 60 %)",
+    "C57H104O6(aq)": "زيت الزيتون (ثلاثي الأولين)",
+    "olive oil": "زيت الزيتون"
   }
 }

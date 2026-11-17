@@ -211,6 +211,8 @@
     "aria.at": "{vessel} से जुड़ा",
     "aria.flame": "ज्वाला {state}",
     "aria.boiling": "उबल रहा है",
+    "aria.oilTop": "ऊपर {name} की परत",
+    "aria.oilBottom": "नीचे {name} की परत",
     "aria.residue": "अवशेष",
     "aria.broken": "टूटा हुआ",
     "aria.burning": "जल रहा है",
@@ -776,6 +778,8 @@
     "bromine water": "ब्रोमीन जल (0.02 mol/L)",
     "C3H8O3(aq)": "ग्लिसरॉल",
     "glycerol": "ग्लिसरॉल 99.5 %",
-    "sugar syrup": "चीनी की चाशनी (सुक्रोज़ 60 %)"
+    "sugar syrup": "चीनी की चाशनी (सुक्रोज़ 60 %)",
+    "C57H104O6(aq)": "जैतून का तेल (ट्राइओलीन)",
+    "olive oil": "जैतून का तेल"
   }
 }
