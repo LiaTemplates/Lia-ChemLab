@@ -82,6 +82,9 @@
     var base = surface.geometry.attributes.position.array.slice();
     var ground = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
     var crust = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xf2f0ea, 0.9));
+    // ein Spiegel am Glas (Silberspiegel): eine Metallhaut knapp innerhalb der Wand
+    var mirror = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 1, roughness: 0.12, transparent: true, side: THREE.DoubleSide }));
+    mirror.renderOrder = 1;
     var solids = new THREE.Group();
     var bubbles = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 48);
     var steam = new THREE.Group(), stream = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 10, 1, true),
@@ -102,15 +105,16 @@
       new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
     drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
-    group.add(body, surface, ground, crust, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
+    group.add(body, surface, ground, crust, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
       var pts = [[0, from]], n = shape.steps || 16, k;
       if (keys[key] === top.toFixed(3) + shape.id) return;
       keys[key] = top.toFixed(3) + shape.id;
-      for (k = 0; k <= n; k++) pts.push([shape.inner(from + (top - from) * k / n) - 0.012, from + (top - from) * k / n]);
-      if (key !== "body") pts.push([0, top]);
+      // der Spiegel ist eine offene Haut dicht an der Wand, alles andere ein Körper mit Deckel (die Flüssigkeit hat ihre eigene Oberfläche)
+      for (k = 0; k <= n; k++) pts.push([shape.inner(from + (top - from) * k / n) - (key === "mirror" ? 0.004 : 0.012), from + (top - from) * k / n]);
+      if (key !== "body" && key !== "mirror") pts.push([0, top]);
       mesh.geometry.dispose();
       mesh.geometry = fx.lathe(pts, 48);
     }
@@ -198,7 +202,8 @@
     return {
       group: group,
       // shape.id: Name der Form, damit eine neue Form (anderes Gefäß) neu gebaut wird; tall: schmales Glas
-      update: function (w, shape, level, ctx, tall) {
+      // shine: Höhe, bis zu der ein Spiegel am Glas reicht (null: keiner)
+      update: function (w, shape, level, ctx, tall, shine) {
         var wet = w.ml > 0.005, r = shape.inner(level), t = ctx.still ? 0 : ctx.t, cloud = w.cloud && w.cloud.alpha > 0.02 ? w.cloud.alpha : 0;
         var rate = Math.max(w.gas || 0, w.steam || 0), boil = w.steam > 0 ? Math.min(1, 0.3 + w.steam / 0.008) : 0, layer, n, k, p, a, d, size, y, top, domes, q;
         body.visible = surface.visible = wet;
@@ -217,6 +222,12 @@
         layer = w.sediment && w.sediment.ml > 0.002 ? Math.min((wet ? level - shape.floor : 2) * 0.45, (3 + 9 * Math.sqrt(w.sediment.ml) * (tall ? 1 : 0.5)) / 16) : 0;
         ground.visible = layer > 0;
         if (layer > 0) { fill(ground, shape, shape.floor, shape.floor + layer, "ground"); ground.material.color.copy(fx.color(w.sediment.rgb)); }
+        mirror.visible = shine != null && w.mirror && w.mirror.share > 0.02;
+        if (mirror.visible) {
+          fill(mirror, shape, shape.floor, shine, "mirror");
+          mirror.material.color.copy(fx.color(w.mirror.rgb));
+          mirror.material.opacity = Math.min(0.97, w.mirror.share);
+        }
         crust.visible = w.residue > 1e-7;
         if (crust.visible) fill(crust, shape, shape.floor, shape.floor + Math.min(14, 2.5 + 30 * Math.sqrt(w.residue)) / 16, "crust");
         layer = layer || 0;

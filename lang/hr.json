@@ -497,7 +497,9 @@
     "spinFlow": "Još nešto teče – najprije pričekajte.",
     "spinEmpty": "Najprije stavite epruvetu.",
     "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol.",
-    "part.electrode-Pb": "olovna elektroda"
+    "part.electrode-Pb": "olovna elektroda",
+    "say.mirror": "{vessel}: Na stijenci posude nastaje zrcalo od tvari {name}.",
+    "hidden.mirror": "{vessel}: Na stijenci posude nastaje zrcalo."
   },
   "names": {
     "H2O(l)": "voda",
@@ -733,6 +735,25 @@
     "Pb(s)": "olovo",
     "Pb^2+(aq)": "olovov(II) ion",
     "PbSO4(s)": "olovov(II) sulfat",
-    "PbO2(s)": "olovov(IV) oksid"
+    "PbO2(s)": "olovov(IV) oksid",
+    "CH3CHO(aq)": "etanal (acetaldehid)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukoza",
+    "C6H11O7-(aq)": "glukonatni ion",
+    "C4H4O6^2-(aq)": "tartaratni ion",
+    "Cu(C4H4O6)2^2-(aq)": "bakrov tartaratni kompleks",
+    "Cu2O(s)": "bakrov(I) oksid",
+    "C6H12(aq)": "heksen",
+    "C6H14(aq)": "heksan",
+    "C6H12Br2(aq)": "1,2-dibromheksan",
+    "Fehling I": "Fehling I (otopina bakrova sulfata)",
+    "Fehling II": "Fehling II (lužnata otopina tartarata)",
+    "Tollens": "Tollensov reagens (amonijakalni srebrov nitrat)",
+    "ethanal": "otopina etanala (1 mol/L)",
+    "glucose": "otopina glukoze 5 %",
+    "acetone": "aceton",
+    "hexene": "heksen",
+    "hexane": "heksan",
+    "bromine water": "bromna voda (0,02 mol/L)"
   }
 }

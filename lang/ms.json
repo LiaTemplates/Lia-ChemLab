@@ -497,7 +497,9 @@
     "spinFlow": "Masih ada yang mengalir – tunggu dahulu.",
     "spinEmpty": "Letakkan tabung uji dahulu.",
     "hint.centrifuge": "Sekarang ketik tabung uji yang hendak dimasukkan ke dalam pengempar – atau meja.",
-    "part.electrode-Pb": "elektrod plumbum"
+    "part.electrode-Pb": "elektrod plumbum",
+    "say.mirror": "{vessel}: Cermin {name} terbentuk pada dinding bekas.",
+    "hidden.mirror": "{vessel}: Cermin terbentuk pada dinding bekas."
   },
   "names": {
     "H2O(l)": "air",
@@ -733,6 +735,25 @@
     "Pb(s)": "plumbum",
     "Pb^2+(aq)": "ion plumbum(II)",
     "PbSO4(s)": "plumbum(II) sulfat",
-    "PbO2(s)": "plumbum(IV) oksida"
+    "PbO2(s)": "plumbum(IV) oksida",
+    "CH3CHO(aq)": "etanal (asetaldehid)",
+    "CH3COCH3(aq)": "aseton (propanon)",
+    "C6H12O6(aq)": "glukosa",
+    "C6H11O7-(aq)": "ion glukonat",
+    "C4H4O6^2-(aq)": "ion tartrat",
+    "Cu(C4H4O6)2^2-(aq)": "kompleks kuprum tartrat",
+    "Cu2O(s)": "kuprum(I) oksida",
+    "C6H12(aq)": "heksena",
+    "C6H14(aq)": "heksana",
+    "C6H12Br2(aq)": "1,2-dibromoheksana",
+    "Fehling I": "Fehling I (larutan kuprum sulfat)",
+    "Fehling II": "Fehling II (larutan tartrat beralkali)",
+    "Tollens": "reagen Tollens (argentum nitrat beramonia)",
+    "ethanal": "larutan etanal (1 mol/L)",
+    "glucose": "larutan glukosa 5 %",
+    "acetone": "aseton",
+    "hexene": "heksena",
+    "hexane": "heksana",
+    "bromine water": "air bromin (0.02 mol/L)"
   }
 }

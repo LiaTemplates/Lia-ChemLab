@@ -497,7 +497,9 @@
     "spinFlow": "Todavía fluye algo: espera primero.",
     "spinEmpty": "Primero coloca un tubo de ensayo.",
     "hint.centrifuge": "Ahora tocar el tubo de ensayo que debe ir a la centrífuga, o la mesa.",
-    "part.electrode-Pb": "electrodo de plomo"
+    "part.electrode-Pb": "electrodo de plomo",
+    "say.mirror": "{vessel}: En la pared del recipiente se forma un espejo de {name}.",
+    "hidden.mirror": "{vessel}: En la pared del recipiente se forma un espejo."
   },
   "names": {
     "H2O(l)": "agua",
@@ -733,6 +735,25 @@
     "Pb(s)": "plomo",
     "Pb^2+(aq)": "ion plomo(II)",
     "PbSO4(s)": "sulfato de plomo(II)",
-    "PbO2(s)": "óxido de plomo(IV)"
+    "PbO2(s)": "óxido de plomo(IV)",
+    "CH3CHO(aq)": "etanal (acetaldehído)",
+    "CH3COCH3(aq)": "acetona (propanona)",
+    "C6H12O6(aq)": "glucosa",
+    "C6H11O7-(aq)": "ion gluconato",
+    "C4H4O6^2-(aq)": "ion tartrato",
+    "Cu(C4H4O6)2^2-(aq)": "complejo de tartrato de cobre",
+    "Cu2O(s)": "óxido de cobre(I)",
+    "C6H12(aq)": "hexeno",
+    "C6H14(aq)": "hexano",
+    "C6H12Br2(aq)": "1,2-dibromohexano",
+    "Fehling I": "Fehling I (disolución de sulfato de cobre)",
+    "Fehling II": "Fehling II (disolución alcalina de tartrato)",
+    "Tollens": "reactivo de Tollens (nitrato de plata amoniacal)",
+    "ethanal": "disolución de etanal (1 mol/L)",
+    "glucose": "disolución de glucosa 5 %",
+    "acetone": "acetona",
+    "hexene": "hexeno",
+    "hexane": "hexano",
+    "bromine water": "agua de bromo (0,02 mol/L)"
   }
 }

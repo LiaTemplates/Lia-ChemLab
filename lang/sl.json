@@ -497,7 +497,9 @@
     "spinFlow": "Nekaj še teče – najprej počakajte.",
     "spinEmpty": "Najprej vstavite epruveto.",
     "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo.",
-    "part.electrode-Pb": "svinčeva elektroda"
+    "part.electrode-Pb": "svinčeva elektroda",
+    "say.mirror": "{vessel}: Na steni posode nastane zrcalo iz snovi {name}.",
+    "hidden.mirror": "{vessel}: Na steni posode nastane zrcalo."
   },
   "names": {
     "H2O(l)": "voda",
@@ -733,6 +735,25 @@
     "Pb(s)": "svinec",
     "Pb^2+(aq)": "svinčev(II) ion",
     "PbSO4(s)": "svinčev(II) sulfat",
-    "PbO2(s)": "svinčev(IV) oksid"
+    "PbO2(s)": "svinčev(IV) oksid",
+    "CH3CHO(aq)": "etanal (acetaldehid)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukoza",
+    "C6H11O7-(aq)": "glukonatni ion",
+    "C4H4O6^2-(aq)": "tartratni ion",
+    "Cu(C4H4O6)2^2-(aq)": "bakrov tartratni kompleks",
+    "Cu2O(s)": "bakrov(I) oksid",
+    "C6H12(aq)": "heksen",
+    "C6H14(aq)": "heksan",
+    "C6H12Br2(aq)": "1,2-dibromoheksan",
+    "Fehling I": "Fehling I (raztopina bakrovega sulfata)",
+    "Fehling II": "Fehling II (bazična raztopina tartrata)",
+    "Tollens": "Tollensov reagent (amoniakalni srebrov nitrat)",
+    "ethanal": "raztopina etanala (1 mol/L)",
+    "glucose": "raztopina glukoze 5 %",
+    "acetone": "aceton",
+    "hexene": "heksen",
+    "hexane": "heksan",
+    "bromine water": "bromovica (0,02 mol/L)"
   }
 }

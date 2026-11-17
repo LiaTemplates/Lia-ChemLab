@@ -1151,7 +1151,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1236,6 +1236,28 @@ Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas 
  ],
  "shelf":["beaker","condenser","wine"],
  "show":{"charts":["T","n"]}}
+```
+
+## Organische Nachweise
+
+@[ChemLab.pack](packs/organic.json)
+
+Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Probe aus dem Regal, und vergleiche Ethanal, Glucose, Aceton, Hexen und Hexan:
+
+- **Fehling-Probe** (Fehling I und II gemischt, tiefblau, im Wasserbad bei 80 °C): Ein Aldehyd und Glucose reduzieren das Kupfer, in etwa einer Minute fällt ziegelrotes Kupfer(I)-oxid aus. Aceton, ein Keton, tut das nicht. Ohne Wasserbad dauert es sehr viel länger.
+- **Tollens-Probe** (ammoniakalische Silbernitrat-Lösung, im Wasserbad bei 60 °C): Ein Aldehyd und Glucose scheiden Silber ab, und das legt sich als glänzender **Silberspiegel** an die Glaswand, mit Ethanal in etwa einer Minute, mit Glucose in einigen Minuten. Er bleibt am Glas, auch wenn du die Lösung ausgießt.
+- **Bromwasser** (gelbbraun): Hexen entfärbt es sofort, denn das Brom lagert sich an die Doppelbindung an. Hexan nicht.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"fehling","contains":[{"reagent":"Fehling I","ml":3},{"reagent":"Fehling II","ml":3}]},
+  {"type":"bath","under":"fehling","temp":80},
+  {"type":"testtube","id":"tollens","contains":[{"reagent":"Tollens","ml":5}]},
+  {"type":"bath","under":"tollens","temp":60},
+  {"type":"testtube","id":"brom","contains":[{"reagent":"bromine water","ml":5}]}
+ ],
+ "shelf":["ethanal","glucose","acetone","hexene","hexane","Fehling I","Fehling II","Tollens","bromine water","testtube","bath"],
+ "show":{"charts":false}}
 ```
 
 ## 3D-Ansicht
@@ -1468,6 +1490,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `settle` | Zeit in s, in der sich ein Niederschlag absetzt; Vorgabe 25 |
 | `flame`, `shine` | Farbe, die das Teilchen einer Flamme gibt (`"#ffd21f"`), und wie stark es färbt; Vorgabe 1, Natrium 30 |
 | `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es. `"fruity"`: riecht fruchtig; bei einem flüchtigen gelösten Stoff zählt sein Dampfdruck über der Lösung |
+| `solvent` | `true`: ein organisches Lösungsmittel, das nach seinem Volumen (`Vm`) zu den organischen Abfällen zählt, auch wenn es im Modell nicht verdampft (Hexan, Aceton). Ein flüchtiger Stoff mit `Tb` zählt ohnehin |
 | `colloid` | `true`: entsteht der Feststoff in einer Lösung, bleibt er fein verteilt in der Schwebe und setzt sich nicht ab (Schwefel aus Thiosulfat) |
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
@@ -1501,6 +1524,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `rate.fast` | `true`: läuft in Lösung sofort ab, bis einer der Ausgangsstoffe verbraucht ist, zum Beispiel Iod mit Thiosulfat. Braucht kein `k`. |
 | `rate.needs` | Nur mit `rate.fast`: Stoffe, die da sein müssen, ohne verbraucht zu werden, mit der Menge je Formelumsatz, etwa `{"H2O(l)":3}`: Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt. Was schon umgesetzt ist, hat seinen Anteil gebunden; gezählt wird es an den Produkten der Gleichung (dem kleinsten Anteil) oder, mit `rate.bound`, an der Summe der dort genannten Teilchen, etwa `["HSO4-(aq)","SO4^2-(aq)"]`. Ein Stoff in `needs` darf nicht in der Gleichung stehen. |
 | `logK` | Nur mit `rate.fast`: Die Reaktion läuft bis zu diesem Gleichgewicht (mit Konzentrationen in mol/L; Feststoffe, Wasser und Gase zählen 1) und nicht weiter. Der Wert gilt bei jeder Temperatur. Ohne die Angabe läuft sie vollständig ab. Die Rückreaktion wird nicht gerechnet. |
+| `mirror` | `true`: Was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit gerade steht (Silberspiegel der Tollens-Probe). Er trübt nicht, liegt nicht am Boden und bleibt beim Umgießen im Gefäß; ab 0,5 µmol je cm² benetzter Wand ist er dicht. |
 | `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
 
@@ -1686,6 +1710,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Der Zerfall von Thiosulfat ist als ein Schritt mit einer angepassten Konstante gerechnet; im Labor vergeht bis zur ersten Trübung eine kurze Anlaufzeit. Wann man „nicht mehr hindurchsieht“, hängt dort von Schichtdicke und Auge ab.
 - Die Geschwindigkeitskonstanten von Ioduhr und Kristallviolett sind Praktikumswerte. Der Einfluss anderer Salze auf die Geschwindigkeit (Ionenstärke) fehlt.
 - Iod gibt es als Lösung in Kaliumiodid, nicht als Kristalle: Festes Iod, das bei einer Elektrolyse ausfällt, reagiert nur, soweit Iodid es wieder löst.
+- Organische Nachweise (Paket Organik): Hexen und Hexan mischen sich im Labor nicht mit Wasser, sie schwimmen als eigene Schicht obenauf; der Baustein rechnet sie gelöst, weil er keine zweite flüssige Phase kennt. Ethanal siedet schon bei 20 °C und riecht stechend; hier bleibt es in der Lösung und riecht nicht. Der Kupfer-Tartrat-Komplex der Fehling-Lösung ist vereinfacht und seine Konstante geschätzt, ebenso die Geschwindigkeiten der Nachweise; Fehling färbt sich nicht erst grün und gelb, bevor das Rot erscheint. Ein Silberspiegel bleibt im Glas, bis es geleert wird oder ein Oxidationsmittel wie Eisen(III)-chlorid ihn auflöst; Salpetersäure, mit der man ihn im Labor ablöst, gibt es nicht. Beim Kopieren des Aufbaus entsteht er von vorn, in dem Glas, in dem die Lösung dann steht. In Bürette und Trichter bildet sich kein Spiegel, das Silber fällt dort als Niederschlag aus. Bromwasser wird im Labor auch von Aldehyden und Glucose langsam entfärbt, und Kupfer(I)-oxid zerfällt in Säure; beides fehlt.
 - Was langsamer als 1 nmol/s abläuft und die Farbe nicht merklich ändert, lässt die Uhr anhalten, auch wenn es nach langer Zeit sichtbar würde (eine stark verdünnte Ioduhr). Der zweite Druck auf „Abspielen“ lässt sie dann weiterlaufen.
 - Stärke ist als Zahl von Plätzen für Iod gerechnet, je 18 Glucose-Einheiten einer; die Konstante des Komplexes und seine Wärmetönung sind geschätzt.
 - Im idealen Modell ist Ammoniumnitrat schon bei 3,6 mol/L gesättigt; im Labor lösen sich in 100 g Wasser fast 200 g. Kaliumnitrat gibt es aus demselben Grund nicht als Feststoff: Die ideale Rechnung sättigte es schon bei 0,75 mol/L statt gut 3 mol/L. Ammoniumnitrat zersetzt sich beim Erhitzen nicht, auch trocken nicht. Natriumhydroxid löst sich nur in Wasser: In konzentrierter Schwefelsäure oder in Ethanol bleiben die Plätzchen liegen, und es wird nicht warm. Gerührt wird nicht eigens, jedes Gefäß gilt als durchmischt; Calciumchlorid ist das wasserfreie Salz, nicht das Hexahydrat, das sich unter Abkühlung löst.

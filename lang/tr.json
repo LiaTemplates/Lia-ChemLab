@@ -497,7 +497,9 @@
     "spinFlow": "Hâlâ bir şey akıyor – önce bekleyin.",
     "spinEmpty": "Önce bir deney tüpü yerleştirin.",
     "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha.",
-    "part.electrode-Pb": "kurşun elektrot"
+    "part.electrode-Pb": "kurşun elektrot",
+    "say.mirror": "{vessel}: Kabın çeperinde {name} aynası oluşuyor.",
+    "hidden.mirror": "{vessel}: Kabın çeperinde bir ayna oluşuyor."
   },
   "names": {
     "H2O(l)": "su",
@@ -733,6 +735,25 @@
     "Pb(s)": "kurşun",
     "Pb^2+(aq)": "kurşun(II) iyonu",
     "PbSO4(s)": "kurşun(II) sülfat",
-    "PbO2(s)": "kurşun(IV) oksit"
+    "PbO2(s)": "kurşun(IV) oksit",
+    "CH3CHO(aq)": "etanal (asetaldehit)",
+    "CH3COCH3(aq)": "aseton (propanon)",
+    "C6H12O6(aq)": "glikoz",
+    "C6H11O7-(aq)": "glukonat iyonu",
+    "C4H4O6^2-(aq)": "tartarat iyonu",
+    "Cu(C4H4O6)2^2-(aq)": "bakır tartarat kompleksi",
+    "Cu2O(s)": "bakır(I) oksit",
+    "C6H12(aq)": "hekzen",
+    "C6H14(aq)": "hekzan",
+    "C6H12Br2(aq)": "1,2-dibromohekzan",
+    "Fehling I": "Fehling I (bakır sülfat çözeltisi)",
+    "Fehling II": "Fehling II (bazik tartarat çözeltisi)",
+    "Tollens": "Tollens ayıracı (amonyaklı gümüş nitrat)",
+    "ethanal": "etanal çözeltisi (1 mol/L)",
+    "glucose": "glikoz çözeltisi %5",
+    "acetone": "aseton",
+    "hexene": "hekzen",
+    "hexane": "hekzan",
+    "bromine water": "bromlu su (0,02 mol/L)"
   }
 }

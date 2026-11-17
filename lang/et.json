@@ -497,7 +497,9 @@
     "spinFlow": "Midagi voolab veel – oota enne.",
     "spinEmpty": "Pane enne katseklaas sisse.",
     "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda.",
-    "part.electrode-Pb": "pliielektrood"
+    "part.electrode-Pb": "pliielektrood",
+    "say.mirror": "{vessel}: Anuma seinale tekib {name} peegel.",
+    "hidden.mirror": "{vessel}: Anuma seinale tekib peegel."
   },
   "names": {
     "H2O(l)": "vesi",
@@ -733,6 +735,25 @@
     "Pb(s)": "plii",
     "Pb^2+(aq)": "plii(II)ioon",
     "PbSO4(s)": "plii(II)sulfaat",
-    "PbO2(s)": "plii(IV)oksiid"
+    "PbO2(s)": "plii(IV)oksiid",
+    "CH3CHO(aq)": "etanaal (atseetaldehüüd)",
+    "CH3COCH3(aq)": "atsetoon (propanoon)",
+    "C6H12O6(aq)": "glükoos",
+    "C6H11O7-(aq)": "glükonaatioon",
+    "C4H4O6^2-(aq)": "tartraatioon",
+    "Cu(C4H4O6)2^2-(aq)": "vasktartraatkompleks",
+    "Cu2O(s)": "vask(I)oksiid",
+    "C6H12(aq)": "heksaan-1-een (hekseen)",
+    "C6H14(aq)": "heksaan",
+    "C6H12Br2(aq)": "1,2-dibromoheksaan",
+    "Fehling I": "Fehling I (vasksulfaadi lahus)",
+    "Fehling II": "Fehling II (aluseline tartraadi lahus)",
+    "Tollens": "Tollensi reaktiiv (ammoniaakne hõbenitraat)",
+    "ethanal": "etanaali lahus (1 mol/L)",
+    "glucose": "glükoosilahus 5 %",
+    "acetone": "atsetoon",
+    "hexene": "hekseen",
+    "hexane": "heksaan",
+    "bromine water": "broomivesi (0,02 mol/L)"
   }
 }

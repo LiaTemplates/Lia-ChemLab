@@ -497,7 +497,9 @@
     "spinFlow": "Bado kuna kinachotiririka – subiri kwanza.",
     "spinEmpty": "Kwanza weka neli ya majaribio.",
     "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi.",
-    "part.electrode-Pb": "elektrodi ya risasi"
+    "part.electrode-Pb": "elektrodi ya risasi",
+    "say.mirror": "{vessel}: Kioo cha {name} kinajitokeza kwenye ukuta wa chombo.",
+    "hidden.mirror": "{vessel}: Kioo kinajitokeza kwenye ukuta wa chombo."
   },
   "names": {
     "H2O(l)": "maji",
@@ -733,6 +735,25 @@
     "Pb(s)": "risasi",
     "Pb^2+(aq)": "ioni ya risasi(II)",
     "PbSO4(s)": "risasi(II) salfeti",
-    "PbO2(s)": "risasi(IV) oksidi"
+    "PbO2(s)": "risasi(IV) oksidi",
+    "CH3CHO(aq)": "ethanali (asetaldehaidi)",
+    "CH3COCH3(aq)": "asetoni (propanoni)",
+    "C6H12O6(aq)": "glukosi",
+    "C6H11O7-(aq)": "ioni ya glukoneti",
+    "C4H4O6^2-(aq)": "ioni ya tatreti",
+    "Cu(C4H4O6)2^2-(aq)": "changamano cha shaba tatreti",
+    "Cu2O(s)": "shaba(I) oksidi",
+    "C6H12(aq)": "heksini",
+    "C6H14(aq)": "heksani",
+    "C6H12Br2(aq)": "1,2-dibromoheksani",
+    "Fehling I": "Fehling I (myeyusho wa shaba salfeti)",
+    "Fehling II": "Fehling II (myeyusho wa tatreti wenye alkali)",
+    "Tollens": "kitendanishi cha Tollens",
+    "ethanal": "myeyusho wa ethanali (1 mol/L)",
+    "glucose": "myeyusho wa glukosi 5 %",
+    "acetone": "asetoni",
+    "hexene": "heksini",
+    "hexane": "heksani",
+    "bromine water": "maji ya bromini (0.02 mol/L)"
   }
 }

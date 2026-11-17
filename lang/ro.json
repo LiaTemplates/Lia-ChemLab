@@ -497,7 +497,9 @@
     "spinFlow": "Încă mai curge ceva – așteptați mai întâi.",
     "spinEmpty": "Puneți mai întâi o eprubetă.",
     "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa.",
-    "part.electrode-Pb": "electrod de plumb"
+    "part.electrode-Pb": "electrod de plumb",
+    "say.mirror": "{vessel}: pe peretele vasului se formează o oglindă de {name}.",
+    "hidden.mirror": "{vessel}: pe peretele vasului se formează o oglindă."
   },
   "names": {
     "H2O(l)": "apă",
@@ -733,6 +735,25 @@
     "Pb(s)": "plumb",
     "Pb^2+(aq)": "ion de plumb(II)",
     "PbSO4(s)": "sulfat de plumb(II)",
-    "PbO2(s)": "oxid de plumb(IV)"
+    "PbO2(s)": "oxid de plumb(IV)",
+    "CH3CHO(aq)": "etanal (acetaldehidă)",
+    "CH3COCH3(aq)": "acetonă (propanonă)",
+    "C6H12O6(aq)": "glucoză",
+    "C6H11O7-(aq)": "ion gluconat",
+    "C4H4O6^2-(aq)": "ion tartrat",
+    "Cu(C4H4O6)2^2-(aq)": "complex tartrat de cupru",
+    "Cu2O(s)": "oxid de cupru(I)",
+    "C6H12(aq)": "hexenă",
+    "C6H14(aq)": "hexan",
+    "C6H12Br2(aq)": "1,2-dibromohexan",
+    "Fehling I": "Fehling I (soluție de sulfat de cupru)",
+    "Fehling II": "Fehling II (soluție alcalină de tartrat)",
+    "Tollens": "reactiv Tollens (azotat de argint amoniacal)",
+    "ethanal": "soluție de etanal (1 mol/L)",
+    "glucose": "soluție de glucoză 5 %",
+    "acetone": "acetonă",
+    "hexene": "hexenă",
+    "hexane": "hexan",
+    "bromine water": "apă de brom (0,02 mol/L)"
   }
 }

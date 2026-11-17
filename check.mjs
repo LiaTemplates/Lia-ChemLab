@@ -8509,6 +8509,112 @@ test("Paket Organik: lädt ohne Fehler, jeder Eintrag nennt seine Quelle", () =>
   for (const r of organic.reactions) assert.ok(r.src, r.eq);
 });
 
+test("Organische Nachweise: Fehling färbt sich mit Aldehyd und Glucose in der Wärme ziegelrot, mit Aceton nicht", () => {
+  L.register(organic);
+  const fehling = (sample, temp) => lab([{ type: "testtube", id: "b", contains: [{ reagent: "Fehling I", ml: 4 }, { reagent: "Fehling II", ml: 4 }] },
+    { type: "bath", id: "w", under: "b", temp }], { room: 20 });
+  const blank = fehling(null, 20);
+  L.step(blank, 5);
+  assert.equal(look(blank).color.name, "blue", "tiefblau");
+  assert.ok(!(amount(blank, "Cu(OH)2(s)") > 1e-9), "kein Kupferhydroxid: das Tartrat hält das Kupfer in Lösung");
+  for (const sample of ["ethanal", "glucose"]) {
+    const cold = fehling(sample, 20), hot = fehling(sample, 80), seen = [];
+    for (const l of [cold, hot]) { L.step(l, 120); L.add(l, "b", sample, { ml: 1 }); }
+    L.step(cold, 120);
+    L.step(hot, 120, (e) => seen.push(e));
+    const cu = 4e-3 * 0.28;
+    assert.ok(amount(cold, "Cu2O(s)") < 0.1 * cu / 2, `${sample} kalt: ${amount(cold, "Cu2O(s)")} mol`);
+    assert.ok(amount(hot, "Cu2O(s)") > 0.3 * cu / 2, `${sample} heiß: ${amount(hot, "Cu2O(s)")} mol`);
+    assert.ok(seen.some((e) => e.key === "solid" && e.species === "Cu2O(s)" && e.color === "red"), `${sample}: ein ziegelroter Niederschlag ${JSON.stringify(seen.filter((e) => e.key === "solid"))}`);
+  }
+  const ketone = fehling("acetone", 80);
+  L.step(ketone, 120); L.add(ketone, "b", "acetone", { ml: 1 }); L.step(ketone, 120);
+  assert.ok(!(amount(ketone, "Cu2O(s)") > 1e-9), "Aceton reduziert Fehling nicht");
+});
+
+test("Organische Nachweise: Tollens gibt mit Aldehyd in der Wärme einen Silberspiegel; er haftet am Glas, trübt nicht und bleibt beim Ausgießen", () => {
+  L.register(organic);
+  const tollens = (sample) => lab([{ type: "testtube", id: "b", contains: [{ reagent: "Tollens", ml: 5 }] }, { type: "bath", id: "w", under: "b", temp: 60 }, { type: "beaker", id: "x" }], { room: 20 });
+  const blank = tollens();
+  L.step(blank, 5);
+  assert.ok(!(amount(blank, "Ag2O(s)") > 1e-9), "das Tollens-Reagenz ist klar");
+  for (const sample of ["ethanal", "glucose"]) {
+    const l = tollens(), seen = [];
+    L.step(l, 120);
+    L.add(l, "b", sample, { ml: 1 });
+    L.step(l, 3600, (e) => seen.push(e));                     // bis das Silber verbraucht ist
+    const v = look(l);
+    assert.ok(v.mirror && v.mirror.share > 0.8, `${sample}: Spiegel ${JSON.stringify(v.mirror)}`);
+    assert.ok(v.cloud.alpha < 0.05 && !(v.sediment.ml > 0.002), "kein Niederschlag, keine Trübung");
+    assert.ok(seen.some((e) => e.key === "solid" && e.species === "Ag(s)" && e.mirror), "das Protokoll meldet den Spiegel");
+    L.pour(l, "b", "x", 10);
+    L.step(l, 10);
+    near(look(l).mirror.share, v.mirror.share, 1e-9, "der Spiegel bleibt am Glas");
+    assert.ok(!(amount(l, "Ag(s)", "x") > 0.01 * amount(l, "Ag(s)", "b")), "nichts davon im Becherglas (nur was der Rest der Lösung dort noch bildet)");
+  }
+  const ketone = tollens();
+  L.step(ketone, 120); L.add(ketone, "b", "acetone", { ml: 1 }); L.step(ketone, 180);
+  assert.equal(look(ketone).mirror, null, "Aceton gibt keinen Spiegel");
+  assert.match(L.parts.testtube.draw(Object.assign(look(tollens()), { mirror: { rgb: [200, 205, 210], share: 1, ml: 5 } }), ctx()), /cl-mirror/);
+  assert.throws(() => L.register({ reactions: [{ eq: "H+(aq) + OH-(aq) -> H2O(l)", rate: { k: 1 }, mirror: true, src: "x" }] }), (e) => e.code === "data", "ein Spiegel braucht einen Feststoff");
+});
+
+test("Organische Nachweise: Bromwasser wird von Hexen sofort entfärbt, von Hexan nicht", () => {
+  L.register(organic);
+  const test = (sample) => { const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }], { room: 20 }); L.add(l, "b", sample, { ml: 1 }); L.step(l, 10); return l; };
+  assert.notEqual(look(lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }])).color.name, "colorless", "Bromwasser ist gefärbt");
+  assert.equal(look(test("hexene")).color.name, "colorless", "Hexen entfärbt");
+  assert.notEqual(look(test("hexane")).color.name, "colorless", "Hexan nicht");
+});
+
+test("Organische Nachweise: Entsorgung, Geschwindigkeit kalt und warm, unbekannte Proben, Sonderfälle des Spiegels", () => {
+  L.register(organic);
+  // Lösungsmittel in den Behälter für organische Abfälle, Bromwasser erst reduzieren, ein Silberspiegel zu den Schwermetallen
+  const want = (contains) => L.waste(lab([{ type: "testtube", id: "b", contains }], { room: 20 }), "b").bin;
+  for (const sample of ["hexane", "hexene", "acetone"]) assert.equal(want([{ reagent: sample, ml: 5 }]), "organic", sample);
+  assert.equal(want([{ reagent: "bromine water", ml: 5 }]), "reduce", "Bromwasser: erst mit Thiosulfat reduzieren");
+  const mirror = lab([{ type: "testtube", id: "b", contains: [{ reagent: "Tollens", ml: 5 }] }, { type: "bath", under: "b", temp: 60 }, { type: "beaker", id: "x" }], { room: 20 });
+  L.add(mirror, "b", "ethanal", { ml: 1 });
+  L.step(mirror, 900);
+  L.pour(mirror, "b", "x", 10);
+  L.step(mirror, 10);
+  assert.ok(look(mirror).mirror.share > 0.8);
+  assert.equal(L.waste(mirror, "b").bin, "heavy", "der Silberspiegel zu den Schwermetallen");
+  // Tollens: kalt dauert der Spiegel lange, im Wasserbad ein bis zwei Minuten
+  const tollens = (temp) => { const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "Tollens", ml: 5 }] }].concat(temp ? [{ type: "bath", under: "b", temp }] : []), { room: 20 }); L.step(l, temp ? 120 : 1); L.add(l, "b", "ethanal", { ml: 1 }); return l; };
+  const cold = tollens(null), warm = tollens(60);
+  L.step(cold, 120); L.step(warm, 120);
+  assert.ok(!look(cold).mirror || look(cold).mirror.share < 0.3, `kalt nach zwei Minuten: ${JSON.stringify(look(cold).mirror)}`);
+  assert.ok(look(warm).mirror.share > 0.8, `warm nach zwei Minuten: ${JSON.stringify(look(warm).mirror)}`);
+  const early = tollens(60);
+  L.step(early, 10);
+  assert.ok(!look(early).mirror || look(early).mirror.share < 0.5, "nicht schon nach Sekunden");
+  // Fehling: kalt nach einer halben Minute noch nichts zu sehen
+  const chill = lab([{ type: "testtube", id: "b", contains: [{ reagent: "Fehling I", ml: 4 }, { reagent: "Fehling II", ml: 4 }] }], { room: 20 }), seen = [];
+  L.add(chill, "b", "ethanal", { ml: 1 });
+  L.step(chill, 30, (e) => seen.push(e));
+  assert.ok(!seen.some((e) => e.key === "solid"), "kalt: noch kein Niederschlag");
+  // eine unbekannte Probe verrät ihr Silber nicht
+  assert.doesNotMatch(L.say({ key: "solid", vessel: "b", species: "Ag(s)", color: "grey", mirror: true }, { lang: "de", names: { b: "Probe A" }, hidden: { b: true } }), /Silber/);
+  // in einer Bürette gibt es keinen Spiegel; ein Spiegel nach einem Niederschlag desselben Stoffs wird gemeldet; eine sofortige Reaktion im Aufbau behält ihn
+  const burette = lab([{ type: "beaker", id: "a" }, { type: "burette", id: "bu", over: "a", contains: [{ reagent: "Tollens", ml: 10 }] }], { room: 60 });
+  L.add(burette, "bu", "ethanal", { ml: 2 });
+  L.step(burette, 300);
+  assert.equal(look(burette, "bu").mirror, null, "keine Wand, an der man ihn sähe");
+  const both = lab([{ type: "testtube", id: "b", contains: [{ reagent: "AgNO3 0.1M", ml: 2 }, { reagent: "NaCl 1M", ml: 1 }] }, { type: "bath", under: "b", temp: 60 }], { room: 20 }), seen2 = [];
+  L.add(both, "b", "Tollens", { ml: 5 });
+  L.add(both, "b", "ethanal", { ml: 1 });
+  L.step(both, 300, (e) => seen2.push(e));
+  assert.ok(seen2.some((e) => e.key === "solid" && e.mirror), "der Spiegel wird gemeldet");
+  const before = L.db;
+  try {
+    L.register({ species: { "Hg(s)": { name: { de: "Quecksilber" }, Hf: 0, color: "#c8ccd0", src: "Probe" }, "Hg^2+(aq)": { name: { de: "Quecksilber-Ion" }, Hf: null, src: "Probe" } },
+      reactions: [{ eq: "Hg^2+(aq) + CH3CHO(aq) + 3 OH-(aq) -> Hg(s) + CH3COO-(aq) + 2 H2O(l)", rate: { fast: true }, mirror: true, src: "Probe" }],
+      reagents: { "Hg probe": { name: { de: "Probe" }, solution: { "Hg^2+(aq)": 0.01, "Na+(aq)": 0.05, "OH-(aq)": 0.05, "NO3-(aq)": 0.02, "CH3CHO(aq)": 0.02 } } } });
+    assert.ok(look(lab([{ type: "testtube", id: "b", contains: [{ reagent: "Hg probe", ml: 5 }] }])).mirror, "auch eine sofortige Reaktion im Aufbau gibt einen Spiegel");
+  } finally { L.db = before; }
+});
+
 test("Eigenvolumen (Vm): ein gelöster Stoff nimmt Platz ein, die Vorratsflasche enthält nur so viel Wasser, wie daneben Platz hat", () => {
   L.register(organic);
   const spirit = beaker([{ reagent: "ethanol", ml: 10 }]);
@@ -9064,6 +9170,29 @@ test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
   assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
   assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
   for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
+});
+
+test("README: die Folie zu den organischen Nachweisen hält, was ihr Text verspricht", () => {
+  L.register(organic);
+  const l = L.createLab(L.normalize(JSON.parse(slide("Organische Nachweise")[0])));
+  L.add(l, "fehling", "glucose", { ml: 1 });
+  L.add(l, "tollens", "ethanal", { ml: 1 });
+  L.add(l, "brom", "hexene", { ml: 1 });
+  L.step(l, 90);                                              // etwa eine Minute
+  assert.ok(amount(l, "Cu2O(s)", "fehling") > 2e-4, "ziegelrotes Kupfer(I)-oxid, auch mit Glucose");
+  assert.ok(look(l, "tollens").mirror.share > 0.8, "Silberspiegel mit Ethanal");
+  const sugar = L.createLab(L.normalize(JSON.parse(slide("Organische Nachweise")[0])));
+  L.add(sugar, "tollens", "glucose", { ml: 1 });
+  L.step(sugar, 60);
+  assert.ok(look(sugar, "tollens").mirror.share < 0.5, "mit Glucose dauert es länger …");
+  L.step(sugar, 240);
+  assert.ok(look(sugar, "tollens").mirror.share > 0.8, "… einige Minuten");
+  assert.equal(look(l, "brom").color.name, "colorless", "Bromwasser entfärbt");
+  const ketone = L.createLab(L.normalize(JSON.parse(slide("Organische Nachweise")[0])));
+  for (const id of ["fehling", "tollens"]) L.add(ketone, id, "acetone", { ml: 1 });
+  L.add(ketone, "brom", "hexane", { ml: 1 });
+  L.step(ketone, 90);
+  assert.ok(!(amount(ketone, "Cu2O(s)", "fehling") > 1e-9) && look(ketone, "tollens").mirror === null && look(ketone, "brom").color.name !== "colorless", "Aceton und Hexan: nichts");
 });
 
 test("README: die Folie zum Bleiakku hält, was ihr Text verspricht", () => {

@@ -497,7 +497,9 @@
     "spinFlow": "Ainda está a escorrer algo – espere primeiro.",
     "spinEmpty": "Coloque primeiro um tubo de ensaio.",
     "hint.centrifuge": "Agora tocar no tubo de ensaio que deve ir para a centrífuga – ou na bancada.",
-    "part.electrode-Pb": "elétrodo de chumbo"
+    "part.electrode-Pb": "elétrodo de chumbo",
+    "say.mirror": "{vessel}: forma-se um espelho de {name} na parede do recipiente.",
+    "hidden.mirror": "{vessel}: forma-se um espelho na parede do recipiente."
   },
   "names": {
     "H2O(l)": "água",
@@ -733,6 +735,25 @@
     "Pb(s)": "chumbo",
     "Pb^2+(aq)": "ião chumbo(II)",
     "PbSO4(s)": "sulfato de chumbo(II)",
-    "PbO2(s)": "óxido de chumbo(IV)"
+    "PbO2(s)": "óxido de chumbo(IV)",
+    "CH3CHO(aq)": "etanal (acetaldeído)",
+    "CH3COCH3(aq)": "acetona (propanona)",
+    "C6H12O6(aq)": "glucose",
+    "C6H11O7-(aq)": "ião gluconato",
+    "C4H4O6^2-(aq)": "ião tartarato",
+    "Cu(C4H4O6)2^2-(aq)": "complexo tartarato de cobre",
+    "Cu2O(s)": "óxido de cobre(I)",
+    "C6H12(aq)": "hexeno",
+    "C6H14(aq)": "hexano",
+    "C6H12Br2(aq)": "1,2-dibromo-hexano",
+    "Fehling I": "Fehling I (solução de sulfato de cobre)",
+    "Fehling II": "Fehling II (solução alcalina de tartarato)",
+    "Tollens": "reagente de Tollens (nitrato de prata amoniacal)",
+    "ethanal": "solução de etanal (1 mol/L)",
+    "glucose": "solução de glucose 5 %",
+    "acetone": "acetona",
+    "hexene": "hexeno",
+    "hexane": "hexano",
+    "bromine water": "água de bromo (0,02 mol/L)"
   }
 }

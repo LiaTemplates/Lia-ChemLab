@@ -497,7 +497,9 @@
     "spinFlow": "Coś jeszcze płynie – najpierw zaczekaj.",
     "spinEmpty": "Najpierw wstaw probówkę.",
     "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół.",
-    "part.electrode-Pb": "elektroda ołowiana"
+    "part.electrode-Pb": "elektroda ołowiana",
+    "say.mirror": "{vessel}: na ściance naczynia tworzy się lustro: {name}.",
+    "hidden.mirror": "{vessel}: na ściance naczynia tworzy się lustro."
   },
   "names": {
     "H2O(l)": "woda",
@@ -733,6 +735,25 @@
     "Pb(s)": "ołów",
     "Pb^2+(aq)": "jon ołowiu(II)",
     "PbSO4(s)": "siarczan(VI) ołowiu(II)",
-    "PbO2(s)": "tlenek ołowiu(IV)"
+    "PbO2(s)": "tlenek ołowiu(IV)",
+    "CH3CHO(aq)": "etanal (aldehyd octowy)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukoza",
+    "C6H11O7-(aq)": "jon glukonianowy",
+    "C4H4O6^2-(aq)": "jon winianowy",
+    "Cu(C4H4O6)2^2-(aq)": "kompleks winianowy miedzi",
+    "Cu2O(s)": "tlenek miedzi(I)",
+    "C6H12(aq)": "heksen",
+    "C6H14(aq)": "heksan",
+    "C6H12Br2(aq)": "1,2-dibromoheksan",
+    "Fehling I": "Fehling I (roztwór siarczanu miedzi)",
+    "Fehling II": "Fehling II (zasadowy roztwór winianu)",
+    "Tollens": "odczynnik Tollensa (amoniakalny azotan srebra)",
+    "ethanal": "roztwór etanalu (1 mol/L)",
+    "glucose": "roztwór glukozy 5 %",
+    "acetone": "aceton",
+    "hexene": "heksen",
+    "hexane": "heksan",
+    "bromine water": "woda bromowa (0,02 mol/L)"
   }
 }

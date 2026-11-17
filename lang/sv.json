@@ -497,7 +497,9 @@
     "spinFlow": "Något rinner fortfarande – vänta först.",
     "spinEmpty": "Sätt först i ett provrör.",
     "hint.centrifuge": "Tryck nu på provröret som ska in i centrifugen – eller på bänken.",
-    "part.electrode-Pb": "blyelektrod"
+    "part.electrode-Pb": "blyelektrod",
+    "say.mirror": "{vessel}: En spegel av {name} bildas på kärlets vägg.",
+    "hidden.mirror": "{vessel}: En spegel bildas på kärlets vägg."
   },
   "names": {
     "H2O(l)": "vatten",
@@ -733,6 +735,25 @@
     "Pb(s)": "bly",
     "Pb^2+(aq)": "bly(II)jon",
     "PbSO4(s)": "bly(II)sulfat",
-    "PbO2(s)": "bly(IV)oxid"
+    "PbO2(s)": "bly(IV)oxid",
+    "CH3CHO(aq)": "etanal (acetaldehyd)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukos",
+    "C6H11O7-(aq)": "glukonatjon",
+    "C4H4O6^2-(aq)": "tartratjon",
+    "Cu(C4H4O6)2^2-(aq)": "koppartartratkomplex",
+    "Cu2O(s)": "koppar(I)oxid",
+    "C6H12(aq)": "hexen",
+    "C6H14(aq)": "hexan",
+    "C6H12Br2(aq)": "1,2-dibromhexan",
+    "Fehling I": "Fehling I (kopparsulfatlösning)",
+    "Fehling II": "Fehling II (basisk tartratlösning)",
+    "Tollens": "Tollens reagens (ammoniakaliskt silvernitrat)",
+    "ethanal": "etanallösning (1 mol/L)",
+    "glucose": "glukoslösning 5 %",
+    "acetone": "aceton",
+    "hexene": "hexen",
+    "hexane": "hexan",
+    "bromine water": "bromvatten (0,02 mol/L)"
   }
 }

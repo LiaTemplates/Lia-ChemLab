@@ -497,7 +497,9 @@
     "spinFlow": "Ešte niečo tečie – najprv počkajte.",
     "spinEmpty": "Najprv vložte skúmavku.",
     "hint.centrifuge": "Teraz ťukni na skúmavku, ktorá má ísť do centrifúgy – alebo na stôl.",
-    "part.electrode-Pb": "olovená elektróda"
+    "part.electrode-Pb": "olovená elektróda",
+    "say.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo z látky {name}.",
+    "hidden.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo."
   },
   "names": {
     "H2O(l)": "voda",
@@ -733,6 +735,25 @@
     "Pb(s)": "olovo",
     "Pb^2+(aq)": "olovnatý katión",
     "PbSO4(s)": "síran olovnatý",
-    "PbO2(s)": "oxid olovičitý"
+    "PbO2(s)": "oxid olovičitý",
+    "CH3CHO(aq)": "etanál (acetaldehyd)",
+    "CH3COCH3(aq)": "acetón (propanón)",
+    "C6H12O6(aq)": "glukóza",
+    "C6H11O7-(aq)": "glukonátový anión",
+    "C4H4O6^2-(aq)": "vínanový anión",
+    "Cu(C4H4O6)2^2-(aq)": "vínanový komplex medi",
+    "Cu2O(s)": "oxid meďný",
+    "C6H12(aq)": "hexén",
+    "C6H14(aq)": "hexán",
+    "C6H12Br2(aq)": "1,2-dibrómhexán",
+    "Fehling I": "Fehling I (roztok síranu meďnatého)",
+    "Fehling II": "Fehling II (alkalický roztok vínanu)",
+    "Tollens": "Tollensovo činidlo (amoniakálny roztok dusičnanu strieborného)",
+    "ethanal": "roztok etanálu (1 mol/L)",
+    "glucose": "roztok glukózy 5 %",
+    "acetone": "acetón",
+    "hexene": "hexén",
+    "hexane": "hexán",
+    "bromine water": "brómová voda (0,02 mol/L)"
   }
 }

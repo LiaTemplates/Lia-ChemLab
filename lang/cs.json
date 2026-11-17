@@ -497,7 +497,9 @@
     "spinFlow": "Ještě něco teče – nejdřív počkejte.",
     "spinEmpty": "Nejdřív vložte zkumavku.",
     "hint.centrifuge": "Teď klepni na zkumavku, která má jít do centrifugy – nebo na stůl.",
-    "part.electrode-Pb": "olověná elektroda"
+    "part.electrode-Pb": "olověná elektroda",
+    "say.mirror": "{vessel}: Na stěně nádoby se tvoří zrcadlo z látky {name}.",
+    "hidden.mirror": "{vessel}: Na stěně nádoby se tvoří zrcadlo."
   },
   "names": {
     "H2O(l)": "voda",
@@ -733,6 +735,25 @@
     "Pb(s)": "olovo",
     "Pb^2+(aq)": "olovnatý kation",
     "PbSO4(s)": "síran olovnatý",
-    "PbO2(s)": "oxid olovičitý"
+    "PbO2(s)": "oxid olovičitý",
+    "CH3CHO(aq)": "ethanal (acetaldehyd)",
+    "CH3COCH3(aq)": "aceton (propanon)",
+    "C6H12O6(aq)": "glukosa",
+    "C6H11O7-(aq)": "glukonátový anion",
+    "C4H4O6^2-(aq)": "vinanový anion",
+    "Cu(C4H4O6)2^2-(aq)": "vinanový komplex mědi",
+    "Cu2O(s)": "oxid měďný",
+    "C6H12(aq)": "hexen",
+    "C6H14(aq)": "hexan",
+    "C6H12Br2(aq)": "1,2-dibromhexan",
+    "Fehling I": "Fehling I (roztok síranu měďnatého)",
+    "Fehling II": "Fehling II (alkalický roztok vinanu)",
+    "Tollens": "Tollensovo činidlo (amoniakální roztok dusičnanu stříbrného)",
+    "ethanal": "roztok ethanalu (1 mol/L)",
+    "glucose": "roztok glukosy 5 %",
+    "acetone": "aceton",
+    "hexene": "hexen",
+    "hexane": "hexan",
+    "bromine water": "bromová voda (0,02 mol/L)"
   }
 }

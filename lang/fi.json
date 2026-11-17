@@ -497,7 +497,9 @@
     "spinFlow": "Jotain virtaa vielä – odota ensin.",
     "spinEmpty": "Laita ensin koeputki paikalleen.",
     "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää.",
-    "part.electrode-Pb": "lyijyelektrodi"
+    "part.electrode-Pb": "lyijyelektrodi",
+    "say.mirror": "{vessel}: Astian seinään muodostuu peili: {name}.",
+    "hidden.mirror": "{vessel}: Astian seinään muodostuu peili."
   },
   "names": {
     "H2O(l)": "vesi",
@@ -733,6 +735,25 @@
     "Pb(s)": "lyijy",
     "Pb^2+(aq)": "lyijy(II)-ioni",
     "PbSO4(s)": "lyijy(II)sulfaatti",
-    "PbO2(s)": "lyijy(IV)oksidi"
+    "PbO2(s)": "lyijy(IV)oksidi",
+    "CH3CHO(aq)": "etanaali (asetaldehydi)",
+    "CH3COCH3(aq)": "asetoni (propanoni)",
+    "C6H12O6(aq)": "glukoosi",
+    "C6H11O7-(aq)": "glukonaatti-ioni",
+    "C4H4O6^2-(aq)": "tartraatti-ioni",
+    "Cu(C4H4O6)2^2-(aq)": "kuparitartraattikompleksi",
+    "Cu2O(s)": "kupari(I)oksidi",
+    "C6H12(aq)": "hekseeni",
+    "C6H14(aq)": "heksaani",
+    "C6H12Br2(aq)": "1,2-dibromiheksaani",
+    "Fehling I": "Fehling I (kuparisulfaattiliuos)",
+    "Fehling II": "Fehling II (emäksinen tartraattiliuos)",
+    "Tollens": "Tollensin reagenssi (ammoniakaalinen hopeanitraatti)",
+    "ethanal": "etanaaliliuos (1 mol/L)",
+    "glucose": "glukoosiliuos 5 %",
+    "acetone": "asetoni",
+    "hexene": "hekseeni",
+    "hexane": "heksaani",
+    "bromine water": "bromivesi (0,02 mol/L)"
   }
 }
