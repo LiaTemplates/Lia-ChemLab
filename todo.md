@@ -24,6 +24,9 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - [x] 3c (17.11.2026): Scheidetrichter (hängt wie die Bürette, lässt unten ab, lässt sich schütteln, meldet, wenn die untere Schicht abgelaufen ist).
   - [x] 3d (17.11.2026): Phasenfeld P im Strömungsbild (mitgetragen, geschärft, Menge vom Rechenkern), Dichte und Zähigkeit der Ölschicht, Stöße beim Schütteln, Grenzlinie; Öltropfen in der Zeichnung (auch ohne Strömungsansicht).
   - [x] 3e (17.11.2026): Schichten, Öltropfen und Scheidetrichter in 3D; dazu die Strömungsansicht in 3D als Schnittebene durch die Mitte des Glases.
+- [x] **Strömung in 3D als Teilchen** (18.11.2026): Knopf „3D: Schnitt / Teilchen“ und `show.flow3d`; das 2D-Feld um die Achse gedreht, 400 Teilchen je Glas, jedes lebt etwa 8 s.
+  - [ ] Weg 2: Farbnebel per WebGL (das gedrehte Feld als 3D-Textur, ein Shader tastet es ab) als dritte Wahl `"fog"`.
+  - Nicht geplant: ein eigener 3D-Löser auf der Grafikkarte (zweite Physik, nicht in Node prüfbar, viele Schulrechner können nicht in Gleitkomma-Texturen schreiben).
   - Offen aus 3d: Oberflächenspannung (Tropfen bleiben unter dem Gitter), eigene Wärmeausdehnung des Öls.
   - Offen aus 3b: Verteilungskoeffizienten von Iod und Brom in Hexan mit Quelle; gelöstes Iod I2(aq) im Wasser (verändert die Zinkiodid-Elektrolyse, deshalb nicht eingebaut); Emulgator; Schütteln einer offenen Flasche spritzt nicht.
   - Offen aus 3a: Ethylacetat als Schicht (braucht eine Regel für Mitlöser wie Ethanol).

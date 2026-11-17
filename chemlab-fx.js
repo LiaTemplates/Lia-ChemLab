@@ -389,6 +389,7 @@
   };
 
   // Dasselbe Feld für die 3D-Bühne: cols × rows Zellen, color(x, y) mit x, y von 0 bis 1 (links oben) → [r, g, b, Deckkraft], bilinear;
+  // flow(x, y) → [u, v]: die Strömung dort, in Breiten und Höhen der Flüssigkeit je Sekunde (v nach unten positiv);
   // dots: die Spurteilchen, ebenso von 0 bis 1. null ohne Flüssigkeit.
   fx.flowCells = function (w, t, key, mode, still) {
     var s = stepped(w, t, key, still), look, W, cells = [];
@@ -403,6 +404,7 @@
         q.forEach(function (e) { for (n = 0; n < 3; n++) c[n] += e[0].rgb[n] * e[1]; c[3] += e[0].alpha * e[1]; });
         return c;
       },
+      flow: function (x, y) { var a = x * s.cols + 0.5, b = y * ROWS + 0.5; return [sample(s, s.u, a, b) / s.cols, sample(s, s.v, a, b) / ROWS]; },
       dots: s.dots.map(function (d) { return [(d[0] - 0.5) / s.cols, (d[1] - 0.5) / ROWS]; })
     };
   };

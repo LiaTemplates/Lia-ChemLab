@@ -88,6 +88,12 @@
     sheetTex = new THREE.CanvasTexture(sheet);
     sheetTex.colorSpace = THREE.SRGBColorSpace;
     cut = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: sheetTex, alphaTest: 0.5, side: THREE.DoubleSide }));
+    // oder als Teilchen im ganzen Glas: das 2D-Feld um die Achse gedreht (ein Becherglas ist rund), je Teilchen [Abstand zur Achse 0…1, Winkel, Höhe 0…1]
+    var SWARM = 400, flock = null, tone = new THREE.Color();
+    var swarm = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 0.6, vertexColors: true, map: puff(), alphaTest: 0.35, sizeAttenuation: true }));
+    swarm.geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(3 * SWARM), 3));
+    swarm.geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(3 * SWARM), 3));
+    swarm.visible = false; swarm.frustumCulled = false;
     beads.count = 0; beads.frustumCulled = false; cut.visible = false; upper.renderOrder = 1;
     var surface = new THREE.Mesh(new THREE.RingGeometry(0.001, 1, 96, 28).rotateX(-Math.PI / 2), liquid);
     var base = surface.geometry.attributes.position.array.slice();
@@ -118,7 +124,7 @@
       new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
     drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
-    group.add(body, upper, beads, cut, surface, ground, crust, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
+    group.add(body, upper, beads, cut, swarm, surface, ground, crust, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -261,25 +267,62 @@
           beads.count = Math.round(Math.min(60, 10 + 50 * w.oil.drops));
           beads.instanceMatrix.needsUpdate = true;
         }
-        // Strömung: Temperatur, Wirbel, Druck oder Schlieren auf der Schnittebene; Grundton ist die Farbe der Schicht, darüber das Feld
-        cut.visible = !!(wet && ctx.flow && L.fx && L.fx.flowCells);
+        // Strömung: Temperatur, Wirbel, Druck oder Schlieren; ctx.flow3d wählt, wie: als Schnittebene ("cut") oder als Teilchen ("particles").
+        // Grundton ist die Farbe der Schicht, darüber das Feld, kräftiger als in 2D: Glas und Brechung machen es blasser
+        var cells = wet && ctx.flow && L.fx && L.fx.flowCells ? L.fx.flowCells(w, ctx.t, "3d-" + (ctx.uid || "") + "-" + w.id, ctx.flow, ctx.still) : null;
+        var shown = cells ? ctx.flow3d || "cut" : null;
+        function tint3(c, yy) {
+          var base = (two && (yy > split) === w.oil.top) || allOil ? w.oil.color.rgb : w.color.rgb, a = Math.min(1, 1.5 * c[3]);
+          return [base[0] + (c[0] - base[0]) * a, base[1] + (c[1] - base[1]) * a, base[2] + (c[2] - base[2]) * a];
+        }
+        swarm.visible = shown === "particles";
+        if (swarm.visible) {
+          var at = swarm.geometry.attributes.position.array, hue = swarm.geometry.attributes.color.array, step, out, inn, f1, f2, hh, R, rgb;
+          if (!flock || ctx.t < flock.t - 1e-9 || ctx.t - flock.t > 5) {
+            flock = [];
+            for (k = 0; k < SWARM; k++) flock.push([Math.sqrt(pseudo(ctx.seed + 41, k)), pseudo(ctx.seed + 42, k) * 6.2832, pseudo(ctx.seed + 43, k)]);
+            flock.t = ctx.t;
+          }
+          step = ctx.still ? 0 : Math.min(0.2, ctx.t - flock.t);
+          flock.t = ctx.t;
+          // gedreht erhält das ebene 2D-Feld das Volumen nicht ganz, die Teilchen sammelten sich an der Achse: jedes lebt etwa 8 s und kommt dann neu
+          flock.due = (flock.due || 0) + step * SWARM / 8;
+          for (; flock.due >= 1; flock.due--) {
+            flock.next = ((flock.next || 0) + 1) % SWARM;
+            flock[flock.next] = [Math.sqrt(Math.random()), Math.random() * 6.2832, Math.random()];
+          }
+          for (k = 0; k < SWARM; k++) {
+            p = flock[k];
+            out = 0.5 + 0.5 * p[0]; inn = 0.5 - 0.5 * p[0];
+            f1 = cells.flow(out, 1 - p[2]); f2 = cells.flow(inn, 1 - p[2]);
+            // nach außen: rechts die Strömung nach rechts, links die nach links; gemittelt, damit das Feld rund wird
+            p[0] = Math.max(0, Math.min(0.97, p[0] + (f1[0] - f2[0]) * step));
+            p[2] = Math.max(0.01, Math.min(0.99, p[2] - (f1[1] + f2[1]) / 2 * step));
+            hh = shape.floor + p[2] * (level - shape.floor);
+            R = Math.max(0, shape.inner(hh) - 0.08) * p[0];
+            at[3 * k] = R * Math.cos(p[1]); at[3 * k + 1] = hh; at[3 * k + 2] = R * Math.sin(p[1]);
+            rgb = tint3(cells.color(out, 1 - p[2]), hh);
+            tone.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255, THREE.SRGBColorSpace);
+            hue[3 * k] = tone.r; hue[3 * k + 1] = tone.g; hue[3 * k + 2] = tone.b;
+          }
+          swarm.geometry.attributes.position.needsUpdate = true;
+          swarm.geometry.attributes.color.needsUpdate = true;
+        }
+        cut.visible = shown === "cut";
         if (cut.visible) {
-          var cells = L.fx.flowCells(w, ctx.t, "3d-" + (ctx.uid || "") + "-" + w.id, ctx.flow, ctx.still), wide = 0, g = sheet.getContext("2d"), img, px, py, yy, xx, half, c, base, o;
-          cut.visible = !!cells;
+          var wide = 0, g = sheet.getContext("2d"), img, px, py, yy, xx, half, c, o;
           if (cells) {
             for (k = 0; k <= 12; k++) wide = Math.max(wide, shape.inner(shape.floor + (level - shape.floor) * k / 12));
             img = g.createImageData(sheet.width, sheet.height);
             for (py = 0; py < sheet.height; py++) {
               yy = level - (level - shape.floor) * (py + 0.5) / sheet.height;
               half = shape.inner(yy) - 0.03;
-              base = (two && (yy > split) === w.oil.top) || allOil ? w.oil.color.rgb : w.color.rgb;
               for (px = 0; px < sheet.width; px++) {
                 xx = -wide + (px + 0.5) / sheet.width * 2 * wide;
                 o = 4 * (py * sheet.width + px);
                 if (Math.abs(xx) > half) { img.data[o + 3] = 0; continue; }
-                c = cells.color((xx + wide) / (2 * wide), (level - yy) / (level - shape.floor));
-                c[3] = Math.min(1, 1.5 * c[3]);            // kräftiger als in 2D: Glas und Brechung machen die Ebene blasser
-                img.data[o] = base[0] + (c[0] - base[0]) * c[3]; img.data[o + 1] = base[1] + (c[1] - base[1]) * c[3]; img.data[o + 2] = base[2] + (c[2] - base[2]) * c[3];
+                c = tint3(cells.color((xx + wide) / (2 * wide), (level - yy) / (level - shape.floor)), yy);
+                img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2];
                 img.data[o + 3] = 255;
               }
             }
@@ -294,10 +337,10 @@
             sheetTex.needsUpdate = true;
             cut.scale.set(2 * wide, level - shape.floor, 1);
             cut.position.set(0, (level + shape.floor) / 2, 0);
-            // die Flüssigkeit selbst wird farblos klar: die Farbe trägt die Ebene, sonst färbte die Schicht davor sie ein zweites Mal
-            [liquid, oil].forEach(function (m) { m.color.set(0xffffff); m.attenuationColor.set(0xffffff); m.transmission = 1; m.roughness = 0.04; });
           }
         }
+        // die Flüssigkeit selbst wird farblos klar: die Farbe tragen Ebene oder Teilchen, sonst färbte die Schicht davor sie ein zweites Mal
+        if (shown) [liquid, oil].forEach(function (m) { m.color.set(0xffffff); m.attenuationColor.set(0xffffff); m.transmission = 1; m.roughness = 0.04; });
         // Bodensatz und eingedampfter Rückstand: Schichten in der Form des Bodens
         layer = w.sediment && w.sediment.ml > 0.002 ? Math.min((wet ? level - shape.floor : 2) * 0.45, (3 + 9 * Math.sqrt(w.sediment.ml) * (tall ? 1 : 0.5)) / 16) : 0;
         ground.visible = layer > 0;

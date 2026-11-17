@@ -1036,6 +1036,7 @@
         log: show.log !== false,
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
         flow: ["temp", "diff", "mix", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
+        flow3d: show.flow3d === "particles" ? "particles" : "cut",       // wie sie in 3D erscheint
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },

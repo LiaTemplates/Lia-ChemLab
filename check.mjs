@@ -600,6 +600,11 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   assert.ok(at(s.v, mid, rows / 2) < -1, "in der Mitte steigt es auf (y zeigt nach unten)");
   assert.ok(at(s.v, 2, rows / 2) > 0, "an der Wand sinkt es ab");
   for (const mode of ["diff", "vortex", "pressure"]) assert.match(L.fx.flow(box, w, 5.1, "warm", mode), /<rect/, mode);
+  // dasselbe Feld für 3D: Farbe und Strömung an einer Stelle, von 0 bis 1 über Breite und Höhe
+  const cells = L.fx.flowCells(w, 5.2, "warm", "temp");
+  assert.ok(cells.flow(0.5, 0.5)[1] < 0, "in der Mitte nach oben (v nach unten positiv)");
+  assert.equal(cells.color(0.5, 0.9).length, 4, "Farbe und Deckkraft");
+  assert.ok(cells.color(0.5, 0.95)[0] > cells.color(0.05, 0.05)[0], "über der Flamme röter als oben am Rand");
   assert.deepEqual(L.fx.heatColor(20), [90, 170, 230], "20 °C hellblau");
   assert.deepEqual(L.fx.heatColor(100), [150, 40, 170], "100 °C violett");
   assert.deepEqual(L.fx.heatColor(-5), [40, 70, 200], "kälter als 0 °C bleibt dunkelblau");
@@ -1142,10 +1147,13 @@ test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein 
 test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {
   assert.equal(L.normalize({ bench: [], show: { flow: "vortex" } }).show.flow, "vortex");
   assert.equal(L.normalize({ bench: [], show: { flow: "wind" } }).show.flow, null, "Unbekanntes bleibt aus");
+  assert.equal(L.normalize({ bench: [], show: { flow3d: "particles" } }).show.flow3d, "particles", "in 3D als Teilchen");
+  assert.equal(L.normalize({ bench: [] }).show.flow3d, "cut", "sonst als Schnitt");
   const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burner", under: "b", flame: 1 }], show: { flow: "temp" } });
   frames(1);
   assert.match(item(el, "b").innerHTML, /cl-flow/, "gleich zu Beginn zu sehen");
   tap(el, "b");
+  assert.equal(part(el, ".cl-panel").querySelector('[data-act="flow3d"]'), null, "die Wahl für 3D gibt es nur in 3D");
   ["diff", "mix", "vortex", "pressure", ""].forEach(() => press(el, "flow"));
   frames(1);
   assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Unterschieden, Schlieren, Wirbel und Druck wieder aus");

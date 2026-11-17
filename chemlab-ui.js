@@ -113,7 +113,9 @@
 
     var show = st.config.show;
     var FLOWS = ["", "temp", "diff", "mix", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
+    var FLOWS3D = ["cut", "particles"];                  // wie die Strömung in 3D erscheint: als Schnittebene oder als Teilchen im Glas
     if (st.flow == null) st.flow = Math.max(0, FLOWS.indexOf(show.flow));
+    if (st.flow3d == null) st.flow3d = Math.max(0, FLOWS3D.indexOf(show.flow3d));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
@@ -209,6 +211,7 @@
     var dragging = null;            // ein Schieber (Spannung, Temperatur, Wellenlänge) wird gerade bewegt: der Wert, auf dem er steht
     var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
     function flowLabel() { return T("flow") + (st.flow ? ": " + T("flow." + FLOWS[st.flow]) : ""); }
+    function flow3dLabel() { return T("flow3d") + ": " + T("flow3d." + FLOWS3D[st.flow3d || 0]); }
     var lensKey = null, lensColors = {};      // was die Legende der Teilchenlupe gerade zeigt, und die Farben ihrer Teilchen
     var shown = [];                 // die Beobachtungen, die gerade in der Liste stehen
     var three = null;               // die 3D-Bühne, solange sie gezeigt wird; sonst zeichnet das SVG
@@ -856,7 +859,7 @@
       }
       items.forEach(function (item, index) {
         var g = nodes[item.id], def = L.parts[item.type];
-        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
+        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], flow3d: FLOWS3D[st.flow3d || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
           sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
         var v, w, r, host, place, b, content, hang, aria;
@@ -1040,6 +1043,7 @@
             lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '"' + (lab.samples[sampleOf(v.id)].said === n ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
           (!L.parts[v.type].dispenser || L.parts[v.type].shake ? '<button type="button" class="cl-btn" data-act="shake" data-id="shake">' + esc(T("shake")) + '</button> <button type="button" class="cl-btn" data-act="shake" data-id="mix">' + esc(T("mix")) + "</button> " : "") +
           '<button type="button" class="cl-btn" data-act="flow" aria-pressed="' + (st.flow ? "true" : "false") + '">' + esc(flowLabel()) + "</button> " +
+          (three ? '<button type="button" class="cl-btn" data-act="flow3d">' + esc(flow3dLabel()) + "</button> " : "") +
           (show.particles && !v.veiled ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
             return '<option value="' + esc(o.id) + '">' + esc(label[o.id]) + "</option>";
@@ -1804,6 +1808,12 @@
       else if (act === "shake" && L.vessel(lab, st.sel)) {        // schütteln oder mixen: zehn Sekunden lang, dann setzt es sich ab
         var shaken = st.sel;
         change(function (l) { return L.shake(l, shaken, id); }, { key: id === "mix" ? "mix" : "shake", vessel: shaken });
+      }
+      else if (act === "flow3d") {                             // in 3D: Schnitt oder Teilchen
+        st.flow3d = ((st.flow3d || 0) + 1) % FLOWS3D.length;
+        b = ui.panel.querySelector('[data-act="flow3d"]');
+        b.textContent = flow3dLabel();
+        paint();
       }
       else if (act === "flow") {                               // Strömung: aus, Temperatur, Wirbel, Druck, wieder aus
         st.flow = ((st.flow || 0) + 1) % FLOWS.length;
