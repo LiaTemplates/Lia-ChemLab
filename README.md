@@ -970,7 +970,7 @@ Das Glas antippen und „Teilchenlupe“ wählen: Sie zeigt, was in einem winzig
 
 ## Strömung im Gefäß
 
-Ein Glas antippen und „Strömung“ wählen. Jedes weitere Tippen wechselt die Ansicht: Temperatur, Wirbel, Druck, aus. Die Ansicht gilt für alle Gefäße auf der Arbeitsfläche.
+Hier ist die Strömung schon eingeschaltet. Mit einem Tipp auf ein Glas öffnet sich sein Feld: Unter **Inhalt** wechselt der Knopf „Strömung“ die Ansicht: Temperatur, Wirbel, Druck, aus. In einem eigenen Aufbau schaltet `"show":{"flow":"temp"}` sie gleich zu Beginn ein (oder `"vortex"`, `"pressure"`). Die Ansicht gilt für alle Gefäße auf der Arbeitsfläche.
 
 - **Über dem Brenner** steigt das warme Wasser in der Mitte auf, kühlt an der Oberfläche und an den Wänden ab und sinkt dort wieder nach unten. Die kleinen Punkte treiben mit der Strömung.
 - **Im warmen Wasserbad** kommt die Wärme von den Wänden. Dort steigt das Wasser auf, in der Mitte sinkt es ab.
@@ -989,7 +989,7 @@ Die Strömung ist ein Bild für die Vorstellung. Gerechnet wird weiter mit einem
   {"type":"bath","under":"bad","temp":60}
  ],
  "shelf":["H2O"],
- "show":{"charts":["T"]}}
+ "show":{"charts":["T"],"flow":"temp"}}
 ```
 
 ## Ideale und reale Lösung
@@ -1451,7 +1451,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `g` – bei einer Elektrode ihre Masse in g, falls sie von der Vorgabe abweichen soll.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
-- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
+- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur, `"vortex"` Wirbel, `"pressure"` Druck. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell. `volumes: false` blendet die Milliliter unter den Gefäßen und das Abgegebene der Bürette aus (auch in der Messwerttabelle).
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.

@@ -112,6 +112,8 @@
     }
 
     var show = st.config.show;
+    var FLOWS = ["", "temp", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
+    if (st.flow == null) st.flow = Math.max(0, FLOWS.indexOf(show.flow));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
@@ -206,7 +208,6 @@
     var bench = BENCH, items = [], nodes = {}, shape = null, raf = 0, last = 0, slowAt = 0, pending = 0, playFrom = 0, stopped = false, down = null;
     var dragging = null;            // ein Schieber (Spannung, Temperatur, Wellenlänge) wird gerade bewegt: der Wert, auf dem er steht
     var insist = null;              // die Zeit, zu der in Ruhe schon einmal „Abspielen“ gedrückt wurde
-    var FLOWS = ["", "temp", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
     function flowLabel() { return T("flow") + (st.flow ? ": " + T("flow." + FLOWS[st.flow]) : ""); }
     var lensKey = null, lensColors = {};      // was die Legende der Teilchenlupe gerade zeigt, und die Farben ihrer Teilchen
     var shown = [];                 // die Beobachtungen, die gerade in der Liste stehen
@@ -1800,6 +1801,7 @@
       else if (act === "bench") { if (st.hand && st.hand.tool) alone(); }
       else if (act === "flow") {                               // Strömung: aus, Temperatur, Wirbel, Druck, wieder aus
         st.flow = ((st.flow || 0) + 1) % FLOWS.length;
+        b = ui.panel.querySelector('[data-act="flow"]');         // der Knopf bleibt stehen und behält den Fokus
         b.setAttribute("aria-pressed", st.flow ? "true" : "false");
         b.textContent = flowLabel();
         paint();

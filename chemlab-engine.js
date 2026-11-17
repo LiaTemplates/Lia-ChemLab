@@ -1022,6 +1022,7 @@
         volumes: show.volumes !== false,                           // mL unter den Gefäßen und das Abgegebene der Bürette
         log: show.log !== false,
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
+        flow: ["temp", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },

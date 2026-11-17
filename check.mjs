@@ -926,6 +926,18 @@ test("Zahlen ausblenden: es bleiben Beobachtungen und Gleichungen ohne Werte", (
   assert.doesNotMatch(part(el, ".cl-panel").querySelector(".cl-contents").innerHTML, /mmol|pH/);
 });
 
+test("Anzeige: die Strömung lässt sich vorgeben und mit dem Knopf durchschalten", () => {
+  assert.equal(L.normalize({ bench: [], show: { flow: "vortex" } }).show.flow, "vortex");
+  assert.equal(L.normalize({ bench: [], show: { flow: "wind" } }).show.flow, null, "Unbekanntes bleibt aus");
+  const el = mount({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burner", under: "b", flame: 1 }], show: { flow: "temp" } });
+  frames(1);
+  assert.match(item(el, "b").innerHTML, /cl-flow/, "gleich zu Beginn zu sehen");
+  tap(el, "b");
+  ["vortex", "pressure", ""].forEach(() => press(el, "flow"));
+  frames(1);
+  assert.doesNotMatch(item(el, "b").innerHTML, /cl-flow/, "nach Wirbel und Druck wieder aus");
+});
+
 test("Anzeige: Diagramme, Gleichungen und Protokoll lassen sich abschalten", () => {
   const el = mount({ bench: [{ type: "testtube" }], show: { charts: false, equations: false, log: false } });
   assert.equal(part(el, ".cl-charts").hidden, true);
