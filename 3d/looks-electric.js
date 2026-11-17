@@ -27,9 +27,10 @@
     build: function (kit) {
       var group = new THREE.Group(), tag = kit.label(0.7);
       var bub = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 16);
-      bub.count = 0;
-      group.add(tag, bub);
-      group.userData = { tag: tag, bub: bub, dummy: new THREE.Object3D() };
+      var film = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 18);
+      bub.count = 0; film.count = 0;
+      group.add(tag, bub, film);
+      group.userData = { tag: tag, bub: bub, film: film, dummy: new THREE.Object3D() };
       return group;
     },
     update: function (group, d) {
@@ -70,6 +71,18 @@
       }
       u.bub.count = n;
       u.bub.instanceMatrix.needsUpdate = true;
+      // Gas, das an der Elektrode haftet: feine Bläschen, die stillsitzen
+      n = wet && r.held > 0.02 ? Math.round(3 + 15 * Math.min(1, r.held)) : 0;
+      for (k = 0; k < n; k++) {
+        q = (fx.pseudo(11, k) - 0.5) * 2;                        // auf den beiden Seiten der Platte, beim Graphitstab rundherum
+        u.dummy.position.set(x + (carbon ? 0.26 * q : 0.18 * q), bottom + 0.1 + fx.pseudo(7, k) * Math.max(0, surface - bottom - 0.2),
+          carbon ? (k % 2 ? 1 : -1) * 0.26 * Math.sqrt(1 - q * q) : (k % 2 ? 0.07 : -0.07));
+        u.dummy.scale.setScalar(0.025 + 0.02 * fx.pseudo(3, k));
+        u.dummy.updateMatrix();
+        u.film.setMatrixAt(k, u.dummy.matrix);
+      }
+      u.film.count = n;
+      u.film.instanceMatrix.needsUpdate = true;
       group.userData.terminals = [V(x, cm(-(p.top + 6)) + 0.2, 0)];
       // der Pol neben dem Anschluss, auf der Seite der Glaswand
       u.tag.visible = !!r.pole;

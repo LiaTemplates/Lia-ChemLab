@@ -722,8 +722,9 @@
   registerPart("rod", { kind: "test", probe: "rod" });             // Magnesiastäbchen für die Flammenfärbung
   registerPart("paper", { kind: "test", probe: "paper" });         // feuchtes Universalindikatorpapier für den Gasraum
   // Elektroden: electrode: Material, g: Masse in g. Angezeigt und aufgezeichnet wird ihre Masse.
+  // hold: an Platin und Graphit haftet ein Teil des Gases, das an ihnen entsteht (siehe FILM)
   ["C", "Pt", "Cu", "Zn", "Fe", "Ag"].forEach(function (el) {
-    registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7 });
+    registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7, hold: el === "C" || el === "Pt" });
   });
   // circuit: Glied eines Stromkreises. Der Stromkreis gehört zu dem Gefäß, an dem das Gerät steht, und führt über dessen zwei Elektroden.
   // max: höchste Spannung in V, limit: Strombegrenzung in A; ohm: Widerstand; watt: Leistung, bei der das Lämpchen voll leuchtet
@@ -828,7 +829,7 @@
       });
       if (g.has) {
         lab.vessels.forEach(function (v) { if (g.in == null || v.id === g.in) total += (v.n[g.has] || 0) + (v.air[g.has] || 0); });
-        lab.tools.forEach(function (t) { if (t.coat && (g.in == null || t.in === g.in)) total += t.coat[g.has] || 0; });      // abgeschieden auf einer Elektrode
+        lab.tools.forEach(function (t) { if (t.coat && (g.in == null || t.in === g.in)) total += (t.coat[g.has] || 0) + (t.film[g.has] || 0); });      // abgeschieden auf einer Elektrode, oder Gas, das an ihr haftet
         return (g.min == null || total >= g.min) && (g.max == null || total <= g.max + 1e-10);
       }
       return events.some(function (e) {
@@ -1190,7 +1191,7 @@
       // i: Strom in A (positiv: hier wird oxidiert), rate: Umsatz in mol je s, phi: Potential gegen die Lösung in V,
       // bub: Gas in mol/s, pole: "+" oder "-", fizz: ob die Gasblasen schon gemeldet sind
       t.n = t.n0 = (item.g || def.g) / species(def.electrode).M;
-      t.coat = {}; t.seen = {}; t.i = 0; t.rate = 0; t.phi = null; t.bub = 0; t.pole = ""; t.fizz = false;
+      t.coat = {}; t.film = {}; t.seen = {}; t.i = 0; t.rate = 0; t.phi = null; t.bub = 0; t.pole = ""; t.fizz = false;
       t.side = 0;                                                // 0: links im Gefäß, 1: rechts
     }
     if (def.circuit === "supply") { t.volts = item.volts || 0; t.flip = !!item.flip; }       // flip: umgepolt
@@ -2447,7 +2448,12 @@
           var sp = L.db.species[t.id], supply;
           if (!ok || t.id === WATER) return;
           if (sp.phase === "s") { if (!face.has(t.id)) ghost = true; return; }
-          if (sp.phase !== "aq" || !(v.n[t.id] > 0)) { ok = false; return; }      // ein Gas steht nicht als Ausgangsstoff bereit
+          if (sp.phase === "g" && face.held && face.held(t.id) > 0) {           // Gas, das an der Elektrode haftet: Druck aus dem Anteil, den sie fassen kann
+            q += t.n / c.n * FILM_K * Math.log(Math.min(1, face.held(t.id) / (FILM * face.area)));
+            lim = Math.min(lim, c.n / t.n * FARADAY * face.held(t.id) / FILM_T);
+            return;
+          }
+          if (sp.phase !== "aq" || !(v.n[t.id] > 0)) { ok = false; return; }      // sonst steht ein Gas nicht als Ausgangsstoff bereit
           q += t.n / c.n * (Math.log(v.n[t.id] / vol) + LN10 * lg(t.id));       // Nernst: mit der Aktivität
           supply = reach(t.id);
           (L.db.carriers[t.id] || []).forEach(function (y) { supply += y.n * reach(y.id); });
@@ -2559,7 +2565,7 @@
     groups.forEach(function (g) {
       g.steps.forEach(function (st) {
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          var hard = L.db.species[t.id].phase === "s", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + t.id;
+          var hard = L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + t.id;
           need[k] = (need[k] || 0) + t.n * st.e / st.c.n;
           have[k] = hard ? g.face.amount(t.id) : stock(g.v, t.id);
         });
@@ -2571,7 +2577,7 @@
       g.steps.forEach(function (st) {
         var xi = part * st.e / st.c.n;
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          if (L.db.species[t.id].phase === "s") { g.face.take(t.id, t.n * xi, emit); return; }
+          if (L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g") { g.face.take(t.id, t.n * xi, emit); return; }
           g.v.n[t.id] = (g.v.n[t.id] || 0) - t.n * xi;
           if (g.v.n[t.id] < 0) { if (short.indexOf(g.v) < 0) short.push(g.v); }      // überzogen: die Träger gleichen es aus
           else if (!(g.v.n[t.id] > 1e-22)) delete g.v.n[t.id];
@@ -2672,6 +2678,13 @@
 
   var PLATE = { w: 2, len: 6, gap: 0.5 };     // Elektrode: Breite und Länge der Platte, Abstand zum Gefäßboden, in cm
   var COAT = 5e-7;            // mol/cm²: ab so viel sieht man einen Belag auf einer Elektrode
+  // Gas an Platin und Graphit (geschätzt): Von dem Gas, das an der Elektrode entsteht, haftet der Anteil STICK an ihrer Oberfläche, bis
+  // FILM mol/cm² erreicht sind. Es steht dann als Ausgangsstoff bereit (Brennstoffzelle, Polarisationsspannung), mit dem Anteil an FILM
+  // hoch FILM_K als Druck in bar (je leerer die Elektrode, desto fester hält sie den Rest: so fällt die Spannung nach und nach), höchstens so
+  // schnell, dass es in FILM_T s verbraucht wäre. Es verliert sich mit der Zeitkonstante LEAK in den Gasraum über der Lösung; unter dem
+  // Anteil THIN von FILM hält es kein Potential mehr und ist fort. Es haften nur Wasserstoff und Sauerstoff, und nur am blanken Platin
+  // oder Graphit, nicht unter einem Belag.
+  var FILM = 1e-6, STICK = 0.2, FILM_T = 20, FILM_K = 4, LEAK = 120, THIN = 1e-4, STICKY = { "H2(g)": 1, "O2(g)": 1 };
   var LEADS = 0.5;            // Ω: Leitungen und Innenwiderstand der Geräte eines Stromkreises
   var QUIET = 1e-9;           // A: ein kleinerer Strom gilt als keiner
 
@@ -2704,15 +2717,19 @@
   }
 
   // Die Elektrode t im Gefäß v als Oberfläche: ihr Material und was sich darauf abgeschieden hat
-  function electrodeFace(v, t) {
+  function electrodeFace(v, t, dry) {
     var body = L.parts[t.type].electrode, size = t.n > 0 ? 2 * PLATE.w * dip(v) : 0, top = body, most = COAT * size, id;
     for (id in t.coat) if (t.coat[id] > most) { most = t.coat[id]; top = id; }     // ein dichter Belag bestimmt, wie sich die Oberfläche verhält
     return {
       id: t.id, tool: t, top: top, area: size, skip: (L.db.metals[body] || {}).skip,
       has: function (x) { return (x === body && t.n > 0) || t.coat[x] > 1e-12; },
-      amount: function (x) { return (x === body ? t.n : 0) + (t.coat[x] > 1e-12 ? t.coat[x] : 0); },
-      take: function (x, n, emit) {                              // vom Belag, oder von der Elektrode selbst
-        if (x !== body) {
+      amount: function (x) { return (x === body ? t.n : 0) + (t.coat[x] > 1e-12 ? t.coat[x] : 0) + (t.film[x] || 0); },
+      held: function (x) { return size > 0 && t.film[x] > 0 ? t.film[x] : 0; },       // haftendes Gas in mol
+      cap: L.parts[t.type].hold && top === body ? FILM * size : 0,
+      take: function (x, n, emit) {                              // vom haftenden Gas, vom Belag, oder von der Elektrode selbst
+        if (L.db.species[x].phase === "g") {
+          if (!((t.film[x] -= n) > 1e-18)) delete t.film[x];
+        } else if (x !== body) {
           if (!((t.coat[x] -= n) > 1e-18)) { delete t.coat[x]; delete t.seen[x]; }
         } else if (!((t.n -= n) > 1e-15)) {
           t.n = 0;
@@ -2728,17 +2745,28 @@
         }
       },
       // ohne Stromkreis verhält sich die Elektrode wie ein Stück Metall; für die Anzeige zählt, was an ihr umgesetzt wird
-      done: function (steps, part, rate) { t.rate = part * rate; bubbles(v, t, steps, part); }
+      done: function (steps, part, rate) { t.rate = part * rate; bubbles(v, t, steps, part, dry ? 0 : this.cap); }
     };
   }
 
   // Gas, das an einer Elektrode entsteht: für die Blasen an ihr (bub, mol/s) und für das Gefäß (eg, mol in diesem Schritt)
-  function bubbles(v, t, steps, part) {
-    var sum = 0;
+  // cap: so viel Gas (mol) kann insgesamt an ihr haften; 0: nichts (oder nur gerechnet, nicht umgesetzt)
+  function bubbles(v, t, steps, part, cap) {
+    var sum = 0, held = 0, id;
+    for (id in t.film) held += t.film[id];
     steps.forEach(function (st) {
       (st.s > 0 ? st.c.ox : st.c.red).forEach(function (x) {
-        var n = x.n * part * st.e / st.c.n;
+        var n = x.n * part * st.e / st.c.n, keep;
         if (L.db.species[x.id].phase !== "g") return;
+        keep = STICKY[x.id] ? Math.max(0, Math.min(STICK * n, cap - held)) : 0;     // ein Teil haftet an der Elektrode
+        if (keep > 0) {
+          t.film[x.id] = (t.film[x.id] || 0) + keep;
+          t.fed = t.fed || {};
+          t.fed[x.id] = true;
+          v.n[x.id] -= keep;
+          held += keep;
+          n -= keep;
+        }
         sum += n;
         v.egas = v.egas || {};
         v.egas[x.id] = (v.egas[x.id] || 0) + n;               // je Gas, damit ein lösliches (Chlor) sich zum Teil löst
@@ -2784,7 +2812,7 @@
   function runCell(lab, cell, emit, dry) {
     var va = cell.va, vb = cell.vb, a = cell.a, b = cell.b, same = va === vb;
     var volA = solution(va), volB = same ? volA : solution(vb);
-    var fa = volA ? electrodeFace(va, a) : null, fb = volB ? electrodeFace(vb, b) : null;
+    var fa = volA ? electrodeFace(va, a, dry) : null, fb = volB ? electrodeFace(vb, b, dry) : null;
     var devices = lab.tools.filter(function (t) { return L.parts[t.type].circuit && (t.in === va.id || t.in === vb.id); });
     var U = 0, R = LEADS, closed = false, limit = Infinity, la, lb, ra, rb, Rs, pa, pb, I = 0, V, na, nb, q = 0, part = 1, turn, groups, key;
     var out = { a: a.id, b: b.id, I: 0, U: null, closed: false };
@@ -2840,7 +2868,7 @@
           g.t.i = g.sign * I;
           g.t.rate = 0;                                          // der schnellste Vorgang an dieser Elektrode, in mol je s
           g.steps.forEach(function (st) { g.t.rate = Math.max(g.t.rate, part * st.e / st.c.n / DT); });
-          bubbles(g.v, g.t, g.steps, part);
+          bubbles(g.v, g.t, g.steps, part, dry ? 0 : g.face.cap);
           if (dry) return;
           g.v.q += g.sign * g.phi * q * FARADAY;                 // elektrische Arbeit an dieser Elektrode …
           g.steps.forEach(function (st) {
@@ -2894,12 +2922,13 @@
     lab.vessels.forEach(function (v) {
       var vol = solution(v);
       if (!vol) return;
-      electrodesIn(lab, v.id).forEach(function (t) { if (!busy[t.id]) corrode(lab, v, vol, electrodeFace(v, t), emit, dry); });
+      electrodesIn(lab, v.id).forEach(function (t) { if (!busy[t.id]) corrode(lab, v, vol, electrodeFace(v, t, dry), emit, dry); });
       if (!dry) metalsIn(v).forEach(function (id) { corrode(lab, v, vol, lumpFace(v, id), emit); });
     });
     if (dry) return;
     lab.tools.forEach(function (t) {
       var def = L.parts[t.type];
+      if (def.electrode) leak(lab, t);
       if (def.electrode) {                                       // Gasblasen an einer Elektrode: gemeldet, wenn sie beginnen
         if (!t.fizz && t.bub > 2 * REST) { t.fizz = true; if (emit) emit({ key: "bubbles", part: t.id, vessel: t.in }); }
         else if (t.fizz && t.bub < REST) t.fizz = false;
@@ -2908,6 +2937,17 @@
         else if (t.lit && t.goal < 0.03) { t.lit = false; if (emit) emit({ key: "lampOff", part: t.id, vessel: t.in }); }
       }
     });
+  }
+
+  // Haftendes Gas verliert sich in die Luft über dem Gefäß (gezählt als entwichen); ohne Gefäß ist es gleich fort
+  function leak(lab, t) {
+    var v = vessel(lab, t.in), least = v ? THIN * FILM * 2 * PLATE.w * (dip(v) || PLATE.len) : Infinity, id, n;      // ausgegossen: es trocknet ab
+    for (id in t.film) {
+      n = t.film[id] < least && !(t.fed && t.fed[id]) ? t.film[id] : t.film[id] * (1 - Math.exp(-DT / LEAK));      // solange neues kommt, wächst es
+      if (v) v.air[id] = (v.air[id] || 0) + n;
+      if (!((t.film[id] -= n) > 0)) delete t.film[id];
+    }
+    t.fed = null;
   }
 
   // Nach einem Eingriff: was die Stromkreise nun tun würden, damit Anzeigen und Ruhezustand stimmen
@@ -3830,7 +3870,8 @@
 
   function atRest(lab) {
     if (lab.flows.length) return false;
-    if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
+    if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;
+    if (lab.tools.some(function (t) { for (var id in t.film) return true; return false; })) return false;      // Gas an einer Elektrode verliert sich noch      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
     return lab.vessels.every(function (v) {
       var key;
       if (v.flag.shown > lab.t) return false;                    // eine Probe mit dem Span dauert noch an, auch wenn das Glas dabei zersprang
@@ -4027,7 +4068,9 @@
       out.material = def.electrode; out.n = t.n; out.g = massOf(t); out.g0 = t.n0 * L.db.species[def.electrode].M;
       out.coat = Object.keys(t.coat).filter(function (id) { return t.coat[id] > 1e-12; }).map(function (id) { return { id: id, n: t.coat[id] }; })
         .sort(function (x, y) { return y.n - x.n; });
-      out.bub = t.bub; out.pole = t.pole; out.i = t.i; out.side = t.side;
+      out.bub = t.bub; out.pole = t.pole; out.i = t.i; out.side = t.side; out.film = Object.assign({}, t.film);
+      out.held = 0;                                              // wie voll das haftende Gas die Elektrode bedeckt, 0 bis 1
+      if (vessel(lab, t.in) && dip(vessel(lab, t.in)) > 0) for (var f in t.film) out.held += t.film[f] / (FILM * 2 * PLATE.w * dip(vessel(lab, t.in)));
     }
     if (def.circuit === "supply") { out.volts = t.volts; out.flip = t.flip; }
     if (def.bridge) out.to = t.to;

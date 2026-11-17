@@ -3907,10 +3907,12 @@ const totalsE = (l) => {
   const sum = totals(l);
   for (const t of l.tools) {
     const r = L.reading(l, t.id);
-    if (r.material) for (const [id, n] of [[r.material, r.n]].concat(r.coat.map((c) => [c.id, c.n]))) sum.mass += n * L.species(id).M;
+    if (r.material) for (const [id, n] of [[r.material, r.n]].concat(r.coat.map((c) => [c.id, c.n]), Object.entries(r.film))) sum.mass += n * L.species(id).M;
   }
   return sum;
 };
+// Gas, das an den Elektroden eines Gefäßes haftet
+const filmOf = (l, id, vessel) => l.tools.filter((t) => t.in === (vessel || "b") && L.parts[t.type].electrode).reduce((sum, t) => sum + (L.reading(l, t.id).film[id] || 0), 0);
 // rechnet weiter und zählt die Ladung, die geflossen ist, in Coulomb
 const charge = (l, seconds, id) => { let q = 0; for (let i = 0; i < seconds * 20; i++) { L.step(l, 0.05); q += L.circuit(l, id || "b").I * 0.05; } return q; };
 const halves = (l, id) => L.reactions(l, id || "b").filter((r) => r.at).map((r) => r.at + ": " + r.eq);
@@ -3976,7 +3978,7 @@ test("Kupferchlorid mit Graphit: Kupfer am Minuspol, Chlor am Pluspol", () => {
   const copper = L.reading(l, "e2").coat.find((c) => c.id === "Cu(s)").n, chlorine = chlorineOf(l);
   assert.ok(copper > 1e-5, `${copper} mol Kupfer`);
   assert.ok(chlorine > 0.9 * copper && chlorine <= copper * (1 + 1e-9), "fast aller Strom macht am Pluspol Chlor, ein Rest Sauerstoff");
-  near(2 * chlorine + 4 * gasOf(l, "O2(g)"), 2 * copper + 2 * gasOf(l, "H2(g)"), 1e-9, "an beiden Elektroden gleich viele Elektronen");
+  near(2 * chlorine + 4 * (gasOf(l, "O2(g)") + filmOf(l, "O2(g)")), 2 * copper + 2 * (gasOf(l, "H2(g)") + filmOf(l, "H2(g)")), 1e-9, "an beiden Elektroden gleich viele Elektronen (mit dem Gas, das haftet)");
   assert.ok(L.reading(l, "e2").g > 5, "die Masse zählt den Belag mit");
   assert.ok(halves(l).includes("e1: 2 Cl-(aq) -> Cl2(g) + 2 e-") && halves(l).includes("e2: Cu^2+(aq) + 2 e- -> Cu(s)"));
   near(totalsE(l).mass, before.mass, 1e-9, "Masse");
@@ -3996,8 +3998,9 @@ test("Elektrodenchlor: was sich löst, zählt nicht gegen Blasen aus anderen Rea
 test("Wasser zerlegen: verdünnte Schwefelsäure an Platin gibt Wasserstoff und Sauerstoff im Verhältnis 2 : 1", () => {
   const l = cell([{ reagent: "H2SO4 0.5M", ml: 80 }], "Pt", "Pt", 3), before = totalsE(l);
   const q = charge(l, 60);
-  near(gasOf(l, "H2(g)"), q / (2 * L.FARADAY), 1e-9, "Wasserstoff nach Faraday");
-  near(gasOf(l, "O2(g)"), gasOf(l, "H2(g)") / 2, 1e-9, "halb so viel Sauerstoff");
+  near(gasOf(l, "H2(g)") + filmOf(l, "H2(g)"), q / (2 * L.FARADAY), 1e-9, "Wasserstoff nach Faraday, mit dem, was an der Elektrode haftet");
+  near(gasOf(l, "O2(g)") + filmOf(l, "O2(g)"), q / (4 * L.FARADAY), 1e-9, "halb so viel Sauerstoff");
+  assert.ok(filmOf(l, "H2(g)") > 0 && filmOf(l, "H2(g)") < 0.5 * gasOf(l, "H2(g)"), "ein Teil haftet, das meiste perlt auf");
   assert.ok(gasOf(l, "H2(g)") > 5e-5);
   assert.ok(L.reading(l, "e1").bub > 0 && L.reading(l, "e2").bub > 1.9 * L.reading(l, "e1").bub, "am Minuspol steigen doppelt so viele Blasen auf");
   assert.equal(look(l).gas, 0, "die Blasen gehören zu den Elektroden, nicht zur ganzen Lösung");
@@ -4018,8 +4021,71 @@ test("Zersetzungsspannung: darunter fließt fast kein Strom, darüber wächst er
   near((at[2.6] - at[2.2]) / 0.4, slope, 0.2 * slope, "oberhalb fast eine Gerade");
   assert.ok(cut > 1.6 && cut < 2.1, `Zersetzungsspannung aus der Geraden: ${cut} V`);
   L.setVolts(l, "n", 0);
-  L.step(l, 10);
-  assert.ok(L.atRest(l), "ohne Spannung kommt alles zur Ruhe");
+  L.step(l, 1);
+  assert.ok(L.circuit(l, "b").I < -1e-4, `abgeschaltet liefert das Gas an den Elektroden Strom in der Gegenrichtung: ${L.circuit(l, "b").I} A`);
+  L.step(l, 1200);
+  assert.ok(L.atRest(l), "ist es verbraucht, kommt alles zur Ruhe");
+});
+
+test("Brennstoffzelle: Gas an Platin oder Graphit haftet zum Teil; abgeschaltet gibt es gut 1 V und liefert Strom, bis es verbraucht ist; ohne Verbraucher verliert es sich in Minuten", () => {
+  const make = (metal, extra) => lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2SO4 0.5M", ml: 80 }] }, { type: "electrode-" + metal, id: "e1", in: "b" }, { type: "electrode-" + metal, id: "e2", in: "b" },
+    { type: "supply", id: "n", in: "b", volts: 3 }, { type: "voltmeter", id: "u", in: "b" }].concat(extra || []), { room: 25 });
+  for (const metal of ["Pt", "C"]) {
+    const l = make(metal), before = totalsE(l);
+    L.step(l, 120);
+    assert.ok(L.reading(l, "e1").film["O2(g)"] > 1e-6, `${metal}: Sauerstoff haftet am Pluspol`);
+    assert.ok(L.reading(l, "e2").film["H2(g)"] > 1e-6, `${metal}: Wasserstoff am Minuspol`);
+    L.setVolts(l, "n", 0);
+    L.step(l, 2);
+    const open = L.reading(l, "u").value;
+    assert.ok(open > 0.9 && open < 1.3, `${metal}: abgeschaltet ${open} V`);
+    L.step(l, 1200);                                            // ohne Verbraucher verliert es sich
+    assert.ok(L.reading(l, "u").value < 0.5 * open, `${metal}: nach 20 Minuten ${L.reading(l, "u").value} V`);
+    near(totalsE(l).mass, before.mass, 1e-9, `${metal}: Masse`);
+  }
+  // mit dem Strommesser im Kreis: Strom in der Gegenrichtung, bis das Gas verbraucht ist; dabei entsteht wieder Wasser
+  const l = make("Pt", [{ type: "ammeter", id: "a", in: "b" }]);
+  L.step(l, 120);
+  const h2 = filmOf(l, "H2(g)");
+  L.setVolts(l, "n", 0);
+  const q = -charge(l, 600);
+  assert.ok(q > 0.5 * 2 * L.FARADAY * h2, `geliefert ${q} C aus ${h2} mol Wasserstoff`);
+  assert.ok(q <= 2 * L.FARADAY * h2 * 1.0001, "nicht mehr, als das Gas hergibt");
+  // solange Gas haftet, läuft die Uhr; die Spannung fällt nach und nach, nicht auf einen Schlag
+  const rest = make("Pt");
+  L.step(rest, 20);
+  L.setVolts(rest, "n", 0);
+  L.step(rest, 1);
+  assert.equal(L.atRest(rest), false, "es haftet noch Gas");
+  const curve = [];
+  for (let i = 0; i < 20; i++) { L.step(rest, 60); curve.push(L.reading(rest, "u").value); }
+  assert.ok(curve[4] < 1.1, `nach fünf Minuten fällt sie: ${curve.map((u) => u.toFixed(2))}`);
+  assert.ok(curve.every((u, i) => i === 0 || curve[i - 1] - u < 0.35), `ohne großen Sprung: ${curve.map((u) => u.toFixed(2))}`);
+  assert.ok(curve[19] < 0.3 && L.atRest(rest), "nach 20 Minuten ist es fort und alles ruht");
+  // mit dem Lämpchen nimmt der Strom allmählich ab
+  const lamp = make("Pt", [{ type: "lamp", id: "lp", in: "b" }]);
+  L.step(lamp, 120);
+  L.setVolts(lamp, "n", 0);
+  L.step(lamp, 2);
+  const i0 = -L.circuit(lamp, "b").I;
+  L.step(lamp, 60);
+  const i1 = -L.circuit(lamp, "b").I;
+  assert.ok(i1 > 0.05 * i0 && i1 < 0.8 * i0, `Strom nach einer Minute ${i1} von ${i0} A`);
+  // ein Glas, das geleert wird: das Gas an den Elektroden ist bald fort; es zählt für Ziele mit, und was sich verliert, steht über der Lösung
+  const dry = make("Pt");
+  L.step(dry, 120);
+  L.setVolts(dry, "n", 0);
+  const task = L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ has: "H2(g)", in: "b", min: 1e-6 }] } }).task;
+  assert.equal(L.checkTask(task, dry, []).done, true, "der Wasserstoff an der Elektrode zählt");
+  L.step(dry, 10);
+  assert.ok(L.vessel(dry, "b").air["H2(g)"] > 0, "was sich verliert, sammelt sich zuerst über der Lösung");
+  L.empty(dry, "b");
+  L.step(dry, 1200);
+  assert.deepEqual([L.reading(dry, "e1").film, L.reading(dry, "e2").film, L.atRest(dry)], [{}, {}, true]);
+  // an Kupfer haftet nichts
+  const cu = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 80 }] }, { type: "electrode-Cu", id: "e1", in: "b" }, { type: "electrode-Cu", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts: 3 }]);
+  L.step(cu, 30);
+  assert.deepEqual([L.reading(cu, "e1").film, L.reading(cu, "e2").film], [{}, {}]);
 });
 
 test("Zinkiodid: Zink am Minuspol, Iod färbt die Lösung braun", () => {
@@ -4028,7 +4094,7 @@ test("Zinkiodid: Zink am Minuspol, Iod färbt die Lösung braun", () => {
   const seen = collect(l, 120);
   assert.deepEqual(seen.filter((e) => e.key === "plated").map((e) => [e.part, e.species]), [["e2", "Zn(s)"]]);
   assert.ok(amount(l, "I3-(aq)") > 1e-5);
-  near(L.reading(l, "e2").coat[0].n + gasOf(l, "H2(g)"), amount(l, "I3-(aq)") + solid(l, "I2(s)"), 1e-9, "je Zink-Atom (und je Wasserstoff-Molekül) ein Iod-Molekül");
+  near(L.reading(l, "e2").coat[0].n + gasOf(l, "H2(g)") + filmOf(l, "H2(g)"), amount(l, "I3-(aq)") + solid(l, "I2(s)"), 1e-9, "je Zink-Atom (und je Wasserstoff-Molekül) ein Iod-Molekül");
   assert.ok(["yellow", "orange", "brown", "red"].includes(look(l).color.name), look(l).color.name);
   assert.ok(gasOf(l, "H2(g)") < 0.02 * L.reading(l, "e2").coat[0].n, "kaum Wasserstoff: an Zink entsteht er nur gehemmt");
   assert.ok(halves(l).includes("e1: 3 I-(aq) -> I3-(aq) + 2 e-"));
@@ -8924,6 +8990,22 @@ test("README: die Folie zum Filtrieren hält, was ihr Text verspricht", () => {
   assert.equal(L.view(l, f).color.name, "colorless", "klar und farblos");
   assert.ok(t.n["Cu(OH)2(s)"] > 0.003, "der blaue Niederschlag liegt im Filter");
   for (const id of ["NaOH 1M", "Na2S2O3 1M", "HCl 2M"]) assert.ok(config.shelf.includes(id), id);
+});
+
+test("README: die Folie zur Brennstoffzelle hält, was ihr Text verspricht", () => {
+  const l = L.createLab(L.normalize(JSON.parse(slide("Brennstoffzelle")[0])));
+  const supply = l.tools.find((t) => t.type === "supply").id, volts = l.tools.find((t) => t.type === "voltmeter").id;
+  L.step(l, 120);                                             // etwa zwei Minuten Wasser zerlegen
+  L.setVolts(l, supply, 0);
+  L.step(l, 2);
+  const open = L.reading(l, volts).value;
+  assert.ok(open > 0.9 && open < 1.3, `gut 1 V: ${open}`);
+  const meter = L.place(l, { type: "ammeter", in: "zelle" });
+  L.step(l, 1);
+  assert.ok(L.circuit(l, "zelle").I < -1e-3, `Strom in der Gegenrichtung: ${L.circuit(l, "zelle").I}`);
+  assert.ok(L.reading(l, meter).value > 1e-3, "der Strommesser zeigt ihn");
+  L.step(l, 300);
+  assert.ok(Math.abs(L.circuit(l, "zelle").I) < 1e-5, "bis das Gas verbraucht ist");
 });
 
 test("README: die Folie zum Zentrifugieren hält, was ihr Text verspricht", () => {
