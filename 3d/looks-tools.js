@@ -374,7 +374,7 @@
       gas.scale.set(Math.max(0.01, px - x0), 1, 1);       // rotateZ hat die Länge des Zylinders in die x-Achse gelegt
       gas.position.set((x0 + px) / 2, y, 0);
       u.tag.visible = !!d.ctx.numbers;
-      u.tag.userData.write(L.num(value, 1, d.ctx.lang) + " mL");
+      u.tag.userData.write(L.shown(Object.assign({}, r, { value: value }), d.ctx.lang));
       u.tag.position.set(x0 + len / 2, y + R + 0.3, 0);
     }
   });
