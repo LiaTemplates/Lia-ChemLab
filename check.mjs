@@ -4051,6 +4051,37 @@ test("Brennstoffzelle: Gas an Platin oder Graphit haftet zum Teil; abgeschaltet 
   const q = -charge(l, 600);
   assert.ok(q > 0.5 * 2 * L.FARADAY * h2, `geliefert ${q} C aus ${h2} mol Wasserstoff`);
   assert.ok(q <= 2 * L.FARADAY * h2 * 1.0001, "nicht mehr, als das Gas hergibt");
+  // solange Gas haftet, läuft die Uhr; die Spannung fällt nach und nach, nicht auf einen Schlag
+  const rest = make("Pt");
+  L.step(rest, 20);
+  L.setVolts(rest, "n", 0);
+  L.step(rest, 1);
+  assert.equal(L.atRest(rest), false, "es haftet noch Gas");
+  const curve = [];
+  for (let i = 0; i < 20; i++) { L.step(rest, 60); curve.push(L.reading(rest, "u").value); }
+  assert.ok(curve[4] < 1.1, `nach fünf Minuten fällt sie: ${curve.map((u) => u.toFixed(2))}`);
+  assert.ok(curve.every((u, i) => i === 0 || curve[i - 1] - u < 0.35), `ohne großen Sprung: ${curve.map((u) => u.toFixed(2))}`);
+  assert.ok(curve[19] < 0.3 && L.atRest(rest), "nach 20 Minuten ist es fort und alles ruht");
+  // mit dem Lämpchen nimmt der Strom allmählich ab
+  const lamp = make("Pt", [{ type: "lamp", id: "lp", in: "b" }]);
+  L.step(lamp, 120);
+  L.setVolts(lamp, "n", 0);
+  L.step(lamp, 2);
+  const i0 = -L.circuit(lamp, "b").I;
+  L.step(lamp, 60);
+  const i1 = -L.circuit(lamp, "b").I;
+  assert.ok(i1 > 0.05 * i0 && i1 < 0.8 * i0, `Strom nach einer Minute ${i1} von ${i0} A`);
+  // ein Glas, das geleert wird: das Gas an den Elektroden ist bald fort; es zählt für Ziele mit, und was sich verliert, steht über der Lösung
+  const dry = make("Pt");
+  L.step(dry, 120);
+  L.setVolts(dry, "n", 0);
+  const task = L.normalize({ bench: [{ type: "beaker", id: "b" }], task: { goals: [{ has: "H2(g)", in: "b", min: 1e-6 }] } }).task;
+  assert.equal(L.checkTask(task, dry, []).done, true, "der Wasserstoff an der Elektrode zählt");
+  L.step(dry, 10);
+  assert.ok(L.vessel(dry, "b").air["H2(g)"] > 0, "was sich verliert, sammelt sich zuerst über der Lösung");
+  L.empty(dry, "b");
+  L.step(dry, 1200);
+  assert.deepEqual([L.reading(dry, "e1").film, L.reading(dry, "e2").film, L.atRest(dry)], [{}, {}, true]);
   // an Kupfer haftet nichts
   const cu = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 80 }] }, { type: "electrode-Cu", id: "e1", in: "b" }, { type: "electrode-Cu", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts: 3 }]);
   L.step(cu, 30);

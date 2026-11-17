@@ -829,7 +829,7 @@
       });
       if (g.has) {
         lab.vessels.forEach(function (v) { if (g.in == null || v.id === g.in) total += (v.n[g.has] || 0) + (v.air[g.has] || 0); });
-        lab.tools.forEach(function (t) { if (t.coat && (g.in == null || t.in === g.in)) total += t.coat[g.has] || 0; });      // abgeschieden auf einer Elektrode
+        lab.tools.forEach(function (t) { if (t.coat && (g.in == null || t.in === g.in)) total += (t.coat[g.has] || 0) + (t.film[g.has] || 0); });      // abgeschieden auf einer Elektrode, oder Gas, das an ihr haftet
         return (g.min == null || total >= g.min) && (g.max == null || total <= g.max + 1e-10);
       }
       return events.some(function (e) {
@@ -2449,7 +2449,7 @@
           if (!ok || t.id === WATER) return;
           if (sp.phase === "s") { if (!face.has(t.id)) ghost = true; return; }
           if (sp.phase === "g" && face.held && face.held(t.id) > 0) {           // Gas, das an der Elektrode haftet: Druck aus dem Anteil, den sie fassen kann
-            q += t.n / c.n * Math.log(Math.min(1, face.held(t.id) / (FILM * face.area)));
+            q += t.n / c.n * FILM_K * Math.log(Math.min(1, face.held(t.id) / (FILM * face.area)));
             lim = Math.min(lim, c.n / t.n * FARADAY * face.held(t.id) / FILM_T);
             return;
           }
@@ -2678,12 +2678,13 @@
 
   var PLATE = { w: 2, len: 6, gap: 0.5 };     // Elektrode: Breite und Länge der Platte, Abstand zum Gefäßboden, in cm
   var COAT = 5e-7;            // mol/cm²: ab so viel sieht man einen Belag auf einer Elektrode
-  // Gas an Platin und Graphit (geschätzt): Von dem Gas, das an der Elektrode entsteht, haftet der Anteil STICK in ihren Poren, bis FILM mol/cm²
-  // erreicht sind. Es steht dann als Ausgangsstoff bereit, mit dem Anteil an FILM als Druck in bar (Brennstoffzelle, Polarisationsspannung),
-  // höchstens so schnell, dass es in FILM_T s verbraucht wäre, und es verliert sich mit der Zeitkonstante LEAK in die Luft; unter
-  // einem Hundertstel von FILM hält es kein Potential mehr und ist fort (so fällt die Spannung nach einigen Minuten ab).
-  // Es haften nur Wasserstoff und Sauerstoff, und nur am blanken Platin oder Graphit, nicht unter einem Belag.
-  var FILM = 1e-6, STICK = 0.2, FILM_T = 1, LEAK = 120, THIN = 0.01, STICKY = { "H2(g)": 1, "O2(g)": 1 };
+  // Gas an Platin und Graphit (geschätzt): Von dem Gas, das an der Elektrode entsteht, haftet der Anteil STICK an ihrer Oberfläche, bis
+  // FILM mol/cm² erreicht sind. Es steht dann als Ausgangsstoff bereit (Brennstoffzelle, Polarisationsspannung), mit dem Anteil an FILM
+  // hoch FILM_K als Druck in bar (je leerer die Elektrode, desto fester hält sie den Rest: so fällt die Spannung nach und nach), höchstens so
+  // schnell, dass es in FILM_T s verbraucht wäre. Es verliert sich mit der Zeitkonstante LEAK in den Gasraum über der Lösung; unter dem
+  // Anteil THIN von FILM hält es kein Potential mehr und ist fort. Es haften nur Wasserstoff und Sauerstoff, und nur am blanken Platin
+  // oder Graphit, nicht unter einem Belag.
+  var FILM = 1e-6, STICK = 0.2, FILM_T = 20, FILM_K = 4, LEAK = 120, THIN = 1e-4, STICKY = { "H2(g)": 1, "O2(g)": 1 };
   var LEADS = 0.5;            // Ω: Leitungen und Innenwiderstand der Geräte eines Stromkreises
   var QUIET = 1e-9;           // A: ein kleinerer Strom gilt als keiner
 
@@ -2760,7 +2761,8 @@
         keep = STICKY[x.id] ? Math.max(0, Math.min(STICK * n, cap - held)) : 0;     // ein Teil haftet an der Elektrode
         if (keep > 0) {
           t.film[x.id] = (t.film[x.id] || 0) + keep;
-          t.fed = true;
+          t.fed = t.fed || {};
+          t.fed[x.id] = true;
           v.n[x.id] -= keep;
           held += keep;
           n -= keep;
@@ -2939,13 +2941,13 @@
 
   // Haftendes Gas verliert sich in die Luft über dem Gefäß (gezählt als entwichen); ohne Gefäß ist es gleich fort
   function leak(lab, t) {
-    var v = vessel(lab, t.in), least = v ? THIN * FILM * 2 * PLATE.w * dip(v) : Infinity, id, n;
+    var v = vessel(lab, t.in), least = v ? THIN * FILM * 2 * PLATE.w * (dip(v) || PLATE.len) : Infinity, id, n;      // ausgegossen: es trocknet ab
     for (id in t.film) {
-      n = t.film[id] < least && !t.fed ? t.film[id] : t.film[id] * (1 - Math.exp(-DT / LEAK));      // solange neues kommt, wächst es
-      if (v) v.out[id] = (v.out[id] || 0) + n;
+      n = t.film[id] < least && !(t.fed && t.fed[id]) ? t.film[id] : t.film[id] * (1 - Math.exp(-DT / LEAK));      // solange neues kommt, wächst es
+      if (v) v.air[id] = (v.air[id] || 0) + n;
       if (!((t.film[id] -= n) > 0)) delete t.film[id];
     }
-    t.fed = false;
+    t.fed = null;
   }
 
   // Nach einem Eingriff: was die Stromkreise nun tun würden, damit Anzeigen und Ruhezustand stimmen
@@ -3868,7 +3870,8 @@
 
   function atRest(lab) {
     if (lab.flows.length) return false;
-    if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
+    if (lab.tools.some(function (t) { return t.flame > 0 || t.spin || t.tint || t.rate > REST; })) return false;
+    if (lab.tools.some(function (t) { for (var id in t.film) return true; return false; })) return false;      // Gas an einer Elektrode verliert sich noch      // solange ein Brenner brennt oder Strom etwas umsetzt, läuft die Uhr
     return lab.vessels.every(function (v) {
       var key;
       if (v.flag.shown > lab.t) return false;                    // eine Probe mit dem Span dauert noch an, auch wenn das Glas dabei zersprang

@@ -74,7 +74,9 @@
       // Gas, das an der Elektrode haftet: feine Bläschen, die stillsitzen
       n = wet && r.held > 0.02 ? Math.round(3 + 15 * Math.min(1, r.held)) : 0;
       for (k = 0; k < n; k++) {
-        u.dummy.position.set(x + (k % 2 ? 0.26 : -0.26), bottom + 0.1 + fx.pseudo(7, k) * (surface - bottom - 0.2), (fx.pseudo(11, k) - 0.5) * 0.12);
+        q = (fx.pseudo(11, k) - 0.5) * 2;                        // auf den beiden Seiten der Platte, beim Graphitstab rundherum
+        u.dummy.position.set(x + (carbon ? 0.26 * q : 0.18 * q), bottom + 0.1 + fx.pseudo(7, k) * Math.max(0, surface - bottom - 0.2),
+          carbon ? (k % 2 ? 1 : -1) * 0.26 * Math.sqrt(1 - q * q) : (k % 2 ? 0.07 : -0.07));
         u.dummy.scale.setScalar(0.025 + 0.02 * fx.pseudo(3, k));
         u.dummy.updateMatrix();
         u.film.setMatrixAt(k, u.dummy.matrix);

@@ -1071,7 +1071,7 @@
       if (w.bub > 1e-9 && wet && L.fx) out += L.fx.bubbles({ x0: x - 9, x1: x + 9, top: place.surface, bottom: p.bottom }, w.bub, ctx.t || 0, ctx.seed || 1, ctx.still);
       // Gas, das an der Elektrode haftet: feine Bläschen auf dem eingetauchten Teil, je mehr, desto dichter
       for (var k = 0, n = wet && w.held > 0.02 ? Math.round(3 + 15 * Math.min(1, w.held)) : 0; k < n; k++) {
-        out += '<circle class="cl-film" cx="' + f(x + (k % 2 ? 4.6 : -4.6)) + '" cy="' + f(place.surface + 2 + pseudo(7, k) * (p.bottom - place.surface - 3)) + '" r="' + f(0.9 + 0.6 * pseudo(3, k)) + '"/>';
+        out += '<circle class="cl-film" cx="' + f(x + (k % 2 ? 4.6 : -4.6)) + '" cy="' + f(place.surface + 2 + pseudo(7, k) * Math.max(0, p.bottom - place.surface - 3)) + '" r="' + f(0.9 + 0.6 * pseudo(3, k)) + '"/>';
       }
       out += '<circle class="cl-terminal" cx="' + f(x) + '" cy="' + (p.top + 6) + '" r="4"/>';
       // der Pol steht neben dem Anschluss, auf der Seite der Gefäßwand: darüber laufen die Leitungen
