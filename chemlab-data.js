@@ -145,7 +145,10 @@
       // die zweite, schwache und sehr breite Bande reicht bis ins Rote: verdünnt ist die Lösung gelb, konzentrierter braun, dann fast schwarz
       "I3-(aq)": { name: name("triiodide ion"), Hf: -51.46, bands: [[350, 130, 26000], [520, 380, 80]],
         src: "llnl.dat (USGS): I3-, Enthalpy of formation -12.3 kcal/mol" + BAND },
-      "Br2(aq)": { name: name("bromine, dissolved"), Hf: null, bands: [[400, 110, 170]], src: NONE + BAND },
+      // kd: Verteilung zwischen einer Ölschicht (Hexan) und Wasser; oilBands: die Banden im Öl
+      "Br2(aq)": { name: name("bromine, dissolved"), Hf: null, bands: [[400, 110, 170]], kd: 20, oilBands: [[415, 100, 200]],
+        src: NONE + BAND + "; distribution hexane/water 20 and the band in hexane: estimates (for carbon tetrachloride/water about 27, Hill, Worsley and Hepler 1968)" },
+
       "C12H22O11(aq)": { name: name("sucrose (sugar)"), Hf: null, Vm: 214.8, eta: [6.84e23, 4.2e23],
         src: NONE + "; Vm from the density of a 60 % sucrose solution, 1.2865 g/cm³ at 20 °C: CRC Handbook of Chemistry and Physics, Concentrative Properties of Aqueous Solutions. " +
           "The viscosity is not that of a pure substance but a parameter for the mixing rule (ln η weighted by mole fractions), fitted so that solutions of 20, 40, 60 and 70 % " +
@@ -233,7 +236,11 @@
       "PbSO4(s)": { name: name("lead(II) sulfate"), Hf: -919.94, S: 148.57, cp: 103.2, rho: 6.29, color: WHITE, dense: true, src: NBS + TABLE + "; " + LOOK },
       "PbO2(s)": { name: name("lead(IV) oxide"), Hf: -277.4, S: 68.6, cp: 64.6, rho: 9.38, color: "#4a2a17", dense: true, conducts: true, src: NBS + TABLE + "; " + LOOK },
       "Pt(s)": { name: name("platinum"), Hf: 0, cp: 25.9, rho: 21.45, color: "#d3d6da", src: ELEMENT + "heat capacity and density: usual table values; " + LOOK },
-      "I2(s)": { name: name("iodine"), Hf: 0, S: 116.14, cp: 54.4, rho: 4.93, color: "#3a3340", src: CODATA + TABLE + "; " + LOOK },
+      // kd mit via: Iod geht als I2 aus dem Triiodid ins Öl, I3- ⇌ I2 (Öl) + I-, also c(Öl) = kd · c(I3-) / c(I-)
+      "I2(s)": { name: name("iodine"), Hf: 0, S: 116.14, cp: 54.4, rho: 4.93, color: "#3a3340", kd: 0.063, via: ["I3-(aq)", "I-(aq)"], oilBands: [[522, 90, 900]],
+        src: CODATA + TABLE + "; " + LOOK + "; in hexane violet, 522 nm, about 900 L/(mol cm) (usual literature value; a patent on iodine sensing gives about 625 at 520 nm). " +
+          "kd = 40 / 640: distribution of dissolved iodine hexane/water about 40 (estimate; textbook examples 30, carbon tetrachloride/water 85) divided by " +
+          "K(I2(aq) + I- = I3-) = 640, from I2(s) + I- = I3- below and the solubility of iodine in water, 1.30 mmol/L (CRC Handbook)" },
       "Zn(OH)2(s)": { name: name("zinc hydroxide"), Hf: null, color: WHITE, settle: 60, src: LOOK },
       "Fe(OH)2(s)": { name: name("iron(II) hydroxide"), Hf: null, color: "#b9c8ae", settle: 60, src: LOOK },
       "MgO(s)": { name: name("magnesium oxide"), Hf: -601.60, S: 26.95, color: WHITE, src: CODATA + "; " + LOOK },

@@ -44,8 +44,8 @@
       "src": "NBS Tables of Chemical Thermodynamic Properties (Wagman u. a. 1982); Farbe: ziegelrot, wie im Schulversuch"
     },
     "C6H12(aq)": {
-      "name": {"de": "Hexen (Hex-1-en)", "en": "hexene (hex-1-ene)"}, "Hf": null, "Vm": 125.1, "solvent": true,
-      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,673 g/cm³ bei 20 °C (Vm = 84,16/0,673)"
+      "name": {"de": "Hexen (Hex-1-en)", "en": "hexene (hex-1-ene)"}, "Hf": null, "Vm": 125.1, "solvent": true, "oil": {"sol": 5.9e-4},
+      "src": "PubChem, Hazardous Substances Data Bank (gemeinfrei): Dichte 0,673 g/cm³ bei 20 °C (Vm = 84,16/0,673); Löslichkeit in Wasser 50 mg/L bei 20 °C (5,9·10⁻⁴ mol/L)"
     },
     "C6H14(aq)": {
       "name": {"de": "Hexan", "en": "hexane"}, "Hf": null, "Vm": 130.8, "solvent": true, "Tb": 68.73, "Hvap": 31.56, "cp": 195.6, "oil": {"sol": 1.1e-4},
@@ -56,7 +56,7 @@
       "src": "Olivenöl besteht zum größten Teil aus Triolein und wird hier als reines Triolein gerechnet (M = 885,4 g/mol). Dichte 0,9137 g/cm³ bei 20 °C (Aceite de las Valdesas, Herstellertabelle), Vm = 885,4/0,9137. Wärmekapazität 1,97 kJ/(kg K) (Engineering ToolBox, Specific Heat of Liquids; andere Tabellen nennen 1,67 bis 1,79). Zähigkeit nach Andrade aus 80,8 mPa·s bei 20 °C (Flottweg) und 40 mPa·s bei 40 °C (Bürkle) auf 25 und 50 °C umgerechnet; je nach Öl streuen die Werte um etwa 20 %. Unlöslich in Wasser. Farbe: goldgelb im Becherglas (geschätzt)"
     },
     "C6H12Br2(aq)": {
-      "name": {"de": "1,2-Dibromhexan", "en": "1,2-dibromohexane"}, "Hf": null, "Vm": 154.4, "solvent": true,
+      "name": {"de": "1,2-Dibromhexan", "en": "1,2-dibromohexane"}, "Hf": null, "Vm": 154.4, "solvent": true, "oil": {"sol": 0},
       "src": "Produkt der Addition von Brom an Hexen, farblos; Dichte etwa 1,58 g/cm³ (Vm = 243,97/1,58)"
     }
   },

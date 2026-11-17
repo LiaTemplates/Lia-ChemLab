@@ -1056,6 +1056,32 @@ test("Zwei Schichten: Hexan und Wasser sieden zusammen bei 62 °C, bis das Hexan
   near(L.vessel(l, "b").T, 100, 0.5, "danach siedet das Wasser allein");
 });
 
+test("Ausschütteln: Iod geht aus der Lugol-Lösung ins Hexan, ruhend langsam, geschüttelt in Sekunden; der Mixer macht eine milchige Emulsion", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const iodine = () => lab([{ type: "testtube", id: "b", contains: [{ reagent: "H2O", ml: 8 }, { reagent: "Lugol", drops: 20 }, { reagent: "hexane", ml: 3 }] }], { room: 20 });
+  const inOil = (l) => L.vessel(l, "b").org["I2(s)"] || 0;
+  let l = iodine();
+  L.step(l, 30);
+  assert.ok(inOil(l) < 1e-6, `ruhend wandert kaum etwas: ${inOil(l)}`);
+  L.shake(l, "b", "shake");
+  L.step(l, 30);
+  near(inOil(l), 8.3e-6, 4e-7, "geschüttelt: im Gleichgewicht gut vier Fünftel des Iods im Hexan");
+  assert.ok(["pink", "violet", "purple"].includes(look(l).oil.color.name), "Iod in Hexan ist violett: " + look(l).oil.color.name);
+  assert.equal(L.view(l, L.vessel(l, "b")).cloud.alpha < 0.05, true, "nach einer halben Minute hat sich alles wieder abgesetzt");
+  const before = totals(iodine());
+  near(totals(l).mass, before.mass, 1e-9, "Masse bleibt");
+  // Olivenöl und Wasser: geschüttelt grobe Tropfen, gemixt feine; die feinen bleiben viel länger in der Schwebe
+  const oil = () => lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }, { reagent: "olive oil", ml: 30 }] }], { room: 20 });
+  const settled = (how) => { const m = oil(); L.step(m, 1); L.shake(m, "b", how); L.step(m, 10); const turbid = L.view(m, L.vessel(m, "b")).cloud.alpha; let t = 0; while (L.vessel(m, "b").drop && t < 7200) { L.step(m, 10); t += 10; } return { turbid, t }; };
+  const shaken = settled("shake"), mixed = settled("mix");
+  assert.ok(shaken.turbid > 0.9 && mixed.turbid > 0.9, "beides zuerst trüb");
+  assert.ok(mixed.t > 4 * shaken.t, `gemixt dauert es viel länger: ${mixed.t} s gegen ${shaken.t} s`);
+  assert.ok(mixed.t > 600 && mixed.t < 3600, `gemixt trennt es sich in zehn Minuten bis einer Stunde: ${mixed.t} s`);
+  l = oil(); L.step(l, 1); L.shake(l, "b", "mix"); L.step(l, 10);
+  assert.ok(L.view(l, L.vessel(l, "b")).oil.ml < 1, "während des Mixens liegt keine Schicht oben");
+  assert.equal(L.shake(lab([{ type: "beaker", id: "b" }]), "b", "mix"), false, "ein leeres Glas lässt sich nicht mixen");
+});
+
 test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein Öl ohne Volumen wird abgelehnt", () => {
   L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
   const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "olive oil", ml: 20 }] }], { room: 20 });
@@ -8842,12 +8868,19 @@ test("Organische Nachweise: Tollens gibt mit Aldehyd in der Wärme einen Silbers
   assert.throws(() => L.register({ reactions: [{ eq: "H+(aq) + OH-(aq) -> H2O(l)", rate: { k: 1 }, mirror: true, src: "x" }] }), (e) => e.code === "data", "ein Spiegel braucht einen Feststoff");
 });
 
-test("Organische Nachweise: Bromwasser wird von Hexen sofort entfärbt, von Hexan nicht", () => {
+test("Organische Nachweise: geschüttelt entfärbt Hexen das Bromwasser, Hexan nimmt das Brom nur auf", () => {
   L.register(organic);
-  const test = (sample) => { const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }], { room: 20 }); L.add(l, "b", sample, { ml: 1 }); L.step(l, 10); return l; };
+  const test = (sample) => {
+    const l = lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }], { room: 20 });
+    L.add(l, "b", sample, { ml: 1 }); L.step(l, 3); L.shake(l, "b", "shake"); L.step(l, 40); return l;
+  };
   assert.notEqual(look(lab([{ type: "testtube", id: "b", contains: [{ reagent: "bromine water", ml: 5 }] }])).color.name, "colorless", "Bromwasser ist gefärbt");
-  assert.equal(look(test("hexene")).color.name, "colorless", "Hexen entfärbt");
-  assert.notEqual(look(test("hexane")).color.name, "colorless", "Hexan nicht");
+  const ene = test("hexene"), ane = test("hexane");
+  assert.equal(look(ene).color.name, "colorless", "Hexen entfärbt");
+  assert.equal(look(ene).oil.color.name, "colorless", "auch die Hexenschicht ist farblos");
+  assert.ok((L.vessel(ene, "b").org["C6H12Br2(aq)"] || 0) > 9e-5, "Dibromhexan in der oberen Schicht");
+  assert.notEqual(look(ane).oil.color.name, "colorless", "Hexan nimmt das Brom auf und färbt sich");
+  near((L.vessel(ane, "b").n["Br2(aq)"] || 0) + (L.vessel(ane, "b").org["Br2(aq)"] || 0), 1e-4, 1e-6, "das Brom ist nur verteilt, nicht verbraucht");
 });
 
 test("Organische Nachweise: Entsorgung, Geschwindigkeit kalt und warm, unbekannte Proben, Sonderfälle des Spiegels", () => {

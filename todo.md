@@ -20,7 +20,9 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - Preis: Jeder Versuch mit Metall in Wasser ändert sich ein wenig; viele Tests müssen neu kalibriert werden.
 - [ ] **Zweite flüssige Phase** (Plan: ~/.claude/plans/2026-11-17-zweite-fluessige-phase.md, Branch `zweite-phase`)
   - [x] 3a (17.11.2026): Ölschicht `v.org` neben der wässrigen Lösung, Stoffdaten `oil`, Hexan und Olivenöl, Abgießen oben, Pipette und Hahn unten, gemeinsames Sieden (Wasserdampfdestillation), Zeichnung in 2D.
-  - [ ] 3b Verteilen und Ausschütteln (`kd`, Knopf „Schütteln“, Reaktionen in der Ölschicht, Hexen und Bromwasser); 3c Scheidetrichter; 3d Phasenfeld im Strömungsbild; 3e 3D.
+  - [x] 3b (17.11.2026): Verteilen (`kd`, mit `via` für Iod aus dem Triiodid), Knöpfe „Schütteln“ und „Stabmixer“ (zehn Sekunden, Tropfen 0,1 mm und 8 µm, Aufrahmen nach Stokes), milchige Trübung, Reaktionen in der Ölschicht (Hexen und Brom).
+  - [ ] 3c Scheidetrichter; 3d Phasenfeld im Strömungsbild; 3e 3D.
+  - Offen aus 3b: Verteilungskoeffizienten von Iod und Brom in Hexan mit Quelle; gelöstes Iod I2(aq) im Wasser (verändert die Zinkiodid-Elektrolyse, deshalb nicht eingebaut); Emulgator; Schütteln einer offenen Flasche spritzt nicht.
   - Offen aus 3a: Ethylacetat als Schicht (braucht eine Regel für Mitlöser wie Ethanol).
   - Schichten mit eigener Zusammensetzung, Verteilung zwischen den Phasen, Ausschütteln, nur die obere Schicht abgießen, Zeichnung der Schichten.
   - Dann schwimmen Hexan und Hexen obenauf; Iod in Hexan (violett), Brom ausschütteln.

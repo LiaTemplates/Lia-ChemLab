@@ -1334,7 +1334,7 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
 
 - **Fehling-Probe** (Fehling I und II gemischt, tiefblau, im Wasserbad bei 80 °C): Ein Aldehyd und Glucose reduzieren das Kupfer, in etwa einer Minute fällt ziegelrotes Kupfer(I)-oxid aus. Aceton, ein Keton, tut das nicht. Ohne Wasserbad dauert es sehr viel länger.
 - **Tollens-Probe** (ammoniakalische Silbernitrat-Lösung, im Wasserbad bei 60 °C): Ein Aldehyd und Glucose scheiden Silber ab, und das legt sich als glänzender **Silberspiegel** an die Glaswand, mit Ethanal in etwa einer Minute, mit Glucose in einigen Minuten. Er bleibt am Glas, auch wenn du die Lösung ausgießt.
-- **Bromwasser** (gelbbraun): Hexen entfärbt es sofort, denn das Brom lagert sich an die Doppelbindung an. Hexan nicht.
+- **Bromwasser** (gelbbraun): Hexen und Hexan bilden eine Schicht auf dem Wasser. Schüttle das Glas: Mit Hexen wird alles farblos, denn das Brom geht in die Hexenschicht und lagert sich dort an die Doppelbindung an. Hexan nimmt das Brom nur auf und färbt sich gelb, entfärbt wird nichts.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1396,6 +1396,24 @@ Olivenöl und Hexan mischen sich nicht mit Wasser: Sie bilden eine eigene Schich
  ],
  "shelf":["olive oil","hexane","H2O","beaker","testtube","burner","thermometer"],
  "show":{"charts":["T"]}}
+```
+
+## Ausschütteln
+
+@[ChemLab.pack](packs/organic.json)
+
+Im Reagenzglas liegt Hexan auf Lugol-Lösung (Iod in Iodid-Lösung, gelbbraun). Iod löst sich in Hexan viel besser als in Wasser, aber es wandert nur über die Grenze zwischen den Schichten. Ruhig stehend dauert das viele Minuten.
+
+- **Schütteln** (Knopf im Feld des Glases, unter **Inhalt**): Zehn Sekunden lang zerfällt das Hexan in feine Tropfen, die Grenzfläche wird groß, und das Iod geht in Sekunden ins Hexan. Danach steigen die Tropfen auf, und oben liegt eine violette Schicht über einer viel blasseren Lösung.
+- **Mixen** mit dem Stabmixer zerschlägt Öl und Wasser im Becherglas in winzige Tropfen: Die Flüssigkeit wird milchig trüb, denn die Tropfen streuen das Licht. Geschüttelt trennt es sich in wenigen Minuten, gemixt dauert es etwa eine halbe Stunde, bis das Öl wieder oben liegt. Ein Emulgator, der die Emulsion dauerhaft hält (wie Eigelb in Mayonnaise), gibt es nicht.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"iod","contains":[{"reagent":"H2O","ml":8},{"reagent":"Lugol","drops":20},{"reagent":"hexane","ml":3}]},
+  {"type":"beaker","id":"oel","ml":250,"contains":[{"reagent":"H2O","ml":100},{"reagent":"olive oil","ml":30}]}
+ ],
+ "shelf":["Lugol","hexane","olive oil","H2O","testtube","beaker"],
+ "show":{"charts":false}}
 ```
 
 ## 3D-Ansicht
@@ -1636,6 +1654,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
 | `oil` | `{"sol": …}`: eine Flüssigkeit, die sich nicht mit Wasser mischt (Hexan, Öl). Über ihrer Löslichkeit `sol` in mol je Liter Wasser bildet sie eine eigene Schicht, die leichtere liegt oben; ohne Wasser ist sie die Flüssigkeit allein. Braucht `Vm` |
+| `kd`, `oilBands` | Wie sich ein ungeladener gelöster Stoff auf Ölschicht und Wasser verteilt, c(Öl) = kd · c(Wasser), und seine Banden im Öl (Brom: `20`, `[[415, 100, 200]]`). Mit `"via": [Träger, Rest]` kommt der Stoff aus dem Träger und lässt den Rest im Wasser: Iod geht aus dem Triiodid ins Hexan, c(Öl) = kd · c(I₃⁻) / c(I⁻) |
 | `eta` | Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, `[η25, η50]`, für die Strömungsansicht (Glycerin: `[934, 152]`). Dazwischen und darüber hinaus folgt sie der Temperatur nach Andrade; eine Mischung mischt den Logarithmus nach den Stoffmengenanteilen. Ohne Angabe zählt ein Stoff wie Wasser |
 | `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
@@ -1817,7 +1836,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
-- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Gelöste Stoffe wie Iod und Brom bleiben in der wässrigen Schicht. In 3D und in der Strömungsansicht erscheint die Ölschicht noch nicht.
+- Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. In 3D und in der Strömungsansicht erscheint die Ölschicht noch nicht.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.

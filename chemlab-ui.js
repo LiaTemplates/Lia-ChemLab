@@ -25,7 +25,7 @@
   var CLOSE_ICON = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l10 10M15 5L5 15"/></svg>';
   // Eingriffe der Lernenden: auf der Zeitleiste als Raute, alles andere (Beobachtungen) als Punkt
   var ACTS = { placed: 1, added: 1, poured: 1, pipetted: 1, emptied: 1, disposed: 1, removed: 1, hung: 1, under: 1, joined: 1, probe: 1, bridged: 1,
-    flame: 1, spin: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1 };
+    flame: 1, spin: 1, flip: 1, tare: 1, plugged: 1, tap: 1, volts: 1, temp: 1, wave: 1, splint: 1, flameTest: 1, shake: 1, mix: 1 };
 
   function glyph(name) {
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
@@ -1038,6 +1038,7 @@
           '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
           (sampleOf(v.id) && lab.samples[sampleOf(v.id)].names.length ? '<label class="cl-guess">' + esc(T("identify")) + ' <select data-act="guess"><option value="">' + esc(T("identify.pick")) + "</option>" +
             lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '"' + (lab.samples[sampleOf(v.id)].said === n ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
+          (!L.parts[v.type].dispenser ? '<button type="button" class="cl-btn" data-act="shake" data-id="shake">' + esc(T("shake")) + '</button> <button type="button" class="cl-btn" data-act="shake" data-id="mix">' + esc(T("mix")) + "</button> " : "") +
           '<button type="button" class="cl-btn" data-act="flow" aria-pressed="' + (st.flow ? "true" : "false") + '">' + esc(flowLabel()) + "</button> " +
           (show.particles && !v.veiled ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
@@ -1800,6 +1801,10 @@
       else if (act === "out") setOut(id);
       else if (act === "jumpto") jump(Math.max(parseFloat(id) || 0, 1e-6));      // gleich nach dem Ereignis; t = 0 allein wäre der Aufbau davor
       else if (act === "bench") { if (st.hand && st.hand.tool) alone(); }
+      else if (act === "shake" && L.vessel(lab, st.sel)) {        // schütteln oder mixen: zehn Sekunden lang, dann setzt es sich ab
+        var shaken = st.sel;
+        change(function (l) { return L.shake(l, shaken, id); }, { key: id === "mix" ? "mix" : "shake", vessel: shaken });
+      }
       else if (act === "flow") {                               // Strömung: aus, Temperatur, Wirbel, Druck, wieder aus
         st.flow = ((st.flow || 0) + 1) % FLOWS.length;
         b = ui.panel.querySelector('[data-act="flow"]');         // der Knopf bleibt stehen und behält den Fokus
