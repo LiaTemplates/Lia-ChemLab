@@ -94,7 +94,7 @@ Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
 
 `import: <Pfad>/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, und das Protokoll lässt sich kopieren. Die Veröffentlichung folgt im letzten Meilenstein.
+> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen. Die Veröffentlichung folgt im letzten Meilenstein.
 
 ## `@ChemLab.sim`
 
@@ -1077,6 +1077,22 @@ Der Text nennt die Geräte, wie sie gerade stehen, und was in jedes Gefäß gege
  "shelf":["CuSO4 0.1M","NaOH 1M","Zn granules","testtube","thermometer","burner"]}
 ```
 
+## Versuche speichern und teilen
+
+In einem Kurs mit `version: 1.0.0` oder höher speichert LiaScript den Stand jeder Fläche im Browser. Nach einem Neuladen der Seite steht der Versuch wieder auf dem Tisch, mit Protokoll, gezogener Probe und abgegebener Antwort. „Zurücksetzen“ löscht ihn. Die Vorlage selbst trägt eine Version unter 1.0.0 und speichert deshalb nichts; zum Ausprobieren braucht es einen eigenen Kurs, der sie mit `import:` einbindet.
+
+Im Klassenraum von LiaScript wandert der gespeicherte Versuch mit. Wer ihn sehen darf, legt die Person fest, die den Raum betreibt, wie bei Quiz und Umfragen:
+
+| Modus | Im Menü unter „Versuche der anderen“ |
+|---|---|
+| Shared | alle sehen die Versuche aller |
+| Summary, Details | nur die Lehrkraft sieht die Versuche der anderen |
+| ohne Klassenraum | nichts, nur der eigene Versuch wird gespeichert |
+
+Ein Klick zeigt den fremden Versuch auf der eigenen Fläche, mit Protokoll, Messwerten und Zielen; man kann ihn weiterlaufen lassen und spulen, gespeichert wird davon nichts. „Zurück zu meinem Versuch“ holt den eigenen wieder. Für Aufgaben mit unbekannten Proben passt Summary oder Details: Im Modus Shared stecken die gezogene Probe und die Antwort der anderen in den geteilten Daten.
+
+Gespeichert wird je Fläche, also unter dem `@uid` ihres Makros. Ändert sich die Beschreibung der Fläche, gilt der alte Stand nicht mehr, und die Fläche beginnt leer.
+
 ## Labor im Lehrtext
 
 Im Becherglas liegen 20 mL Salzsäure mit ein paar Tropfen Bromthymolblau. Das pH-Meter zeigt @ChemLab.value(labor,phmeter1), die Lösung ist also <script>
@@ -1694,6 +1710,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 **Grenzen:**
 
 - Jedes Gefäß gilt als durchmischt; Schlieren und Schichten gibt es nicht.
+- Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.
 - Mit seinen Ionenpaaren trifft das reale Modell den mittleren Aktivitätskoeffizienten von Natriumsulfat bis 0,5 mol/L auf 7 %; bei 1 mol/L ist er um ein Viertel zu groß. Gips und Calciumhydroxid lösen sich auf 3 % wie gemessen (im idealen Modell 67 und 42 % zu wenig), Silbersulfat um 9 % zu wenig.

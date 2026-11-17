@@ -9815,3 +9815,97 @@ test("Sprachen: wechselt die Seite die Sprache, folgt die Fläche; Google übers
     for (const code of ["fr", "ar"]) { delete L.strings[code]; delete L.names[code]; }
   }
 });
+
+// ================================================================ Speichern und Teilen
+
+// LiaScript reicht gespeicherte Werte gefroren weiter
+const frozen = (v) => { if (v && typeof v === "object") { Object.values(v).forEach(frozen); Object.freeze(v); } return v; };
+
+test("Speichern: ein Lauf übersteht JSON, mit gezogener Probe, Antwort, Streuung und Protokoll", () => {
+  const more = { scatter: 42, bench: [sampleA, { type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }], task: { text: "A?", goals: [{ identify: "A" }] } };
+  const config = drawn(0.7, more), run = L.createRun(config);
+  L.act(run, (l, emit) => L.add(l, "b", "Mg ribbon", { g: 0.05 }, emit), { key: "added", vessel: "b", reagent: "Mg ribbon" });
+  L.advance(run, 5);
+  L.guess(run.lab, "A", "Kaliumiodid");
+  const back = L.loadRun(drawn(0.2, more), frozen(JSON.parse(JSON.stringify(L.saveRun(run)))));      // neu gezogen: die gespeicherte Probe gilt
+  assert.equal(back.frames[0].s, run.frames[run.frames.length - 1].s, "derselbe Zustand");
+  assert.deepEqual(L.snapshot(back), L.snapshot(run));
+  assert.deepEqual(back.log, run.log);
+  assert.deepEqual(back.lab.samples, run.lab.samples);
+  assert.equal(back.lab.scatter, 42);
+  assert.equal(L.checkTask(config.task, back.lab, L.logAt(back)).done, true, "die Antwort zählt weiter");
+  L.advance(back, 1);
+  L.guess(back.lab, "A", "Natriumchlorid");
+  assert.equal(back.lab.samples.A.said, "Natriumchlorid", "der geladene Lauf lässt sich weiter ändern");
+});
+
+// ein Klassenraum wie in LiaScript, nur im Speicher: "me" ist die eigene Schicht, andere tragen einen Namen
+const fakeRoom = () => {
+  const layers = {}, subs = [];
+  const list = (name) => Object.entries(layers[name] || {}).map(([id, values]) => ({ id, name: id === "me" ? "" : "Ada <b>", me: id === "me", symbol: "🦊", values }));
+  return {
+    layers,
+    layer: (name) => ({
+      on(fn) { const s = { name, fn }; subs.push(s); fn(list(name)); return () => subs.splice(subs.indexOf(s), 1); },
+      set(values, id) {
+        (layers[name] ||= {})[id || "me"] = frozen(JSON.parse(JSON.stringify(values)));
+        subs.filter((s) => s.name === name).forEach((s) => s.fn(list(name)));
+        return Promise.resolve();
+      },
+      get: () => (layers[name]?.me || []).slice()
+    })
+  };
+};
+
+test("Speichern: die Fläche lädt den eigenen Versuch wieder und zeigt fremde zum Ansehen", () => {
+  const room = fakeRoom();
+  globalThis.LIA = { classroom: room };
+  try {
+    const el = mount(tube, "saved1");
+    press(el, "hand", "Mg ribbon");
+    tap(el, "rg");
+    frames(3);
+    const n = state(el).run.log.length, mg = L.vessel(state(el).run.lab, "rg").n["Mg(s)"];
+    el._cl.stop();                                              // die Folie wird verlassen: gespeichert
+    const own = room.layers["ChemLab:saved1"].me;
+    assert.equal(own.length, 1);
+
+    delete L.store.saved1;                                      // ein Reload
+    const again = mount(tube, "saved1");
+    assert.equal(state(again).run.log.length, n, "das Protokoll ist wieder da");
+    near(L.vessel(state(again).run.lab, "rg").n["Mg(s)"], mg, 1e-12, "der Inhalt auch");
+    assert.match(logOf(again), /Magnesiumband/);
+    assert.equal(part(again, ".cl-others").hidden, true, "allein: keine fremden Versuche");
+
+    room.layer("ChemLab:saved1").set([{ src: own[0].src, run: L.saveRun(L.createRun(state(again).config)), names: {}, counts: {}, types: {} }], "ada");
+    assert.equal(part(again, ".cl-others").hidden, false);
+    assert.match(part(again, ".cl-otherlist").innerHTML, /🦊 Ada &lt;b&gt;/, "Namen tippen andere: maskiert");
+    press(again, "other", "ada");
+    assert.equal(state(again).run.log.length, 0, "der fremde Versuch");
+    assert.equal(part(again, ".cl-viewing").hidden, false);
+    assert.match(part(again, ".cl-viewing").querySelector("span").textContent, /Du siehst den Versuch von Ada <b>/);
+    press(again, "hand", "Mg ribbon");
+    tap(again, "rg");
+    press(again, "reset");
+    again._cl.stop();
+    assert.equal(room.layers["ChemLab:saved1"].me, own, "was man im fremden Versuch tut, wird nicht gespeichert");
+    const back = mount(tube, "saved1");
+    press(back, "mine");
+    assert.equal(state(back).run.log.length, n, "zurück zum eigenen");
+    assert.equal(part(back, ".cl-viewing").hidden, true);
+
+    const other = mount(Object.assign({}, tube, { room: 30 }), "saved1");
+    assert.equal(state(other).run.log.length, 0, "ein geänderter Aufbau lädt nichts");
+    assert.equal(part(other, ".cl-others").hidden, true);
+    other._cl.stop();
+    assert.equal(room.layers["ChemLab:saved1"].me, own, "und überschreibt nichts");
+
+    delete L.store.saved1;
+    const last = mount(tube, "saved1");
+    press(last, "reset");
+    assert.deepEqual(room.layers["ChemLab:saved1"].me, [], "zurückgesetzt: die Schicht ist leer");
+    last._cl.stop();
+  } finally {
+    delete globalThis.LIA;
+  }
+});

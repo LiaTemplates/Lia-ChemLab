@@ -196,6 +196,7 @@
       "count.reactions": "{n} reaction", "count.reactions.n": "{n} reactions", "count.couples": "{n} redox couple", "count.couples.n": "{n} redox couples",
       "count.reagents": "{n} stock bottle", "count.reagents.n": "{n} stock bottles",
       "copy": "Copy setup", "copy.manual": "The setup as text – select and copy:", "copy.done": "The text is on the clipboard.",
+      "others": "Experiments of others", "others.anon": "no name", "others.viewing": "You are looking at the experiment of {name}.", "others.back": "Back to my experiment",
       "log.copy": "Copy the log", "log.manual": "The log as text – select and copy:",
       "table.copy": "Copy the table", "table.manual": "The readings, separated by tabs – select and copy:",
       "table.note": "Note the readings", "table.clear": "Clear the table", "table.title": "Readings", "table.no": "No.",
