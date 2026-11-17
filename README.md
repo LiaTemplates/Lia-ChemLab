@@ -90,11 +90,15 @@ Mit diesem Baustein experimentieren Lernende an einem Labortisch: Gefäße aufst
 
 Weil der Zustand laufend aufgezeichnet wird, lässt sich jeder Versuch **anhalten, zurückspulen und rückwärts abspielen**.
 
-Einbinden im Kopf eines Kurses, mit dem Pfad oder der Adresse dieser Datei:
+Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
-`import: <Pfad>/README.md`
+`import: https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/0.0.1/README.md`
 
-> **Stand:** Meilenstein 6 von 7. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen. Die Veröffentlichung folgt im letzten Meilenstein.
+`import: https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md`
+
+Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
+
+> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -1578,7 +1582,7 @@ Szenen und das Aussehen der Geräte in 3D lassen sich nachtragen, wie Stoffe. Si
 
 ```
 <!--
-import: <Pfad>/README.md
+import: https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/0.0.1/README.md
 script: ./werkstatt.js
 -->
 ```

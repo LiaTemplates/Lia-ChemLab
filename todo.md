@@ -32,4 +32,4 @@ Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nu
 
 ## Veröffentlichung
 
-- [ ] Meilenstein 7: Veröffentlichung. Es gibt noch kein Remote; gepusht oder veröffentlicht wird nur nach ausdrücklicher Bestätigung.
+- [x] Meilenstein 7: veröffentlicht am 17.11.2026 als [LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab), Version 0.0.1. Neue Fassungen: `version:` im Kopf erhöhen (unter 1.0.0 bleiben) und ein Tag mit derselben Nummer pushen.
