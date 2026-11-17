@@ -616,6 +616,18 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   assert.ok(Math.max(...L.fx.fields.boil.v.map(Math.abs)) > 0.5, "es strömt weiter");
   assert.equal(L.view(lab([{ type: "beaker", id: "b" }]), L.vessel(lab([{ type: "beaker", id: "b" }]), "b")).heat.boil, null, "leer: nichts, was siedet");
 
+  // kaltes Wasser auf heißes gießen: der Rechenkern mischt sofort, im Bild liegt es erst oben, nie kälter als es selbst
+  const still = { k: 0.25, room: 20, d: 7, boil: 100, q: 0 };
+  let ml = 150, T = 80, t = 0;
+  L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp");
+  for (; t < 2; t += 1 / 60) { const add = 50 / 120; T = (ml * T + add * 20) / (ml + add); ml += add; L.fx.flow(box, { ml, T, heat: still }, t, "pour", "temp"); }
+  const p = L.fx.fields.pour, row = (j) => { let a = 0; for (let i = 1; i <= p.cols; i++) a += p.T[i + j * (p.cols + 2)]; return a / p.cols; };
+  assert.ok(row(1) < 30 && row(1) > 19.9, `oben das kalte Wasser: ${row(1)}`);
+  assert.ok(row(24) > T + 1, "unten noch das heiße");
+  let mean = 0;
+  for (let j = 1; j <= 24; j++) mean += row(j) / 24;
+  near(mean, T, 1e-6, "das Mittel ist die gemischte Temperatur des Rechenkerns");
+
   const cold = beaker([{ reagent: "H2O", ml: 80 }], { room: 20 });
   const c = L.view(cold, L.vessel(cold, "b"));
   L.fx.flow(box, c, 0, "cold", "temp"); L.fx.flow(box, c, 5, "cold", "temp");

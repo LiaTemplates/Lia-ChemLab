@@ -164,8 +164,9 @@
     bound(s, 1, s.u); bound(s, 2, s.v);
   }
 
-  // Ein Schritt um dt Sekunden. heat: { q, k, room } aus dem Rechenkern; cell: Wärmekapazität einer Zelle in J/K, size: Kantenlänge in m
-  function advance(s, heat, T, cell, size, dt, still) {
+  // Ein Schritt um dt Sekunden. heat: { q, k, room, boil } aus dem Rechenkern; cell: Wärmekapazität einer Zelle in J/K, size: Kantenlänge in m;
+  // inflow: welcher Anteil der Flüssigkeit eben zugeflossen ist (er kommt oben an), sonst 0
+  function advance(s, heat, T, cell, size, dt, still, inflow) {
     var W = s.cols + 2, x = s.T, rho = fx.density(T), lo = Math.round(s.cols * 0.2), hi = s.cols + 1 - lo, rim = 2 * ROWS + s.cols, sum = 0, i, j, k, nu, nv;
     for (i = lo; i <= hi; i++) x[i + ROWS * W] += heat.q * dt / ((hi - lo + 1) * cell);      // die Flamme heizt die Mitte des Bodens
     if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });
@@ -181,7 +182,15 @@
     s.T = x = advect(s, 0, x, dt);
     spread(s, 0, x, dt);
     each(s, function (k) { sum += x[k]; });
-    sum = T - sum / (s.cols * ROWS);
+    sum /= s.cols * ROWS;
+    if (inflow > 1e-6) {           // der Rechenkern mischt Zugegossenes sofort; im Bild kommt es oben an und mischt sich erst dort ein
+      var poured = (T - (1 - inflow) * sum) / inflow, top = Math.min(ROWS, Math.ceil(ROWS * inflow)), share = inflow * ROWS / top;      // seine Temperatur, aus der Energiebilanz
+      each(s, function (k, i, j) { if (j <= top) x[k] += share * (poured - x[k]); });
+      sum = 0;
+      each(s, function (k) { sum += x[k]; });
+      sum /= s.cols * ROWS;
+    }
+    sum = T - sum;
     each(s, function (k) { x[k] += sum; });                     // das Mittel bleibt die Temperatur des Rechenkerns
     if (heat.boil != null) each(s, function (k) { x[k] = Math.min(x[k], heat.boil + SUPER); });      // beim Sieden liegt das Mittel damit knapp darunter
     bound(s, 0, x);
@@ -211,15 +220,18 @@
     size = deep / ROWS;
     cols = Math.max(3, Math.min(40, Math.round(heat.d / 100 / size)));      // Zellen etwa quadratisch
     cell = w.ml * 4.18 / (cols * ROWS);
-    if (!s || s.cols !== cols || t < s.t - 1e-9 || t - s.t > 30) {      // neu oder nach einem Sprung: unter den jetzigen Bedingungen einschwingen
+    // neu, nach einem Sprung der Uhr oder bei ganz anderer Form: unter den jetzigen Bedingungen einschwingen.
+    // Nach dem Zugießen bleibt das Gitter, damit man sieht, wohin das Zugegossene läuft; die Zellen werden dabei etwas höher.
+    if (!s || s.cols > 2 * cols || cols > 2 * s.cols || t < s.t - 1e-9 || t - s.t > 30) {
       s = fields[key] = field(cols, w.T);
-      for (i = 0; i < 100; i++) advance(s, heat, w.T, cell, size, STEP, true);
-      s.t = t;
+      for (i = 0; i < 100; i++) advance(s, heat, w.T, cell, size, STEP, true, 0);
+      s.t = t; s.ml = w.ml;
     }
+    cols = s.cols; cell = w.ml * 4.18 / (cols * ROWS);
     dt = still ? 0 : t - s.t;
     n = Math.min(40, Math.ceil(dt / STEP));
-    for (i = 0; i < n; i++) advance(s, heat, w.T, cell, size, Math.min(0.5, dt / n), false);
-    s.t = t;
+    for (i = 0; i < n; i++) advance(s, heat, w.T, cell, size, Math.min(0.5, dt / n), false, i ? 0 : Math.max(0, (w.ml - s.ml) / w.ml));
+    if (n) { s.t = t; s.ml = w.ml; }
 
     W = cols + 2; cw = width / cols; ch = height / ROWS;
     function curl(k) { return (s.v[k + 1] - s.v[k - 1] - s.u[k + W] + s.u[k - W]) / 2; }      // positiv: dreht im Uhrzeigersinn
