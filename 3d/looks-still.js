@@ -48,6 +48,7 @@
       var group = new THREE.Group(), drops = new THREE.InstancedMesh(new THREE.SphereGeometry(0.07, 8, 6),
         new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 1, thickness: 0.2 }), 3);
       drops.count = 0;
+      drops.frustumCulled = false;                             // count wechselt: nah herangezoomt fehlten sonst die Tropfen
       group.add(drops);
       group.userData = { drops: drops };
       return group;

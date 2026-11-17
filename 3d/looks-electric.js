@@ -29,6 +29,7 @@
       var bub = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 10, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 16);
       var film = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 18);
       bub.count = 0; film.count = 0;
+      bub.frustumCulled = film.frustumCulled = false;            // count wechselt: eine einmal berechnete Hülle wäre leer oder zu klein, und nah herangezoomt fehlten die Blasen
       group.add(tag, bub, film);
       group.userData = { tag: tag, bub: bub, film: film, dummy: new THREE.Object3D() };
       return group;
