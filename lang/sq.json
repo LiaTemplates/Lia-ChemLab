@@ -498,7 +498,8 @@
     "spinEmpty": "Së pari vendosni një provëz.",
     "hint.centrifuge": "Tani prek provëzën që duhet të futet në centrifugë – ose tavolinën.",
     "part.electrode-Pb": "elektrodë plumbi",
-    "say.mirror": "{vessel}: Në murin e qelqit formohet një pasqyrë prej {name}."
+    "say.mirror": "{vessel}: Në murin e enës formohet një pasqyrë prej {name}.",
+    "hidden.mirror": "{vessel}: Në murin e enës formohet një pasqyrë."
   },
   "names": {
     "H2O(l)": "ujë",

@@ -498,7 +498,8 @@
     "spinEmpty": "Letakkan tabung uji dahulu.",
     "hint.centrifuge": "Sekarang ketik tabung uji yang hendak dimasukkan ke dalam pengempar – atau meja.",
     "part.electrode-Pb": "elektrod plumbum",
-    "say.mirror": "{vessel}: Cermin {name} terbentuk pada dinding kaca."
+    "say.mirror": "{vessel}: Cermin {name} terbentuk pada dinding bekas.",
+    "hidden.mirror": "{vessel}: Cermin terbentuk pada dinding bekas."
   },
   "names": {
     "H2O(l)": "air",

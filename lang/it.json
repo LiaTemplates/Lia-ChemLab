@@ -498,7 +498,8 @@
     "spinEmpty": "Metti prima una provetta.",
     "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco.",
     "part.electrode-Pb": "elettrodo di piombo",
-    "say.mirror": "{vessel}: sulla parete del vetro si forma uno specchio di {name}."
+    "say.mirror": "{vessel}: sulla parete del recipiente si forma uno specchio di {name}.",
+    "hidden.mirror": "{vessel}: sulla parete del recipiente si forma uno specchio."
   },
   "names": {
     "H2O(l)": "acqua",

@@ -498,7 +498,8 @@
     "spinEmpty": "Laita ensin koeputki paikalleen.",
     "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää.",
     "part.electrode-Pb": "lyijyelektrodi",
-    "say.mirror": "{vessel}: Lasin seinään muodostuu peili: {name}."
+    "say.mirror": "{vessel}: Astian seinään muodostuu peili: {name}.",
+    "hidden.mirror": "{vessel}: Astian seinään muodostuu peili."
   },
   "names": {
     "H2O(l)": "vesi",

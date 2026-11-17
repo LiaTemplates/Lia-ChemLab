@@ -498,7 +498,8 @@
     "spinEmpty": "Puneți mai întâi o eprubetă.",
     "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa.",
     "part.electrode-Pb": "electrod de plumb",
-    "say.mirror": "{vessel}: pe peretele sticlei se formează o oglindă de {name}."
+    "say.mirror": "{vessel}: pe peretele vasului se formează o oglindă de {name}.",
+    "hidden.mirror": "{vessel}: pe peretele vasului se formează o oglindă."
   },
   "names": {
     "H2O(l)": "apă",

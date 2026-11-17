@@ -498,7 +498,8 @@
     "spinEmpty": "Primero coloca un tubo de ensayo.",
     "hint.centrifuge": "Ahora tocar el tubo de ensayo que debe ir a la centrífuga, o la mesa.",
     "part.electrode-Pb": "electrodo de plomo",
-    "say.mirror": "{vessel}: En la pared del vidrio se forma un espejo de {name}."
+    "say.mirror": "{vessel}: En la pared del recipiente se forma un espejo de {name}.",
+    "hidden.mirror": "{vessel}: En la pared del recipiente se forma un espejo."
   },
   "names": {
     "H2O(l)": "agua",

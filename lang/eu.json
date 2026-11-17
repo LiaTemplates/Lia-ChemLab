@@ -498,7 +498,8 @@
     "spinEmpty": "Jarri lehenik saiakuntza-hodi bat.",
     "hint.centrifuge": "Orain sakatu zentrifugagailura joan behar duen saiakuntza-hodia – edo lan-mahaia.",
     "part.electrode-Pb": "berunezko elektrodoa",
-    "say.mirror": "{vessel}: Beiraren hormari {name} ispilu bat sortzen zaio."
+    "say.mirror": "{vessel}: Ontziaren hormari {name} ispilu bat sortzen zaio.",
+    "hidden.mirror": "{vessel}: Ontziaren hormari ispilu bat sortzen zaio."
   },
   "names": {
     "H2O(l)": "ura",

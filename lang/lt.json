@@ -498,7 +498,8 @@
     "spinEmpty": "Pirmiausia įstatykite mėgintuvėlį.",
     "hint.centrifuge": "Dabar bakstelėkite mėgintuvėlį, kuris turi patekti į centrifugą, – arba stalą.",
     "part.electrode-Pb": "švino elektrodas",
-    "say.mirror": "{vessel}: ant stiklo sienelės susidaro veidrodis: {name}."
+    "say.mirror": "{vessel}: ant indo sienelės susidaro veidrodis: {name}.",
+    "hidden.mirror": "{vessel}: ant indo sienelės susidaro veidrodis."
   },
   "names": {
     "H2O(l)": "vanduo",

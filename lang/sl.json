@@ -498,7 +498,8 @@
     "spinEmpty": "Najprej vstavite epruveto.",
     "hint.centrifuge": "Zdaj tapni epruveto, ki naj gre v centrifugo – ali mizo.",
     "part.electrode-Pb": "svinčeva elektroda",
-    "say.mirror": "{vessel}: Na steni stekla nastane zrcalo iz snovi {name}."
+    "say.mirror": "{vessel}: Na steni posode nastane zrcalo iz snovi {name}.",
+    "hidden.mirror": "{vessel}: Na steni posode nastane zrcalo."
   },
   "names": {
     "H2O(l)": "voda",

@@ -498,7 +498,8 @@
     "spinEmpty": "Najprv vložte skúmavku.",
     "hint.centrifuge": "Teraz ťukni na skúmavku, ktorá má ísť do centrifúgy – alebo na stôl.",
     "part.electrode-Pb": "olovená elektróda",
-    "say.mirror": "{vessel}: Na stene skla sa tvorí zrkadlo z látky {name}."
+    "say.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo z látky {name}.",
+    "hidden.mirror": "{vessel}: Na stene nádoby sa tvorí zrkadlo."
   },
   "names": {
     "H2O(l)": "voda",

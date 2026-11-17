@@ -498,7 +498,8 @@
     "spinEmpty": "Kwanza weka neli ya majaribio.",
     "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi.",
     "part.electrode-Pb": "elektrodi ya risasi",
-    "say.mirror": "{vessel}: Kioo cha {name} kinajitokeza kwenye ukuta wa glasi."
+    "say.mirror": "{vessel}: Kioo cha {name} kinajitokeza kwenye ukuta wa chombo.",
+    "hidden.mirror": "{vessel}: Kioo kinajitokeza kwenye ukuta wa chombo."
   },
   "names": {
     "H2O(l)": "maji",

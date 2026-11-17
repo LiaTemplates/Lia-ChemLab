@@ -498,7 +498,8 @@
     "spinEmpty": "Előbb tegyen bele egy kémcsövet.",
     "hint.centrifuge": "Most koppints arra a kémcsőre, amely a centrifugába kerüljön – vagy az asztalra.",
     "part.electrode-Pb": "ólomelektród",
-    "say.mirror": "{vessel}: Az üveg falán {name}tükör képződik."
+    "say.mirror": "{vessel}: Az edény falán {name}tükör képződik.",
+    "hidden.mirror": "{vessel}: Az edény falán tükör képződik."
   },
   "names": {
     "H2O(l)": "víz",

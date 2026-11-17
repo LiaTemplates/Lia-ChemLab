@@ -498,7 +498,8 @@
     "spinEmpty": "请先放入一支试管。",
     "hint.centrifuge": "现在点击要放进离心机的试管——或点击实验台。",
     "part.electrode-Pb": "铅电极",
-    "say.mirror": "{vessel}：玻璃壁上形成一层{name}镜。"
+    "say.mirror": "{vessel}：容器壁上形成一层{name}镜。",
+    "hidden.mirror": "{vessel}：容器壁上形成一层镜面。"
   },
   "names": {
     "H2O(l)": "水",

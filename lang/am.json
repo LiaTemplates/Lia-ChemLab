@@ -498,7 +498,8 @@
     "spinEmpty": "መጀመሪያ የሙከራ ቱቦ ያስገቡ።",
     "hint.centrifuge": "አሁን ወደ ሴንትሪፊዩጁ የሚገባውን የሙከራ ቱቦ ይንኩ – ወይም ጠረጴዛውን።",
     "part.electrode-Pb": "የእርሳስ ኤሌክትሮድ",
-    "say.mirror": "{vessel}: በመስታወቱ ግድግዳ ላይ የ{name} መስተዋት ይፈጠራል።"
+    "say.mirror": "{vessel}: በዕቃው ግድግዳ ላይ የ{name} መስተዋት ይፈጠራል።",
+    "hidden.mirror": "{vessel}: በዕቃው ግድግዳ ላይ መስተዋት ይፈጠራል።"
   },
   "names": {
     "H2O(l)": "ውሃ",

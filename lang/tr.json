@@ -498,7 +498,8 @@
     "spinEmpty": "Önce bir deney tüpü yerleştirin.",
     "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha.",
     "part.electrode-Pb": "kurşun elektrot",
-    "say.mirror": "{vessel}: Cam duvarda {name} aynası oluşuyor."
+    "say.mirror": "{vessel}: Kabın çeperinde {name} aynası oluşuyor.",
+    "hidden.mirror": "{vessel}: Kabın çeperinde bir ayna oluşuyor."
   },
   "names": {
     "H2O(l)": "su",
@@ -742,7 +743,7 @@
     "C4H4O6^2-(aq)": "tartarat iyonu",
     "Cu(C4H4O6)2^2-(aq)": "bakır tartarat kompleksi",
     "Cu2O(s)": "bakır(I) oksit",
-    "C6H12(aq)": "heksen",
+    "C6H12(aq)": "hekzen",
     "C6H14(aq)": "hekzan",
     "C6H12Br2(aq)": "1,2-dibromohekzan",
     "Fehling I": "Fehling I (bakır sülfat çözeltisi)",
@@ -751,7 +752,7 @@
     "ethanal": "etanal çözeltisi (1 mol/L)",
     "glucose": "glikoz çözeltisi %5",
     "acetone": "aseton",
-    "hexene": "heksen",
+    "hexene": "hekzen",
     "hexane": "hekzan",
     "bromine water": "bromlu su (0,02 mol/L)"
   }

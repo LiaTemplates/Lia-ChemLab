@@ -288,6 +288,8 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
+        // solvent: ein organisches Lösungsmittel, das in den Behälter für organische Abfälle gehört, auch wenn es nicht verdampft (kein Tb)
+        if (data.solvent != null && !(data.solvent === true && phase === "aq" && data.Vm != null)) throw fail("species", id + " solvent");
         var gamma = pack.species[id] && pack.species[id].gamma;
         if (gamma != null && !(parse(id).phase === "aq" && Array.isArray(gamma) && gamma.length === 2 &&
           gamma.every(function (value) { return typeof value === "number" && isFinite(value); }) &&
@@ -1234,7 +1236,7 @@
       var x = r.rate.fast ? burst(v, r, volume(v)) : 0, id;
       if (!(x > 0)) return;
       for (id in r.nu) {
-        if (L.db.species[id].phase === "s") { if (r.nu[id] > 0) growSolid(v, id, r.nu[id] * x); else takeSolid(v, id, -r.nu[id] * x); }
+        if (L.db.species[id].phase === "s") { if (r.nu[id] > 0) growSolid(v, id, r.nu[id] * x, r.mirror); else takeSolid(v, id, -r.nu[id] * x); }
         else if ((v.n[id] = (v.n[id] || 0) + r.nu[id] * x) < TRACE) delete v.n[id];
       }
     });
@@ -1380,7 +1382,7 @@
   var BINS = ["sink", "acid", "heavy", "organic", "solid"];
   var HEAVY = { Cu: 1, Zn: 1, Ag: 1, Ba: 1, Cr: 1, Co: 1, Mn: 1, Ni: 1, Pb: 1, Cd: 1, Hg: 1, Sn: 1, As: 1, Sb: 1, Tl: 1, Se: 1, V: 1, Mo: 1, Bi: 1, U: 1 };      // dürfen nicht ins Abwasser
   var ALKALI = { Li: 1, Na: 1, K: 1, Rb: 1, Cs: 1 };              // als Metall: Reste zurück unter Paraffinöl, die Lehrkraft vernichtet sie
-  var OXIDIZER = { "OCl-(aq)": 1, "HOCl(aq)": 1, "Cl2(aq)": 1, "I3-(aq)": 1, "I2(aq)": 1, "I2(s)": 1 };      // erst mit Thiosulfat reduzieren
+  var OXIDIZER = { "OCl-(aq)": 1, "HOCl(aq)": 1, "Cl2(aq)": 1, "Br2(aq)": 1, "I3-(aq)": 1, "I2(aq)": 1, "I2(s)": 1 };      // erst mit Thiosulfat reduzieren
   var PH_SINK = [6, 9];                                           // so neutral muss eine Lösung für den Ausguss sein
 
   function elementsOf(id) { return (id.replace(/\([a-z]+\)$/, "").match(/[A-Z][a-z]?/g) || []); }
@@ -1410,11 +1412,12 @@
       if (!(v.n[id] > 1e-7) || id === WATER) continue;
       any = true;
       el = elementsOf(id);
-      if (s.phase === "s" && el.length === 1) { if (ALKALI[el[0]]) alkali = true; }      // ein Metallstück ist Feststoff, kein Salz
+      // ein Metallstück ist Feststoff, kein Salz; was sich aber aus einer Lösung abgeschieden hat (ein Silberspiegel), sammelt man mit den Schwermetallen
+      if (s.phase === "s" && el.length === 1) { if (ALKALI[el[0]]) alkali = true; else if (HEAVY[el[0]] && fresh(v, id) > 1e-7) heavy = true; }
       else if (el.some(function (e) { return HEAVY[e]; })) heavy = true;
       if (OXIDIZER[id]) oxid += v.n[id];
       if (el.indexOf("C") >= 0 && el.indexOf("H") >= 0)        // flüssiger oder flüchtiger gelöster organischer Stoff, mit seinem Volumen
-        organic += s.phase === "l" ? v.n[id] * s.M / s.rho / 1000 : s.phase === "aq" && s.Tb != null && s.Vm ? v.n[id] * s.Vm / 1000 : 0;
+        organic += s.phase === "l" ? v.n[id] * s.M / s.rho / 1000 : s.phase === "aq" && (s.Tb != null || s.solvent) && s.Vm ? v.n[id] * s.Vm / 1000 : 0;
     }
     v.lumps.forEach(function (l) { if (!l.made) solid += l.n * L.db.species[l.id].M; });
     if (!any && !(vol > 0)) return { bin: null };
@@ -2270,18 +2273,23 @@
   // mirror: er legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit steht (wet, in mL); er schwebt nicht und bleibt beim Umgießen
   function growSolid(v, id, amount, mirror) {
     var lump = null;
+    mirror = mirror && !L.parts[v.type].dispenser;              // in Bürette und Trichter: keine Wand, an der man ihn sähe
     v.lumps.forEach(function (l) { if (l.id === id && l.made && !l.mirror === !mirror) lump = l; });
     if (!lump) v.lumps.push((lump = { id: id, n: 0, n0: 0, a0: 0, p: 2 / 3, made: true, settled: 0 }));
     if (mirror) { lump.mirror = true; lump.wet = Math.max(lump.wet || 0, volume(v) * 1000); }
     lump.settled = mirror ? 1 : lump.n + amount > 0 ? lump.settled * lump.n / (lump.n + amount) : 0;     // der neue schwebt noch
     lump.n += amount;
     if (lump.n > lump.n0) { lump.n0 = lump.n; lump.a0 = 100 * lump.n0 * species(id).M; }
+    if (mirror) { lump.p = 0; lump.a0 = wall(v, lump.wet); }     // ein Spiegel ist so groß wie die benetzte Wand, bis er aufgezehrt ist
     v.n[id] = (v.n[id] || 0) + amount;
   }
 
-  function fresh(v, id) {          // was von einem Feststoff im Gefäß entstanden ist (ohne die Stücke aus dem Regal), in mol
+  // benetzte Wand und Boden eines Gefäßes bis ml, in cm², als Zylinder gerechnet
+  function wall(v, ml) { var d = spec(v).d; return Math.PI * d * (ml / (Math.PI * d * d / 4)) + Math.PI * d * d / 4; }
+
+  function fresh(v, id, mirror) {  // was von einem Feststoff im Gefäß entstanden ist (ohne die Stücke aus dem Regal), in mol; mirror: nur der Spiegel
     var sum = 0;
-    v.lumps.forEach(function (l) { if (l.id === id && l.made) sum += l.n; });
+    v.lumps.forEach(function (l) { if (l.id === id && l.made && (mirror == null || !l.mirror === !mirror)) sum += l.n; });
     return sum;
   }
 
@@ -2374,7 +2382,7 @@
     fast = fast.filter(function (r) { return list.length || limit(v, r) > SPARE; });
     if (!list.length && !fast.length) return;
     // Teilschritte so fein, dass je Teilschritt höchstens 5 % eines Ausgangsstoffs umgesetzt werden
-    var worst = 0, done = {}, grew = {}, sub, s, made, any = false;
+    var worst = 0, done = {}, grew = {}, sub, s, made, sp, any = false;
     list.forEach(function (r) {
       var x = speed(v, r, vol) * DT;
       r.left.forEach(function (t) { if (t.id !== WATER && v.n[t.id] > 0) worst = Math.max(worst, x * t.n / v.n[t.id]); });
@@ -2395,16 +2403,17 @@
         delta = r.nu[id] * x; phase = L.db.species[id].phase;
         if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;     // aus der Luft
         else if (phase === "s" && delta < 0) takeSolid(v, id, -delta, emit);
-        else if (phase === "s") { growSolid(v, id, delta, r.mirror); grew[id] = r.mirror ? "mirror" : true; }
+        else if (phase === "s") { growSolid(v, id, delta, r.mirror); grew[r.mirror ? id + " mirror" : id] = true; }
         else if ((v.n[id] = (v.n[id] || 0) + delta) < TRACE) delete v.n[id];
       }
       done[r.key] = (done[r.key] || 0) + x;
     });
     // Feststoff, der in der Flüssigkeit entsteht, trübt sie: gemeldet wird er, sobald man ihn sieht. colloid: er bleibt in der Schwebe
-    if (vol > 0) for (made in grew) {
-      if (v.flag.solid[made] || !(fresh(v, made) / vol > SEEN)) continue;        // was als Stück aus dem Regal daliegt, trübt nicht
+    if (vol > 0) for (made in grew) {                            // ein Spiegel wird für sich gemeldet ("Ag(s) mirror"), neben einem Niederschlag desselben Stoffs
+      sp = made.split(" ")[0];
+      if (v.flag.solid[made] || !(fresh(v, sp, made !== sp) / vol > SEEN)) continue;        // was als Stück aus dem Regal daliegt, trübt nicht
       v.flag.solid[made] = true;
-      if (emit) emit({ key: "solid", vessel: v.id, species: made, color: solidColor(made), grown: false, colloid: !!L.db.species[made].colloid, mirror: grew[made] === "mirror" });
+      if (emit) emit({ key: "solid", vessel: v.id, species: sp, color: solidColor(sp), grown: false, colloid: !!L.db.species[sp].colloid, mirror: made !== sp });
     }
     list.forEach(function (r) {
       var x = done[r.key], h;
@@ -4024,14 +4033,13 @@
     var paste = thick(v, vol);
     if (!(vol > 0) || paste) list.forEach(function (x) { if (x.phase === "aq") residue += x.n; });
     for (id in v.air) air[id] = cap > 0 ? Math.min(1, v.air[id] / cap) : 0;
-    var mirror = null, d = spec(v).d, coat;
+    var mirror = null, share;
     v.lumps.forEach(function (l) {                             // Niederschlag: was schwebt, trübt; was liegt, ist Bodensatz
       var color = rgbOf(l.id), down = vol > 0 ? l.settled : 1, k;   // ohne Flüssigkeit liegt alles am Boden
       if (!l.made) return;
-      if (l.mirror) {                                          // ein Spiegel am Glas: wie dicht er die benetzte Wand bedeckt
-        if (!(l.n > 0)) return;
-        coat = Math.PI * d * (l.wet / (Math.PI * d * d / 4)) + Math.PI * d * d / 4;      // Wand und Boden in cm², als Zylinder gerechnet
-        mirror = { rgb: color, ml: l.wet, share: Math.min(1, l.n / (MIRROR * coat)) };
+      if (l.mirror) {                                          // ein Spiegel am Glas: wie dicht er die benetzte Wand bedeckt; bei zweien zählt der dichtere
+        share = l.n > 0 ? Math.min(1, l.n / (MIRROR * wall(v, l.wet))) : 0;
+        if (share > 0 && !(mirror && mirror.share >= share)) mirror = { rgb: color, ml: l.wet, share: share };
         return;
       }
       // ein Kolloid streut das Licht: es trübt milchig, in einem blassen Ton seiner Farbe

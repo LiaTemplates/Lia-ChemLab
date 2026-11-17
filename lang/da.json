@@ -498,7 +498,8 @@
     "spinEmpty": "Sæt først et reagensglas i.",
     "hint.centrifuge": "Tryk nu på det reagensglas, der skal i centrifugen – eller på bordet.",
     "part.electrode-Pb": "blyelektrode",
-    "say.mirror": "{vessel}: Der dannes et spejl af {name} på glasvæggen."
+    "say.mirror": "{vessel}: Der dannes et spejl af {name} på beholderens væg.",
+    "hidden.mirror": "{vessel}: Der dannes et spejl på beholderens væg."
   },
   "names": {
     "H2O(l)": "vand",

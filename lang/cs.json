@@ -498,7 +498,8 @@
     "spinEmpty": "Nejdřív vložte zkumavku.",
     "hint.centrifuge": "Teď klepni na zkumavku, která má jít do centrifugy – nebo na stůl.",
     "part.electrode-Pb": "olověná elektroda",
-    "say.mirror": "{vessel}: Na stěně skla se tvoří zrcadlo z látky {name}."
+    "say.mirror": "{vessel}: Na stěně nádoby se tvoří zrcadlo z látky {name}.",
+    "hidden.mirror": "{vessel}: Na stěně nádoby se tvoří zrcadlo."
   },
   "names": {
     "H2O(l)": "voda",

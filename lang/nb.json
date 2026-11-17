@@ -498,7 +498,8 @@
     "spinEmpty": "Sett først inn et reagensrør.",
     "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken.",
     "part.electrode-Pb": "blyelektrode",
-    "say.mirror": "{vessel}: Det dannes et speil av {name} på glassveggen."
+    "say.mirror": "{vessel}: Det dannes et speil av {name} på karets vegg.",
+    "hidden.mirror": "{vessel}: Det dannes et speil på karets vegg."
   },
   "names": {
     "H2O(l)": "vann",

@@ -498,7 +498,8 @@
     "spinEmpty": "Pane enne katseklaas sisse.",
     "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda.",
     "part.electrode-Pb": "pliielektrood",
-    "say.mirror": "{vessel}: Klaasi seinale tekib {name} peegel."
+    "say.mirror": "{vessel}: Anuma seinale tekib {name} peegel.",
+    "hidden.mirror": "{vessel}: Anuma seinale tekib peegel."
   },
   "names": {
     "H2O(l)": "vesi",

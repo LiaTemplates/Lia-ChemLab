@@ -498,7 +498,8 @@
     "spinEmpty": "Vispirms ielieciet mēģeni.",
     "hint.centrifuge": "Tagad pieskarieties mēģenei, kurai jānonāk centrifūgā, – vai galdam.",
     "part.electrode-Pb": "svina elektrods",
-    "say.mirror": "{vessel}: uz stikla sieniņas veidojas spogulis: {name}."
+    "say.mirror": "{vessel}: uz trauka sieniņas veidojas spogulis: {name}.",
+    "hidden.mirror": "{vessel}: uz trauka sieniņas veidojas spogulis."
   },
   "names": {
     "H2O(l)": "ūdens",

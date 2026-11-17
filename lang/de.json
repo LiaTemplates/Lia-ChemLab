@@ -498,7 +498,8 @@
     "spinEmpty": "Erst ein Reagenzglas hineinstellen.",
     "hint.centrifuge": "Nun das Reagenzglas antippen, das in die Zentrifuge soll – oder den Tisch.",
     "part.electrode-Pb": "Blei-Elektrode",
-    "say.mirror": "{vessel}: An der Glaswand bildet sich ein Spiegel aus {name}."
+    "say.mirror": "{vessel}: An der Gefäßwand bildet sich ein Spiegel aus {name}.",
+    "hidden.mirror": "{vessel}: An der Gefäßwand bildet sich ein Spiegel."
   },
   "names": {
     "H2O(l)": "Wasser",

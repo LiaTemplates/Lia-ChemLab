@@ -498,7 +498,8 @@
     "spinEmpty": "Najpierw wstaw probówkę.",
     "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół.",
     "part.electrode-Pb": "elektroda ołowiana",
-    "say.mirror": "{vessel}: na ściance szkła tworzy się lustro: {name}."
+    "say.mirror": "{vessel}: na ściance naczynia tworzy się lustro: {name}.",
+    "hidden.mirror": "{vessel}: na ściance naczynia tworzy się lustro."
   },
   "names": {
     "H2O(l)": "woda",

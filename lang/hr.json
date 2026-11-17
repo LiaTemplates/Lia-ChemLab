@@ -498,7 +498,8 @@
     "spinEmpty": "Najprije stavite epruvetu.",
     "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol.",
     "part.electrode-Pb": "olovna elektroda",
-    "say.mirror": "{vessel}: Na stijenci stakla nastaje zrcalo od tvari {name}."
+    "say.mirror": "{vessel}: Na stijenci posude nastaje zrcalo od tvari {name}.",
+    "hidden.mirror": "{vessel}: Na stijenci posude nastaje zrcalo."
   },
   "names": {
     "H2O(l)": "voda",

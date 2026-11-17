@@ -498,7 +498,8 @@
     "spinEmpty": "Zet eerst een reageerbuis erin.",
     "hint.centrifuge": "Tik nu op de reageerbuis die in de centrifuge moet – of op de tafel.",
     "part.electrode-Pb": "loodelektrode",
-    "say.mirror": "{vessel}: Op de glaswand vormt zich een spiegel van {name}."
+    "say.mirror": "{vessel}: Op de wand van het vat vormt zich een spiegel van {name}.",
+    "hidden.mirror": "{vessel}: Op de wand van het vat vormt zich een spiegel."
   },
   "names": {
     "H2O(l)": "water",

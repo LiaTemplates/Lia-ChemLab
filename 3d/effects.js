@@ -83,8 +83,7 @@
     var ground = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
     var crust = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xf2f0ea, 0.9));
     // ein Spiegel am Glas (Silberspiegel): eine Metallhaut knapp innerhalb der Wand
-    var mirror = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 1, roughness: 0.12, transparent: true }));
-    mirror.scale.set(1.01, 1, 1.01);
+    var mirror = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 1, roughness: 0.12, transparent: true, side: THREE.DoubleSide }));
     mirror.renderOrder = 1;
     var solids = new THREE.Group();
     var bubbles = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 48);
@@ -113,8 +112,9 @@
       var pts = [[0, from]], n = shape.steps || 16, k;
       if (keys[key] === top.toFixed(3) + shape.id) return;
       keys[key] = top.toFixed(3) + shape.id;
-      for (k = 0; k <= n; k++) pts.push([shape.inner(from + (top - from) * k / n) - 0.012, from + (top - from) * k / n]);
-      if (key !== "body") pts.push([0, top]);
+      // der Spiegel ist eine offene Haut dicht an der Wand, alles andere ein Körper mit Deckel (die Flüssigkeit hat ihre eigene Oberfläche)
+      for (k = 0; k <= n; k++) pts.push([shape.inner(from + (top - from) * k / n) - (key === "mirror" ? 0.004 : 0.012), from + (top - from) * k / n]);
+      if (key !== "body" && key !== "mirror") pts.push([0, top]);
       mesh.geometry.dispose();
       mesh.geometry = fx.lathe(pts, 48);
     }

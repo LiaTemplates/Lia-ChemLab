@@ -498,7 +498,8 @@
     "spinEmpty": "Fa test tube hyɛ mu kan.",
     "hint.centrifuge": "Afei mia test tube a ɛsɛ sɛ ɛkɔ mfiri a ɛtwa kyinkyin no mu no so – anaa pon no.",
     "part.electrode-Pb": "lead electrode",
-    "say.mirror": "{vessel}: {name} ahwehwɛ bi yɛ wɔ ahwehwɛ no fasu ho."
+    "say.mirror": "{vessel}: {name} ahwehwɛ bi yɛ wɔ adekorade no fasu ho.",
+    "hidden.mirror": "{vessel}: Ahwehwɛ bi yɛ wɔ adekorade no fasu ho."
   },
   "names": {
     "H2O(l)": "nsuo",

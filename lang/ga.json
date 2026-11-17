@@ -498,7 +498,8 @@
     "spinEmpty": "Cuir triaileadán isteach ar dtús.",
     "hint.centrifuge": "Anois tapáil an triaileadán a rachaidh isteach sa lártheifneoir – nó an binse.",
     "part.electrode-Pb": "leictreoid luaidhe",
-    "say.mirror": "{vessel}: Cruthaítear scáthán de {name} ar bhalla na gloine."
+    "say.mirror": "{vessel}: Cruthaítear scáthán de {name} ar bhalla an tsoithigh.",
+    "hidden.mirror": "{vessel}: Cruthaítear scáthán ar bhalla an tsoithigh."
   },
   "names": {
     "H2O(l)": "uisce",

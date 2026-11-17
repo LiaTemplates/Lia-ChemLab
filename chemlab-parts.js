@@ -152,7 +152,7 @@
       "say.tap": "{vessel}: tap set to “{state}”", "say.tapOff": "{vessel}: tap closed",
       "say.tapFull": "{vessel}: The vessel below is full, the tap closes.",
       "say.solid": "{vessel}: A {color} precipitate forms.", "say.dissolved": "{vessel}: The precipitate dissolves.",
-      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the glass.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
+      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
       "say.crystals": "{vessel}: {color} crystals separate out.",
       "say.dissolvedOne": "{vessel}: The {color} precipitate dissolves.",
       "the.white": "white", "the.yellow": "yellow", "the.orange": "orange", "the.red": "red",
@@ -360,7 +360,7 @@
     if (veiled) switch (event.key) {
       case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
       case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
-      case "solid": if (event.colloid) return text("hidden.haze", lang, vars);
+      case "solid": if (event.colloid) return text("hidden.haze", lang, vars); if (event.mirror) return text("hidden.mirror", lang, vars);
     }
     switch (event.key) {
       case "disposed":                                           // in welchen Behälter, und ob er passte

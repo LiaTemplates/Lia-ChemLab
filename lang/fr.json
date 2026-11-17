@@ -498,7 +498,8 @@
     "spinEmpty": "Placez d'abord un tube à essai.",
     "hint.centrifuge": "Toucher maintenant le tube à essai qui doit aller dans la centrifugeuse – ou la paillasse.",
     "part.electrode-Pb": "électrode de plomb",
-    "say.mirror": "{vessel} : un miroir de {name} se forme sur la paroi du verre."
+    "say.mirror": "{vessel} : un miroir de {name} se forme sur la paroi du récipient.",
+    "hidden.mirror": "{vessel} : un miroir se forme sur la paroi du récipient."
   },
   "names": {
     "H2O(l)": "eau",

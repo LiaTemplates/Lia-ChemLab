@@ -498,7 +498,8 @@
     "spinEmpty": "先に試験管を入れること。",
     "hint.centrifuge": "次に、遠心分離機に入れる試験管をタップしてください。または実験台をタップしてください。",
     "part.electrode-Pb": "鉛電極",
-    "say.mirror": "{vessel}：ガラスの壁に{name}の鏡ができる。"
+    "say.mirror": "{vessel}：容器の壁に{name}の鏡ができる。",
+    "hidden.mirror": "{vessel}：容器の壁に鏡ができる。"
   },
   "names": {
     "H2O(l)": "水",
