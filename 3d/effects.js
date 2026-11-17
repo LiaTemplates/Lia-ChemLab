@@ -87,8 +87,10 @@
     mirror.renderOrder = 1;
     var solids = new THREE.Group();
     var bubbles = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.03 }), 48);
-    var steam = new THREE.Group(), stream = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 10, 1, true),
-      new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.55, depthWrite: false }));
+    // der Strahl: kräftig genug, dass man ihn auch vor einem weißen Deckel (Kalorimeter) sieht, und nach durchscheinenden Wänden gezeichnet
+    var steam = new THREE.Group(), stream = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 12, 1, true),
+      new THREE.MeshPhysicalMaterial({ color: 0x7fb0dc, roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.9, depthWrite: false }));
+    stream.renderOrder = 3;
     var dummy = new THREE.Object3D(), keys = {}, i, flat = false;
     for (i = 0; i < 24; i++) steam.add(new THREE.Sprite(new THREE.SpriteMaterial({ map: puff(), transparent: true, depthWrite: false, opacity: 0 })));
     bubbles.count = 0;
@@ -319,8 +321,8 @@
         stream.visible = !!w.inflow;
         if (stream.visible) {
           y = wet ? level : shape.floor;
-          stream.scale.set(0.07, shape.rim + 3 - y, 0.07);
-          stream.position.set(-r * 0.35 + (ctx.still ? 0 : 0.02 * Math.sin(t * 30)), (shape.rim + 3 + y) / 2, 0);
+          stream.scale.set(0.15, shape.rim + 5 - y, 0.15);
+          stream.position.set(-r * 0.35 + (ctx.still ? 0 : 0.02 * Math.sin(t * 30)), (shape.rim + 5 + y) / 2, 0);
         }
         burn.update(w, shape, ctx, tall);
       },
