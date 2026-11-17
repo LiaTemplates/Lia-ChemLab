@@ -487,13 +487,16 @@
     "err.other": "Mpangilio hauwezi kuonyeshwa",
     "part.centrifuge": "kitenganishi kizunguko",
     "spin": "Rota",
-    "spin.0": "imesimama",
+    "spin.0": "imezimwa",
     "spin.1": "inafanya kazi",
     "say.spinOn": "{part}: imewashwa",
     "say.spinOff": "{part}: imezimwa",
     "spinning": "Kitenganishi kizunguko kinafanya kazi – kizime kwanza.",
-    "tubesOnly": "Mirija ya majaribio pekee ndiyo inayoingia kwenye kitenganishi kizunguko.",
-    "spinFree": "Kwanza toa kila kitu kwenye mrija wa majaribio; kizibo pekee kinaweza kubaki."
+    "tubesOnly": "Neli za majaribio pekee ndizo zinazoingia kwenye kitenganishi kizunguko.",
+    "spinFree": "Kwanza toa kila kitu kwenye neli ya majaribio; hakuna kitu kinachopaswa kuning'inia juu yake au kuingia ndani yake, kizibo pekee kinaweza kubaki.",
+    "spinFlow": "Bado kuna kinachotiririka – subiri kwanza.",
+    "spinEmpty": "Kwanza weka neli ya majaribio.",
+    "hint.centrifuge": "Sasa gusa neli ya majaribio itakayoingia kwenye kitenganishi kizunguko – au meza ya kazi."
   },
   "names": {
     "H2O(l)": "maji",

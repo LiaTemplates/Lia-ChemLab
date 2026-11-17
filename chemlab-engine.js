@@ -921,7 +921,10 @@
         if (raw.unknown != null || raw.oneOf != null) throw fail("sample", item.id);      // nur ein Gefäß kann eine Probe sein
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
         if (def.flames) item.flame = flameLevel(raw.flame);
-        if (def.spin) item.spin = raw.spin ? 1 : 0;
+        if (def.spin) {
+          if (raw.spin != null && [0, 1, true, false].indexOf(raw.spin) < 0) throw fail("amount", item.id);
+          item.spin = raw.spin === 1 || raw.spin === true ? 1 : 0;
+        }
         if (def.bath && raw.temp != null) {
           if (typeof raw.temp !== "number" || !(raw.temp >= def.range[0] && raw.temp <= def.range[1])) throw fail("amount", item.id);
           item.temp = raw.temp;
@@ -955,6 +958,9 @@
       if (item.in != null && (!fits || ((own.electrode || own.circuit) && !def.electrodes))) throw fail("place", item.in);
       if (item.in != null && (def.insulated || def.noHeat) && (own.flames || own.bath)) throw fail("place", item.in);
       if (item.in != null && own.fits && host.type !== own.fits) throw fail("place", item.in);
+      if (item.spin && item.in != null && bench.some(function (o) {      // läuft sie, steckt nichts im Glas außer einem Stopfen, und nichts hängt darüber oder führt hinein
+        return o !== item && ((o.in === item.in && !closer(L.parts[o.type])) || o.over === item.in || o.to === item.in);
+      })) throw fail("place", item.in);
       if (item.to != null) {                                               // das andere Ende der Salzbrücke; an jedem Gefäß hängt nur eines
         def = ids[item.to] && L.parts[ids[item.to].type];
         if (!def || def.kind !== "vessel" || def.dispenser || item.to === item.in || item.in == null) throw fail("place", item.to);
@@ -1349,13 +1355,15 @@
       }));
     } else {
       var far = (def.bridge || def.duct) && host ? vessel(lab, raw.to) : null;
+      if (far && spinning(lab, far)) far = null;                                   // nichts führt in die laufende Zentrifuge
       if (far && (far === host || far.broken || L.parts[far.type].dispenser || (def.bridge ? bridged(lab, far.id) : lab.tools.some(function (t) { return L.parts[t.type].duct && t.to === far.id; }) || looped(ducts(lab), host.id, far.id)))) far = null;
       if ((def.bridge || def.duct) && raw.to != null && !far) host = null;   // ohne das andere Ende bleibt sie für sich liegen
       lab.tools.push((made = makeTool({
-        id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame), spin: raw.spin,
+        id: id, type: raw.type, in: host ? host.id : null, flame: flameLevel(raw.flame), spin: raw.spin === 1 || raw.spin === true,
         volts: def.circuit === "supply" ? voltsOf(def, raw.volts) : 0, flip: raw.flip, to: far ? far.id : null, g: raw.g > 0 ? +raw.g : 0,
         temp: def.bath ? tempOf(def, raw.temp == null ? lab.room : raw.temp) : null, nm: def.sense === "A" && raw.nm != null ? waveOf(def, raw.nm) : 0
       })));
+      if (made.spin && !spinFree(lab, id)) made.spin = 0;
       seat(lab, made);
       survey(lab);
       prime(lab, made);
@@ -1490,17 +1498,20 @@
     t.spin = on ? 1 : 0;
     return true;
   }
+  // ob sie anlaufen kann: ein Reagenzglas darin, nichts im Glas außer einem Stopfen, nichts darüber, nichts, was hineinführt, und es fließt nichts
   function spinFree(lab, id) {
     var t = tool(lab, id), v = t && vessel(lab, t.in);
-    return !!t && !(v && (lab.tools.some(function (o) { return o.in === v.id && o !== t && !L.parts[o.type].plug; }) || lab.vessels.some(function (b) { return b.over === v.id; })));
+    return !!v && !v.broken && !lab.tools.some(function (o) { return o !== t && ((o.in === v.id && !closer(L.parts[o.type])) || o.to === v.id); }) &&
+      !lab.vessels.some(function (b) { return b.over === v.id; }) && !lab.flows.some(function (f) { return f.to === v.id || f.from === v.id; });
   }
+  function closer(def) { return def.stopper && def.plug && !def.sense; }      // ein schlichter Stopfen, kein Manometer
 
   // ob ein Gefäß in einer laufenden Zentrifuge steckt: dann ist der Deckel zu
   function spinning(lab, v) { return !!(v && toolAt(lab, v, function (def, t) { return def.spin && t.spin; })); }
 
   function attach(lab, toolId, vesselId) {
     var t = tool(lab, toolId), v = vessel(lab, vesselId), def = t && L.parts[t.type];
-    if (!t || (v && L.parts[v.type].dispenser) || t.spin || (v && spinning(lab, v))) return false;      // die laufende Zentrifuge bleibt, wo sie ist
+    if (!t || (v && L.parts[v.type].dispenser) || t.spin || (v && spinning(lab, v)) || (t.in && spinning(lab, vessel(lab, t.in)))) return false;      // die laufende Zentrifuge und was im Glas steckt bleiben, wo sie sind
     if (v && def.fits && v.type !== def.fits) return false;
     if (v && (def.electrode || def.circuit) && !L.parts[v.type].electrodes) return false;
     if (v && def.electrode && electrodesIn(lab, v.id).filter(function (o) { return o !== t; }).length >= 2) return false;

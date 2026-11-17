@@ -487,13 +487,16 @@
     "err.other": "Düzenek gösterilemiyor",
     "part.centrifuge": "santrifüj",
     "spin": "Rotor",
-    "spin.0": "duruyor",
+    "spin.0": "kapalı",
     "spin.1": "çalışıyor",
     "say.spinOn": "{part}: açıldı",
     "say.spinOff": "{part}: kapatıldı",
     "spinning": "Santrifüj çalışıyor – önce kapatın.",
     "tubesOnly": "Santrifüje yalnızca deney tüpleri sığar.",
-    "spinFree": "Önce deney tüpünden her şeyi çıkarın; yalnızca tıpa kalabilir."
+    "spinFree": "Önce deney tüpünden her şeyi çıkarın; üstünde hiçbir şey asılı durmamalı ya da içine girmemeli, yalnızca tıpa kalabilir.",
+    "spinFlow": "Hâlâ bir şey akıyor – önce bekleyin.",
+    "spinEmpty": "Önce bir deney tüpü yerleştirin.",
+    "hint.centrifuge": "Şimdi santrifüje girecek deney tüpüne dokunun – ya da tezgâha."
   },
   "names": {
     "H2O(l)": "su",

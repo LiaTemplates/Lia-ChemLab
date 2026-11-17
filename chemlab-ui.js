@@ -346,7 +346,7 @@
       if (h.tool || h.test) {
         name = L.parts[h.id];
         ui.hand.innerHTML = L.icon(h.id) + "<strong>" + esc(L.partName(h.id, lang)) + '</strong> <span class="cl-hint">' +
-          esc(T(h.test ? (name.probe === "pipette" ? (h.from ? "hint.pipette2" : "hint.pipette1") : name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.filter ? "hint.funnel" : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
+          esc(T(h.test ? (name.probe === "pipette" ? (h.from ? "hint.pipette2" : "hint.pipette1") : name.probe === "rod" ? "hint.rod" : name.probe === "paper" ? "hint.paper" : "hint.test") : name.fits ? "hint.centrifuge" : name.filter ? "hint.funnel" : name.dispenser ? "hint.over" : name.scale ? "hint.scale" : name.plug ? "hint.stopper" : name.under ? "hint.under" : name.sense === "V" ? "hint.join"
             : name.electrode ? "hint.electrode" : name.circuit ? "hint.circuit" : name.bridge ? (h.from ? "hint.bridge2" : "hint.bridge1")
             : name.pipe ? (h.from ? "hint.tube2" : "hint.tube1") : name.condenser ? (h.from ? "hint.still2" : "hint.still1") : "hint.tool")) + "</span>" +
           // der Brenner darf für sich stehen: dafür ein Knopf, damit es auch mit der Tastatur geht
@@ -537,7 +537,10 @@
     function spin(id, on) {
       var t = L.tool(st.run.lab, id);
       if (!t || t.spin === on) return;
-      if (on && !L.spinFree(st.run.lab, id)) { status(T("spinFree")); return; }
+      if (on && !L.spinFree(st.run.lab, id)) {                  // warum nicht: kein Glas, es fließt noch, oder etwas steckt darin, hängt darüber, führt hinein
+        status(T(!L.vessel(st.run.lab, t.in) ? "spinEmpty" : st.run.lab.flows.some(function (f) { return f.to === t.in || f.from === t.in; }) ? "spinFlow" : "spinFree"));
+        return;
+      }
       change(function (l) { return L.setSpin(l, id, on); }, { key: "spin", part: id, level: on });
     }
 
@@ -1610,7 +1613,7 @@
         if (cmd.flame != null && t.flame !== undefined && +cmd.flame !== t.flame) {
           change(function (l) { return L.setFlame(l, cmd.set, +cmd.flame); }, { key: "flame", part: cmd.set, level: +cmd.flame });
         }
-        if (cmd.spin != null && t.spin !== undefined && (cmd.spin ? 1 : 0) !== t.spin) spin(cmd.set, cmd.spin ? 1 : 0);
+        if (cmd.spin != null && t.spin !== undefined) spin(cmd.set, +cmd.spin === 1 || cmd.spin === true ? 1 : 0);
       }
     }
 
@@ -1775,7 +1778,7 @@
         change(function (l) { return L.dispose(l, r, id); }, function (out) { return Object.assign({ key: "disposed" }, out); });
       } else if (act === "remove" && st.sel && !st.config.lock) {
         id = st.sel;
-        if (spun(id) || (L.tool(lab, id) || {}).spin) { status(T("spinning")); return; }      // die laufende Zentrifuge und ihr Glas bleiben stehen
+        if (spun(id) || (L.tool(lab, id) || {}).spin || ((L.tool(lab, id) || {}).in && spun(L.tool(lab, id).in))) { status(T("spinning")); return; }      // die laufende Zentrifuge, ihr Glas und sein Stopfen bleiben
         st.sel = null;
         change(function (l) { return L.remove(l, id); }, { key: "removed", part: id, label: names()[id] });
       }

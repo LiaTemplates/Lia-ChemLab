@@ -487,13 +487,16 @@
     "err.other": "Susunan tidak dapat dipaparkan",
     "part.centrifuge": "pengempar",
     "spin": "Rotor",
-    "spin.0": "berhenti",
+    "spin.0": "mati",
     "spin.1": "sedang berputar",
     "say.spinOn": "{part}: dihidupkan",
     "say.spinOff": "{part}: dimatikan",
     "spinning": "Pengempar sedang berputar – matikan dahulu.",
     "tubesOnly": "Hanya tabung uji muat dalam pengempar.",
-    "spinFree": "Keluarkan semuanya dari tabung uji dahulu; hanya penyumbat boleh kekal."
+    "spinFree": "Keluarkan semuanya dari tabung uji dahulu; tiada apa-apa boleh tergantung di atasnya atau masuk ke dalamnya, hanya penyumbat boleh kekal.",
+    "spinFlow": "Masih ada yang mengalir – tunggu dahulu.",
+    "spinEmpty": "Letakkan tabung uji dahulu.",
+    "hint.centrifuge": "Sekarang ketik tabung uji yang hendak dimasukkan ke dalam pengempar – atau meja."
   },
   "names": {
     "H2O(l)": "air",

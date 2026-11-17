@@ -493,7 +493,10 @@
     "say.spinOff": "{part}: aturada",
     "spinning": "La centrifugadora està en marxa: atura-la primer.",
     "tubesOnly": "A la centrifugadora només hi caben tubs d'assaig.",
-    "spinFree": "Primer treu-ho tot del tub d'assaig; només hi pot quedar un tap."
+    "spinFree": "Primer treu-ho tot del tub d'assaig; no hi pot penjar ni entrar-hi res, només hi pot quedar un tap.",
+    "spinFlow": "Encara flueix alguna cosa: espera primer.",
+    "spinEmpty": "Primer posa-hi un tub d'assaig.",
+    "hint.centrifuge": "Ara toca el tub d'assaig que ha d'anar a la centrifugadora, o el taulell."
   },
   "names": {
     "H2O(l)": "aigua",

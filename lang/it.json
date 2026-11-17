@@ -487,13 +487,16 @@
     "err.other": "L'apparato non può essere mostrato",
     "part.centrifuge": "centrifuga",
     "spin": "Rotore",
-    "spin.0": "ferma",
+    "spin.0": "spenta",
     "spin.1": "in funzione",
     "say.spinOn": "{part}: accesa",
     "say.spinOff": "{part}: spenta",
     "spinning": "La centrifuga è in funzione: spegnila prima.",
     "tubesOnly": "Nella centrifuga entrano solo provette.",
-    "spinFree": "Togli prima tutto dalla provetta; può restare solo un tappo."
+    "spinFree": "Togli prima tutto dalla provetta; niente deve pendere sopra o entrarvi, può restare solo un tappo.",
+    "spinFlow": "Qualcosa scorre ancora: aspetta prima.",
+    "spinEmpty": "Metti prima una provetta.",
+    "hint.centrifuge": "Ora tocca la provetta che deve andare nella centrifuga – oppure il banco."
   },
   "names": {
     "H2O(l)": "acqua",

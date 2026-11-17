@@ -487,13 +487,16 @@
     "err.other": "Kokoonpanoa ei voi näyttää",
     "part.centrifuge": "sentrifugi",
     "spin": "Roottori",
-    "spin.0": "pysähdyksissä",
+    "spin.0": "pois",
     "spin.1": "käynnissä",
     "say.spinOn": "{part}: käynnistetty",
     "say.spinOff": "{part}: pysäytetty",
     "spinning": "Sentrifugi on käynnissä – pysäytä se ensin.",
     "tubesOnly": "Sentrifugiin mahtuvat vain koeputket.",
-    "spinFree": "Ota ensin kaikki pois koeputkesta; vain tulppa saa jäädä."
+    "spinFree": "Ota ensin kaikki pois koeputkesta; sen yllä ei saa roikkua eikä siihen johtaa mitään, vain tulppa saa jäädä.",
+    "spinFlow": "Jotain virtaa vielä – odota ensin.",
+    "spinEmpty": "Laita ensin koeputki paikalleen.",
+    "hint.centrifuge": "Napauta nyt koeputkea, joka menee sentrifugiin – tai pöytää."
   },
   "names": {
     "H2O(l)": "vesi",

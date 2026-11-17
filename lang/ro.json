@@ -493,7 +493,10 @@
     "say.spinOff": "{part}: oprită",
     "spinning": "Centrifuga funcționează – opriți-o mai întâi.",
     "tubesOnly": "În centrifugă încap doar eprubete.",
-    "spinFree": "Scoateți mai întâi totul din eprubetă; poate rămâne doar un dop."
+    "spinFree": "Scoateți mai întâi totul din eprubetă; nimic nu trebuie să atârne deasupra sau să ducă în ea, poate rămâne doar un dop.",
+    "spinFlow": "Încă mai curge ceva – așteptați mai întâi.",
+    "spinEmpty": "Puneți mai întâi o eprubetă.",
+    "hint.centrifuge": "Acum atinge eprubeta care trebuie să intre în centrifugă – sau masa."
   },
   "names": {
     "H2O(l)": "apă",

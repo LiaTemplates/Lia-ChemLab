@@ -487,13 +487,16 @@
     "err.other": "Uppställningen kan inte visas",
     "part.centrifuge": "centrifug",
     "spin": "Rotor",
-    "spin.0": "står still",
+    "spin.0": "av",
     "spin.1": "går",
     "say.spinOn": "{part}: påslagen",
     "say.spinOff": "{part}: avslagen",
     "spinning": "Centrifugen går – stäng av den först.",
     "tubesOnly": "Bara provrör får plats i centrifugen.",
-    "spinFree": "Ta först ut allt ur provröret; bara en propp får sitta kvar."
+    "spinFree": "Ta först ut allt ur provröret; ingenting får hänga över det eller leda in i det, bara en propp får sitta kvar.",
+    "spinFlow": "Något rinner fortfarande – vänta först.",
+    "spinEmpty": "Sätt först i ett provrör.",
+    "hint.centrifuge": "Tryck nu på provröret som ska in i centrifugen – eller på bänken."
   },
   "names": {
     "H2O(l)": "vatten",

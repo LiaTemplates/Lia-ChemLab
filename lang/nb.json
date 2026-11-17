@@ -487,13 +487,16 @@
     "err.other": "Oppsettet kan ikke vises",
     "part.centrifuge": "sentrifuge",
     "spin": "Rotor",
-    "spin.0": "står stille",
+    "spin.0": "av",
     "spin.1": "går",
     "say.spinOn": "{part}: slått på",
     "say.spinOff": "{part}: slått av",
     "spinning": "Sentrifugen går – slå den av først.",
     "tubesOnly": "Bare reagensrør passer i sentrifugen.",
-    "spinFree": "Ta først alt ut av reagensrøret; bare en kork kan bli."
+    "spinFree": "Ta først alt ut av reagensrøret; ingenting må henge over det eller føre inn i det, bare en kork kan bli sittende.",
+    "spinFlow": "Det renner fortsatt noe – vent først.",
+    "spinEmpty": "Sett først inn et reagensrør.",
+    "hint.centrifuge": "Trykk nå på reagensrøret som skal i sentrifugen – eller på benken."
   },
   "names": {
     "H2O(l)": "vann",

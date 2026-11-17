@@ -487,13 +487,16 @@
     "err.other": "Katseseadet ei saa kuvada",
     "part.centrifuge": "tsentrifuug",
     "spin": "Rootor",
-    "spin.0": "seisab",
+    "spin.0": "väljas",
     "spin.1": "töötab",
     "say.spinOn": "{part}: sisse lülitatud",
     "say.spinOff": "{part}: välja lülitatud",
     "spinning": "Tsentrifuug töötab – lülita see enne välja.",
     "tubesOnly": "Tsentrifuugi mahuvad ainult katseklaasid.",
-    "spinFree": "Võta enne katseklaasist kõik välja; jääda võib ainult kork."
+    "spinFree": "Võta enne katseklaasist kõik välja; selle kohal ei tohi midagi rippuda ega sinna midagi viia, jääda võib ainult kork.",
+    "spinFlow": "Midagi voolab veel – oota enne.",
+    "spinEmpty": "Pane enne katseklaas sisse.",
+    "hint.centrifuge": "Puuduta nüüd katseklaasi, mis läheb tsentrifuugi – või lauda."
   },
   "names": {
     "H2O(l)": "vesi",

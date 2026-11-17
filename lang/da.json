@@ -487,13 +487,16 @@
     "err.other": "Opstillingen kan ikke vises",
     "part.centrifuge": "centrifuge",
     "spin": "Rotor",
-    "spin.0": "står stille",
+    "spin.0": "slukket",
     "spin.1": "kører",
     "say.spinOn": "{part}: tændt",
     "say.spinOff": "{part}: slukket",
     "spinning": "Centrifugen kører – sluk den først.",
     "tubesOnly": "Kun reagensglas passer i centrifugen.",
-    "spinFree": "Tag først alt ud af reagensglasset; kun en prop må blive."
+    "spinFree": "Tag først alt ud af reagensglasset; intet må hænge over det eller føre ind i det, kun en prop må blive.",
+    "spinFlow": "Der løber stadig noget – vent først.",
+    "spinEmpty": "Sæt først et reagensglas i.",
+    "hint.centrifuge": "Tryk nu på det reagensglas, der skal i centrifugen – eller på bordet."
   },
   "names": {
     "H2O(l)": "vand",

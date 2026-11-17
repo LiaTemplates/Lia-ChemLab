@@ -487,13 +487,16 @@
     "err.other": "Nie można wyświetlić układu",
     "part.centrifuge": "wirówka",
     "spin": "Wirnik",
-    "spin.0": "stoi",
+    "spin.0": "wyłączona",
     "spin.1": "pracuje",
     "say.spinOn": "{part}: włączona",
     "say.spinOff": "{part}: wyłączona",
     "spinning": "Wirówka pracuje – najpierw ją wyłącz.",
     "tubesOnly": "Do wirówki pasują tylko probówki.",
-    "spinFree": "Najpierw wyjmij wszystko z probówki; może zostać tylko korek."
+    "spinFree": "Najpierw wyjmij wszystko z probówki; nic nie może nad nią wisieć ani do niej prowadzić, może zostać tylko korek.",
+    "spinFlow": "Coś jeszcze płynie – najpierw zaczekaj.",
+    "spinEmpty": "Najpierw wstaw probówkę.",
+    "hint.centrifuge": "Teraz stuknij probówkę, która ma trafić do wirówki – albo stół."
   },
   "names": {
     "H2O(l)": "woda",

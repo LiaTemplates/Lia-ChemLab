@@ -487,13 +487,16 @@
     "err.other": "Não é possível mostrar a montagem",
     "part.centrifuge": "centrífuga",
     "spin": "Rotor",
-    "spin.0": "parada",
+    "spin.0": "desligada",
     "spin.1": "a funcionar",
     "say.spinOn": "{part}: ligada",
     "say.spinOff": "{part}: desligada",
     "spinning": "A centrífuga está a funcionar – desligue-a primeiro.",
     "tubesOnly": "Na centrífuga só cabem tubos de ensaio.",
-    "spinFree": "Retire primeiro tudo do tubo de ensaio; só pode ficar uma rolha."
+    "spinFree": "Retire primeiro tudo do tubo de ensaio; nada pode estar pendurado por cima nem entrar nele, só pode ficar uma rolha.",
+    "spinFlow": "Ainda está a escorrer algo – espere primeiro.",
+    "spinEmpty": "Coloque primeiro um tubo de ensaio.",
+    "hint.centrifuge": "Agora tocar no tubo de ensaio que deve ir para a centrífuga – ou na bancada."
   },
   "names": {
     "H2O(l)": "água",

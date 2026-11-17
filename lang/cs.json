@@ -487,13 +487,16 @@
     "err.other": "Sestavu nelze zobrazit",
     "part.centrifuge": "centrifuga",
     "spin": "Rotor",
-    "spin.0": "stojí",
+    "spin.0": "vypnuta",
     "spin.1": "běží",
     "say.spinOn": "{part}: zapnuta",
     "say.spinOff": "{part}: vypnuta",
     "spinning": "Centrifuga běží – nejdřív ji vypněte.",
     "tubesOnly": "Do centrifugy se vejdou jen zkumavky.",
-    "spinFree": "Nejdřív ze zkumavky vše vyndejte; smí zůstat jen zátka."
+    "spinFree": "Nejdřív ze zkumavky vše vyndejte; nic nad ní nesmí viset ani do ní vést, smí zůstat jen zátka.",
+    "spinFlow": "Ještě něco teče – nejdřív počkejte.",
+    "spinEmpty": "Nejdřív vložte zkumavku.",
+    "hint.centrifuge": "Teď klepni na zkumavku, která má jít do centrifugy – nebo na stůl."
   },
   "names": {
     "H2O(l)": "voda",

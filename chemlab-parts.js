@@ -26,10 +26,12 @@
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",
       "sameTube": "The tube leads into another vessel.",
-      "part.centrifuge": "centrifuge", "spin": "Rotor", "spin.0": "stopped", "spin.1": "running",
+      "part.centrifuge": "centrifuge", "spin": "Rotor", "spin.0": "off", "spin.1": "running",
       "say.spinOn": "{part}: switched on", "say.spinOff": "{part}: switched off",
       "spinning": "The centrifuge is running – switch it off first.", "tubesOnly": "Only test tubes fit into the centrifuge.",
-      "spinFree": "Take everything out of the test tube first; only a stopper may stay.",
+      "spinFree": "Take everything out of the test tube first; nothing may hang over it or lead into it, only a stopper may stay.",
+      "spinFlow": "Something is still flowing – wait first.", "spinEmpty": "Put a test tube in first.",
+      "hint.centrifuge": "Now tap the test tube that should go into the centrifuge – or the bench.",
       "part.balance": "balance", "hint.scale": "Now tap the vessel to put on the balance – or the bench.", "tare": "Tare",
       "say.tare": "{part}: set to zero", "chart.mass": "Mass",
       "eq.catalyst": "catalyst",
@@ -843,7 +845,7 @@
 
   // ------------------------------------------------------------------ Zentrifuge
 
-  var ROTOR = { lift: 25, h: 30 };       // das Reagenzglas steckt oben im Deckel, sein Boden bleibt zu sehen; vorn dreht sich die Scheibe, solange sie läuft
+  var ROTOR = { lift: 22, h: 30 };       // das Reagenzglas steckt oben im Deckel, sein Boden bleibt zu sehen; vorn dreht sich die Scheibe, solange sie läuft
 
   // place: { lift, half } aus stand(), wie bei der Waage; das Glas bleibt ganz zu sehen, damit man den Bodensatz sieht
   L.registerPart("centrifuge", {
@@ -855,7 +857,7 @@
       var a = place ? place.half : 34, turn = w.spin ? (ctx.still ? 30 : ((ctx.t || 0) * 300) % 360) : 0;
       return '<g class="cl-centrifuge"><rect class="cl-device" x="' + (-a) + '" y="' + (-ROTOR.h) + '" width="' + 2 * a + '" height="' + ROTOR.h + '" rx="6"/>' +
         '<rect class="cl-knob" x="' + (-a + 4) + '" y="' + (-ROTOR.h + 1) + '" width="' + (2 * a - 8) + '" height="5" rx="2"/>' +      // der Deckel
-        '<ellipse class="cl-led" cx="0" cy="' + (-ROTOR.h + 1) + '" rx="15" ry="2.5"/>' +
+        '<ellipse class="cl-slot" cx="0" cy="' + (-ROTOR.h + 1) + '" rx="15" ry="2.5"/>' +
         '<g transform="translate(' + (-a + 15) + ",-14) rotate(" + f(turn) + ')"><circle class="cl-knob" r="8"/><path class="cl-knob-mark" d="M0,-6L0,6M-6,0L6,0"/></g>' +
         '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/></g>' + badge(place ? a + 14 : 0, 14, ctx.no);
     }

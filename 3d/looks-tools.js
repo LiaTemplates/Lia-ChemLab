@@ -167,7 +167,7 @@
 
   // ------------------------------------------------------------------ Zentrifuge
 
-  // place: { lift, half } aus stand(), wie bei der Waage: Gehäuse mit gewölbtem Deckel, in dem das Reagenzglas steckt;
+  // place: { lift, half } aus stand(), wie bei der Waage: Gehäuse mit flachem Deckel, in dem das Reagenzglas steckt;
   // vorn die Scheibe, die sich dreht, solange sie läuft, und ein Lämpchen
   L.registerLook("centrifuge", "lab", {
     build: function () {
@@ -179,7 +179,7 @@
       return group;
     },
     update: function (group, d, kit) {
-      var u = group.userData, p = d.place || { lift: 25, half: 34 }, a = cm(p.half), body = kit.up(p.lift) + cm(-L.shapes.tube.floor - 1) - 0.35, deep = Math.max(6, 1.6 * a);      // der Deckel endet am Boden des Glases
+      var u = group.userData, p = d.place || { lift: 22, half: 34 }, a = cm(p.half), body = kit.up(p.lift) + cm(-L.shapes.tube.floor - 1) - 0.35, deep = Math.max(6, 1.6 * a);      // der Deckel endet am Boden des Glases
       fx.rebuild(group, "body", [a, body].join("|"), function (sub) {      // der Deckel oben, darin die Öffnung für das Glas
         sub.add(mesh(new THREE.BoxGeometry(2 * a, body, deep), fx.matte(fx.style.device, 0.45), 0, body / 2));
         sub.add(mesh(new THREE.BoxGeometry(2 * a - 0.6, 0.3, deep - 0.6), fx.matte(0xf7f9fb, 0.4), 0, body + 0.15));

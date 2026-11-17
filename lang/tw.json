@@ -487,13 +487,16 @@
     "err.other": "Wɔntumi nkyerɛ nhyehyɛeɛ no",
     "part.centrifuge": "mfiri a ɛtwa kyinkyin",
     "spin": "Rotɔ",
-    "spin.0": "agyina",
+    "spin.0": "wɔadum",
     "spin.1": "ɛreyɛ adwuma",
     "say.spinOn": "{part}: wɔasɔ no",
     "say.spinOff": "{part}: wɔadum no",
     "spinning": "Mfiri a ɛtwa kyinkyin no reyɛ adwuma – dum no kan.",
-    "tubesOnly": "Sɔhwɛ dorobɛn nkutoo na ɛkɔ mfiri a ɛtwa kyinkyin no mu.",
-    "spinFree": "Yi biribiara fi sɔhwɛ dorobɛn no mu kan; nsɛmmɔ nkutoo na ɛtumi ka hɔ."
+    "tubesOnly": "Test tube nkutoo na ɛkɔ mfiri a ɛtwa kyinkyin no mu.",
+    "spinFree": "Yi biribiara fi test tube no mu kan; biribiara nsɛ sɛ ɛsensɛn ne so anaa ɛkɔ mu, rubber stopper nkutoo na ɛtumi ka hɔ.",
+    "spinFlow": "Biribi da so resen – twɛn kan.",
+    "spinEmpty": "Fa test tube hyɛ mu kan.",
+    "hint.centrifuge": "Afei mia test tube a ɛsɛ sɛ ɛkɔ mfiri a ɛtwa kyinkyin no mu no so – anaa pon no."
   },
   "names": {
     "H2O(l)": "nsuo",

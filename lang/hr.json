@@ -487,13 +487,16 @@
     "err.other": "Postav se ne može prikazati",
     "part.centrifuge": "centrifuga",
     "spin": "Rotor",
-    "spin.0": "stoji",
+    "spin.0": "isključena",
     "spin.1": "radi",
     "say.spinOn": "{part}: uključena",
     "say.spinOff": "{part}: isključena",
     "spinning": "Centrifuga radi – najprije je isključite.",
     "tubesOnly": "U centrifugu stanu samo epruvete.",
-    "spinFree": "Najprije izvadite sve iz epruvete; smije ostati samo čep."
+    "spinFree": "Najprije izvadite sve iz epruvete; ništa ne smije visjeti iznad nje ni voditi u nju, smije ostati samo čep.",
+    "spinFlow": "Još nešto teče – najprije pričekajte.",
+    "spinEmpty": "Najprije stavite epruvetu.",
+    "hint.centrifuge": "Sada dodirni epruvetu koja ide u centrifugu – ili stol."
   },
   "names": {
     "H2O(l)": "voda",
