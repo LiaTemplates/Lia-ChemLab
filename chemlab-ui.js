@@ -128,7 +128,9 @@
       '<div class="cl-menu">' +
       (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
       '<button type="button" class="cl-btn" data-act="copy">' + esc(T("copy")) + "</button> " +
-      '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button></div></details></div></div>" +
+      '<button type="button" class="cl-btn" data-act="reset">' + esc(T("reset")) + "</button>" +
+      '<div class="cl-others" hidden><span class="cl-hint">' + esc(T("others")) + '</span><div class="cl-otherlist"></div></div></div></details></div></div>' +
+      '<p class="cl-viewing" role="status" hidden><span></span> <button type="button" class="cl-btn" data-act="mine">' + esc(T("others.back")) + "</button></p>" +
       '<div class="cl-bar" hidden><div class="cl-tabs" role="tablist" aria-label="' + esc(T("shelf.tabs")) + '" hidden></div>' +
       '<div class="cl-shelf" role="toolbar" aria-label="' + esc(T("shelf")) + '"></div></div>' +
       '<div class="cl-stage"><svg class="cl-svg" role="group" aria-label="' + esc(T("stage")) + '" xmlns="http://www.w3.org/2000/svg"></svg>' +
@@ -144,8 +146,10 @@
       '<div class="cl-log"><h4>' + esc(T("log.title")) + '</h4><p class="cl-hint cl-none">' + esc(T("log.none")) + "</p>" +
       '<ol class="cl-events" aria-live="polite"></ol><p><button type="button" class="cl-btn" data-act="copyLog" disabled>' + esc(T("log.copy")) + "</button></p></div></div>";
 
+    var room = global.LIA && global.LIA.classroom, layer = room && room.layer ? room.layer("ChemLab:" + el.id) : null;
+    var unlisten = null, saveTimer = 0, savedKey = null;
     var ui = {};
-    ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log", "bar", "tabs", "out", "outtabs"].forEach(function (name) {
+    ["task", "shelf", "hand", "stage", "svg", "three", "time", "status", "readings", "panel", "eq", "charts", "log", "bar", "tabs", "out", "outtabs", "others", "otherlist", "viewing"].forEach(function (name) {
       ui[name] = el.querySelector(".cl-" + name);
     });
     ui.barbtn = el.querySelector(".cl-barbtn");
@@ -566,17 +570,72 @@
       dialed = run.log[run.log.length - 1];
     }
 
-    function reset() {
-      st.run = L.createRun(st.config);
+    function reset() {                                           // in einem fremden Versuch: nur die Ansicht, der eigene bleibt
+      useRun({ run: L.createRun(st.config) });
+      save();
+    }
+
+    // Einen Lauf mit seinen Gerätenamen zeigen: neu, gespeichert, fremd oder wieder der eigene
+    function useRun(b) {
+      st.run = b.run;
+      st.names = b.names || {}; st.counts = b.counts || {}; st.types = b.types || {}; st.lang = b.lang;
       st.sel = null;
       st.copyText = null;                                        // ein kopierter Text gehört zum alten Versuch
-      st.play = 0; st.names = {}; st.counts = {}; st.types = {}; st.solved = false;
+      st.play = 0; st.solved = false;
       pending = 0;
       status("");
       shape = null;
       setHand(null);
       renderPanel();
+      renderOthers();
       refresh();
+    }
+
+    // ---------------------------------------------------------------- Speichern und Teilen
+    // Ein Layer von LiaScript je Fläche: gespeichert ab Kursversion 1.0.0, im Klassenraum abgeglichen.
+    // Wer fremde Versuche sieht, regelt der Modus des Klassenraums (Shared: alle, Summary/Details: die Lehrkraft).
+    function keyOf() { return st.run.log.length + "|" + st.run.end + "|" + JSON.stringify(st.run.lab.samples); }
+    function fresh(run) { return !run.log.length && !run.end && !Object.keys(run.lab.samples).some(function (k) { return run.lab.samples[k].said != null; }); }
+    function save() {
+      if (saveTimer) global.clearTimeout(saveTimer);
+      saveTimer = 0;
+      if (!layer || st.own || keyOf() === savedKey) return;     // einen fremden Versuch speichert niemand als eigenen
+      savedKey = keyOf();
+      layer.set(fresh(st.run) ? [] : [{ src: text, run: L.saveRun(st.run), names: st.names, counts: st.counts, types: st.types, lang: st.lang }])
+        .catch(function (error) { if (global.console) global.console.warn("ChemLab:", error); });
+    }
+    function saveSoon() { if (layer && !saveTimer && !st.own && keyOf() !== savedKey) saveTimer = global.setTimeout(save, 2000); }
+    function loaded(v) {            // null, wenn sich der gespeicherte Stand nicht lesen lässt (etwa aus einer anderen Fassung)
+      try {
+        var c = JSON.parse(JSON.stringify(v));                   // LiaScript reicht gefrorene Werte
+        return { run: L.loadRun(st.config, c.run), names: c.names, counts: c.counts, types: c.types, lang: c.lang };
+      } catch (error) {
+        if (global.console) global.console.warn("ChemLab:", error);
+        return null;
+      }
+    }
+    function renderOthers() {
+      var list = st.others || [];
+      ui.others.hidden = !list.length;
+      ui.otherlist.innerHTML = list.map(function (l) {
+        return '<button type="button" class="cl-btn" data-act="other" data-id="' + esc(l.id) + '">' + esc((l.symbol ? l.symbol + " " : "") + (l.name || T("others.anon"))) + "</button>";
+      }).join("");
+      ui.viewing.hidden = !st.own;
+      ui.viewing.querySelector("span").textContent = st.own ? T("others.viewing", { name: st.viewing }) : "";
+    }
+    function view(id) {
+      var l = (st.others || []).filter(function (x) { return x.id === id; })[0], b = l && loaded(l.values[0]);
+      if (!b) return;
+      save();                                                    // der eigene Stand ist gesichert, bevor ein fremder kommt
+      if (!st.own) st.own = { run: st.run, names: st.names, counts: st.counts, types: st.types, lang: st.lang };
+      st.viewing = l.name || T("others.anon");
+      useRun(b);
+    }
+    function mine() {
+      var own = st.own;
+      if (!own) return;
+      st.own = null;
+      useRun(own);
     }
 
     // ---------------------------------------------------------------- Arbeitsfläche
@@ -1580,6 +1639,7 @@
         var r = list.filter(function (x) { return x.key === s.getAttribute("data-value"); })[0];
         s.textContent = !r || !show.numbers ? "–" : r.text + (r.unit ? " " + r.unit : "");
       });
+      saveSoon();
       if (!link.publish) return;
       now = JSON.stringify(L.snapshot(st.run));
       if (now !== published) { published = now; link.publish(now); }
@@ -1760,6 +1820,8 @@
       else if (act === "start") jump(0);
       else if (act === "end") jump(st.run.end);
       else if (act === "reset") reset();
+      else if (act === "other") view(id);
+      else if (act === "mine") mine();
       else if (act === "note") noteRow();
       else if (act === "copy") copyOut(setupText(), "copy.manual");
       else if (act === "copyTable" && st.rows.length) copyOut(tableText(), "table.manual");
@@ -1861,6 +1923,9 @@
 
     function stop() {
       stopped = true;
+      save();                                                    // was in den letzten zwei Sekunden geschah
+      if (unlisten) unlisten();
+      if (global.removeEventListener) global.removeEventListener("pagehide", save);
       if (three) three.stop();
       if (raf && global.cancelAnimationFrame) global.cancelAnimationFrame(raf);
       if (global.removeEventListener) global.removeEventListener("resize", onResize);
@@ -1879,9 +1944,21 @@
     renderHand();
     renderTime();
     renderReadings();
+    savedKey = keyOf();             // der Stand beim Aufbau ist schon gespeichert (oder leer): nicht gleich überschreiben
+    renderOthers();
     refresh();
     if (st.view === "3d") setView("3d");
     kick();
+    if (layer) {
+      if (global.addEventListener) global.addEventListener("pagehide", save);
+      unlisten = layer.on(function (layers) {
+        var own = layers.filter(function (l) { return l.me; })[0], v = own && own.values[0];
+        var b = v && v.src === text && !st.own && fresh(st.run) && loaded(v);
+        if (b) { useRun(b); savedKey = keyOf(); }
+        st.others = layers.filter(function (l) { return !l.me && l.values[0] && l.values[0].src === text; });
+        renderOthers();
+      });
+    }
   }
 
   // Die Adressen der Pakete einer Beschreibung; was sich nicht lesen lässt, meldet später normalize

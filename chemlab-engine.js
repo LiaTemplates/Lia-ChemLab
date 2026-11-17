@@ -4261,6 +4261,24 @@
 
   function inPast(run) { return run.cursor < run.frames.length - 1; }
 
+  // Ein Lauf zum Speichern: das Ende, die gezogenen Proben samt Antwort, der Seed der Streuung und das Protokoll
+  function saveRun(run) {
+    return { s: run.frames[run.frames.length - 1].s, samples: run.lab.samples, scatter: run.lab.scatter, log: run.log };
+  }
+
+  // shortcut: die Zeitleiste beginnt beim gespeicherten Stand; alle Abbilder wären zu groß zum Speichern
+  function loadRun(config, saved) {
+    var run = createRun(config);
+    saved = JSON.parse(JSON.stringify(saved));                   // LiaScript reicht gefrorene Werte, der Lauf ändert sie
+    restore(run.lab, saved.s);
+    run.lab.samples = saved.samples;
+    run.lab.scatter = saved.scatter;
+    run.log = saved.log;
+    run.frames = [];
+    record(run, true);
+    return run;
+  }
+
   // Zeiger auf die Zeit t. Bei t = 0 gilt der Ausgangszustand, vor jedem Eingriff.
   function seek(run, t) {
     t = Math.max(0, Math.min(run.end, t));
@@ -4580,6 +4598,8 @@
   L.toEnd = toEnd;
   L.inPast = inPast;
   L.logAt = logAt;
+  L.saveRun = saveRun;
+  L.loadRun = loadRun;
   L.advance = advance;
   L.act = act;
   L.series = series;
