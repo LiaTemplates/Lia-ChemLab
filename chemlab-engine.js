@@ -730,6 +730,8 @@
   registerPart("reflux", { kind: "tool", reflux: true });
   // dispenser: hängt über einem anderen Gefäß und gibt durch einen Hahn ab
   registerPart("burette", { kind: "vessel", dispenser: true, cap: 50, d: 1.1, Cv: 25, loss: 0.08 });
+  // Scheidetrichter: hängt wie die Bürette, lässt unten ab (zuerst die untere Schicht) und lässt sich schütteln (shake); d: seine größte Weite
+  registerPart("separator", { kind: "vessel", dispenser: true, shake: true, cap: 100, d: 5.5, Cv: 60, loss: 0.12 });
   // Trichter mit Filterpapier: hängt wie die Bürette über einem Gefäß und läuft von selbst ab (drain, mL/s, geschätzt für einen
   // Rundfilter); Feststoffe bleiben im Filter, nur Kolloide laufen mit durch
   registerPart("funnel", { kind: "vessel", dispenser: true, filter: true, cap: 60, d: 4, Cv: 30, loss: 0.08, drain: 0.5 });
@@ -3284,6 +3286,12 @@
         return;
       }
       v.given += pourInto(lab, v, to, Math.min(rate * DT, room), emit, true);      // der Hahn ist unten
+      // zwei Schichten: ist die untere abgelaufen, sagt das Protokoll Bescheid (dann schließt man den Hahn); einmal je untere Schicht
+      if (def.shake) {
+        var lower = oilOnTop(v) ? volume(v) : oilVolume(v), upper = oilOnTop(v) ? oilVolume(v) : volume(v);
+        if (lower * 1000 > 0.5) v.flag.layer = true;
+        else if (v.flag.layer && upper > 0) { v.flag.layer = false; if (emit) emit({ key: "layerOut", vessel: v.id }); }
+      }
     });
   }
 

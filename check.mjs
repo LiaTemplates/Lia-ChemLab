@@ -1082,6 +1082,26 @@ test("Ausschütteln: Iod geht aus der Lugol-Lösung ins Hexan, ruhend langsam, g
   assert.equal(L.shake(lab([{ type: "beaker", id: "b" }]), "b", "mix"), false, "ein leeres Glas lässt sich nicht mixen");
 });
 
+test("Scheidetrichter: schütteln, absetzen lassen, die untere Schicht ablassen; das Protokoll sagt, wann der Hahn zu soll", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "beaker", id: "unten", ml: 100 }, { type: "separator", id: "s", over: "unten", contains: [{ reagent: "H2O", ml: 40 }, { reagent: "Lugol", drops: 60 }, { reagent: "hexane", ml: 20 }] }], { room: 20 });
+  const s = () => L.vessel(l, "s"), b = () => L.vessel(l, "unten"), seen = [];
+  L.step(l, 1);
+  assert.ok(L.shake(l, "s", "shake"), "ein Scheidetrichter lässt sich schütteln");
+  L.step(l, 50);
+  assert.ok(L.setTap(l, "s", 1));
+  for (let i = 0; i < 400 && !seen.length; i++) L.step(l, 0.5, (e) => { if (e.key === "layerOut") seen.push(e); });
+  assert.equal(seen.length, 1, "Meldung, sobald die untere Schicht abgelaufen ist");
+  assert.equal(L.say(seen[0], { lang: "de", names: { s: "Scheidetrichter 1" } }), "Scheidetrichter 1: Die untere Schicht ist abgelaufen – jetzt den Hahn schließen.");
+  L.setTap(l, "s", 0);
+  L.step(l, 2);
+  assert.equal(L.view(l, b()).oil, null, "im Becherglas kein Hexan");
+  near(L.view(l, b()).ml, 43, 0.6, "dort die wässrige Schicht");
+  near(L.view(l, s()).oil.ml, 20, 0.1, "das Hexan bleibt im Trichter");
+  assert.ok((s().org["I2(s)"] || 0) > 0.8 * 3e-5, "mit dem meisten Iod");
+  assert.match(L.parts.separator.draw(L.view(l, s()), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }, L.parts.beaker.mount(L.view(l, b()))), /cl-cock[\s\S]*cl-stopper|cl-stopper[\s\S]*cl-cock/);
+});
+
 test("Zwei Schichten: Zeichnung mit Grenze und Ansage für Bildschirmleser; ein Öl ohne Volumen wird abgelehnt", () => {
   L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
   const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 50 }, { reagent: "olive oil", ml: 20 }] }], { room: 20 });

@@ -1038,7 +1038,7 @@
           '<div class="cl-contents"></div><div class="cl-lens"></div><div class="cl-actions">' +
           (sampleOf(v.id) && lab.samples[sampleOf(v.id)].names.length ? '<label class="cl-guess">' + esc(T("identify")) + ' <select data-act="guess"><option value="">' + esc(T("identify.pick")) + "</option>" +
             lab.samples[sampleOf(v.id)].names.map(function (n) { return '<option value="' + esc(n) + '"' + (lab.samples[sampleOf(v.id)].said === n ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("") + "</select></label> " : "") +
-          (!L.parts[v.type].dispenser ? '<button type="button" class="cl-btn" data-act="shake" data-id="shake">' + esc(T("shake")) + '</button> <button type="button" class="cl-btn" data-act="shake" data-id="mix">' + esc(T("mix")) + "</button> " : "") +
+          (!L.parts[v.type].dispenser || L.parts[v.type].shake ? '<button type="button" class="cl-btn" data-act="shake" data-id="shake">' + esc(T("shake")) + '</button> <button type="button" class="cl-btn" data-act="shake" data-id="mix">' + esc(T("mix")) + "</button> " : "") +
           '<button type="button" class="cl-btn" data-act="flow" aria-pressed="' + (st.flow ? "true" : "false") + '">' + esc(flowLabel()) + "</button> " +
           (show.particles && !v.veiled ? '<button type="button" class="cl-btn" data-act="lens" aria-pressed="' + (st.lens ? "true" : "false") + '">' + esc(T("lens")) + "</button> " : "") +
           (others.length ? "<label>" + esc(T("panel.pour")) + ' <select class="cl-pour-to">' + others.map(function (o) {
