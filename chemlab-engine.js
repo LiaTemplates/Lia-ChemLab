@@ -3653,6 +3653,7 @@
     v.n = {}; v.air = {}; v.lumps = []; v.lit = {}; v.rate = {}; v.gas = 0; v.boil = 0; v.tap = 0; v.dirty = false;
     v.broken = true;
     v.T = lab.room;
+    v.flag.shown = Math.max(v.flag.shown || 0, lab.t + 1.6);      // die Uhr läuft weiter, bis die Scherben liegen (fx.shatter)
     lab.flows = lab.flows.filter(function (f) { return f.to !== v.id && f.from !== v.id; });
     lab.tools.forEach(function (t) { if (t.in === v.id) t.in = null; if (t.to === v.id) t.to = null; });
     lab.vessels.forEach(function (b) { if (b.over === v.id) { b.over = null; b.tap = 0; } });

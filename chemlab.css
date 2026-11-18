@@ -191,6 +191,9 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab polyline.cl-solid { stroke-opacity: 1; }
 .lia-chemlab .cl-solid-edge { stroke: #4a5059; }
 .lia-chemlab .cl-bubble { fill: #ffffff; fill-opacity: 0.75; stroke: #6f8296; stroke-width: 0.6; }
+.lia-chemlab .cl-dome { fill: #ffffff; fill-opacity: 0.45; stroke: #6f8296; stroke-width: 0.5; }
+.lia-chemlab .cl-burst { fill: none; stroke: #6f8296; stroke-width: 0.7; }
+.lia-chemlab .cl-spray { fill: #ffffff; stroke: #6f8296; stroke-width: 0.4; }
 .lia-chemlab .cl-flow, .lia-chemlab .cl-flow-dot { pointer-events: none; }
 .lia-chemlab .cl-flow-dot { fill: #33475b; fill-opacity: 0.7; }      /* dunkel, damit sie nicht wie Gasblasen aussehen */
 .lia-chemlab .cl-droplet { stroke: #ffffff; stroke-width: 0.4; stroke-opacity: 0.8; pointer-events: none; }
@@ -252,6 +255,7 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-porcelain-edge { fill: none; stroke: var(--cl-glass); stroke-width: 1.2; stroke-linejoin: round; stroke-linecap: round; opacity: 0.7; }
 .lia-chemlab .cl-crust { fill: #ece8dc; stroke: #bdb6a4; stroke-width: 0.5; }
 .lia-chemlab .cl-shard { fill: #dfeaf3; fill-opacity: 0.6; stroke: var(--cl-glass); stroke-width: 1; stroke-linejoin: round; }
+.lia-chemlab .cl-shard-back { fill-opacity: 0.3; stroke-opacity: 0.45; }
 .lia-chemlab .cl-scale { fill: #e3e7eb; stroke: #55677a; stroke-width: 1.2; }
 .lia-chemlab .cl-spatter { fill: #d9dde2; stroke: #6b7682; stroke-width: 0.4; }
 .lia-chemlab .cl-paper { fill: #f2e7a0; stroke: #a89a4a; stroke-width: 0.6; }

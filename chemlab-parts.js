@@ -542,12 +542,20 @@
     return '<ellipse class="cl-glow" cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(r * 1.8 + 4) + '" ry="' + f(r * 1.4 + 3) + '" fill="' + css(s.glow.rgb) + '" fill-opacity="' + (0.25 + 0.5 * s.glow.level).toFixed(2) + '"/>';
   }
 
-  // Scherben eines zersprungenen Gefäßes, auf dem Tisch verstreut
-  function shards(half, ctx) {
-    var out = "", i, x, w, down = ctx.lift || 0;
-    for (i = 0; i < 7; i++) {
-      x = (pseudo(3, i) * 2 - 1) * (half + 14); w = 5 + 9 * pseudo(5, i);
-      out += '<path class="cl-shard" d="M' + f(x) + "," + f(down - 1) + "L" + f(x + w * 0.4) + "," + f(down - 4 - 10 * pseudo(7, i)) + "L" + f(x + w) + "," + f(down - 1) + 'Z"/>';
+  // Scherben eines zersprungenen Gefäßes (fx.shatter): sie fliegen aus der Wand, fallen auf den Tisch und bleiben dort liegen.
+  // half: halbe Breite, high: Höhe des Gefäßes in Bildpunkten; ctx.fall: so hoch stand es vorher (Dreifuß); der Bruch (mark "broken")
+  // sagt, wie lange er her ist
+  function shards(half, ctx, high) {
+    var out = "", down = ctx.lift || 0, broke = (ctx.marks || []).filter(function (m) { return m.key === "broken"; })[0], list, PX = 16;
+    if (L.fx && L.fx.shatter) {
+      list = L.fx.shatter(Math.max(0.6, half / PX), Math.max(1.5, (high || 2.4 * half) / PX), broke ? broke.age : null, ctx.seed || 1, ctx.still, (ctx.fall || 0) / PX);
+      list.sort(function (a, b) { return a.z - b.z; });      // was hinten liegt, zuerst
+      list.forEach(function (s) {
+        // liegt sie, ist sie von der Seite gesehen flach; nie reicht sie unter die Tischkante: ihr tiefster Punkt bleibt darüber
+        var squash = 1 - 0.7 * s.flat, low = Math.max.apply(null, s.pts.map(function (q) { return (q[0] * Math.sin(s.spin) + q[1] * Math.cos(s.spin)) * squash; })) * PX;
+        out += '<path class="cl-shard' + (s.z < 0 ? " cl-shard-back" : "") + '" transform="translate(' + f(s.x * PX) + "," + f(down - 1 - Math.max(s.y * PX, low)) + ") scale(1," + f(squash) +
+          ") rotate(" + f(s.spin * 57.3) + ')" d="M' + s.pts.map(function (q) { return f(q[0] * PX) + "," + f(q[1] * PX); }).join("L") + 'Z"/>';
+      });
     }
     (ctx.marks || []).forEach(function (mark) {                // der Knall, der das Gefäß zerstört hat, blitzt dort, wo es stand
       if (L.fx && mark.level > 0 && (mark.key === "pop" || mark.result === "pop")) out += L.fx.flash(0, down - 50, mark.age, mark.level + 1);
@@ -701,7 +709,10 @@
       // Strömung: Temperatur, Wirbel oder Druck im Querschnitt, über der Flüssigkeit und unter den Blasen
       if (ctx.flow && w.heat && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.flow(box, w, ctx.t, esc(clip), ctx.flow, ctx.still) + "</g>";
       // Blasen: Gas, das entsteht, und beim Sieden der Dampf
-      if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + L.fx.bubbles(box, Math.max(w.gas, w.steam), ctx.t, ctx.seed || 1, ctx.still) + "</g>";
+      // beim Sieden entstehen die Blasen an Keimstellen am Boden und platzen oben (fx.boil); Gas steigt als gleichmäßige Perlen
+      if ((w.gas > 0 || w.steam > 0) && L.fx) out += '<g clip-path="url(#' + esc(clip) + ')">' + (w.gas > 0 ? L.fx.bubbles(box, w.gas, ctx.t, ctx.seed || 1, ctx.still) : "") +
+        (w.steam > 0 && L.fx.boil ? L.fx.boil(box, Math.min(1, 0.3 + w.steam / 0.008), ctx.t, ctx.seed || 1, ctx.still) : "") + "</g>" +
+        (w.steam > 0 && L.fx.boil ? L.fx.boil(box, Math.min(1, 0.3 + w.steam / 0.008), ctx.t, ctx.seed || 1, ctx.still, true) : "");
       out += '<line class="cl-surface" x1="' + f(shape.x0) + '" x2="' + f(shape.x1) + '" y1="' + f(shape.top) + '" y2="' + f(shape.top) + '"/>';
     }
     if (w.inflow && L.fx) out += L.fx.stream(shape.tall ? -4 : -10, shape.rim - 46, w.ml > 0.005 ? shape.top : shape.bottom, ctx.t, ctx.still);
@@ -763,7 +774,7 @@
     draw: function (w, ctx) {
       var y = tubeSurface(w), R = TUBE.r + 1, center = TUBE.floor - TUBE.r;
       var half = y <= center ? TUBE.r : Math.sqrt(Math.max(0, TUBE.r * TUBE.r - (y - center) * (y - center)));
-      if (w.broken) return shards(16, ctx);
+      if (w.broken) return shards(16, ctx, -TUBE.top);
       // über dem Brenner hält eine Klemme das Glas (sie gehört zur Zeichnung des Brenners), sonst steht es im Ständer
       return (ctx.lift ? "" : '<rect class="cl-wood" x="-30" y="-112" width="60" height="7" rx="2"/>' +
         '<rect class="cl-wood" x="-30" y="-106" width="5" height="100"/><rect class="cl-wood" x="25" y="-106" width="5" height="100"/>') +
@@ -820,7 +831,7 @@
         return "M" + (-a + 2) + "," + f(level) + "L" + (-a + 2) + ",-8Q" + (-a + 2) + ",-2 " + (-a + 8) + ",-2L" + (a - 8) + ",-2Q" + (a - 2) + ",-2 " + (a - 2) + ",-8L" + (a - 2) + "," + f(level) + "Z";
       };
       var liquid = fill(y);
-      if (w.broken) return shards(a, ctx);
+      if (w.broken) return shards(a, ctx, h);
       // Die Skala eines Becherglases zeigt nur ungefähr (ISO 3819, 8.4): wenige Striche, die Zahl über dem Strich wie bei Messgeräten
       for (i = 1; i <= 4; i++) {
         my = -3 - i / 4 * (h - 16);
@@ -892,7 +903,7 @@
   function erlDraw(w, ctx) {
       var s = erlSize(w), a = s[0], H = s[1], n = s[2], shoulder = H - s[3], y = erlSurface(w), marks = "", i, my, mx, outer;
       var fill = function (level) { return erlFill(s, level); };
-      if (w.broken) return shards(a, ctx);
+      if (w.broken) return shards(a, ctx, H);
       outer = function (h) { return h >= shoulder ? n : a - (a - n) * Math.max(0, h - 8) / (shoulder - 8); };
       // Skala nur ungefähr (wie beim Becherglas), an der rechten Wand: Striche bei einem Fünftel bis vier Fünfteln, Zahl über dem Strich
       for (i = 1; i <= 4; i++) {
@@ -986,7 +997,7 @@
     },
     draw: function (w, ctx) {
       var F = flatShape(w), S = F.shape, y = S.level(w.ml / w.cap), half;
-      if (w.broken) return shards(F.size[0], ctx);
+      if (w.broken) return shards(F.size[0], ctx, F.size[1]);
       half = Math.max(0, S.half(S.base - y) - 1);
       return contents(w, ctx, { path: S.fill(y), fill: S.fill, x0: -half, x1: half, top: y, bottom: -2, rim: -F.H, tall: true }) +
         '<path class="cl-glass" d="' + S.outline(-F.H) + '"/>' +
@@ -1009,7 +1020,7 @@
     mount: function (w) { var m = L.parts.erlenmeyer.mount(asErl(w)); m.x = 0; return m; },
     draw: function (w, ctx) {
       var s = ERL[250], n = s[2], H = s[1], arm = -H + s[3] * 0.5, out;
-      if (w.broken) return shards(s[0], ctx);
+      if (w.broken) return shards(s[0], ctx, H);
       out = L.parts.erlenmeyer.draw(asErl(w), ctx);
       // Ansatz schräg nach rechts, Schlauch zur Pumpe, die am Wasserhahn hinter dem Tisch hängt (nur angedeutet)
       return out + '<path class="cl-glass cl-thick" d="M' + n + "," + f(arm - 3) + "L" + (n + 16) + "," + f(arm - 1) + "M" + n + "," + f(arm + 4) + "L" + (n + 16) + "," + f(arm + 6) + '"/>' +
@@ -1036,7 +1047,7 @@
     mount: function (w) { return { x: 0, rim: -CRUC.h - 2, surface: w.ml > 0.005 ? crucShape.level(w.ml / w.cap) : -4, edge: CRUC.top + 6 }; },
     draw: function (w, ctx) {
       var y = crucShape.level(w.ml / w.cap), half = Math.max(0, crucShape.half(crucShape.base - y) - 3), outline;
-      if (w.broken) return shards(CRUC.top, ctx);
+      if (w.broken) return shards(CRUC.top, ctx, CRUC.h);
       outline = "M" + (-CRUC.top - 1) + "," + (-CRUC.h - 2) + "L" + (-CRUC.bottom) + ",-2L" + CRUC.bottom + ",-2L" + (CRUC.top + 1) + "," + (-CRUC.h - 2);
       return contents(w, ctx, { path: crucShape.body(y, 3), fill: function (l) { return crucShape.body(l, 3); }, x0: -half, x1: half, top: y, bottom: -4, rim: -CRUC.h, tall: false }) +
         '<path class="cl-porcelain" d="' + outline + '"/><path class="cl-porcelain-edge cl-strong" d="' + outline + '"/>' +
@@ -1065,7 +1076,7 @@
     draw: function (w, ctx) {
       var A = TROUGH.a, H = TROUGH.h, y = troughSurface(w), cx = TROUGH.cyl, ca = TROUGH.cylA, wet = w.ml > 0.005, gas, out, end;
       var fill = function (level) { return "M" + (-A + 2) + "," + f(level) + "L" + (-A + 2) + ",-6Q" + (-A + 2) + ",-2 " + (-A + 6) + ",-2L" + (A - 6) + ",-2Q" + (A - 2) + ",-2 " + (A - 2) + ",-6L" + (A - 2) + "," + f(level) + "Z"; };
-      if (w.broken) return shards(A * 0.6, ctx);
+      if (w.broken) return shards(A * 0.6, ctx, H);
       // wie hoch das Gas im Zylinder steht: sein Volumen auf die Länge des Zylinders umgerechnet (100 mL füllen ihn bis zur Öffnung)
       gas = Math.min(1, (w.caught || 0) / L.parts.trough.collect) * (TROUGH.mouth - TROUGH.cylTop - 6);
       end = Math.min(y + 22, -8);                       // so tief taucht das Rohr ein (wie im Code der Fläche)
@@ -1191,7 +1202,7 @@
       var fill = function (level) {
         return "M" + (-a + 2) + "," + f(level) + "L" + (-a + 2) + ",-2L" + (a - 2) + ",-2L" + (a - 2) + "," + f(level) + "Z";
       };
-      if (w.broken) return shards(a, ctx);
+      if (w.broken) return shards(a, ctx, h);
       return contents(w, ctx, { path: fill(y), fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -2, rim: -h, tall: false }) +
         // Becherform: die Wand ist oben dick und läuft nach unten schmal zu; innen bleibt der Raum der Flüssigkeit gerade
         '<path class="cl-foam" d="M' + (-a - t - 3) + "," + (-h) + "L" + (-a) + "," + (-h) + "L" + (-a) + ",-2L" + a + ",-2L" + a + "," + (-h) + "L" + (a + t + 3) + "," + (-h) + "L" + (a + 3) + ",0L" + (-a - 3) + ',0Z"/>' +
@@ -1244,7 +1255,7 @@
     mount: function (w) { return { x: 24, rim: -DISH.h - 6, surface: w.ml > 0.005 ? dishSurface(w) : -2, edge: 52 }; },
     draw: function (w, ctx) {
       var y = dishSurface(w), wall = dishSide(-DISH.h - 4, 2), half = dishHalf(y);
-      if (w.broken) return shards(DISH.a, ctx);
+      if (w.broken) return shards(DISH.a, ctx, DISH.h);
       var outline = "M" + wall.slice().reverse().map(function (p) { return f(-p[0]) + "," + f(p[1] + 2); }).join("L") + "L" +
         wall.map(function (p) { return f(p[0]) + "," + f(p[1] + 2); }).join("L");
       return contents(w, ctx, { path: dishFill(y), fill: dishFill, x0: -half, x1: half, top: y, bottom: -2, rim: -DISH.h - 4, tall: false }) +
@@ -1778,7 +1789,7 @@
     draw: function (w, ctx) {
       var R = FLASK.R, n = FLASK.neck, y = flaskSurface(w), k = flaskKit(ctx.fit), half, glass;
       var top = function (x) { return FLASK_CY - Math.sqrt(R * R - x * x); };      // wo die Kugel oben bei x endet
-      if (w.broken) return shards(R, ctx);
+      if (w.broken) return shards(R, ctx, -FLASK.rim);
       half = Math.sqrt(Math.max(0, (R - 1) * (R - 1) - (y - FLASK_CY) * (y - FLASK_CY)));
       glass = k.side
         // Zweihalskolben: vom Haupthals über die Kugel zum Nebenhals, dann von dessen anderer Wand unten herum zurück
@@ -1878,7 +1889,7 @@
     mount: function (w) { return { x: 0, rim: VF.rim, surface: w.ml > 0.005 ? vfSurface(w) : -4, edge: VF.R + 6 }; },
     draw: function (w, ctx) {
       var R = VF.R, n = VF.neck, y = vfSurface(w), half;
-      if (w.broken) return shards(R, ctx);
+      if (w.broken) return shards(R, ctx, -VF.rim);
       half = y < VF_MEET ? n - 1 : Math.max(0, vfHalf(-4 - y) - 1);
       return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
         contents(w, ctx, { path: vfFill(y), fill: vfFill, x0: -half, x1: half, top: y, bottom: -5, rim: VF.rim, tall: true }) +
@@ -2139,7 +2150,7 @@
       var s = cylSize(w), a = s[0] / 2, h = s[1], rim = -h - CYL_FOOT, y = cylSurface(w), marks = "", at;
       // oben der Meniskus: am Rand hochgezogen, abgelesen wird der tiefste Punkt (level)
       var fill = function (level) { return "M" + (-a + 2) + "," + f(level - 2.5) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level - 2.5) + "Q0," + f(level + 2.5) + " " + (-a + 2) + "," + f(level - 2.5) + "Z"; };
-      if (w.broken) return shards(a + 4, ctx);
+      if (w.broken) return shards(a + 4, ctx, h);
       if (s[4]) {
         at = function (ml) { return -CYL_FOOT - 2 - ml / w.cap * (h - 14); };
         marks = scaleMarks(cylScale(w, s, (h - 14) / w.cap), 0, a - 1, at, ctx) +

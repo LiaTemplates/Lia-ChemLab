@@ -781,6 +781,7 @@
     }
 
     function at(id) { return items.filter(function (item) { return item.id === id; })[0]; }
+    var fallFrom = {};             // je Gefäß die Höhe, in der es zuletzt heil stand (für die Scherben)
 
     // Was in einem Gefäß steckt (die Arten der Geräte): ein Rundkolben zeichnet danach Seitenrohr oder zweiten Hals und legt fest, wo ein Fühler sitzt
     function fitOf(lab, v) { return lab.tools.filter(function (t) { return t.in === v.id; }).map(function (t) { return t.type; }); }
@@ -881,7 +882,7 @@
       var sign = lab.vessels.map(function (v) { return v.id + ">" + v.over + (v.broken ? "!" : ""); }).concat(lab.tools.map(function (t) { return t.id + ">" + t.in + ">" + (t.to || ""); })).join("|");
       // was eben geschah und kurz zu sehen bleibt: der Span an der Öffnung, der Blitz einer Verpuffung
       st.run.log.slice(Math.max(0, st.run.frames[st.run.cursor].n - 8), st.run.frames[st.run.cursor].n).forEach(function (event) {
-        if ((event.key !== "splint" && event.key !== "pop" && event.key !== "popped" && event.key !== "spatter") || !(now - event.t < SHOWN) || now < event.t) return;
+        if ((event.key !== "splint" && event.key !== "pop" && event.key !== "popped" && event.key !== "spatter" && event.key !== "broken") || !(now - event.t < SHOWN) || now < event.t) return;
         (marks[event.vessel] = marks[event.vessel] || []).push(Object.assign({ age: now - event.t }, event));
       });
       if (sign !== shape) {
@@ -894,7 +895,10 @@
         var g = nodes[item.id], def = L.parts[item.type];
         var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], flow3d: FLOWS3D[st.flow3d || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id], fit: item.vessel ? fitOf(lab, item) : null,
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
-          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
+          sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }),
+          // ein zersprungenes Gefäß steht wieder auf dem Tisch; seine Scherben fallen aber aus der Höhe, in der es zuletzt stand
+          fall: item.vessel ? fallFrom[item.id] || 0 : 0 };
+        if (item.vessel && !L.vessel(lab, item.id).broken) fallFrom[item.id] = item.lift || 0;
         var v, w, r, host, place, b, content, hang, aria;
         if (item.vessel) {
           v = L.vessel(lab, item.id);

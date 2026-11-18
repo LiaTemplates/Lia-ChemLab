@@ -59,10 +59,14 @@
         if (w.broken !== u.broken) {
           u.broken = w.broken;
           if (u.shards) { group.remove(u.shards); u.shards = null; }
-          if (w.broken) { u.shards = fx.shards(shape.inner(shape.rim), d.ctx.seed || 1); group.add(u.shards); }
+          if (w.broken) { u.shards = fx.shards(shape.inner(shape.rim), shape.rim, d.ctx.seed || 1); group.add(u.shards); }
           group.children.forEach(function (o) { if (o !== u.shards && o !== u.tag) o.visible = !w.broken; });
         }
-        if (w.broken) return;
+        if (w.broken) {                                 // die Scherben fliegen, solange der Bruch frisch ist (mark "broken"), dann liegen sie
+          var broke = (d.ctx.marks || []).filter(function (m) { return m.key === "broken"; })[0];
+          fx.shardsAt(u.shards, broke ? broke.age : null, d.ctx.still, kit.up(d.ctx.fall || 0), -kit.up(d.lift));
+          return;
+        }
         level = opts.level(w, d);
         // zwei Schichten: die Grenze in der Höhe, bis zu der die untere reicht
         var lower = w.oil ? (w.oil.top ? w.ml - w.oil.ml : w.oil.ml) : 0;

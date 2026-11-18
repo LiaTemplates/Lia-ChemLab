@@ -646,6 +646,32 @@ test("Blasen: Zahl nach der Gasmenge, Ort nach der Zeit, rückwärts wie vorwär
   assert.equal(L.fx.bubbles(box, 2e-5, 3, 1, true), L.fx.bubbles(box, 2e-5, 9, 1, true), "ohne Bewegung: stehendes Bild");
 });
 
+test("Sieden: Blasen wachsen an Keimstellen am Boden, steigen beschleunigt, werden größer und platzen oben", () => {
+  const depth = 5, all = [];
+  for (let t = 0; t < 6; t += 0.05) all.push(...L.fx.boiling(1, depth, t, 3, false).map((b) => Object.assign({ t }, b)));
+  assert.ok(all.some((b) => b.stage === "grow") && all.some((b) => b.stage === "rise") && all.some((b) => b.stage === "burst"), "alle drei Abschnitte kommen vor");
+  assert.ok(all.filter((b) => b.stage === "grow").every((b) => b.y === 0), "sie wachsen am Boden");
+  const sites = new Set(all.map((b) => b.u.toFixed(1) + "/" + b.v.toFixed(1)).filter((key, i) => all[i].stage === "grow"));
+  assert.ok(sites.size <= L.fx.boiling(1, depth, 0, 3, false).length + 20, "an wenigen festen Stellen");
+  const rising = all.filter((b) => b.stage === "rise");
+  const low = rising.filter((b) => b.q < 0.2), high = rising.filter((b) => b.q > 0.8);
+  const mean = (list) => list.reduce((s, b) => s + b.r, 0) / list.length;
+  assert.ok(mean(high) > mean(low) * 1.3, "oben sind die Blasen größer");
+  assert.ok(all.filter((b) => b.stage === "burst").every((b) => b.y === depth), "sie platzen am Spiegel");
+  let sum = [0, 0];
+  for (let t = 0; t < 4; t += 0.1) { sum[0] += L.fx.boiling(0.3, depth, t, 3, false).length; sum[1] += L.fx.boiling(1, depth, t, 3, false).length; }
+  assert.ok(sum[1] > sum[0] * 1.5, `heftiges Sieden: mehr Blasen (${sum[0]} gegen ${sum[1]})`);
+  assert.deepEqual(L.fx.boiling(1, depth, 7, 3, true), L.fx.boiling(1, depth, 2, 3, true), "bei „weniger Bewegung“ steht das Bild");
+  assert.deepEqual(L.fx.boiling(0, depth, 2, 3, false), [], "ohne Sieden keine Dampfblasen");
+  // 2D: die Blasen in der Flüssigkeit, Wölbung, Ring und Spritzer darüber
+  const box = { x0: -30, x1: 30, top: -80, bottom: -4 };
+  let inside = "", above = "";
+  for (let t = 0; t < 3; t += 0.05) { inside += L.fx.boil(box, 1, t, 3, false); above += L.fx.boil(box, 1, t, 3, false, true); }
+  assert.match(inside, /cl-bubble/); assert.doesNotMatch(inside, /cl-burst|cl-dome/);
+  assert.match(above, /cl-dome/); assert.match(above, /cl-burst/); assert.match(above, /cl-spray/); assert.doesNotMatch(above, /cl-bubble/);
+});
+
+
 test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sinkt an den Wänden; ohne Heizung bleibt alles still", () => {
   const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", id: "br", under: "b", flame: 2 }], { room: 20 });
   L.step(l, 30);
@@ -3035,6 +3061,32 @@ test("Gasableitungsrohr: Brenner aus, solange das Rohr im Kalkwasser steckt – 
   L.setFlame(d, "br", 0);
   L.step(d, 120, (e) => dry.push(e));
   assert.ok(dry.some((e) => e.key === "broken" && e.vessel === "a"), "kaltes Wasser im heißen Glas: es zerspringt");
+});
+
+test("Glasbruch: die Scherben fliegen aus der Wand, fallen auf den Tisch und bleiben liegen; die Uhr läuft so lange", () => {
+  const R = 2, H = 6, start = L.fx.shatter(R, H, 0, 5, false, 6.5), late = L.fx.shatter(R, H, 3, 5, false, 6.5), lying = L.fx.shatter(R, H, null, 5, false, 6.5);
+  assert.ok(start.length >= 12, "ein Dutzend Scherben und mehr");
+  assert.ok(start.every((s) => Math.abs(Math.hypot(s.x, s.z) - R) < 1e-9 && s.y >= 6.5 && s.y <= 6.5 + H && !s.landed), "am Anfang sitzen sie in der Wand, auch über dem Dreifuß");
+  const mid = L.fx.shatter(R, H, 0.15, 5, false, 6.5);
+  assert.ok(mid.every((s, i) => Math.hypot(s.x, s.z) > Math.hypot(start[i].x, start[i].z)), "sie fliegen nach außen");
+  assert.ok(late.every((s) => s.landed && s.y === 0 && s.flat === 1), "nach drei Sekunden liegen alle flach auf dem Tisch");
+  assert.deepEqual(late, lying, "und genau dort, wo sie ohne Flug lägen");
+  assert.deepEqual(L.fx.shatter(R, H, 0.1, 5, true, 6.5), lying, "bei „weniger Bewegung“ liegen sie sofort");
+  // 2D: mit der Marke des Bruchs fliegen sie, ohne liegen sie
+  const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 50 }] }]), w = Object.assign(L.view(l, L.vessel(l, "b")), { broken: true });
+  const flying = L.parts.beaker.draw(w, ctx({ marks: [{ key: "broken", age: 0.1 }], fall: 104 })), rest = L.parts.beaker.draw(w, ctx());
+  assert.ok((flying.match(/cl-shard/g) || []).length >= 12);
+  assert.notEqual(flying, rest, "im Flug anders als liegend");
+  assert.ok([...flying.matchAll(/translate\([-\d.]+,([-\d.]+)\)/g)].some((m) => +m[1] < -80), "aus der Höhe des Dreifußes");
+  // die Uhr bleibt nicht stehen, solange sie fliegen: heißes Glas, kaltes Wasser steigt zurück, es zerspringt
+  const d = lab([{ type: "testtube", id: "a" }, { type: "burner", id: "br", under: "a", flame: 2 }, { type: "tube", in: "a", to: "z" },
+    { type: "testtube", id: "z", contains: [{ reagent: "H2O", ml: 10 }] }], { room: 20 });
+  until(d, () => L.vessel(d, "a").T > 320, 900);
+  L.setFlame(d, "br", 0);
+  until(d, () => L.vessel(d, "a").broken, 120);
+  assert.equal(L.atRest(d), false, "gleich nach dem Bruch fliegen die Scherben noch");
+  L.step(d, 2);
+  assert.ok(L.vessel(d, "a").flag.shown <= d.t, "danach darf sie stehen bleiben");
 });
 
 test("Stopfen: auf ein Glas voller Gas gesetzt, fliegt er heraus statt es durchzulassen; auf siedendes Wasser auch; auf ein heißes nicht gleich", () => {
