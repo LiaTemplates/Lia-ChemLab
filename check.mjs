@@ -525,6 +525,57 @@ test("Zahlen: Dezimalkomma, Stoffmengen mit Vorsatz, Uhr", () => {
   assert.equal(L.clock(3725), "62:05");
 });
 
+test("Skalen nach ISO 384: Folge der Striche, Ziffern an den langen, gröbere Teilung bei wenig Platz", () => {
+  const kinds = (list) => Object.fromEntries(list.map((m) => [m.v, m.kind]));
+  const one = kinds(L.graduation(50, 1));
+  assert.equal(one[10], "long"); assert.equal(one[5], "medium"); assert.equal(one[3], "short");
+  const two = kinds(L.graduation(100, 2));
+  assert.equal(two[10], "long"); assert.equal(two[4], "short", "Teilung 2: jeder 5. Strich lang, kein mittlerer");
+  const five = kinds(L.graduation(25, 0.5));
+  assert.equal(five[5], "long"); assert.equal(five[1], "medium"); assert.equal(five[0.5], "short");
+  assert.ok(L.graduation(50, 1).every((m) => m.figure === (m.kind === "long")), "beziffert werden nur die langen Striche");
+  const tight = L.graduation(50, 0.1, 4.6, 2.5, true);
+  assert.equal(tight[0].v, 0, "Bürette: mit Nullstrich");
+  assert.equal(tight[1].v, 1, "0,1 mL stünden 0,46 Bildpunkte auseinander: Teilung 1 mL");
+  assert.equal(L.graduation(50, 0.1, null, null, true).length, 501, "ohne Platzangabe bleibt die genormte Teilung (3D)");
+
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }] }, { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] },
+    { type: "cylinder", id: "c", ml: 100, contains: [{ reagent: "H2O", ml: 40 }] }]);
+  const burette = L.parts.burette.draw(look(l, "bu"), ctx(), L.parts.beaker.mount(look(l)));
+  assert.match(burette, /cl-schellbach-line/, "Schellbachstreifen (ISO 385)");
+  assert.match(burette, />50 mL · AS</, "Aufdruck der Bürette");
+  assert.match(burette, /cl-boss/, "Doppelmuffe am Stativ");
+  const cylinder = L.parts.cylinder.draw(look(l, "c"), ctx());
+  assert.match(cylinder, /In · 20 °C/, "Messzylinder: enthaltenes Volumen (ISO 4788)");
+  assert.doesNotMatch(cylinder, /Ex/);
+  assert.doesNotMatch(L.parts.cylinder.draw(look(l, "c"), ctx({ numbers: false })), /cl-print/, "ohne Zahlen kein Aufdruck");
+  assert.match(L.parts.burner.draw({ flame: 0 }, ctx()), /cl-gas-knob/, "Gashahn mit gelbem Griff (DIN EN 13792)");
+  const thermo = L.parts.thermometer.draw({ value: 20, unit: "°C" }, ctx(), null);
+  assert.match(thermo, /cl-enamel/, "Emaillestreifen hinter der Kapillare (ISO 386, 8.3)");
+  assert.match(thermo, /cl-chamber/, "Ausdehnungskammer (ISO 386, 8.7)");
+  const figures = [...thermo.matchAll(/class="cl-mark-text"[^>]*>([^<]+)</g)].map((m) => +m[1].replace("−", "-"));
+  assert.ok(figures.includes(0) && figures.every((T) => T % 10 === 0), `die Stufen zählen vom Nullpunkt aus: ${figures}`);
+  const cold = Object.fromEntries(L.graduation(110, 1, null, null, true, -10).map((m) => [m.v, m.kind]));
+  assert.equal(cold[-10], "long"); assert.equal(cold[-5], "medium"); assert.equal(cold[0], "long"); assert.equal(cold[-3], "short");
+  assert.match(L.parts.testtube.draw(look(lab([{ type: "testtube", id: "b" }])), ctx()), /boro 3\.3/, "Reagenzglas Typ I (ISO 4142)");
+  assert.equal(L.shapes.funnel.h, 48, "Trichter: Öffnungswinkel 60° (ISO 4798)");
+  const sep = lab([{ type: "beaker", id: "b" }, { type: "separator", id: "s", over: "b" }]);
+  assert.match(L.parts.separator.draw(look(sep, "s"), ctx(), L.parts.beaker.mount(look(sep))), />100 mL</, "Scheidetrichter: Nennvolumen (ISO 4800)");
+  // Hahngriff rechts (ISO 4800, 5.3): der Griff beginnt rechts vom Rohr
+  const handle = /class="cl-cock-handle" x="([\d.-]+)"/.exec(burette);
+  assert.ok(handle && +handle[1] > L.shapes.buretteAt(L.parts.beaker.mount(look(l))).x, "Griff rechts vom Rohr");
+  assert.match(burette, /cl-clamp-jaw/, "Bürettenklemme mit Backen");
+  assert.match(L.parts.beaker.draw(look(l), ctx()), /cl-label-field/, "Schriftfeld auf dem Becherglas");
+  // Messkolben birnenförmig (ISO 1042:1981, 8.3): unten am breitesten, der Spiegel steigt stetig und steht bei der Marke am Eichstrich
+  const half = L.shapes.volflaskHalf;
+  assert.ok(half(9) > half(30) && half(30) > half(50) && half(50) > half(59), "breit unten, zum Hals hin schmal");
+  const vf = lab([{ type: "volflask", id: "m", ml: 100 }]);
+  const level = (ml) => L.parts.volflask.surface(Object.assign({}, look(vf, "m"), { ml }));
+  for (let ml = 1, last = level(0.5); ml <= 100; ml++) { assert.ok(level(ml) <= last + 1e-9, `steigt stetig (${ml} mL)`); last = level(ml); }
+  near(level(100), L.shapes.volflask.mark, 1e-6, "bei 100 mL am Eichstrich");
+  clean(L.parts.volflask.draw(Object.assign({}, look(vf, "m"), { ml: 60 }), ctx()), "Messkolben halb voll");
+});
+
 test("Zeichnung: jedes Gerät, leer und gefüllt, ohne Fehler im SVG", () => {
   const l = lab([
     { type: "testtube", id: "a" },
@@ -5352,7 +5403,9 @@ test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Z
   tap(el, "a");
   assert.match(part(el, ".cl-hand").innerHTML, /abgeben/, "jetzt das Ziel");
   assert.equal(part(el, ".cl-status").textContent, "Aus Becherglas 1 aufgezogen.", "die Statuszeile sagt es an");
+  assert.match(item(el, "a").innerHTML, /cl-held[\s\S]*fill="#c1121c"/, "die aufgezogene Pipette steht im Gefäß, mit rotem Ring (10 mL, ISO 1769)");
   tap(el, "b");
+  assert.doesNotMatch(item(el, "a").innerHTML, /cl-held/, "nach dem Abgeben steht sie nicht mehr dort");
   frames(30);
   near(L.volume(L.vessel(state(el).run.lab, "b")) * 1000, 10, 1e-9);
   assert.match(logOf(el), /10 mL mit der Pipette aus Becherglas 1 in Becherglas 2 gegeben/);
@@ -5361,6 +5414,88 @@ test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Z
   tap(el, "b");
   tap(el, "b");
   assert.match(part(el, ".cl-status").textContent, /anderes Gefäß/);
+});
+
+test("Erlenmeyerkolben (ISO 1773): Füllhöhe, Messfühler, Bürette darüber, Namen in allen Sprachen", () => {
+  const l = lab([{ type: "erlenmeyer", id: "e", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "erlenmeyer", id: "k", ml: 100 },
+    { type: "phmeter", id: "ph", in: "e" }, { type: "thermometer", id: "th", in: "e" }, { type: "burette", id: "bu", over: "e", contains: [{ reagent: "NaOH 0.1M", ml: 50 }] }]);
+  const e = look(l, "e");
+  assert.equal(e.cap, 250, "ohne Angabe 250 mL");
+  assert.equal(look(l, "k").cap, 100);
+  const level = (ml) => L.parts.erlenmeyer.surface(Object.assign({}, e, { ml }));
+  for (let ml = 5, last = level(1); ml <= 250; ml += 5) { assert.ok(level(ml) < last, `steigt (${ml} mL)`); last = level(ml); }
+  const s = L.shapes.erlenmeyer[250];
+  near(level(250), -2 - (s[1] - s[3]), 0.6, "voll bis zur Schulter");
+  assert.ok(level(125) - level(100) < level(25) - level(0.01), "oben im Kegel steigt es schneller als unten");
+  for (const numbers of [true, false]) clean(L.parts.erlenmeyer.draw(e, ctx({ numbers })), "Erlenmeyerkolben");
+  clean(L.parts.burette.draw(look(l, "bu"), ctx(), L.parts.erlenmeyer.mount(e)), "Bürette über dem Erlenmeyerkolben");
+  const probe = L.parts.erlenmeyer.probe(e, "thermometer"), neck = s[2];
+  assert.ok(Math.abs(probe.x) < neck && Math.abs(L.parts.erlenmeyer.mount(e).x) < neck, "Thermometer und Bürette stecken im Hals");
+  assert.match(L.icon("erlenmeyer"), /<svg/);
+  for (const code of fs.readdirSync(new URL("lang/", here)).map((f) => f.replace(".json", ""))) {
+    assert.ok(JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here))).strings["part.erlenmeyer"], `${code}: part.erlenmeyer`);
+  }
+  L.step(l, 5);
+  near(look(l, "e").pH, 1.0, 0.05, "rechnet wie jedes Gefäß");
+});
+
+test("Weitere Geräte: Stehkolben, Tropftrichter, Saugflasche mit Büchnertrichter, Tiegel im Tondreieck, pneumatische Wanne", () => {
+  const l = lab([
+    { type: "flatflask", id: "f", contains: [{ reagent: "HCl 0.1M", ml: 50 }] },
+    { type: "dropfunnel", id: "d", over: "f", contains: [{ reagent: "NaOH 0.1M", ml: 50 }] },
+    { type: "filterflask", id: "s" },
+    { type: "buchner", id: "bu", over: "s", contains: [{ reagent: "H2O", ml: 40 }] },
+    { type: "crucible", id: "c", contains: [{ reagent: "H2O", ml: 5 }] }, { type: "burner", id: "br", under: "c", flame: 2 },
+    { type: "testtube", id: "t", contains: [{ reagent: "HCl 1M", ml: 10 }] },
+    { type: "trough", id: "w", contains: [{ reagent: "H2O", ml: 1000 }] }, { type: "tube", id: "r", in: "t", to: "w" }
+  ], { room: 20 });
+  L.add(l, "t", "Mg ribbon", { g: 0.05 });
+  assert.ok(L.setTap(l, "d", 1), "der Tropftrichter hat einen Hahn");
+  L.step(l, 60);
+  assert.ok(look(l, "f").ml > 60, "aus dem Tropftrichter in den Stehkolben");
+  assert.ok(look(l, "s").ml > 35, "durch den Büchnertrichter schnell in die Saugflasche");
+  assert.ok(look(l, "c").T > 60, "der Tiegel wird in der Flamme heiß");
+  assert.ok(look(l, "w").caught > 10, `Gas im Zylinder der Wanne: ${look(l, "w").caught} mL`);
+  for (const id of ["f", "s", "c", "w"]) for (const numbers of [true, false]) clean(L.parts[look(l, id).type].draw(look(l, id), ctx({ numbers })), id);
+  clean(L.parts.dropfunnel.draw(look(l, "d"), ctx(), L.parts.flatflask.mount(look(l, "f"))), "Tropftrichter");
+  clean(L.parts.buchner.draw(look(l, "bu"), ctx(), L.parts.filterflask.mount(look(l, "s"))), "Büchnertrichter");
+  assert.match(L.parts.burner.draw({ flame: 2 }, ctx(), L.parts.burner.stand(L.vessel(l, "c"))), /cl-clay/, "Tondreieck unter dem Tiegel");
+  assert.match(L.parts.trough.draw(look(l, "w"), ctx()), /cl-gasroom/, "das Gas oben im Zylinder");
+  for (const [type, size, neck] of [["flatflask", 250, 22], ["flatflask", 100, 16], ["erlenmeyer", 250, 27]]) {
+    const v = { type, size, cap: size }, plug = L.parts[type].probe(v, "tube");
+    assert.equal(plug.rim, L.parts[type].bounds(v).top + 8, `${type} ${size}: der Stopfen sitzt auf dem Rand`);
+    assert.equal(plug.w, 2 * neck + 2, `${type} ${size}: und ist so breit wie der Hals`);
+  }
+  const level = (ml) => L.parts.flatflask.surface(Object.assign({}, look(l, "f"), { ml }));
+  for (let ml = 10, last = level(5); ml <= 250; ml += 10) { assert.ok(level(ml) < last, `Stehkolben: steigt (${ml} mL)`); last = level(ml); }
+  for (const type of ["flatflask", "filterflask", "crucible", "trough", "dropfunnel", "buchner"]) {
+    assert.match(L.icon(type), /<svg/);
+    for (const code of fs.readdirSync(new URL("lang/", here)).map((f) => f.replace(".json", ""))) {
+      assert.ok(JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here))).strings["part." + type], `${code}: part.${type}`);
+    }
+  }
+});
+
+test("README: Gas pneumatisch auffangen – im Zylinder etwa so viel wie der Wasserstoff, zuerst vor allem Luft; der Tiegel trocknet doppelt so schnell", () => {
+  const l = lab([{ type: "flatflask", id: "kolben", contains: [{ reagent: "Mg ribbon", g: 0.05 }] },
+    { type: "dropfunnel", id: "tropf", over: "kolben", contains: [{ reagent: "HCl 1M", ml: 20 }] },
+    { type: "thermometer", id: "th", in: "kolben" },
+    { type: "trough", id: "wanne", contains: [{ reagent: "H2O", ml: 1000 }] }, { type: "tube", in: "kolben", to: "wanne" }], { room: 20 });
+  L.setTap(l, "tropf", 1); L.step(l, 20); L.setTap(l, "tropf", 0); L.step(l, 240);
+  assert.ok(L.reading(l, "th").value > 21, "das Thermometer zeigt, dass es warm wird");
+  const hydrogen = 0.05 / 24.305 * 8.314 * 293.15 / 1e5 * 1e6;          // mL Wasserstoff aus 0,05 g Magnesium
+  // Platz im Hals des Stehkolbens: Tropftrichter links, Gasableitungsrohr in der Mitte, Thermometer rechts; nichts berührt sich
+  const F = L.parts.flatflask, k = look(l, "kolben"), neck = L.shapes.flatShape(k).size[2];
+  const funnel = F.mount(k).x, pipe = F.probe(k, "tube").x, thermo = F.probe(k, "thermometer");
+  assert.ok(-neck < funnel - 2.5 && funnel + 2.5 < pipe - 1.5 && pipe + 1.5 < thermo.x - 3.5 && thermo.x + 3.5 < neck, `im Hals: ${funnel}, ${pipe}, ${thermo.x} bei ±${neck}`);
+  const body = [funnel - L.shapes.drop.a, funnel + L.shapes.drop.a], tag = [thermo.x + thermo.tag, thermo.x + thermo.tag + 50];
+  assert.ok(tag[0] > body[1], "die Anzeige des Thermometers liegt rechts neben dem Tropftrichter");
+  assert.ok(body[1] < pipe + 6, "das Rohr geht rechts am Tropftrichter vorbei");
+  near(look(l, "wanne").caught, hydrogen, hydrogen * 0.15, "Gas im Zylinder");
+  assert.ok(L.vessel(l, "wanne").caught.air > L.vessel(l, "wanne").caught["H2(g)"], "zuerst kommt die Luft aus dem Kolben");
+  const dry = (type) => { const d = lab([{ type, id: "v", contains: [{ reagent: "NaCl 1M", ml: 5 }] }, { type: "burner", under: "v", flame: 2 }], { room: 20 }); let t = 0; while (look(d, "v").ml > 0.01 && t < 1200) { L.step(d, 10); t += 10; } return t; };
+  const ratio = dry("dish") / dry("crucible");
+  assert.ok(ratio > 1.6 && ratio < 2.6, `Schale braucht ${ratio.toFixed(2)}-mal so lange`);
 });
 
 test("Filtrieren in der Fläche: den Trichter über ein Becherglas hängen, hineingießen; kein Hahn", () => {
@@ -10683,7 +10818,9 @@ test("Messkolben: bis zur Marke genau; 4 g Natriumhydroxid im 100-mL-Kolben erge
   near(look(l, "m").ml, 100, 1e-6, "Volumen");
   near(amount(l, "Na+(aq)", "m") / 0.1, 1.0, 0.002, "Konzentration");
   assert.equal(look(l, "m").mark, 100);
-  assert.match(L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 }), /class="cl-mark"/, "Eichstrich");
+  const drawn = L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 });
+  assert.match(drawn, /class="cl-ring"/, "Eichstrich ganz um den Hals (ISO 1042)");
+  assert.match(drawn, />A · In · 20 °C</, "Aufdruck: Klasse, enthaltenes Volumen, Bezugstemperatur");
   const big = lab([{ type: "volflask", id: "m", ml: 250 }]);
   assert.equal(look(big, "m").mark, 250, "auch mit 250 mL");
   L.add(big, "m", "H2O", { ml: 260 });

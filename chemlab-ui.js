@@ -363,7 +363,10 @@
     }
 
     // Was in der Hand liegt, schwebt oben links über der Fläche: Name, Menge und ein Knopf, der es zurücklegt
+    var shownPipette = null;          // aus welchem Gefäß die Vollpipette in der Hand aufgezogen hat: dort steht sie auf der Fläche
     function renderHand() {
+      var held = st.hand && st.hand.test && L.parts[st.hand.id] && L.parts[st.hand.id].probe === "pipette" ? st.hand.from || null : null;
+      if (held !== shownPipette) { shownPipette = held; if (items.length) paint(); }
       var h = st.hand, name, drop = '<button type="button" class="cl-btn cl-round cl-x" data-act="drop" title="' + esc(T("hand.drop")) + '" aria-label="' + esc(T("hand.drop")) + '">' + CLOSE_ICON + "</button>";
       ui.hand.hidden = !h;
       if (el.setAttribute) el.setAttribute("data-hand", !h ? "" : h.tool || h.test ? "tool" : "stuff");      // die Gefäße zeigen dann, dass sie Ziel sind
@@ -724,6 +727,14 @@
       return { list: list, width: total };
     }
 
+    // Fliesen an der Wand, 10 cm groß (160 Bildpunkte), von der Tischkante aus gezählt
+    function tiles(width) {
+      var d = "", y, x, T = 160;
+      for (y = bench - T; y > 0; y -= T) d += "M0," + y + "H" + width;
+      for (x = T; x < width; x += T) d += "M" + x + ",0V" + bench;
+      return d ? '<path class="cl-tile" d="' + d + '"/>' : "";
+    }
+
     function renderStage() {
       var plan = layout();
       items = plan.list;
@@ -731,7 +742,7 @@
       ui.svg.setAttribute("viewBox", "0 0 " + plan.width + " " + (bench + FRONT));
       ui.svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
       ui.svg.innerHTML =
-        '<rect class="cl-wall" x="0" y="0" width="' + plan.width + '" height="' + bench + '"/>' +
+        '<rect class="cl-wall" x="0" y="0" width="' + plan.width + '" height="' + bench + '"/>' + tiles(plan.width) +
         '<rect class="cl-bench" x="0" y="' + bench + '" width="' + plan.width + '" height="' + FRONT + '"/>' +
         '<line class="cl-edge" x1="0" x2="' + plan.width + '" y1="' + bench + '" y2="' + bench + '"/>' +
         items.map(function (item) {
@@ -895,8 +906,10 @@
           }
           b = def.bounds(v, hang);
           aria = T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content });
-          if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
-          else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang);
+          if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx,
+            held: shownPipette === item.id && def.mount ? { ml: L.parts[st.hand.id].ml, rgb: w.color.rgb, tip: Math.min(-6, def.mount(w).surface + 10) } : null });
+          else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang) +
+            (shownPipette === item.id && def.mount ? L.pipetteHeld(L.parts[st.hand.id].ml, w, def.mount(w), ctx) : "");
           g.setAttribute("aria-label", aria);
         } else {
           r = L.reading(lab, item.id);

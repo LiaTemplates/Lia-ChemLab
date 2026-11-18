@@ -7,12 +7,30 @@
 
   var L = global.LiaChemLab, THREE = L.THREE, fx = L.fx3d;
 
+  // Fliesen als Bild aus einem Canvas: eine Fliese mit Fuge, wiederholt (repeat) auf die gewünschte Größe
+  function tiles(color, grout) {
+    var c = global.document.createElement("canvas"), g = c.getContext("2d"), tex;
+    c.width = c.height = 128;
+    g.fillStyle = grout; g.fillRect(0, 0, 128, 128);
+    g.fillStyle = color; g.fillRect(2, 2, 124, 124);
+    tex = new THREE.CanvasTexture(c);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
+    return tex;
+  }
+  fx.tiles = tiles;            // auch für eigene Szenen
+
   // Ein Raum aus Wand, Tischplatte, Unterschrank und Boden, dazu ein Licht von schräg vorn mit Schatten.
-  // look.wall, .top, .cabinet: Farbe oder { map, normal, repeat, rough } mit Pfaden unter assets/3d/
+  // look.wall, .top, .cabinet: Farbe, { map, normal, repeat, rough } mit Pfaden unter assets/3d/ oder { texture, repeat, rough }
   function room(kit, look) {
     var root = kit.root;
     function surface(spec, rough, repeat) {
       if (typeof spec === "number") return fx.matte(spec, rough);
+      if (spec.texture) {
+        spec.texture.repeat.set((spec.repeat || repeat)[0], (spec.repeat || repeat)[1]);
+        return new THREE.MeshStandardMaterial({ map: spec.texture, roughness: spec.rough == null ? rough : spec.rough });
+      }
       return new THREE.MeshStandardMaterial({
         map: kit.texture(spec.map, true, spec.repeat || repeat),
         normalMap: spec.normal ? kit.texture(spec.normal, false, spec.repeat || repeat) : null,
@@ -34,7 +52,7 @@
     root.background = new THREE.Color(look.sky || 0xdde3e8);
 
     var sun = new THREE.DirectionalLight(look.light, look.lightPower);
-    sun.position.set(-70, 140, 90);
+    sun.position.set(-50, 220, 70);           // hoch und von links vorn: kurze Schatten, die die Geräte auf den Tisch stellen
     sun.castShadow = kit.high;
     sun.shadow.mapSize.set(2048, 2048);
     sun.shadow.camera.left = -120; sun.shadow.camera.right = 120;
@@ -68,7 +86,9 @@
 
   L.registerScene("lab", {
     build: function (kit) {
-      room(kit, { top: 0x3b4046, topRough: 0.35, cabinet: 0xd5dade, wall: 0xe8ecef, floor: 0x9aa1a8, light: 0xffffff, lightPower: 2.2, exposure: 0.9, sky: 0xe8ecef });
+      // Fliesenwand mit 10 cm großen Fliesen wie in 2D, dunkle Arbeitsplatte
+      room(kit, { top: 0x3b4046, topRough: 0.35, cabinet: 0xd5dade, wall: { texture: tiles("#eeeae2", "#cfc9bd"), repeat: [90, 30], rough: 0.35 },
+        floor: 0x9aa1a8, light: 0xffffff, lightPower: 2.2, exposure: 0.9, sky: 0xe8ecef });
     }
   });
 

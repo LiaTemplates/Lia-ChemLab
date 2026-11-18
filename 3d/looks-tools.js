@@ -42,10 +42,14 @@
   L.registerLook("burner", "lab", {
     build: function (kit) {
       var group = new THREE.Group(), body = new THREE.Group(), steel = fx.steel(), iron = fx.iron();
-      // der Gasschlauch läuft nach hinten und durch eine Tülle in die Tischplatte, wo die Gasleitung liegt
-      var hose = new THREE.CatmullRomCurve3([V(2.4, 1.6, 0), V(3.6, 0.9, 0), V(4.2, 0.4, -2.5), V(4.5, 0.4, -6), V(4.6, -0.3, -8), V(4.6, -2.5, -8.4)]);
+      // der Gasschlauch läuft nach hinten zum Gashahn auf dem Tisch; dessen Griff ist im heutigen Labor gelb (Erdgas, DIN EN 13792)
+      var hose = new THREE.CatmullRomCurve3([V(2.4, 1.6, 0), V(3.6, 0.9, 0), V(4.2, 0.4, -2.5), V(4.5, 0.5, -5.5), V(4.6, 0.8, -7.0), V(4.6, 0.8, -7.6)]);
+      var knob = fx.style.metal === "steel" ? fx.matte(0xf3c300, 0.45) : steel;
       body.add(mesh(new THREE.CylinderGeometry(3.0, 3.4, 0.9, 40), iron, 0, 0.45),
-        mesh(new THREE.CylinderGeometry(0.8, 0.95, 0.16, 24), steel, 4.6, 0.08, -8.2),     // Tülle im Tisch
+        mesh(new THREE.BoxGeometry(1.6, 1.7, 1.6), steel, 4.6, 0.85, -8.5),                 // Gashahn
+        mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.8, 12).rotateX(Math.PI / 2), steel, 4.6, 0.8, -7.5),
+        mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.5, 8), steel, 4.6, 1.9, -8.5),
+        mesh(new THREE.CylinderGeometry(0.75, 0.75, 0.45, 24), knob, 4.6, 2.3, -8.5),
         mesh(new THREE.CylinderGeometry(0.75, 0.75, 1.3, 24), steel, 0, 2.2),            // Luftregler
         mesh(new THREE.CylinderGeometry(0.3, 0.3, 2.2, 12).rotateZ(Math.PI / 2), steel, 1.4, 1.6),
         mesh(new THREE.TubeGeometry(hose, 40, 0.45, 10), fx.matte(fx.style.hose, 0.6), 0, 0, 0));
@@ -60,12 +64,12 @@
       var u = group.userData, r = d.data, place = d.place, H = burnerHeight(d, kit), f = FLAMES[r.flame], t = d.ctx.still ? 0 : d.ctx.t, flick;
       u.tube.scale.y = H - 0.9; u.tube.position.y = 0.9 + (H - 0.9) / 2;
       // Dreifuß mit Drahtnetz unter Becherglas und Schale; eine Klemme am Stativ hält das Reagenzglas
-      fx.rebuild(group, "stand", place ? JSON.stringify([place.lift, place.foot, place.clamp]) : "", function (sub) {
+      fx.rebuild(group, "stand", place ? JSON.stringify([place.lift, place.foot, place.clamp, place.triangle]) : "", function (sub) {
         var Y, a, k, ang, net;
         if (!place) return;
-        Y = kit.up(place.lift);
+        Y = kit.up(place.lift) + (place.triangle ? 1 : 0);          // das Tondreieck sitzt 1 cm über dem Boden des Tiegels, der darin hängt
         if (place.clamp) {
-          fx.stand(sub, cm(54), -4, 0, Y + cm(150), [{ y: Y + cm(120), x: 0, r: cm(13) }]);
+          fx.stand(sub, cm(54), fx.STAND.z, 0, Y + cm(150), [{ y: Y + cm(120), x: 0, r: cm(13) }]);
           return;
         }
         a = cm(place.foot + 10) + 0.4;
@@ -73,6 +77,15 @@
         for (k = 0; k < 3; k++) {
           ang = k * Math.PI * 2 / 3 - Math.PI / 2;      // ein Bein hinten, zwei vorn seitlich: keines steht vor dem Brenner
           sub.add(fx.rod(V(a * Math.cos(ang), Y - 0.32, a * Math.sin(ang)), V(a * 1.45 * Math.cos(ang), 0, a * 1.45 * Math.sin(ang)), 0.22, fx.iron()));
+        }
+        if (place.triangle) {                         // Tondreieck: drei Röhrchen aus Ton auf einem Drahtdreieck, der Tiegel hängt darin
+          for (k = 0; k < 3; k++) {
+            ang = k * Math.PI * 2 / 3 + Math.PI / 6;
+            var p1 = V(a * Math.cos(ang), Y - 0.2, a * Math.sin(ang)), p2 = V(a * Math.cos(ang + Math.PI * 2 / 3), Y - 0.2, a * Math.sin(ang + Math.PI * 2 / 3));
+            sub.add(fx.rod(p1, p2, 0.05, fx.iron()));
+            sub.add(fx.rod(p1.clone().lerp(p2, 0.22), p1.clone().lerp(p2, 0.78), 0.2, fx.matte(0xe9e2d2, 0.8)));
+          }
+          return;
         }
         net = new THREE.Mesh(new THREE.PlaneGeometry(2 * a + 1.6, 2 * a + 1.6).rotateX(-Math.PI / 2),
           new THREE.MeshStandardMaterial({ map: gauze(true), alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.4, roughness: 0.6 }));
@@ -139,7 +152,7 @@
         var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(fx.style.device, 0.5), a + 2, 3, 0);
         sub.add(box, fx.rod(V(a + 1.2, 6, 0), V(a + 1.2, top + 0.8, 0), 0.18, fx.steel()), fx.rod(V(a + 1.2, top + 0.8, 0), V(a - 0.8, top + 0.8, 0), 0.18, fx.steel()),
           fx.rod(V(a - 0.8, top + 0.8, 0), V(a - 0.8, grate + 1, 0), 0.18, fx.steel()));
-        if (p.clamp) fx.stand(sub, -a - 1.3, -4, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
+        if (p.clamp) fx.stand(sub, -a - 1.3, fx.STAND.z, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
       });
       u.screen.position.set(a + 2, 4.3, 2.52);
       u.screen.userData.write(d.ctx.numbers ? L.num(r.temp, 0, d.ctx.lang) + " °C" : "");
@@ -205,12 +218,14 @@
     var c = doc.createElement("canvas"), g = c.getContext("2d"), T, y, tex;
     c.width = 64; c.height = 1024;
     g.fillStyle = fx.style.display === "paper" ? "#efe3c2" : "#f7f7f4"; g.fillRect(0, 0, 64, 1024);      // um 1880 auf Papier
-    g.fillStyle = "#22262b"; g.font = "bold 22px system-ui, sans-serif"; g.textBaseline = "middle";
-    for (T = -10; T <= 110; T += 2) {
+    // Teilung 1 °C, gestuft wie in 2D (nach dem Muster von ISO 384): jeder 10. Strich lang mit Ziffer darüber, in der Mitte ein mittlerer
+    g.fillStyle = "#22262b"; g.font = "bold 22px system-ui, sans-serif"; g.textBaseline = "alphabetic";
+    L.graduation(110, 1, null, null, true, -10).forEach(function (m) {
+      T = m.v;
       y = 1024 * (1 - (T + 10) / 120);
-      g.fillRect(0, y - 1, T % 10 ? 12 : T % 50 ? 20 : 26, 2);
-      if (numbers && T % 50 === 0 && T >= 0) g.fillText(String(T), 28, Math.min(1012, Math.max(12, y)));
-    }
+      g.fillRect(0, y - 1, m.kind === "long" ? 30 : m.kind === "medium" ? 19 : 12, m.kind === "long" ? 2.5 : 2);
+      if (numbers && m.figure) g.fillText(T < 0 ? "−" + -T : String(T), 14, Math.min(1020, Math.max(24, y - 5)));
+    });
     tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
@@ -232,6 +247,7 @@
         var glass = thermoGlass(), red = fx.matte(0xd8322c, 0.35);
         sub.add(mesh(new THREE.CylinderGeometry(0.2, 0.2, top - bottom - 0.5, 20), glass, x, (top + bottom + 0.5) / 2));
         sub.add(mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), glass, x, top));
+        sub.add(mesh(new THREE.TorusGeometry(0.16, 0.035, 8, 20), glass, x, top + 0.32));          // Ring oben (ISO 386, Bild 1)
         sub.add(mesh(new THREE.SphereGeometry(0.3, 20, 14), glass, x, bottom + 0.31));
         sub.add(mesh(new THREE.SphereGeometry(0.22, 16, 12), red, x, bottom + 0.31));
         var back = new THREE.Mesh(new THREE.PlaneGeometry(0.3, at(110) - at(-10)), new THREE.MeshBasicMaterial({ map: thermoScale(d.ctx.numbers) }));
@@ -247,7 +263,8 @@
       column.position.y = bottom + 0.5 + column.scale.y / 2;
       u.tag.visible = !!d.ctx.numbers;
       u.tag.userData.write((r.over ? "> " + L.num(r.value, 0, d.ctx.lang) : L.num(r.value, 1, d.ctx.lang)) + " °C");
-      u.tag.position.set(x, top + 0.5, 0);
+      // die Anzeige steht wie in 2D: rechts daneben, wenn das Gefäß sie dorthin legt (tag > 0, etwa im Stehkolben neben dem Tropftrichter)
+      u.tag.position.set(x + (p.tag > 0 ? cm(p.tag + 45) : 0), top + 0.5, 0);
     }
   });
 
@@ -348,9 +365,13 @@
         var barrel = new THREE.Mesh(new THREE.CylinderGeometry(R, R, len, 28, 1, true).rotateZ(Math.PI / 2), glass);
         barrel.position.set(x0 + len / 2, y, 0); barrel.renderOrder = 2;
         sub.add(barrel, mesh(new THREE.CircleGeometry(R, 28).rotateY(Math.PI / 2), glass, x0, y));
-        for (k = 0; k <= 100; k += 20) {                // Teilstriche als Ringe
-          sub.add(mesh(new THREE.TorusGeometry(R + 0.01, 0.012, 4, 28).rotateY(Math.PI / 2), fx.matte(0x22262b, 0.6), x0 + cm(6 + (BARREL - 14) * k / 100), y));
-        }
+        // Teilstriche wie in 2D gestuft: lange als Ringe ganz herum, mittlere als halbe Ringe vorn (ISO 384, 9.2); die kurzen fehlen in 3D
+        L.graduation(100, 1, null, null, true).forEach(function (m) {
+          if (m.kind === "short") return;
+          // der halbe Ring liegt nach rotateZ und rotateY vorn (+z), der Kamera zugewandt
+          sub.add(mesh(new THREE.TorusGeometry(R + 0.01, m.kind === "long" ? 0.014 : 0.01, 4, 28, m.kind === "long" ? Math.PI * 2 : Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
+            fx.matte(0x22262b, 0.6), x0 + cm(6 + (BARREL - 14) * m.v / 100), y));
+        });
         var plunger = new THREE.Group();
         plunger.name = "plunger";
         plunger.add(mesh(new THREE.CylinderGeometry(R - 0.02, R - 0.02, cm(4), 24).rotateZ(Math.PI / 2), fx.matte(0x3a3f45, 0.5), cm(2), 0),
@@ -366,7 +387,7 @@
           var hose = new THREE.CatmullRomCurve3([V(cm(p.x), cm(-(p.rim - 4)), 0), V(cm(p.x), y - 0.3, 0), V(cm(p.x) + 0.4, y, 0), V(x0, y, 0)]);
           sub.add(stopper, mesh(new THREE.TubeGeometry(hose, 30, 0.12, 8), fx.matte(0xc0462e, 0.6)));
         }
-        fx.stand(sub, x0 + len / 2, -4, floor, y + 1.2, [{ y: y, x: x0 + len / 2, r: R, across: true }]);
+        fx.stand(sub, x0 + len / 2, fx.STAND.z, floor, y + 1.2, [{ y: y, x: x0 + len / 2, r: R, across: true }]);
       });
       var px = x0 + cm(6 + (BARREL - 14) * value / 100), gas = u.body.getObjectByName("gas");
       u.body.getObjectByName("plunger").position.set(px, y, 0);

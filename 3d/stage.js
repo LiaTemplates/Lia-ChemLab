@@ -25,28 +25,33 @@
     return looks[scene.gear[type]] || looks[scene.base] || looks[(def.gear || {})[type]] || looks.lab || (def.electrode && L.electrode3d) || L.looks3d["*"].lab;
   }
 
-  // Ein Schild als Sprite: schreibt nur neu, wenn sich der Text ändert. Höhe in cm.
+  // Ein Schild als Sprite: schreibt nur neu, wenn sich der Text ändert. Es hat eine feste Größe auf dem Bildschirm, wie die Schilder
+  // in 2D, und wird beim Heranzoomen nicht größer, beim Wegdrehen nicht unlesbar klein. height: das alte Maß in cm, nur noch als Verhältnis.
+  var FOV = 32, SCREEN = 2 * Math.tan(FOV * Math.PI / 360);
   function label(height) {
     var canvas = doc.createElement("canvas"), g = canvas.getContext("2d"), tex = new THREE.CanvasTexture(canvas);
-    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true, sizeAttenuation: false }));
+    var H = 0.06 * SCREEN * Math.max(0.9, (height || 1.1) / 1.1);       // Anteil an der Höhe des Bildes: etwa 6 %, die Schrift so groß wie in 2D
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = 4;
     sprite.renderOrder = 10;
     sprite.center.set(0.5, 0);
     sprite.userData.write = function (text) {
-      var font = "500 40px system-ui, sans-serif", w;
+      var font = "500 80px system-ui, sans-serif", w;
       if (text === sprite.userData.text) return;
       sprite.userData.text = text;
       g.font = font;
-      w = Math.ceil(g.measureText(text).width) + 32;
-      canvas.width = w; canvas.height = 64;
+      w = Math.ceil(g.measureText(text).width) + 64;
+      canvas.width = w; canvas.height = 128;
       g.font = font;
-      g.fillStyle = "rgba(255,255,255,0.88)";
-      g.beginPath(); g.roundRect(0, 0, w, 64, 14); g.fill();
+      g.fillStyle = "rgba(255,255,255,0.92)";
+      g.strokeStyle = "rgba(40,48,60,0.25)"; g.lineWidth = 3;
+      g.beginPath(); g.roundRect(1.5, 1.5, w - 3, 125, 28); g.fill(); g.stroke();
       g.fillStyle = "#28303c"; g.textBaseline = "middle";
-      g.fillText(text, 16, 33);
+      g.fillText(text, 32, 67);
       tex.dispose();                // neue Größe der Leinwand: die Textur neu anlegen lassen
       tex.needsUpdate = true;
-      sprite.scale.set((height || 1.1) * w / 64, height || 1.1, 1);
+      sprite.scale.set(H * w / 128, H, 1);
     };
     return sprite;
   }
@@ -102,7 +107,7 @@
     var world = new THREE.Scene();
     var pmrem = new THREE.PMREMGenerator(renderer);
     world.environment = pmrem.fromScene(new L.three.RoomEnvironment(renderer), 0.04).texture;
-    var camera = new THREE.PerspectiveCamera(32, 2, 1, 3000);
+    var camera = new THREE.PerspectiveCamera(FOV, 2, 1, 3000);
     var controls = new L.three.OrbitControls(camera, renderer.domElement);
     controls.minDistance = 12; controls.maxDistance = 400;
     controls.minPolarAngle = 0.3; controls.maxPolarAngle = 1.52;
@@ -207,7 +212,9 @@
     var watcher = global.ResizeObserver ? new global.ResizeObserver(size) : null;
     if (watcher) watcher.observe(host);
 
-    // Die Kamera blickt so auf den Tisch, dass alle Geräte zu sehen sind; danach gehört sie den Lernenden
+    // Die Kamera blickt so auf den Tisch, dass alle Geräte zu sehen sind; danach gehört sie den Lernenden.
+    // Sie steht vorn und nur wenig erhöht (15°): so beginnt 3D bei der Vorderansicht der Versuchsskizze in 2D, und wie in einer
+    // dimetrischen Darstellung (ISO 5456-3, 5.2) bleibt die Vorderansicht die Hauptansicht; Tiefe zeigen Ellipsen und Schatten.
     function frame() {
       var box = new THREE.Box3(), sphere = new THREE.Sphere(), half, dist;
       order.forEach(function (id) { if (entries[id]) box.expandByObject(entries[id].obj); });
@@ -215,9 +222,9 @@
       box.getBoundingSphere(sphere);
       // eine Kugel um alles passt in jeder Blickrichtung ins Bild; der engere der beiden Bildwinkel zählt
       half = Math.min(camera.fov * Math.PI / 360, Math.atan(Math.tan(camera.fov * Math.PI / 360) * camera.aspect));
-      dist = sphere.radius / Math.sin(half) * 0.92;
+      dist = sphere.radius / Math.sin(half) * 1.02;          // etwas Rand: die Schilder haben eine feste Größe und gehören nicht zur Kugel
       controls.target.copy(sphere.center);
-      camera.position.copy(sphere.center).add(new THREE.Vector3(0, 0.45, 0.89).multiplyScalar(dist));
+      camera.position.copy(sphere.center).add(new THREE.Vector3(0, 0.26, 0.966).multiplyScalar(dist));
       controls.update();
     }
 
@@ -297,6 +304,14 @@
         e.obj.position.set((d.x - width / 2) / PX, up(d.lift), 0);
         L.fx3d.style = kit.style;
         e.look.update(e.obj, d, kit);
+        // eine aufgezogene Vollpipette steht im Gefäß (held: { ml, rgb, tip in 2D-Bildpunkten }), wie in 2D
+        var held = d.held ? d.held.ml + "|" + d.held.rgb.join(",") : null;
+        if (held !== e.held) {
+          if (e.pipette) { e.obj.remove(e.pipette); dispose(e.pipette); e.pipette = null; }
+          e.held = held;
+          if (d.held) { e.pipette = L.fx3d.pipette(d.held.ml, d.held.rgb); e.obj.add(e.pipette); }
+        }
+        if (e.pipette) e.pipette.position.set(0, -d.held.tip / PX, 0);          // die Gruppe des Gefäßes ist schon gehoben
         e.key.setAttribute("aria-label", d.label);
         e.selected = d.selected;
       },
