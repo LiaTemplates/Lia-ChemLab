@@ -219,6 +219,11 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-stand { fill: #6f7780; }
 .lia-chemlab .cl-rod { stroke: #6f7780; stroke-width: 3; stroke-linecap: round; }
 .lia-chemlab .cl-cock { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 1.25; }
+/* Küken mit Mutter links und Griff rechts (ISO 4800, 5.3); Backen der Bürettenklemme; Schriftfeld auf dem Becherglas */
+.lia-chemlab .cl-cock-nut { fill: #8b949e; stroke: #4f5760; stroke-width: 0.6; }
+.lia-chemlab .cl-cock-handle { fill: #2c6fb5; stroke: #1d4f85; stroke-width: 0.6; }
+.lia-chemlab .cl-clamp-jaw { fill: none; stroke: #4f5760; stroke-width: 2; stroke-linejoin: round; }
+.lia-chemlab .cl-label-field { fill: #fbfbf7; fill-opacity: 0.85; stroke: #d8dde2; stroke-width: 0.4; }
 /* Schellbachstreifen der Bürette (ISO 385, 7), Doppelmuffe am Stativ, Ringmarke des Messkolbens, Kegelschliff */
 .lia-chemlab .cl-schellbach { fill: #fbfbf7; }
 .lia-chemlab .cl-schellbach-line { fill: #1f5aa6; }

@@ -827,6 +827,8 @@
         marks += '<line class="cl-mark' + (i % 2 ? "" : " cl-mark-long") + '" x1="' + (a - (i % 2 ? 10 : 14)) + '" x2="' + (a - 3) + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
         if (ctx.numbers && i % 2 === 0) marks += '<text class="cl-mark-text" x="' + (a - 3) + '" y="' + f(my - 1.5) + '" text-anchor="end">' + w.cap * i / 4 + "</text>";
       }
+      // weißes Schriftfeld auf dem Glas, zum Beschriften mit Bleistift (wie auf echtem Laborglas und in ChemCollective)
+      marks += '<rect class="cl-label-field" x="' + f(-0.35 * a) + '" y="' + f(-h * 0.55) + '" width="' + f(0.7 * a) + '" height="' + f(Math.max(7, h * 0.09)) + '" rx="1"/>';
       return contents(w, ctx, { path: liquid, fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -2, rim: -h, tall: false }) +
         marks +
         '<path class="cl-glass" d="M' + (-a - 6) + "," + (-h - 2) + "Q" + (-a) + "," + (-h) + " " + (-a) + "," + (-h + 8) + "L" + (-a) + ",-8Q" + (-a) + ",0 " + (-a + 8) + ",0L" +
@@ -1374,23 +1376,60 @@
 
   // ------------------------------------------------------------------ Messkolben
 
-  // Kugel mit langem, engem Hals; in der Kugel steht bulb (Anteil) der Marke, der Rest bis zum Eichstrich steht im Hals
-  var VF = { R: 30, neck: 4.5, rim: -150, mark: -105, bulb: 0.92 };
-  var VF_CY = -4 - VF.R, VF_MEET = VF_CY - Math.sqrt(VF.R * VF.R - VF.neck * VF.neck);
+  // Birnenförmiger Körper (ISO 1042:1981, 8.3: „vorzugsweise birnenförmig“, damit er breit und sicher steht) mit langem, engem Hals.
+  // Im Körper steht bulb (Anteil) der Marke, der Rest bis zum Eichstrich steht im Hals. R: größte halbe Breite, body: Höhe des Körpers.
+  var VF = { R: 32, neck: 4.5, rim: -150, mark: -105, bulb: 0.92, body: 60 };
+  var VF_CY = -34, VF_MEET = -4 - VF.body;      // VF_CY: Höhe, in der Messfühler enden; VF_MEET: wo der Körper in den Hals übergeht
+
+  // Profil der Außenseite: halbe Breite r über der Höhe h vom Boden, aus zwei Bézierkurven abgetastet: unten die gerundete Kante,
+  // dann eine lange, eingezogene Schulter bis in den Hals. Dazu das Volumen bis zur Höhe h (als Summe von r² dh).
+  var VF_PROFILE = (function () {
+    var list = [], vol = [0], i, t;
+    function bez(a, b, c, d, t) { var u = 1 - t; return u * u * u * a + 3 * u * u * t * b + 3 * u * t * t * c + t * t * t * d; }
+    for (i = 0; i <= 20; i++) { t = i / 20; list.push([bez(22, 29, 31, 31, t), bez(0, 0, 2, 9, t)]); }
+    for (i = 1; i <= 60; i++) { t = i / 60; list.push([bez(31, 34, VF.neck, VF.neck, t), bez(9, 26, 38, VF.body, t)]); }
+    for (i = 1; i < list.length; i++) {
+      var a = Math.max(0, list[i - 1][0] - 1), b = Math.max(0, list[i][0] - 1);      // innen: eine Wand dünner
+      vol.push(vol[i - 1] + (a * a + a * b + b * b) / 3 * (list[i][1] - list[i - 1][1]));
+    }
+    return { points: list, vol: vol };
+  })();
+  function vfHalf(h) {                    // halbe Außenbreite in der Höhe h über dem Boden
+    var p = VF_PROFILE.points, i;
+    if (h >= VF.body) return VF.neck;
+    for (i = 1; i < p.length; i++) if (p[i][1] >= h) return p[i - 1][0] + (p[i][0] - p[i - 1][0]) * (h - p[i - 1][1]) / Math.max(1e-9, p[i][1] - p[i - 1][1]);
+    return p[0][0];
+  }
   function vfMark(w) { return w.mark || w.cap / 1.1; }
   function vfSurface(w) {
-    var R = VF.R - 1, bulb = VF.bulb * vfMark(w), share = Math.min(1, w.ml / bulb), lo = 0, hi = 2 * R, h, i;
+    var bulb = VF.bulb * vfMark(w), share = Math.min(1, w.ml / bulb), p = VF_PROFILE, total = p.vol[p.vol.length - 1], want = share * total, i;
     if (w.ml > bulb) return Math.max(VF.rim, VF_MEET - (w.ml - bulb) / ((1 - VF.bulb) * vfMark(w) / (VF_MEET - VF.mark)));
-    for (i = 0; i < 30; i++) { h = (lo + hi) / 2; if (h * h * (3 * R - h) / (4 * R * R * R) < share) lo = h; else hi = h; }
-    return VF_CY + R - (lo + hi) / 2;
+    for (i = 1; i < p.vol.length; i++) {
+      if (p.vol[i] >= want) return -4 - (p.points[i - 1][1] + (p.points[i][1] - p.points[i - 1][1]) * (want - p.vol[i - 1]) / Math.max(1e-9, p.vol[i] - p.vol[i - 1]));
+    }
+    return VF_MEET;
   }
-  function vfFill(y) {                    // Umriss der Flüssigkeit bis zur Höhe y: in der Kugel ein Kreisabschnitt, darüber die volle Kugel und der Hals
-    var R = VF.R - 1, n = VF.neck - 1, half;
-    if (y < VF_MEET) return "M0," + f(VF_CY - R) + "A" + R + "," + R + " 0 1 0 0.01," + f(VF_CY - R) + "Z" +
+  // Umriss der Birne bis zur Höhe y; inset: so viel schmaler (die Flüssigkeit innen)
+  function vfBody(y, inset) {
+    var top = Math.min(VF.body, -4 - y), right = [], d = "", i;
+    VF_PROFILE.points.forEach(function (pt) { if (pt[1] < top) right.push([Math.max(0, pt[0] - inset), -4 - pt[1]]); });
+    right.push([Math.max(0, vfHalf(top) - inset), -4 - top]);
+    right.forEach(function (pt, k) { d += (k ? "L" : "M") + f(-pt[0]) + "," + f(pt[1]); });
+    for (i = right.length - 1; i >= 0; i--) d += "L" + f(right[i][0]) + "," + f(right[i][1]);
+    return d + "Z";
+  }
+  function vfFill(y) {                    // Umriss der Flüssigkeit bis zur Höhe y: der Körper bis zur Höhe, darüber der Hals
+    var n = VF.neck - 1;
+    if (y < VF_MEET) return vfBody(VF_MEET, 1) +
       "M" + f(-n) + "," + f(VF_MEET + 2) + "L" + f(-n) + "," + f(y) + "L" + f(n) + "," + f(y) + "L" + f(n) + "," + f(VF_MEET + 2) + "Z";
-    if (y <= VF_CY - R + 0.5) return "M0," + f(VF_CY - R) + "A" + R + "," + R + " 0 1 0 0.01," + f(VF_CY - R) + "Z";
-    half = Math.sqrt(Math.max(0, R * R - (y - VF_CY) * (y - VF_CY)));
-    return "M" + f(-half) + "," + f(y) + "A" + R + "," + R + " 0 " + (y < VF_CY ? 1 : 0) + " 0 " + f(half) + "," + f(y) + "Z";
+    return vfBody(y, 1);
+  }
+  // die Glaswand: vom Rand den Hals hinab, um die Birne herum und auf der anderen Seite wieder hinauf
+  function vfOutline() {
+    var p = VF_PROFILE.points, d = "M" + -VF.neck + "," + VF.rim, i;
+    for (i = p.length - 1; i >= 0; i--) d += "L" + f(-p[i][0]) + "," + f(-4 - p[i][1]);
+    for (i = 0; i < p.length; i++) d += "L" + f(p[i][0]) + "," + f(-4 - p[i][1]);
+    return d + "L" + VF.neck + "," + VF.rim;
   }
 
   L.registerPart("volflask", {
@@ -1405,14 +1444,14 @@
       if (type === "conductometer" || type === "photometer") return { x: 1, bottom: VF_CY + 14, top: VF.rim - 40, box: -70 };
       return type === "phmeter" ? { x: 2, bottom: VF_CY + 14, top: VF.rim - 20, box: -62 } : { x: -2, bottom: VF_CY + 14, top: VF.rim - 40, tag: -62 };
     },
-    mount: function (w) { return { x: 0, rim: VF.rim, surface: w.ml > 0.005 ? vfSurface(w) : VF_CY + VF.R, edge: VF.R + 6 }; },
+    mount: function (w) { return { x: 0, rim: VF.rim, surface: w.ml > 0.005 ? vfSurface(w) : -4, edge: VF.R + 6 }; },
     draw: function (w, ctx) {
       var R = VF.R, n = VF.neck, y = vfSurface(w), half;
       if (w.broken) return shards(R, ctx);
-      half = y < VF_MEET ? n - 1 : Math.sqrt(Math.max(0, (R - 1) * (R - 1) - (y - VF_CY) * (y - VF_CY)));
+      half = y < VF_MEET ? n - 1 : Math.max(0, vfHalf(-4 - y) - 1);
       return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
-        contents(w, ctx, { path: vfFill(y), fill: vfFill, x0: -half, x1: half, top: y, bottom: VF_CY + R - 1, rim: VF.rim, tall: true }) +
-        '<path class="cl-glass" d="M' + -n + "," + VF.rim + "L" + -n + "," + f(VF_MEET) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(VF_MEET) + "L" + n + "," + VF.rim + '"/>' +
+        contents(w, ctx, { path: vfFill(y), fill: vfFill, x0: -half, x1: half, top: y, bottom: -5, rim: VF.rim, tall: true }) +
+        '<path class="cl-glass" d="' + vfOutline() + '"/>' +
         // Ringmarke ganz um den Hals (ISO 1042, OIML R 4): vorn kräftig, hinten durchs Glas gesehen schwächer
         '<path class="cl-ring-back" d="M' + (-n) + "," + VF.mark + "A" + n + ",1.6 0 0 1 " + n + "," + VF.mark + '"/>' +
         '<path class="cl-ring" d="M' + (-n) + "," + VF.mark + "A" + n + ",1.6 0 0 0 " + n + "," + VF.mark + '"/>' +
@@ -1498,6 +1537,15 @@
     }
   });
 
+  // Hahn mit Küken quer zum Rohr: links die Mutter, rechts der Griff (ISO 4800, 5.3; so auch auf Wikimedia Commons und in ChemCollective).
+  // Steht der Griff längs zum Rohr, ist der Hahn offen; quer, also zum Betrachter hin und kurz gezeichnet, ist er zu.
+  function cock(x, y, open) {
+    return '<rect class="cl-cock" x="' + (x - 5) + '" y="' + (y - 3.5) + '" width="12" height="7" rx="2"/>' +
+      '<rect class="cl-cock-nut" x="' + (x - 8) + '" y="' + (y - 3) + '" width="3" height="6" rx="1"/>' +
+      (open ? '<rect class="cl-cock-handle" x="' + (x + 7) + '" y="' + (y - 7) + '" width="3" height="14" rx="1.2"/>'
+        : '<rect class="cl-cock-handle" x="' + (x + 7) + '" y="' + (y - 2) + '" width="9" height="4" rx="1.2"/>');
+  }
+
   // ------------------------------------------------------------------ Bürette
 
   // Länge der Skala in Bildpunkten für 50 mL; Teilung und Aufdruck nach ISO 385 (Klasse AS: 30 s Wartezeit, auf Ablauf justiert)
@@ -1524,7 +1572,8 @@
       out = '<rect class="cl-stand" x="' + (rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
         '<line class="cl-rod" x1="' + rod + '" x2="' + rod + '" y1="-5" y2="' + (g.high + 24) + '"/>';
       arms.forEach(function (y) {          // Bürettenklemme an einer Doppelmuffe
-        out += '<line class="cl-rod" x1="' + rod + '" x2="' + (x + 6) + '" y1="' + y + '" y2="' + y + '"/>' +
+        out += '<line class="cl-rod" x1="' + rod + '" x2="' + (x + 10) + '" y1="' + y + '" y2="' + y + '"/>' +
+          '<path class="cl-clamp-jaw" d="M' + (x + 10) + "," + (y - 4.5) + "H" + (x - 8) + "V" + (y + 4.5) + "H" + (x + 10) + '"/>' +
           '<rect class="cl-boss" x="' + (rod - 5) + '" y="' + (y - 5) + '" width="10" height="10" rx="2"/>';
       });
       // Schellbachstreifen (ISO 385, 7): weiß mit blauem Mittelstrich auf der Rückwand. Durch die Flüssigkeit gesehen
@@ -1543,9 +1592,7 @@
       out += scaleMarks(graduation(BURETTE.cap, BURETTE.division, BURETTE.length / BURETTE.cap, 2.5, true), x, 5, function (ml) { return g.high + ml / BURETTE.cap * BURETTE.length; }, ctx) +
         print(BURETTE.print, x - 8, g.high + 14, ctx, "end");
       // Hahn: quer heißt zu, längs heißt offen
-      out += '<rect class="cl-cock" x="' + (x - 4) + '" y="' + (g.low + 4) + '" width="8" height="8" rx="2"/>' +
-        (open ? '<line class="cl-cock-grip" x1="' + x + '" x2="' + x + '" y1="' + (g.low + 1) + '" y2="' + (g.low + 15) + '"/>'
-          : '<line class="cl-cock-grip" x1="' + (x - 9) + '" x2="' + (x + 9) + '" y1="' + (g.low + 8) + '" y2="' + (g.low + 8) + '"/>');
+      out += cock(x, g.low + 8, open);
       if (open && w.ml > 0.001 && mount && L.fx) {
         out += w.tap >= 0.3 ? L.fx.stream(x, g.tip, g.surface, ctx.t, ctx.still) : L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);
       }
@@ -1589,9 +1636,7 @@
         // Aufdruck nach ISO 4800, 6: nur das Nennvolumen (der Stopfen sitzt in einem Schliff 19/26)
         print([SEP.cap + " mL"], x, g.top + 22, ctx, "middle") +
         '<path class="cl-glass" d="M' + (x - 2) + "," + g.bottom + "L" + (x - 2) + "," + (g.tip - 3) + "L" + x + "," + g.tip + "L" + (x + 2) + "," + (g.tip - 3) + "L" + (x + 2) + "," + g.bottom + '"/>' +
-        '<rect class="cl-cock" x="' + (x - 4) + '" y="' + (g.cock - 4) + '" width="8" height="8" rx="2"/>' +
-        (open ? '<line class="cl-cock-grip" x1="' + x + '" x2="' + x + '" y1="' + (g.cock - 7) + '" y2="' + (g.cock + 7) + '"/>'
-          : '<line class="cl-cock-grip" x1="' + (x - 9) + '" x2="' + (x + 9) + '" y1="' + g.cock + '" y2="' + g.cock + '"/>');
+        cock(x, g.cock, open);
       if (open && w.ml > 0.001 && mount && L.fx) out += w.tap >= 0.3 ? L.fx.stream(x, g.tip, g.surface, ctx.t, ctx.still) : L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);
       return out + (mount ? "" : badge(0, 14, ctx.no));
     }
@@ -1845,5 +1890,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

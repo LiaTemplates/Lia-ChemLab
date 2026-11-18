@@ -561,6 +561,19 @@ test("Skalen nach ISO 384: Folge der Striche, Ziffern an den langen, gröbere Te
   assert.equal(L.shapes.funnel.h, 48, "Trichter: Öffnungswinkel 60° (ISO 4798)");
   const sep = lab([{ type: "beaker", id: "b" }, { type: "separator", id: "s", over: "b" }]);
   assert.match(L.parts.separator.draw(look(sep, "s"), ctx(), L.parts.beaker.mount(look(sep))), />100 mL</, "Scheidetrichter: Nennvolumen (ISO 4800)");
+  // Hahngriff rechts (ISO 4800, 5.3): der Griff beginnt rechts vom Rohr
+  const handle = /class="cl-cock-handle" x="([\d.-]+)"/.exec(burette);
+  assert.ok(handle && +handle[1] > L.shapes.buretteAt(L.parts.beaker.mount(look(l))).x, "Griff rechts vom Rohr");
+  assert.match(burette, /cl-clamp-jaw/, "Bürettenklemme mit Backen");
+  assert.match(L.parts.beaker.draw(look(l), ctx()), /cl-label-field/, "Schriftfeld auf dem Becherglas");
+  // Messkolben birnenförmig (ISO 1042:1981, 8.3): unten am breitesten, der Spiegel steigt stetig und steht bei der Marke am Eichstrich
+  const half = L.shapes.volflaskHalf;
+  assert.ok(half(9) > half(30) && half(30) > half(50) && half(50) > half(59), "breit unten, zum Hals hin schmal");
+  const vf = lab([{ type: "volflask", id: "m", ml: 100 }]);
+  const level = (ml) => L.parts.volflask.surface(Object.assign({}, look(vf, "m"), { ml }));
+  for (let ml = 1, last = level(0.5); ml <= 100; ml++) { assert.ok(level(ml) <= last + 1e-9, `steigt stetig (${ml} mL)`); last = level(ml); }
+  near(level(100), L.shapes.volflask.mark, 1e-6, "bei 100 mL am Eichstrich");
+  clean(L.parts.volflask.draw(Object.assign({}, look(vf, "m"), { ml: 60 }), ctx()), "Messkolben halb voll");
 });
 
 test("Zeichnung: jedes Gerät, leer und gefüllt, ohne Fehler im SVG", () => {

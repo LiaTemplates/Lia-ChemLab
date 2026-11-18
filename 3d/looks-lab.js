@@ -129,6 +129,13 @@
       u.marks.position.y = shape.rim / 2;
       u.marks.renderOrder = 3;
       group.add(u.marks);
+      // weißes Schriftfeld vorn auf dem Glas, wie in 2D: 70 % der halben Breite links und rechts der Mitte, in halber Höhe
+      if (u.field) { group.remove(u.field); u.field.geometry.dispose(); }
+      u.field = new THREE.Mesh(new THREE.CylinderGeometry(cm(s[0] / 2) + 0.01, cm(s[0] / 2) + 0.01, cm(Math.max(7, s[1] * 0.09)), 16, 1, true, -0.35, 0.7),
+        u.fieldMat || (u.fieldMat = new THREE.MeshStandardMaterial({ color: 0xfbfbf7, roughness: 0.7, transparent: true, opacity: 0.9, depthWrite: false })));
+      u.field.position.y = cm(s[1] * 0.55 - Math.max(7, s[1] * 0.09) / 2);
+      u.field.renderOrder = 3;
+      group.add(u.field);
     }
   }));
 
@@ -241,11 +248,13 @@
       glass.renderOrder = tip.renderOrder = body.renderOrder = 2;
       // Doppelmuffen, an denen die Klemmen an der Stange sitzen
       var boss1 = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), fx.matte(0x4f5760, 0.45, 0.4)), boss2 = boss1.clone();
+      // Bürettenklemme: Backen, die das Rohr umfassen (wie Stativ.svg auf Wikimedia Commons und in Chemix)
+      var jaw1 = new THREE.Mesh(new THREE.TorusGeometry(cm(8), 0.13, 8, 24).rotateX(Math.PI / 2), fx.matte(0x3a3f45, 0.5, 0.3)), jaw2 = jaw1.clone();
       [foot, rod, arm1, arm2, grip, boss1, boss2].forEach(function (o) { o.castShadow = true; });
-      cock.add(body, grip);
-      stand.add(foot, rod, arm1, arm2, boss1, boss2);
+      cock.add(body, grip, new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(3), cm(3), 12).rotateZ(Math.PI / 2).translate(-cm(8.5), 0, 0), fx.matte(0x8b949e, 0.5)));
+      stand.add(foot, rod, arm1, arm2, boss1, boss2, jaw1, jaw2);
       group.add(schellbach, column, neck, glass, tip, cock, stand, flow, drops, tag);
-      group.userData = { body: glass, glass: glass, tip: tip, column: column, neck: neck, liquid: liquid, cock: cock, grip: grip, foot: foot, rod: rod, arm1: arm1, arm2: arm2, boss1: boss1, boss2: boss2, flow: flow, drops: drops, tag: tag, schellbach: schellbach, marksKey: null };
+      group.userData = { body: glass, glass: glass, tip: tip, column: column, neck: neck, liquid: liquid, cock: cock, grip: grip, foot: foot, rod: rod, arm1: arm1, arm2: arm2, boss1: boss1, boss2: boss2, jaw1: jaw1, jaw2: jaw2, flow: flow, drops: drops, tag: tag, schellbach: schellbach, marksKey: null };
       return group;
     },
     update: function (group, d, kit) {
@@ -261,19 +270,21 @@
       }
       // Hahn: längs heißt offen, quer heißt zu
       u.cock.position.set(x, cm(-(g.low + 8)), 0);
-      u.grip.rotation.z = open ? 0 : Math.PI / 2;
-      u.grip.position.set(0, 0, cm(5));
+      // Griff rechts am Küken (ISO 4800, 5.3): längs zum Rohr offen, quer (zum Betrachter) zu
+      u.grip.rotation.set(open ? 0 : Math.PI / 2, 0, 0);
+      u.grip.position.set(cm(10), 0, 0);
       // Stativ: Fuß und Stange hinter der Reihe der Geräte, zwei Klemmen nach vorn zur Bürette
       // steht das Gefäß darunter gehoben (Dreifuß, Wasserbad), reicht das Stativ trotzdem bis auf den Tisch
       floor = -kit.up(d.lift);
       u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
       u.rod.scale.y = cm(-(g.high + 24)) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
-      [[u.arm1, cm(-(g.high + 60)), u.boss1], [u.arm2, cm(-(g.low - 30)), u.boss2]].forEach(function (a) {
+      [[u.arm1, cm(-(g.high + 60)), u.boss1, u.jaw1], [u.arm2, cm(-(g.low - 30)), u.boss2, u.jaw2]].forEach(function (a) {
         var dx = x - rod, len = Math.sqrt(dx * dx + Z * Z);
         a[0].scale.set(len, 1, 1);
         a[0].position.set((x + rod) / 2, a[1], Z / 2);
         a[0].rotation.y = Math.atan2(Z, dx);
         a[2].position.set(rod, a[1], Z);
+        a[3].position.set(x, a[1], 0);
       });
       // Skala nach ISO 384 mit der genormten Teilung 0,1 mL (ISO 385): jeder Milliliter ein langer Strich mit Ziffer, wenn Zahlen gezeigt werden
       if (u.marksKey !== (d.ctx.numbers ? "#" : "")) {
@@ -321,7 +332,7 @@
       var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 8, 32).rotateX(Math.PI / 2), m);
       var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
       var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
-      cock.add(barrel, grip);
+      cock.add(barrel, grip, new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(3), cm(3), 12).rotateZ(Math.PI / 2).translate(-cm(8.5), 0, 0), fx.matte(0x8b949e, 0.5)));
       [foot, rod, arm, grip].forEach(function (o) { o.castShadow = true; });
       body.add(inside.group, stopper, stem, cock);
       group.add(body, foot, rod, ring, arm, flow, tag);
@@ -346,8 +357,9 @@
       u.stopper.position.set(0, rim + cm(6), 0);
       u.stem.scale.y = floor - tip; u.stem.position.set(0, (floor + tip) / 2, 0);
       u.cock.position.set(0, cm(-g.cock), 0);
-      u.grip.rotation.z = open ? 0 : Math.PI / 2;
-      u.grip.position.set(0, 0, cm(5));
+      // Griff rechts am Küken (ISO 4800, 5.3): längs zum Rohr offen, quer (zum Betrachter) zu
+      u.grip.rotation.set(open ? 0 : Math.PI / 2, 0, 0);
+      u.grip.position.set(cm(10), 0, 0);
       // Stativ mit Ring um den Trichter
       var base = -kit.up(d.lift), rodX = cm(g.rod), ringY = rim - (rim - floor) * 0.35, dx = x - rodX, len;
       u.foot.position.set(rodX + cm(13), base + cm(2.5), Z);
@@ -471,13 +483,13 @@
 
   // ------------------------------------------------------------------ Messkolben
 
-  // Kugel mit langem, engem Hals; ein Ring am Hals ist der Eichstrich
-  var V = S.volflask, vfR = cm(V.R - 1), vfCY = cm(4 + V.R), vfNeck = cm(V.neck - 0.5);
+  // Birnenförmiger Körper mit langem, engem Hals, dasselbe Profil wie in 2D (S.volflaskHalf); ein Ring am Hals ist der Eichstrich
+  var V = S.volflask, vfNeck = cm(V.neck - 0.5);
   var vfShape = {
-    id: "volflask", floor: vfCY - vfR, rim: cm(-V.rim), front: cm(V.R), steps: 64,
+    id: "volflask", floor: cm(5), rim: cm(-V.rim), front: cm(V.R), steps: 72,
     inner: function (y) {
-      var dy = y - vfCY, r = Math.sqrt(Math.max(0, vfR * vfR - dy * dy));
-      return dy > 0 ? Math.max(vfNeck, r) : r;
+      var h = y * PX - 4;
+      return h >= V.body ? vfNeck : Math.max(vfNeck, cm(S.volflaskHalf(Math.max(0, h)) - 1));
     }
   };
   L.registerLook("volflask", "lab", vessel({
