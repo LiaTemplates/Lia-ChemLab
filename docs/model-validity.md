@@ -16,10 +16,10 @@ Stand: Branch `benchmarks`, ausgehend von `249db01` (Version 0.3.0). Prüfen: `n
 | Bereich | Ist (Code) | Lücke laut Entwicklungsplan |
 |---|---|---|
 | Gasinventar | `v.air` (mol je Gas im Gasraum), `v.out` (entwichen), `v.taken` (aus der Luft genommen); Druck im verschlossenen Gefäß über `v.seal` (eingeschlossene Luft, mol) und Dampfdruck. **Neu:** `v.o2`, der Sauerstoff der eingeschlossenen Luft; dicht verschlossen (Stopfen, Manometer, Rohr) nehmen `aerate`, `airborne` und die Kinetik nur noch ihn (B02, B06, B07) | Kolbenprober am Gefäß: Sauerstoff weiter unbegrenzt (eigene Luftrechnung `t.air`) |
-| O₂-Aufnahme | `aerate`: Henry + k_L·A/V an ruhiger Oberfläche, k_L·a beim Schütteln; nur wo O₂(aq) schon da ist oder verbraucht werden kann | N₂ und CO₂ aus der Luft fehlen (CO₂ würde reines Wasser auf pH 5,6 bringen: nur als Option, sonst ändern sich alle Bestandsversuche) |
+| O₂-Aufnahme | `aerate`: Henry + k_L·A/V an ruhiger Oberfläche, k_L·a beim Schütteln; nur wo O₂(aq) schon da ist oder verbraucht werden kann. **Neu:** Laborschalter `"oxygen": true`: jede wässrige Lösung nimmt Luftsauerstoff auf | N₂ und CO₂ aus der Luft fehlen (CO₂ würde reines Wasser auf pH 5,6 bringen: nur als Option, sonst ändern sich alle Bestandsversuche) |
 | offen/geschlossen | `stopper`/`manometer` dicht, `tube` mit Druckausgleich, Kolbenprober | – |
 | Oberflächen | Feststoffstücke mit Fläche (`area`), Elektroden mit Fläche und Belag | – |
-| Korrosion | `corrode`: Mischpotential, Butler-Volmer mit halbem Durchtrittsfaktor, Grenzstrom aus Nachschub (`processes`, `reach`) | Passivschicht als eigener Zustand fehlt (nur „dichter Belag“ an Elektroden, `SHUT`) |
+| Korrosion | `corrode`: Mischpotential, Butler-Volmer mit halbem Durchtrittsfaktor, Grenzstrom aus Nachschub (`processes`, `reach`). **Neu:** Ein Gas als Ausgangsstoff (O₂-Reduktion) steht an Metallstücken und Elektroden gelöst bereit, mit Henry-Druck aus O₂(aq) und dessen Nachschub (`solved`, B19); Fe–Zn über den Strommesser schützt das Eisen | Passivschicht als eigener Zustand fehlt (nur „dichter Belag“ an Elektroden, `SHUT`); kein Chlorid-Effekt; k_Film geschätzt, Raten nur qualitativ |
 | Kristallisation | Gleichgewichtsfällung (`saturation`, `balance`), Eindampfen (`dry`) | keine Übersättigung/Keimbildungsverzögerung, keine Größenklassen |
 | Strömung | nur Darstellung (siehe oben) | gekoppelter Transport: `chemlab-spatial.js` (noch nicht an Gefäße gebunden) |
 | 3D | Three.js lazy (`chemlab-3d.js`, `registerScene`, `registerLook`), WebGL2-Prüfung | Feldtextur für r,z-Felder |

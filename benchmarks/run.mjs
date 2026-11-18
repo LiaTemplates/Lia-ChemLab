@@ -119,6 +119,29 @@ const models = {
       check("stays_colorless", L.view(l, v).color.name === "colorless" ? 0 : 1, 0)];
   },
 
+  // B17: Elektrolyse mit zwei Kupferelektroden: die Anode verliert Q·M/(2F), Q aus dem Strom des Stromkreises aufsummiert
+  faraday({ volts, seconds }, tol) {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "CuSO4 0.5M", ml: 80 }] },
+      { type: "electrode-Cu", id: "e1", in: "b" }, { type: "electrode-Cu", id: "e2", in: "b" }, { type: "supply", id: "n", in: "b", volts }]);
+    const g0 = L.reading(l, "e1").g;
+    let q = 0;
+    for (let i = 0; i < seconds * 20; i++) { L.step(l, 0.05); q += L.circuit(l, "b").I * 0.05; }
+    return [check("anode_loss_error", rel(g0 - L.reading(l, "e1").g, q / (2 * L.FARADAY) * L.species("Cu(s)").M), tol.relative)];
+  },
+
+  // B19: Eisenwolle in luftgesättigter Kochsalzlösung (oxygen: true): Eisen geht mit dem doppelten O2-Grenzfluss in Lösung,
+  // O2-Fluss = A · k_Film · D^(2/3) · c(O2), mit A der Fläche der Stücke (wie area() in der Engine)
+  oxygenLimit({ g, ml }, tol) {
+    const l = L.createLab(L.normalize({ oxygen: true, room: 25, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 0.5M", ml }, { reagent: "Fe wool", g }] }] }));
+    const v = L.vessel(l, "b"), area = () => v.lumps.filter((x) => x.id === "Fe(s)" && x.n > 0).reduce((s, x) => s + x.a0 * (x.n / x.n0) ** x.p, 0);
+    L.shake(l, "b", "shake");
+    L.step(l, 30);
+    const fe = v.n["Fe(s)"], c0 = v.n["O2(aq)"] / L.volume(v), a = area();
+    L.step(l, 1);
+    const c = (c0 + v.n["O2(aq)"] / L.volume(v)) / 2, flux = a * 1.2e-3 * L.species("O2(aq)").D ** (2 / 3) * c / 1000;
+    return [check("rate_error", rel(fe - v.n["Fe(s)"], 2 * flux), tol.relative)];
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {

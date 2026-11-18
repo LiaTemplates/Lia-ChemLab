@@ -969,6 +969,7 @@
     if (d.data) register(d.data);
     if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
     if (d.view != null && d.view !== "2d" && d.view !== "3d") throw fail("view", String(d.view));
+    if (d.oxygen != null && typeof d.oxygen !== "boolean") throw fail("oxygen", String(d.oxygen));
     if (d.scatter != null && typeof d.scatter !== "boolean" && !(typeof d.scatter === "number" && isFinite(d.scatter))) throw fail("scatter", String(d.scatter));
     var scene = sceneOf(d.scene);
 
@@ -1106,6 +1107,8 @@
       packs: d.packs || [],
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
       model: d.model == null ? "ideal" : d.model,
+      // oxygen: Luftsauerstoff löst sich in jeder wässrigen Lösung (Henry, über die Oberfläche) und korrodiert Metalle; sonst nur, wo er gebraucht wird
+      oxygen: !!d.oxygen,
       // view: womit die Fläche beginnt; scene: wie sie in 3D aussieht (Raum und Geräte), an der Rechnung ändert sie nichts
       view: d.view || "2d",
       scene: scene
@@ -1459,7 +1462,7 @@
   }
 
   function createLab(config) {
-    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", scatter: config.scatter == null ? null : config.scatter, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
+    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", oxygen: !!config.oxygen, scatter: config.scatter == null ? null : config.scatter, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
     config.bench.forEach(function (item) {                       // unbekannte Proben: welches Gefäß, welche Füllung gezogen wurde, und die möglichen Namen
       if (item.unknown) lab.samples[item.unknown] = { vessel: item.id, pick: item.oneOf ? item.pick : null, names: item.oneOf ? item.oneOf.map(function (o) { return o.name; }) : [] };
     });
@@ -2752,6 +2755,16 @@
   // so dass im Gleichgewicht die Nernst-Gleichung gilt). Bei großem Antrieb begrenzt ihn der Nachschub aus der Lösung (lim).
   // ghost: Diese Richtung bräuchte einen Feststoff, der an der Oberfläche (noch) nicht vorliegt. Sie zählt nur als Gegenspieler:
   // ein Metall scheidet sich erst ab, wenn die Abscheidung seine eigene Auflösung überwiegt.
+  // Ein Gas, das sich 1:1 löst (O2(g) <=> O2(aq)): { e: das Gleichgewicht, aq: der gelöste Stoff }, sonst null
+  var SOLVED = {};
+  function solved(id) {
+    if (SOLVED[id] === undefined) {
+      var e = L.db.equilibria.filter(function (q) { return q.gas === id && Object.keys(q.d).length === 1 && q.d[Object.keys(q.d)[0]] === 1; })[0];
+      SOLVED[id] = e ? { e: e, aq: Object.keys(e.d)[0] } : null;
+    }
+    return SOLVED[id];
+  }
+
   function processes(v, vol, face) {
     var T = v.T + KELVIN, b = 2 * R * T / FARADAY, out = [], lg = gammas(v, vol);
     var feed = FARADAY * face.area * K_FILM * Math.exp(-EA_FILM * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) / 1000;
@@ -2768,6 +2781,12 @@
           if (sp.phase === "g" && face.held && face.held(t.id) > 0) {           // Gas, das an der Elektrode haftet: Druck aus dem Anteil, den sie fassen kann
             q += t.n / c.n * FILM_K * Math.log(Math.min(1, face.held(t.id) / (FILM * face.area)));
             lim = Math.min(lim, c.n / t.n * FARADAY * face.held(t.id) / FILM_T);
+            return;
+          }
+          if (sp.phase === "g" && solved(t.id) && v.n[solved(t.id).aq] > 0) {     // gelöstes Gas (O2 an einem Metall): Druck nach Henry aus der Lösung
+            var e = solved(t.id).e, aq = solved(t.id).aq, h = heatOf(e);
+            q += t.n / c.n * (Math.log(v.n[aq] / vol) + LN10 * (lg(aq) - shift(e.logK * e.f, h == null ? null : h * e.f, T)));
+            lim = Math.min(lim, c.n / t.n * feed * reach(aq));
             return;
           }
           if (sp.phase !== "aq" || !(v.n[t.id] > 0)) { ok = false; return; }      // sonst steht ein Gas nicht als Ausgangsstoff bereit
@@ -2876,6 +2895,8 @@
   // (H+ aus Hydrogencarbonat, Zink-Ionen aus dem Zinkat): das Gleichgewicht der Lösung wird gleich danach neu eingestellt.
   function convert(lab, groups, emit) {
     var need = {}, have = {}, part = 1, key, short = [];
+    // ein Gas, das die Oberfläche nicht hält, kommt gelöst aus der Lösung (wie in processes)
+    function wet(g, id) { return L.db.species[id].phase === "g" && !(g.face.held && g.face.held(id) > 0) && solved(id) ? solved(id).aq : id; }
     function stock(v, id) {
       var sum = v.n[id] || 0;
       (L.db.carriers[id] || []).forEach(function (y) { sum += y.n * (v.n[y.id] || 0); });
@@ -2884,9 +2905,9 @@
     groups.forEach(function (g) {
       g.steps.forEach(function (st) {
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          var hard = L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + t.id;
+          var id = wet(g, t.id), hard = L.db.species[id].phase === "s" || L.db.species[id].phase === "g", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + id;
           need[k] = (need[k] || 0) + t.n * st.e / st.c.n;
-          have[k] = hard ? g.face.amount(t.id) : stock(g.v, t.id);
+          have[k] = hard ? g.face.amount(id) : stock(g.v, id);
         });
       });
     });
@@ -2896,10 +2917,11 @@
       g.steps.forEach(function (st) {
         var xi = part * st.e / st.c.n;
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          if (L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g") { g.face.take(t.id, t.n * xi, emit); return; }
-          g.v.n[t.id] = (g.v.n[t.id] || 0) - t.n * xi;
-          if (g.v.n[t.id] < 0) { if (short.indexOf(g.v) < 0) short.push(g.v); }      // überzogen: die Träger gleichen es aus
-          else if (!(g.v.n[t.id] > 1e-22)) delete g.v.n[t.id];
+          var id = wet(g, t.id);
+          if (L.db.species[id].phase === "s" || L.db.species[id].phase === "g") { g.face.take(id, t.n * xi, emit); return; }
+          g.v.n[id] = (g.v.n[id] || 0) - t.n * xi;
+          if (g.v.n[id] < 0) { if (short.indexOf(g.v) < 0) short.push(g.v); }      // überzogen: die Träger gleichen es aus
+          else if (!(g.v.n[id] > 1e-22)) delete g.v.n[id];
         });
         (st.s > 0 ? st.c.ox : st.c.red).forEach(function (t) {
           if (L.db.species[t.id].phase === "s") g.face.give(t.id, t.n * xi, emit);
@@ -3460,7 +3482,7 @@
 
   // Gelöster Sauerstoff (Blaue Flasche): Die Lösung nimmt Sauerstoff aus dem Gasraum auf oder gibt ihn ab, bis sie nach Henry
   // gesättigt ist, an der ruhigen Oberfläche in einer Stunde, beim Schütteln in Sekunden. Gerechnet nur, wo schon O2(aq) ist oder
-  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist; sonst bliebe jede Lösung voll gelöster Luft.
+  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist, oder das Labor es will (oxygen: Korrosion); sonst bliebe jede Lösung voll gelöster Luft.
   // Verschlossen kommt der Sauerstoff aus der eingeschlossenen Luft (v.o2) und dem Gas darüber, mit seinem Partialdruck, und geht dorthin zurück.
   // shortcut: nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen (CO2 brächte reines Wasser auf pH 5,6: nur als Option einbauen)
   function aerate(lab, v, vol) {
@@ -3470,7 +3492,7 @@
       if (!(r.nu["O2(aq)"] < 0)) return false;
       for (var key in r.nu) if (r.nu[key] < 0 && key !== "O2(aq)" && key !== WATER && !(v.n[key] > 0)) return false;
       return true;
-    })) return;
+    }) && !lab.oxygen) return;                                 // oxygen: jede wässrige Lösung nimmt Sauerstoff aus der Luft
     cap = headroom(lab, v);
     for (id in v.air) sum += v.air[id];
     oxygen = cap > 0 ? AIR["O2(g)"] * Math.max(0, 1 - sum / cap) + (v.air["O2(g)"] || 0) / cap : AIR["O2(g)"];

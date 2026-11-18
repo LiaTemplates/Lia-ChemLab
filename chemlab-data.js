@@ -112,7 +112,7 @@
       "CO3^2-(aq)": { name: name("carbonate ion"), Hf: -675.23, S: -50.0, D: 0.955, src: CODATA + DW },
       "HCO3-(aq)": { name: name("hydrogen carbonate ion"), Hf: -689.93, S: 98.4, D: 1.18, src: CODATA + DW },
       "CO2(aq)": { name: name("carbon dioxide, dissolved"), Hf: -413.26, S: 119.36, src: CODATA },
-      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, src: NBS },
+      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, D: 2.10, src: NBS + "; D: CRC Handbook of Chemistry and Physics, diffusion coefficients in water at 25 °C (2.10e-9 m²/s)" },
       // Spülmittel: das Tensid vereinfacht als Dodecylsulfat; foam: es hält aufsteigendes Gas als Schaum fest
       "C12H25SO4-(aq)": { name: name("dodecyl sulfate ion (detergent)"), symbol: "DS⁻", Hf: null, foam: true, src: NONE + "; the surfactant of washing-up liquid, simplified as dodecyl sulfate" },
       "H2O2(aq)": { name: name("hydrogen peroxide"), Hf: -191.17, src: "textbook value: enthalpy of formation in solution -191.17 kJ/mol" },

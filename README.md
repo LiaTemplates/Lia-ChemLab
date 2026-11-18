@@ -1002,6 +1002,28 @@ Mit den anderen Elektroden und Lösungen aus dem Regal entstehen weitere Zellen.
  "show":{"charts":["U","I","m"]}}
 ```
 
+## Korrosion: Sauerstoff, Eisen und Zink
+
+Mit `"oxygen": true` löst sich Luftsauerstoff in jeder wässrigen Lösung: an der ruhigen Oberfläche langsam, beim Schütteln in Sekunden (Henry). Gelöster Sauerstoff wird an Metallen reduziert und oxidiert dabei das Metall. Ohne diese Angabe rechnet ChemLab wie bisher ohne gelöste Luft.
+
+- **Links** liegt Eisenwolle in Kochsalzlösung. Nach dem Schütteln geht Eisen als Eisen(II) in Lösung, mit der Zeit fällt Eisen(II)-hydroxid aus. Wie schnell, bestimmt der Sauerstoff, der an das Eisen gelangt: Ist er verbraucht, kommt nur so viel nach, wie die Oberfläche aus der Luft aufnimmt.
+- **Rechts** stehen Eisen und Zink in Kochsalzlösung, verbunden über den Strommesser. Es fließen etwa 2 mA: Das Zink geht in Lösung, der Sauerstoff wird am Eisen reduziert, und das Eisen bleibt erhalten (Opferanode, verzinktes Eisen). Ohne den Strommesser korrodieren beide für sich.
+
+Die Geschwindigkeit hängt an einem geschätzten Stoffübergang zur Oberfläche. Den Verlauf zeigt das Modell, eine verlässliche Korrosionsrate in mm pro Jahr nicht. Eine Passivschicht (Aluminium, Edelstahl) und eine schnellere Korrosion durch Chlorid kennt es noch nicht.
+
+```json @ChemLab.sim
+{"oxygen":true,
+ "bench":[
+  {"type":"beaker","id":"wolle","contains":[{"reagent":"NaCl 0.5M","ml":100},{"reagent":"Fe wool","g":1}]},
+  {"type":"beaker","id":"paar","contains":[{"reagent":"NaCl 0.5M","ml":80}]},
+  {"type":"electrode-Fe","in":"paar"},
+  {"type":"electrode-Zn","in":"paar"},
+  {"type":"ammeter","in":"paar"}
+ ],
+ "shelf":["NaCl 0.5M","H2O","Fe wool","electrode-Fe","electrode-Zn","electrode-Cu","ammeter","stopper"],
+ "show":{"charts":["I","m"]}}
+```
+
 ## Reaktionsgeschwindigkeit: Konzentration
 
 Natriumthiosulfat zerfällt in Säure: Fein verteilter Schwefel trübt die Lösung, bis man nicht mehr hindurchsieht. In beide Gläser je 5 mL Salzsäure geben und im Protokoll die Zeit vom Zugeben bis zur Meldung „Durch die Flüssigkeit sieht man nicht mehr hindurch“ ablesen: Mit der halben Konzentration dauert es etwa doppelt so lang. Mit Wasser und Thiosulfat-Lösung aus dem Regal lassen sich weitere Verdünnungen ansetzen.
