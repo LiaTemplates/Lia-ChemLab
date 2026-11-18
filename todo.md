@@ -45,7 +45,7 @@ Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nu
 
 - Bleiakku: Ganz entladen zeigt er ohne Last etwa 1 V statt knapp 2 V; er fasst immer gleich viel (kein Formieren).
 - Zentrifuge: kein Gegengewicht, nur eine Drehzahl.
-- Keine Siedepunkterhöhung: Gesättigte Kochsalzlösung siedet bei 100 °C statt bei etwa 108 °C, denn gelöste Salze zählen beim Sieden nicht mit.
+- ~~Keine Siedepunkterhöhung~~: erledigt (ideal nach Raoult; gesättigte Kochsalzlösung siedet bei gut 106 statt knapp 109 °C).
 - Organische Nachweise: Bromwasser wird nicht von Aldehyden und Glucose entfärbt; Kupfer(I)-oxid zerfällt in Säure nicht; Fehling wird nicht erst grün und gelb.
 - Silberchlorid auf einer Silber-Elektrode wächst beliebig weiter (nur Bleibeläge decken ab).
 

@@ -627,7 +627,7 @@ test("Strömung: über der Flamme steigt warmes Wasser in der Mitte auf und sink
   const boiling = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 80 }] }, { type: "burner", under: "b", flame: 2 }], { room: 20 });
   L.step(boiling, 300);
   const hot = L.view(boiling, L.vessel(boiling, "b"));
-  assert.ok(hot.steam > 0 && hot.heat.boil === 100, "es siedet, bei 100 °C");
+  assert.ok(hot.steam > 0 && Math.abs(hot.heat.boil - 100) < 1e-3, "es siedet, bei 100 °C");
   L.fx.flow(box, hot, 0, "boil", "temp"); L.fx.flow(box, hot, 5, "boil", "temp");
   assert.ok(Math.max(...L.fx.fields.boil.T) <= 103 + 1e-9, "höchstens wenige Kelvin über dem Siedepunkt");
   assert.ok(Math.max(...L.fx.fields.boil.v.map(Math.abs)) > 0.5, "es strömt weiter");
@@ -2251,7 +2251,7 @@ const stress = (model, seeds) => {
         near(charge, 0, 1e-9, `Ladung in ${v.id} (${where})`);
         for (const piece of v.lumps) lumps[piece.id] = (lumps[piece.id] || 0) + piece.n;
         for (const [id, n] of Object.entries(lumps)) near(n, v.n[id] || 0, 1e-12 + 1e-9 * n, `Feststoff ${id} in ${v.id} (${where})`);
-        assert.ok(v.T >= 0 && v.T <= 100.001, `Temperatur ${v.T} (${where})`);
+        assert.ok(v.T >= 0 && v.T <= Math.max(100, L.view(l, v).heat.boil || 0) + 0.001, `Temperatur ${v.T} (${where})`);      // nie über dem eigenen Siedepunkt
         const pH = L.view(l, v).pH;
         assert.ok(pH == null || (pH > -1.5 && pH < 15.5), `pH ${pH} in ${v.id} (${where})`);
       }
@@ -10990,4 +10990,19 @@ test("Trennungsgang, Calcium: Ammoniumoxalat fällt weißes Calciumoxalat, auch 
   L.register(ionen());
   const g = precipitate(["CaCl2 0.1M"], [{ reagent: "CH3COOH 1M", ml: 2 }], [["(NH4)2C2O4", { ml: 5 }]], 30);
   assert.ok(g.out["CaC2O4(s)"] > 0.99 * full, "Calciumoxalat");
+});
+
+test("Siedepunkterhöhung: gelöste Teilchen lassen später sieden, beim Eindampfen immer später", () => {
+  const boilAt = (reagent) => { const b = beaker([{ reagent, ml: 60 }]); return L.view(b, L.vessel(b, "b")).heat.boil; };
+  near(boilAt("NaCl 1M") - boilAt("H2O"), 1.0, 0.1, "1 mol/L Kochsalz, zwei Teilchen je Formeleinheit: etwa 2 · 0,51 K");
+  near(boilAt("NaCl 4M") - boilAt("H2O"), 3.9, 0.2, "4 mol/L Kochsalz");
+  const salty = lab([{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 4M", ml: 60 }] }, { type: "burner", under: "b", flame: 2 }], { room: 20 });
+  L.step(salty, 300);
+  const first = L.view(salty, L.vessel(salty, "b"));
+  assert.ok(first.steam > 0 && Math.abs(first.T - first.heat.boil) < 0.05, "es siedet bei seiner eigenen Siedetemperatur");
+  L.step(salty, 200);
+  const later = L.view(salty, L.vessel(salty, "b"));
+  assert.ok(later.ml < first.ml && later.heat.boil > first.heat.boil, "weniger Wasser, höhere Siedetemperatur");
+  L.step(salty, 600);
+  assert.ok(!(L.view(salty, L.vessel(salty, "b")).ml > 0), "es dampft trotzdem ganz ein");
 });

@@ -3551,7 +3551,7 @@
           if (!(e.d[key] > 0)) return;
           most = Math.min(most, (v.n[key] || 0) / e.d[key]);
         }
-        if (!(most > 1e-15)) return;
+        if (!(most > 1e-15) || (solid && most < 1e-6 * sum)) return;      // Spuren kristallisieren nicht, sie gehen unten mit dem Dampf fort
         for (key in e.d) if (!((v.n[key] -= e.d[key] * most) > 1e-13 * e.d[key] * most)) delete v.n[key];
         if (solid) { growSolid(v, product, most); v.flag.solid[product] = true; }
         else v.n[product] = (v.n[product] || 0) + most;
@@ -3866,12 +3866,12 @@
   }
 
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
-  // g: Aktivitätskoeffizient nach Van Laar, wo ein Stoff Konstanten mit Wasser hat (mix). Salze und andere gelöste Stoffe zählen
-  // nicht mit: Eine Salzlösung siedet hier wie Wasser bei 100 °C. null, wenn nichts Flüchtiges da ist.
+  // g: Aktivitätskoeffizient nach Van Laar, wo ein Stoff Konstanten mit Wasser hat (mix). Gelöste Teilchen ohne Siedepunkt (Ionen,
+  // Zucker) verdünnen die flüchtigen nach Raoult: Eine Salzlösung siedet später (Siedepunkterhöhung). null, wenn nichts Flüchtiges da ist.
   // Die Ölschicht (org: true) verdampft für sich, mit Anteilen unter ihren eigenen flüchtigen Stoffen: Zwei Schichten sieden, sobald die
   // Summe beider Dampfdrücke den Luftdruck erreicht, früher als jede für sich (Wasserdampfdestillation).
   function volatiles(v) {
-    var list = [], total = 0, id, s, water = null, lnw = 0, oil = [], sum = 0;
+    var list = [], total = 0, id, s, water = null, lnw = 0, oil = [], sum = 0, solute = 0;
     for (id in v.org || {}) {
       s = L.db.species[id];
       if (s.Tb == null) continue;
@@ -3881,7 +3881,7 @@
     oil.forEach(function (c) { c.x = c.n / sum; });
     for (id in v.n) {
       s = L.db.species[id];
-      if (id !== WATER && !(s.Tb != null && s.phase === "aq")) continue;
+      if (id !== WATER && !(s.Tb != null && s.phase === "aq")) { if (s.phase === "aq") solute += v.n[id]; continue; }
       list.push({ id: id, n: v.n[id], Tb: id === WATER ? BOIL : s.Tb, H: id === WATER ? VAPOR : s.Hvap * 1000, mix: s.mix, g: 1 });
       total += v.n[id];
     }
@@ -3896,6 +3896,8 @@
       lnw += b * Math.pow(a * c.x / d, 2);
     });
     if (water) water.g = Math.exp(lnw);
+    solute = Math.min(solute, CRUST * 0.018 * (v.n[WATER] || 0));      // dichter als ein Brei wird es nicht (thick)
+    if (solute > 0) list.forEach(function (c) { c.x *= total / (total + solute); });
     return list.concat(oil);
   }
 
@@ -3908,12 +3910,18 @@
     return e ? e.gas : id;
   }
 
+  // Temperatur, bei der ein Teil allein den Luftdruck erreicht; Infinity, wenn nie
+  function alone(c) {
+    var d = 1 / (c.Tb + KELVIN) - R * Math.log(P_AIR / (c.g * c.x)) / c.H;
+    return d > 0 ? 1 / d - KELVIN : Infinity;
+  }
+
   // Siedetemperatur: bei ihr ist die Summe der Dampfdrücke gleich dem Luftdruck
   function bubble(list) {
-    var lo = Infinity, hi = -Infinity, mid, i;
-    if (list.length === 1) return list[0].Tb;
-    list.forEach(function (c) { lo = Math.min(lo, c.Tb); hi = Math.max(hi, c.Tb); });
-    lo -= 40; hi += 40;
+    var lo = Infinity, hi = Infinity, top = -Infinity, mid, i;
+    if (list.length === 1) return alone(list[0]);
+    list.forEach(function (c) { lo = Math.min(lo, c.Tb); top = Math.max(top, c.Tb); hi = Math.min(hi, alone(c)); });
+    lo -= 40; if (!isFinite(hi)) hi = top + 40;              // jeder Teil allein erreicht den Luftdruck nicht früher als alle zusammen
     for (i = 0; i < 50; i++) {
       mid = (lo + hi) / 2;
       if (list.reduce(function (sum, c) { return sum + vapor(c, mid); }, 0) < P_AIR) lo = mid; else hi = mid;
