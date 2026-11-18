@@ -11323,7 +11323,7 @@ test("Feld: gleichmäßig zeigt es genau das Gefäß, auch mit Puffer und Indika
   }
 });
 
-test("Feld: Säure tropft oben an der Achse ein, die Front wandert nach unten; die Ladung der starken Ionen bleibt im Feld", () => {
+test("Feld: die schwerere Salzsäure sinkt an der Achse bis zum Boden, dann wandert die Front nach außen; die Ladung der starken Ionen bleibt im Feld", () => {
   const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] }, { type: "phmeter", id: "p", in: "b" }], { room: 25 });
   L.step(l, 1);
   L.add(l, "b", "HCl 1M", { ml: 1 });
@@ -11332,18 +11332,32 @@ test("Feld: Säure tropft oben an der Achse ein, die Front wandert nach unten; d
   let f = look();
   near(sum(), strongCharge(l), 1e-15, "Bilanz");
   assert.ok(pH(f, 0, 0) < 1 && pH(f, 0, 0) >= 0, `oben an der Achse sauer, aber nicht saurer als die Salzsäure: ${pH(f, 0, 0)}`);
-  assert.ok(pH(f, 0, f.nz - 1) > 11.9 && pH(f, f.nr - 1, 0) > 11, "unten und außen noch Lauge");
-  assert.ok(L.reading(l, "p").value > 11.9, "das pH-Meter am Boden merkt noch nichts");
+  assert.ok(pH(f, 0, f.nz - 1) < 2, `sie ist an der Achse bis zum Boden gesunken: ${pH(f, 0, f.nz - 1)}`);
+  assert.ok(pH(f, f.nr - 1, 0) > 11.9 && pH(f, f.nr - 1, f.nz - 1) > 11.9, "außen noch Lauge, oben wie unten");
+  assert.ok(L.reading(l, "p").value < 3, "das pH-Meter steht nah an der Achse: es merkt es gleich");
   assert.ok(L.view(l, v).pH < 3, "das Gefäß selbst rechnet durchmischt");
-  L.step(l, 200);
+  L.step(l, 60);
   f = look();
-  assert.ok(pH(f, 0, 0) < 3 && pH(f, 0, f.nz - 1) > 10, `nach 200 s: oben sauer, unten noch basisch (${pH(f, 0, 0)}, ${pH(f, 0, f.nz - 1)})`);
-  assert.ok(L.reading(l, "p").value < 11.5, "die Front kommt am pH-Meter an");
+  assert.ok(pH(f, 6, 10) < pH(f, f.nr - 1, 10) && pH(f, f.nr - 1, 10) > 4, `nach einer Minute: die Front wandert nach außen (${pH(f, 6, 10)}, ${pH(f, f.nr - 1, 10)})`);
   near(sum(), strongCharge(l), 1e-15, "Bilanz");
   assert.ok(f.cells.every((c) => c.pH >= 0 && c.pH <= 14), "kein pH außerhalb dessen, was die Lösungen hergeben");
   L.shake(l, "b", "shake");
   L.step(l, 1);
   for (const c of look().cells) near(c.pH, L.view(l, v).pH, 1e-6, "geschüttelt: überall gleich");
+});
+
+test("Feld: eine leichtere Zugabe bleibt oben, eine schwerere sinkt (Natronlauge auf Salzsäure 1 mol/L)", () => {
+  const drop = (reagent) => {
+    const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "HCl 1M", ml: 80 }, { reagent: "UI", drops: 10 }] }], { room: 25 });
+    L.step(l, 1);
+    L.add(l, "b", reagent, { ml: 2 });
+    L.step(l, 3);
+    const f = L.view(l, L.vessel(l, "b")).field;
+    return [f.cells[0].pH, f.cells[(f.nz - 1) * f.nr].pH];      // an der Achse oben und unten
+  };
+  const [top, bottom] = drop("NaOH 0.5M"), [top2, bottom2] = drop("NaOH 2M");
+  assert.ok(top > bottom + 0.05, `0,5 mol/L (20 g/L gelöst, leichter als 1 mol/L Salzsäure mit 36 g/L): oben weniger sauer als unten (${top} gegen ${bottom})`);
+  assert.ok(bottom2 > 0.05, `2 mol/L (80 g/L, schwerer): sie sinkt bis zum Boden (${top2}, ${bottom2})`);
 });
 
 test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das Chlorid ankommt; Silber und Chlorid bleiben im Feld", () => {
@@ -11354,8 +11368,8 @@ test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das 
   L.step(l, 10);
   let f = L.view(l, v).field;
   const cloud = (i, j) => (f.cells[j * f.nr + i].cloud || { alpha: 0 }).alpha;
-  assert.ok(cloud(0, 0) > 0.5, `oben an der Achse trüb: ${cloud(0, 0)}`);
-  assert.equal(cloud(0, f.nz - 1), 0, "unten noch klar");
+  assert.ok(cloud(0, 0) > 0.5 && cloud(0, f.nz - 1) > 0.5, `die schwerere Kochsalzlösung sinkt: an der Achse oben und unten trüb (${cloud(0, 0)}, ${cloud(0, f.nz - 1)})`);
+  assert.equal(cloud(f.nr - 1, f.nz / 2), 0, "außen noch klar");
   assert.equal(L.view(l, v).cloud.alpha, 0, "die durchmischte Trübung zeigt das Feld nicht ein zweites Mal");
   assert.equal(L.view(l, v).sediment.ml, 0);
   assert.equal(L.atRest(l), false, "es wandert noch");
@@ -11364,7 +11378,7 @@ test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das 
   near(cl, amount(l, "Cl-(aq)") + amount(l, "AgCl(s)"), 1e-15, "Chlorid");
   L.step(l, 120);
   f = L.view(l, v).field;
-  assert.ok(cloud(0, 10) > 0.5, "die Front ist in der Mitte des Glases angekommen");
+  assert.ok(cloud(5, 10) > 0.5, "die Front ist nach außen gewandert");
   near(sums()[0], amount(l, "Ag+(aq)") + amount(l, "AgCl(s)"), 1e-15, "Silber, auch später");
   L.shake(l, "b", "shake");
   L.step(l, 1);

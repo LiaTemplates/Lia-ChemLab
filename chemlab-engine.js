@@ -4817,6 +4817,8 @@
       c.G.near = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) {
         return Math.pow(c.G.r(a), 2) + Math.pow(c.G.z(a), 2) - Math.pow(c.G.r(b), 2) - Math.pow(c.G.z(b), 2);
       });
+      // … und für eine Zugabe, die absinkt: Ring um Ring von der Achse nach außen, jeder von oben bis zum Boden (eine Fahne)
+      c.G.plume = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) { return c.G.r(a) - c.G.r(b) || c.G.z(a) - c.G.z(b); });
     }
     return c.G;
   }
@@ -4870,8 +4872,14 @@
     }
   }
 
+  function liquidMass(v) {        // g Flüssigkeit samt Gelöstem: wie zoneFactor die Dichte vergleicht
+    var g = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") g += v.n[id] * s.M; }
+    return g;
+  }
+
   function fieldStep(lab, v) {
-    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put;
+    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put, sink;
     if (!f || !L.spatial) return;
     if (!(volume(v) > 0)) { f.n = null; return; }
     G = fieldGrid(lab, v);
@@ -4884,10 +4892,17 @@
       f.ion = {}; f.tot = {}; f.solid = {};
       for (id in ids) { f.ion[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.tot[id] = component(v, id, solids)))); }
     } else {
-      // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen; was ohne Zugabe
-      // wegging oder sich änderte (Ausgießen, Reaktion), überall gleich
+      // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen. Ist es schwerer als die
+      // Lösung, sinkt es als Fahne bis zum Boden und mischt sich dabei mit ZONE_SINK-mal seinem Volumen, wie bei der Mischwärme (zoneFactor).
+      // Was ohne Zugabe wegging oder sich änderte (Ausgießen, Reaktion), überall gleich.
+      // shortcut: eine angenommene Mischzone statt gerechneter Strömung; sie entsteht im Augenblick des Zugebens und wandert danach nicht
       add = volume(v) * 1000 - f.ml;
-      for (i = 0, cells = []; i < G.n && (i === 0 || (add > 0 && room < Math.max(add, FIELD.mix))); i++) { cells.push(G.near[i]); room += G.vol[G.near[i]] * 1e6; }
+      sink = add > 0 && f.mass > 0 && (liquidMass(v) - f.mass) / add > f.mass / f.ml;
+      // eine sinkende Zugabe reicht in jedem Schritt mindestens durch die innerste Säule bis zum Boden (sonst bliebe ein Strahl, der je Schritt
+      // nur einen Hauch bringt, oben hängen)
+      for (i = 0, cells = []; i < G.n && (i === 0 || (add > 0 && (room < (sink ? ZONE_SINK * add : Math.max(add, FIELD.mix)) || (sink && i < FIELD.nz)))); i++) {
+        cells.push((sink ? G.plume : G.near)[i]); room += G.vol[(sink ? G.plume : G.near)[i]] * 1e6;
+      }
       if (!(add > 0)) cells = G.near;
       for (i = 0, sum = 0; i < cells.length; i++) sum += G.vol[cells[i]];
       put = function (arr, delta) { if (delta) for (var q = 0; q < cells.length; q++) arr[cells[q]] += delta * G.vol[cells[q]] / sum; };
@@ -4899,7 +4914,7 @@
       L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
       for (id in f.ion) L.spatial.diffuse(G, f.ion[id], FIELD.D * f.speed, DT);
     }
-    f.ml = volume(v) * 1000;
+    f.ml = volume(v) * 1000; f.mass = liquidMass(v);
     solids.forEach(function (e) {
       if (!Object.keys(e.d).every(function (id) { return f.ion[id]; })) return;
       if (!f.solid[e.solid]) f.solid[e.solid] = new Array(G.n).fill(0);
