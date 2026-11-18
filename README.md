@@ -1358,7 +1358,21 @@ Ein Kristall Kaliumpermanganat sinkt im Becherglas mit Wasser zu Boden und löst
 
 In der 3D-Ansicht schaltet der Knopf „3D: …“ in der Karte des Glases (Glas antippen) auf „Volumen“: Dann sieht man die Farbe im ganzen Glas, nicht nur im Schnitt. Auch ein Natriumhydroxid-Plätzchen in Wasser mit Universalindikator löst sich dort, wo es liegt: Die Lauge färbt das Glas von unten her.
 
-So verfolgt das Feld farbige Ionen, die nicht an Säure-Base-Gleichgewichten hängen (Permanganat, Kristallviolett, Kupfertetrammin, Tetrachlorocobaltat …), je für sich. Was sich von einem Stück löst, kommt dort an, wo es liegt. Reagiert ein farbiges Ion in der Lösung, etwa Permanganat mit Wasserstoffperoxid, nimmt es überall im selben Verhältnis ab, nicht nur dort, wo es gerade ist.
+So verfolgt das Feld farbige Ionen, die nicht an Säure-Base-Gleichgewichten hängen, je für sich. Was sich von einem Stück löst, kommt dort an, wo es liegt. Reagiert ein farbiges Ion in der Lösung, etwa Permanganat mit Wasserstoffperoxid, nimmt es überall im selben Verhältnis ab, nicht nur dort, wo es gerade ist. Diese Flaschen bringen ein solches Ion mit (für die aus einem Paket lädt die Folie das Paket):
+
+| Ion | Flasche | Paket |
+|---|---|---|
+| Permanganat | `KMnO4`, `KMnO4 crystals` (Kristall: löst sich am Boden) | – |
+| Triiodid | `Lugol` | – |
+| Cobalt(II) | `CoCl2` | – |
+| Kristallviolett | `crystal violet` | – |
+| Dioxovanadium(V) | `NH4VO3 acidic` | Ionen |
+| Nickel(II) | `NiSO4 0.1M` | Ionen |
+| Polysulfid | `(NH4)2Sx` | Ionen |
+| Methylenblau, Indigocarmin | `methylene blue`, `indigo carmine` | Organik |
+| Hexacyanoferrat(III) | `K3Fe(CN)6 0.05M` | Organik |
+
+Erst bei einer Reaktion entstehen Tetrachlorocobaltat (Cobalt in konzentrierter Salzsäure), die Kupfer-Ammin-Komplexe (Kupfersulfat und Ammoniak), Eisenthiocyanat, der Iod-Stärke-Komplex und die übrigen Stufen des Vanadiums; auch sie wandern dann je für sich. Kupfer(II), Chromat und Eisen(III) hängen an Säure-Base-Gleichgewichten: Ihre Farbe verteilt das Feld gleichmäßig.
 
 ```json @ChemLab.sim
 {"bench":[
