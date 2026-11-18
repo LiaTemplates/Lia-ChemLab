@@ -209,12 +209,14 @@
     var c = doc.createElement("canvas"), g = c.getContext("2d"), T, y, tex;
     c.width = 64; c.height = 1024;
     g.fillStyle = fx.style.display === "paper" ? "#efe3c2" : "#f7f7f4"; g.fillRect(0, 0, 64, 1024);      // um 1880 auf Papier
-    g.fillStyle = "#22262b"; g.font = "bold 22px system-ui, sans-serif"; g.textBaseline = "middle";
-    for (T = -10; T <= 110; T += 2) {
+    // Teilung 1 °C, gestuft wie in 2D (nach dem Muster von ISO 384): jeder 10. Strich lang mit Ziffer darüber, in der Mitte ein mittlerer
+    g.fillStyle = "#22262b"; g.font = "bold 22px system-ui, sans-serif"; g.textBaseline = "alphabetic";
+    L.graduation(110, 1, null, null, true, -10).forEach(function (m) {
+      T = m.v;
       y = 1024 * (1 - (T + 10) / 120);
-      g.fillRect(0, y - 1, T % 10 ? 12 : T % 50 ? 20 : 26, 2);
-      if (numbers && T % 50 === 0 && T >= 0) g.fillText(String(T), 28, Math.min(1012, Math.max(12, y)));
-    }
+      g.fillRect(0, y - 1, m.kind === "long" ? 30 : m.kind === "medium" ? 19 : 12, m.kind === "long" ? 2.5 : 2);
+      if (numbers && m.figure) g.fillText(T < 0 ? "−" + -T : String(T), 14, Math.min(1020, Math.max(24, y - 5)));
+    });
     tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
@@ -236,6 +238,7 @@
         var glass = thermoGlass(), red = fx.matte(0xd8322c, 0.35);
         sub.add(mesh(new THREE.CylinderGeometry(0.2, 0.2, top - bottom - 0.5, 20), glass, x, (top + bottom + 0.5) / 2));
         sub.add(mesh(new THREE.SphereGeometry(0.2, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), glass, x, top));
+        sub.add(mesh(new THREE.TorusGeometry(0.16, 0.035, 8, 20), glass, x, top + 0.32));          // Ring oben (ISO 386, Bild 1)
         sub.add(mesh(new THREE.SphereGeometry(0.3, 20, 14), glass, x, bottom + 0.31));
         sub.add(mesh(new THREE.SphereGeometry(0.22, 16, 12), red, x, bottom + 0.31));
         var back = new THREE.Mesh(new THREE.PlaneGeometry(0.3, at(110) - at(-10)), new THREE.MeshBasicMaterial({ map: thermoScale(d.ctx.numbers) }));
@@ -352,9 +355,13 @@
         var barrel = new THREE.Mesh(new THREE.CylinderGeometry(R, R, len, 28, 1, true).rotateZ(Math.PI / 2), glass);
         barrel.position.set(x0 + len / 2, y, 0); barrel.renderOrder = 2;
         sub.add(barrel, mesh(new THREE.CircleGeometry(R, 28).rotateY(Math.PI / 2), glass, x0, y));
-        for (k = 0; k <= 100; k += 20) {                // Teilstriche als Ringe
-          sub.add(mesh(new THREE.TorusGeometry(R + 0.01, 0.012, 4, 28).rotateY(Math.PI / 2), fx.matte(0x22262b, 0.6), x0 + cm(6 + (BARREL - 14) * k / 100), y));
-        }
+        // Teilstriche wie in 2D gestuft: lange als Ringe ganz herum, mittlere als halbe Ringe vorn (ISO 384, 9.2); die kurzen fehlen in 3D
+        L.graduation(100, 1, null, null, true).forEach(function (m) {
+          if (m.kind === "short") return;
+          // der halbe Ring liegt nach rotateZ und rotateY vorn (+z), der Kamera zugewandt
+          sub.add(mesh(new THREE.TorusGeometry(R + 0.01, m.kind === "long" ? 0.014 : 0.01, 4, 28, m.kind === "long" ? Math.PI * 2 : Math.PI).rotateZ(Math.PI / 2).rotateY(Math.PI / 2),
+            fx.matte(0x22262b, 0.6), x0 + cm(6 + (BARREL - 14) * m.v / 100), y));
+        });
         var plunger = new THREE.Group();
         plunger.name = "plunger";
         plunger.add(mesh(new THREE.CylinderGeometry(R - 0.02, R - 0.02, cm(4), 24).rotateZ(Math.PI / 2), fx.matte(0x3a3f45, 0.5), cm(2), 0),

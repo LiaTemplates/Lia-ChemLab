@@ -564,13 +564,14 @@
   // dazwischen ein mittlerer, bei 2 jeder 5. lang, bei 5 jeder 10. lang und jeder 2. mittel. Beziffert werden die langen Striche.
   // iso: die genormte Teilung (ISO 385, ISO 4788); space: Bildpunkte je Einheit. Stehen die Striche enger als gap, wird die Teilung
   // um einen Schritt der Reihe gröber, bis sie passt (in 3D bleibt die genormte). zero: auch der Nullstrich (Bürette).
-  function graduation(cap, iso, space, gap, zero) {
+  // from: Beginn einer Skala unter null (Thermometer ab −10 °C); die Stufen zählen trotzdem vom Nullpunkt aus.
+  function graduation(cap, iso, space, gap, zero, from) {
     var d = iso, e, lead, k, n, kind, list = [];
     function split() { e = Math.pow(10, Math.floor(Math.log(d) / Math.LN10 + 1e-9)); lead = Math.round(d / e); }
     split();
     while (space && d * space < (gap || 2.5)) { d = lead === 1 ? 2 * e : lead === 2 ? 5 * e : 10 * e; split(); }
     n = Math.round(cap / d);
-    for (k = zero ? 0 : 1; k <= n; k++) {
+    for (k = from ? Math.ceil(from / d - 1e-9) : zero ? 0 : 1; k <= n; k++) {
       kind = lead === 2 ? (k % 5 ? "short" : "long") : k % 10 === 0 ? "long" : (lead === 1 ? k % 5 === 0 : k % 2 === 0) ? "medium" : "short";
       list.push({ v: +(k * d).toFixed(6), kind: kind, figure: kind === "long" });
     }
@@ -770,6 +771,7 @@
         '<path class="cl-glass" d="M-16,' + TUBE.top + "L" + -R + "," + (TUBE.top + 3) + "L" + -R + "," + center + "A" + R + "," + R + " 0 0 0 " + R + "," + center +
         "L" + R + "," + (TUBE.top + 3) + "L16," + TUBE.top + '"/>' +
         '<line class="cl-shine" x1="-8" y1="' + (TUBE.top + 14) + '" x2="-8" y2="' + (center - 6) + '"/>' +
+        print(["boro 3.3"], 1, TUBE.top + 22, ctx, "middle") +          // Typ I aus Borosilikatglas (ISO 4142, 6.1)
         (ctx.lift ? "" : '<rect class="cl-wood" x="-32" y="-8" width="64" height="8" rx="2"/>') +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
@@ -1042,9 +1044,13 @@
         '<rect class="cl-plunger" x="' + f(px) + '" y="' + (y - 6.5) + '" width="4" height="13"/>' +
         '<line class="cl-rod" x1="' + f(px + 4) + '" x2="' + f(px + 34) + '" y1="' + y + '" y2="' + y + '"/>' +
         '<line class="cl-rod" x1="' + f(px + 34) + '" x2="' + f(px + 34) + '" y1="' + (y - 7) + '" y2="' + (y + 7) + '"/>';
-      for (ml = 0; ml <= 100; ml += 20) {
-        out += '<line class="cl-mark" x1="' + f(x0 + 6 + (BARREL - 14) * ml / 100) + '" x2="' + f(x0 + 6 + (BARREL - 14) * ml / 100) + '" y1="' + (y - 8) + '" y2="' + (y - 4) + '"/>';
-      }
+      // Skala gestuft wie bei ISO 384 (für Kolbenprober gibt es keine eigene Norm): die Striche hängen von der Oberkante herab,
+      // kurz, mittel, lang; die Ziffern stehen über den langen
+      graduation(100, 1, (BARREL - 14) / 100, 2.5, true).forEach(function (m) {
+        var mx = f(x0 + 6 + (BARREL - 14) * m.v / 100);
+        out += '<line class="cl-mark' + (m.kind === "long" ? " cl-mark-long" : "") + '" x1="' + mx + '" x2="' + mx + '" y1="' + (y - 8) + '" y2="' + (y - 8 + (m.kind === "long" ? 9 : m.kind === "medium" ? 6 : 4)) + '"/>';
+        if (ctx.numbers && m.figure && !place) out += '<text class="cl-mark-text" x="' + mx + '" y="' + (y - 10) + '" text-anchor="middle">' + m.v + "</text>";
+      });
       if (ctx.numbers) {
         out += '<g class="cl-tag"><rect x="' + (x0 - 6) + '" y="' + (y - 30) + '" width="102" height="17" rx="4"/>' +
           '<text x="' + (x0 + 45) + '" y="' + (y - 18) + '" text-anchor="middle">' + shown(Object.assign({}, w, { value: value }), ctx.lang) + "</text></g>";
@@ -1077,16 +1083,20 @@
       var p = place || { x: 0, bottom: -10, top: -200 }, x = p.x, len = p.bottom - p.top;
       var zero = p.bottom - 16, span = len - 30;                    // Skala von −10 °C bis 110 °C
       var at = function (T) { return zero - (Math.max(-10, Math.min(110, T)) + 10) / 120 * span; };
-      var out = "", T, y = at(w.value);
+      var out = "", y = at(w.value);
       if (!place) out += '<rect class="cl-wood" x="-14" y="-8" width="28" height="8" rx="2"/>';
-      out += '<rect class="cl-thermo" x="' + (x - 3.5) + '" y="' + p.top + '" width="7" height="' + (len - 4) + '" rx="3.5"/>' +
+      // Stabthermometer (ISO 386): oben ein Ring, darunter die birnenförmige Ausdehnungskammer (8.7); hinter der Kapillare
+      // ein weißer Emaillestreifen (8.3), vor dem man die Flüssigkeitssäule abliest
+      out += '<circle class="cl-thermo-ring" cx="' + x + '" cy="' + (p.top - 2.5) + '" r="2.5"/>' +
+        '<rect class="cl-thermo" x="' + (x - 3.5) + '" y="' + p.top + '" width="7" height="' + (len - 4) + '" rx="3.5"/>' +
+        '<rect class="cl-enamel" x="' + (x - 0.2) + '" y="' + (p.top + 12) + '" width="2.6" height="' + (len - 26) + '"/>' +
+        '<path class="cl-chamber" d="M' + x + "," + (p.top + 13) + "C" + (x - 2.2) + "," + (p.top + 9) + " " + (x - 1.6) + "," + (p.top + 4) + " " + x + "," + (p.top + 4) +
+          "C" + (x + 1.6) + "," + (p.top + 4) + " " + (x + 2.2) + "," + (p.top + 9) + " " + x + "," + (p.top + 13) + 'Z"/>' +
         '<circle class="cl-thermo" cx="' + x + '" cy="' + (p.bottom - 5) + '" r="5"/>' +
         '<circle class="cl-mercury" cx="' + x + '" cy="' + (p.bottom - 5) + '" r="3.4"/>' +
         '<rect class="cl-mercury" x="' + (x - 1.2) + '" y="' + f(y) + '" width="2.4" height="' + f(p.bottom - 6 - y) + '"/>';
-      for (T = 0; T <= 100; T += 10) {
-        out += '<line class="cl-mark" x1="' + (x + 3.5) + '" x2="' + (x + (T % 50 ? 6.5 : 9)) + '" y1="' + f(at(T)) + '" y2="' + f(at(T)) + '"/>';
-        if (ctx.numbers && T % 50 === 0) out += '<text class="cl-mark-text" x="' + (x + 11) + '" y="' + f(at(T) + 2.5) + '">' + T + "</text>";
-      }
+      // Skala von −10 bis 110 °C, Teilung 1 °C, gestuft wie bei ISO 384 (Abschnitt 9 von ISO 386 ist nicht gelesen); bei wenig Platz gröber
+      out += scaleMarks(graduation(110, 1, span / 120, 2.5, true, -10), x, 3.5, at, ctx, function (T) { return T < 0 ? "−" + -T : String(T); });
       if (ctx.numbers) {
         var tag = x + (p.tag == null ? 8 : p.tag);
         out += '<g class="cl-tag"><rect x="' + tag + '" y="' + (p.top - 4) + '" width="50" height="17" rx="4"/>' +
@@ -1576,6 +1586,8 @@
       out += '<path class="cl-glass" d="M' + (x - SEP.neck) + "," + g.bottom + "L" + (x - SEP.wide) + "," + g.top + "Q" + x + "," + (g.top - 16) + " " + (x + SEP.wide) + "," + g.top +
         "L" + (x + SEP.neck) + "," + g.bottom + '"/>' +
         '<path class="cl-stopper" d="M' + (x - 5) + "," + (g.top - 18) + "L" + (x + 5) + "," + (g.top - 18) + "L" + (x + 4) + "," + (g.top - 8) + "L" + (x - 4) + "," + (g.top - 8) + 'Z"/>' +
+        // Aufdruck nach ISO 4800, 6: nur das Nennvolumen (der Stopfen sitzt in einem Schliff 19/26)
+        print([SEP.cap + " mL"], x, g.top + 22, ctx, "middle") +
         '<path class="cl-glass" d="M' + (x - 2) + "," + g.bottom + "L" + (x - 2) + "," + (g.tip - 3) + "L" + x + "," + g.tip + "L" + (x + 2) + "," + (g.tip - 3) + "L" + (x + 2) + "," + g.bottom + '"/>' +
         '<rect class="cl-cock" x="' + (x - 4) + '" y="' + (g.cock - 4) + '" width="8" height="8" rx="2"/>' +
         (open ? '<line class="cl-cock-grip" x1="' + x + '" x2="' + x + '" y1="' + (g.cock - 7) + '" y2="' + (g.cock + 7) + '"/>'
@@ -1640,7 +1652,9 @@
 
   // ------------------------------------------------------------------ Trichter mit Filterpapier
 
-  var FUNNEL = { a: 28, h: 40, stem: 34, cap: 60 };     // halbe Weite oben, Höhe des Kegels, Länge des Rohrs, Fassungsvermögen in mL
+  // halbe Weite oben, Höhe des Kegels, Länge des Rohrs, Fassungsvermögen in mL. Der Kegel hat einen Öffnungswinkel von 60° (ISO 4798, 5.2.1):
+  // Höhe = halbe Weite / tan 30°
+  var FUNNEL = { a: 28, h: 48, stem: 34, cap: 60 };
 
   // mount: über welchem Gefäß er hängt; das Rohr reicht in dessen Öffnung
   function funnelAt(mount) {
@@ -1665,6 +1679,7 @@
       out = '<rect class="cl-stand" x="' + (g.rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
         '<line class="cl-rod" x1="' + g.rod + '" x2="' + g.rod + '" y1="-5" y2="' + (g.top - 16) + '"/>' +
         '<line class="cl-rod" x1="' + g.rod + '" x2="' + (x + a - 4) + '" y1="' + (g.top + 8) + '" y2="' + (g.top + 8) + '"/>' +
+        '<rect class="cl-boss" x="' + (g.rod - 5) + '" y="' + (g.top + 3) + '" width="10" height="10" rx="2"/>' +
         // Filterpapier; ein Rückstand färbt es in seiner Farbe
         '<path class="cl-filter" d="' + cone(g.top + 3) + '"' + (sed && sed.ml > 0.002 ? ' style="fill:' + css(sed.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.55); })) + '"' : "") + "/>";
       if (w.ml > 0.005) out += '<path class="cl-liquid" d="' + cone(funnelSurface(w, mount)) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
@@ -1672,8 +1687,9 @@
         rest = g.apex - Math.max(10, FUNNEL.h * 0.7 * Math.pow(Math.min(1, sed.ml / FUNNEL.cap * 8), 1 / 3));
         out += '<path class="cl-sediment" d="' + cone(rest) + '" fill="' + css(shade(sed.rgb, 0.88)) + '"/>';
       }
+      // das Ende des Rohrs ist schräg angeschliffen, mindestens 30° zur Achse (ISO 4798, 5.4.3): links tiefer als rechts
       out += '<path class="cl-glass" d="M' + (x - a - 3) + "," + (g.top - 2) + "L" + (x - 3) + "," + (g.apex + 2) + "L" + (x - 3) + "," + g.tip +
-        "M" + (x + 3) + "," + g.tip + "L" + (x + 3) + "," + (g.apex + 2) + "L" + (x + a + 3) + "," + (g.top - 2) + '"/>';
+        "L" + (x + 3) + "," + (g.tip - 10) + "L" + (x + 3) + "," + (g.apex + 2) + "L" + (x + a + 3) + "," + (g.top - 2) + '"/>';
       if (w.ml > 0.001 && mount && !w.blocked && L.fx) out += L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);      // das Filtrat tropft
       return out + (mount ? "" : badge(0, 14, ctx.no));
     }

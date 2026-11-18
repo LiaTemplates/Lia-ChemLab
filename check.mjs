@@ -550,6 +550,17 @@ test("Skalen nach ISO 384: Folge der Striche, Ziffern an den langen, gröbere Te
   assert.doesNotMatch(cylinder, /Ex/);
   assert.doesNotMatch(L.parts.cylinder.draw(look(l, "c"), ctx({ numbers: false })), /cl-print/, "ohne Zahlen kein Aufdruck");
   assert.match(L.parts.burner.draw({ flame: 0 }, ctx()), /cl-gas-knob/, "Gashahn mit gelbem Griff (DIN EN 13792)");
+  const thermo = L.parts.thermometer.draw({ value: 20, unit: "°C" }, ctx(), null);
+  assert.match(thermo, /cl-enamel/, "Emaillestreifen hinter der Kapillare (ISO 386, 8.3)");
+  assert.match(thermo, /cl-chamber/, "Ausdehnungskammer (ISO 386, 8.7)");
+  const figures = [...thermo.matchAll(/class="cl-mark-text"[^>]*>([^<]+)</g)].map((m) => +m[1].replace("−", "-"));
+  assert.ok(figures.includes(0) && figures.every((T) => T % 10 === 0), `die Stufen zählen vom Nullpunkt aus: ${figures}`);
+  const cold = Object.fromEntries(L.graduation(110, 1, null, null, true, -10).map((m) => [m.v, m.kind]));
+  assert.equal(cold[-10], "long"); assert.equal(cold[-5], "medium"); assert.equal(cold[0], "long"); assert.equal(cold[-3], "short");
+  assert.match(L.parts.testtube.draw(look(lab([{ type: "testtube", id: "b" }])), ctx()), /boro 3\.3/, "Reagenzglas Typ I (ISO 4142)");
+  assert.equal(L.shapes.funnel.h, 48, "Trichter: Öffnungswinkel 60° (ISO 4798)");
+  const sep = lab([{ type: "beaker", id: "b" }, { type: "separator", id: "s", over: "b" }]);
+  assert.match(L.parts.separator.draw(look(sep, "s"), ctx(), L.parts.beaker.mount(look(sep))), />100 mL</, "Scheidetrichter: Nennvolumen (ISO 4800)");
 });
 
 test("Zeichnung: jedes Gerät, leer und gefüllt, ohne Fehler im SVG", () => {

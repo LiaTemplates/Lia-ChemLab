@@ -227,6 +227,10 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-ring { fill: none; stroke: var(--cl-glass); stroke-width: 1.25; }
 .lia-chemlab .cl-ring-back { fill: none; stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.45; }
 .lia-chemlab .cl-ground { fill: #c9d3dc; opacity: 0.6; }
+/* Thermometer (ISO 386): Emaillestreifen hinter der Kapillare, Ausdehnungskammer, Ring oben */
+.lia-chemlab .cl-enamel { fill: #fbfbf7; stroke: #d8dde2; stroke-width: 0.3; }
+.lia-chemlab .cl-chamber { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 0.6; }
+.lia-chemlab .cl-thermo-ring { fill: none; stroke: var(--cl-glass); stroke-width: 1.25; }
 .lia-chemlab .cl-cock-grip { stroke: #2c6fb5; stroke-width: 3.5; stroke-linecap: round; }
 
 .lia-chemlab .cl-porcelain { fill: none; stroke: #f1eee6; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }

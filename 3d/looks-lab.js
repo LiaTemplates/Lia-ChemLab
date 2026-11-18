@@ -458,7 +458,12 @@
       var cork = new THREE.Mesh(new THREE.TorusGeometry(cm(13), cm(3), 10, 32).rotateX(Math.PI / 2), fx.matte(0xb58b5c, 0.9));
       cork.position.y = cm(3);
       cork.castShadow = cork.receiveShadow = true;
-      group.add(arm, cork);
+      // Kegelschliff oben am Hals: mattes Glas wie in 2D
+      var ground = new THREE.Mesh(new THREE.CylinderGeometry(cm(F.neck) + 0.02, cm(F.neck) + 0.02, cm(9), 24, 1, true),
+        new THREE.MeshStandardMaterial({ color: 0xe8edf1, roughness: 1, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide }));
+      ground.position.y = cm(-F.rim) - cm(4.5);
+      ground.renderOrder = 3;
+      group.add(arm, cork, ground);
       group.userData.cork = cork;
     },
     refresh: function (group, d) { group.userData.cork.visible = !d.lift; }
