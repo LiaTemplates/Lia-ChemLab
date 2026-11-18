@@ -10541,6 +10541,56 @@ test("Geigerzähler: tickt hörbar, ein Klick je Impuls; stumm nicht", () => {
   } finally { delete globalThis.AudioContext; }
 });
 
+// ---------------------------------------------------------------- Gase aus Feststoffen, Methan, Stickstoff
+
+const airOf = (l, id, gas) => look(l, id).air[gas] || 0;
+const overBurner = (contains, more) => lab([{ type: "testtube", id: "a", contains }, { type: "burner", under: "a", flame: 2 }].concat(more || []), { room: 20 });
+
+test("Gase aus Feststoffen: Kaliumpermanganat gibt beim Erhitzen Sauerstoff, Natron Kohlenstoffdioxid, das Kalkwasser trübt", () => {
+  const l = overBurner([{ reagent: "KMnO4 crystals", g: 1 }]), before = totals(l);
+  L.step(l, 70);
+  assert.ok(airOf(l, "a", "O2(g)") > 0.5, `Sauerstoff im Glas: ${airOf(l, "a", "O2(g)")}`);
+  assert.equal(L.probe(l, "a", "glow").result, "relight", "der Glimmspan flammt auf");
+  assert.ok(amount(l, "K2MnO4(s)", "a") > 0 && amount(l, "MnO2(s)", "a") > 0, "zurück bleiben Manganat und Braunstein");
+  near(totals(l).mass, before.mass, 1e-9, "Masse");
+  const soda = overBurner([{ reagent: "NaHCO3 powder", g: 1 }], [{ type: "tube", in: "a", to: "k" }, { type: "testtube", id: "k", contains: [{ reagent: "limewater", ml: 10 }] }]), seen = [];
+  L.step(soda, 90, (e) => seen.push(e));
+  assert.ok(amount(soda, "Na2CO3(s)", "a") > 0, "Soda bleibt zurück");
+  assert.ok(seen.some((e) => e.key === "solid" && e.vessel === "k"), "das Kalkwasser trübt sich");
+  const cold = lab([{ type: "testtube", id: "a", contains: [{ reagent: "KMnO4 crystals", g: 1 }] }], { room: 20 });
+  L.step(cold, 300);
+  assert.equal(airOf(cold, "a", "O2(g)"), 0, "ohne Brenner nichts");
+});
+
+test("Methan: Natriumacetat mit Natriumhydroxid erhitzt; aufgefangen brennt es am Span, als Gemisch mit Luft knallt es; offen zündet es am Brenner", () => {
+  const l = overBurner([{ reagent: "CH3COONa salt", g: 1 }, { reagent: "NaOH pellets", g: 1 }], [{ type: "tube", in: "a", to: "z" }, { type: "testtube", id: "z" }]), seen = [];
+  const t = until(l, () => airOf(l, "z", "CH4(g)") > 0.9, 240, seen);
+  assert.ok(t > 30 && t < 200, `Methan im Auffangglas nach ${t} s`);
+  assert.ok(!seen.some((e) => e.key === "pop"), "durch das Rohr kommt nichts an die Flamme");
+  assert.equal(L.probe(l, "z", "flame").result, "burn", "reines Methan brennt ruhig ab");
+  const mix = lab([{ type: "testtube", id: "z" }]);
+  L.vessel(mix, "z").air["CH4(g)"] = 0.1 * 0.02 / 24;      // 10 % im Gasraum von etwa 20 mL
+  assert.equal(L.probe(mix, "z", "flame").result, "pop", "im Gemisch mit Luft knallt es");
+  const open = overBurner([{ reagent: "CH3COONa salt", g: 1 }, { reagent: "NaOH pellets", g: 1 }]), heard = [];
+  L.step(open, 200, (e) => heard.push(e));
+  assert.ok(heard.some((e) => e.key === "pop" && e.species === "CH4(g)"), "offen zündet es an der Flamme darunter");
+  const none = overBurner([{ reagent: "CH3COONa salt", g: 1 }]);
+  L.step(none, 200);
+  assert.equal(airOf(none, "a", "CH4(g)"), 0, "ohne Natriumhydroxid kein Methan");
+});
+
+test("Stickstoff: Ammoniumchlorid und Natriumnitrit geben im heißen Wasserbad Stickstoff, der Span erlischt; kalt kaum", () => {
+  const make = (bath) => lab([{ type: "testtube", id: "a", contains: [{ reagent: "NH4Cl 1M", ml: 5 }, { reagent: "NaNO2 1M", ml: 5 }] }].concat(bath ? [{ type: "bath", under: "a", temp: 80 }] : []), { room: 20 });
+  const hot = make(true), before = totals(hot);
+  L.step(hot, 120);
+  assert.ok(airOf(hot, "a", "N2(g)") > 0.8, `Stickstoff: ${airOf(hot, "a", "N2(g)")}`);
+  assert.equal(L.probe(hot, "a", "flame").result, "out", "der brennende Span erlischt");
+  near(totals(hot).mass, before.mass, 1e-9, "Masse");
+  const cold = make(false);
+  L.step(cold, 120);
+  assert.ok(airOf(cold, "a", "N2(g)") < 0.05, "bei Raumtemperatur kaum");
+});
+
 // ---------------------------------------------------------------- Landolt-Reaktion
 
 // Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag
