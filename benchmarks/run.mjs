@@ -217,6 +217,27 @@ const models = {
       check("pits_without_chloride", w.pit && w.pit["Al(s)"] ? 1 : 0, 0), { name: "pits_with_chloride", value: sv.pit && sv.pit["Al(s)"] ? 1 : 0, limit: 1, pass: !!(sv.pit && sv.pit["Al(s)"]) }];
   },
 
+  // B16, B25: dieselben Lösungen in ChemLab (reales Modell) und in PHREEQC (references/phreeqc.json). Verglichen werden der pH und lg c
+  // der genannten Teilchen (ChemLab mol/L, PHREEQC mol/kg Wasser: bis 0,1 M wenige Promille)
+  // B26: dieselben Fälle (from) gegen phreeqc.dat
+  phreeqc(params, tol) {
+    const file = new URL("references/phreeqc.json", here);
+    if (!fs.existsSync(file)) throw new Error("references/phreeqc.json fehlt: node benchmarks/phreeqc.mjs");
+    const ref = JSON.parse(fs.readFileSync(file, "utf8")), out = [];
+    const sets = params.from ? params.from.map((id) => [id, cases.find((c) => c.id === id).params.cases]) : [[cases.find((c) => c.params === params).id, params.cases]];
+    for (const [id, list] of sets) for (const item of list) {
+      const { l, v } = phreeqcLab(item), vol = L.volume(v), pH = L.view(l, v).pH;
+      for (const which of Object.keys(tol)) {
+        const r = ref.cases[`${id}/${item.name}/${which}`];
+        if (!r) throw new Error(`Vergleich fehlt: ${id}/${item.name}/${which}`);
+        out.push(check(`${item.name}/${which}/pH`, Math.abs(pH - r.pH), tol[which].pH));
+        const worst = Math.max(...item.species.map((s) => Math.abs(Math.log10((v.n[s] || 1e-300) / vol) - Math.log10(r.m[s] || 1e-300))));
+        out.push(check(`${item.name}/${which}/lg`, worst, tol[which].lg));
+      }
+    }
+    return out;
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {
@@ -338,6 +359,13 @@ const models = {
   },
 };
 
+// Aufbau eines PHREEQC-Vergleichs: ein Becherglas im realen Modell bei 25 °C, bis zum Gleichgewicht
+export function phreeqcLab(item) {
+  const l = L.createLab(L.normalize({ room: 25, model: "real", bench: [{ type: "beaker", id: "b", contains: item.contains }] }));
+  L.step(l, 120);
+  return { l, v: L.vessel(l, "b") };
+}
+
 const spec = (v) => (L.parts[v.type].sizes ? L.parts[v.type].sizes[v.size] : L.parts[v.type]);      // wie spec() in der Engine
 
 export function run(c) {
@@ -347,7 +375,8 @@ export function run(c) {
   const start = performance.now();
   try {
     const checks = models[c.model](c.params, c.tolerance);
-    return { id: c.id, status: checks.every((x) => x.pass) ? "PASS" : "FAIL", checks, ms: Math.round(performance.now() - start) };
+    const ok = checks.every((x) => x.pass);
+    return { id: c.id, status: ok ? "PASS" : "FAIL", checks, known: ok ? undefined : c.known, ms: Math.round(performance.now() - start) };
   } catch (error) {
     return { id: c.id, status: "FAIL", reason: String(error && error.stack || error), ms: Math.round(performance.now() - start) };
   }
@@ -366,7 +395,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const md = format === "markdown";
     if (md) console.log(`| ID | Art | Status | Prüfungen |\n|---|---|---|---|`);
     for (const r of results) {
-      const detail = r.checks ? r.checks.map((x) => `${x.name}=${fmt(x.value)}${x.pass ? "" : ` (Grenze ${fmt(x.limit)})`}`).join("  ") : r.reason || "";
+      const detail = (r.checks ? r.checks.filter((x) => !md || !x.pass || r.checks.length < 9).map((x) => `${x.name}=${fmt(x.value)}${x.pass ? "" : ` (Grenze ${fmt(x.limit)})`}`).join("  ") : r.reason || "") +
+        (r.known ? `  [bekannt: ${r.known}]` : "");
       console.log(md ? `| ${r.id} | ${r.kind} | ${r.status} | ${detail.replace(/\|/g, "/")} |` : `${r.id} ${r.status.padEnd(15)} ${detail}`);
     }
     if (!md) console.log(`\nEngine ${commit}: ${["PASS", "FAIL", "NOT_RUN", "NOT_IMPLEMENTED"].map((s) => `${results.filter((r) => r.status === s).length} ${s}`).join(", ")}`);

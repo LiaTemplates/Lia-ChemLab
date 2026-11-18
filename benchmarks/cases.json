@@ -38,7 +38,13 @@
     "params": { "acid": { "reagent": "HCl 0.1M", "ml": 20 }, "base": { "reagent": "NaOH 0.1M", "ml": 10 } },
     "tolerance": { "pH_absolute": 0.01 } },
   { "id": "B15", "title": "pH-Puffer aus standardisierter Lösung (NIST-SRM)", "kind": "C", "priority": "P1", "pending": "reference_certificate_missing" },
-  { "id": "B16", "title": "Komplex-/Löslichkeitsgleichgewicht gegen PHREEQC", "kind": "B", "priority": "P1", "pending": "phreeqc_reference_missing" },
+  { "id": "B16", "title": "Löslichkeit gegen PHREEQC: Gips und Fluorit fallen aus (reales Modell)", "kind": "B", "priority": "P1", "model": "phreeqc",
+    "params": { "cases": [
+      { "name": "Gips", "contains": [{ "reagent": "CaCl2 0.1M", "ml": 25 }, { "reagent": "Na2SO4 0.1M", "ml": 25 }], "species": ["Ca^2+(aq)", "SO4^2-(aq)", "CaSO4(aq)", "NaSO4-(aq)"], "phases": ["Gypsum"] },
+      { "name": "Fluorit", "contains": [{ "reagent": "CaCl2 0.1M", "ml": 25 }, { "reagent": "NaF 0.1M", "ml": 25 }], "species": ["Ca^2+(aq)", "F-(aq)", "HF(aq)"], "phases": ["Fluorite"] }
+    ] },
+    "tolerance": { "chemlab": { "pH": 0.01, "lg": 0.02 } },
+    "note": "PHREEQC mit einer Datenbank aus ChemLabs eigenen Konstanten und Aktivitätsparametern: prüft Löser und Aktivitätsmodell, nicht die Daten (dafür B26). Vergleichsdaten: references/phreeqc.json, erzeugt mit benchmarks/phreeqc.mjs. Grenzen vor dem ersten Lauf festgelegt." },
   { "id": "B17", "title": "Metallauflösung unter Strom: Faraday (Kupferanode in CuSO4)", "kind": "A", "priority": "P1", "model": "faraday",
     "params": { "volts": 2, "seconds": 300 }, "tolerance": { "relative": 1e-4 } },
   { "id": "B18", "title": "Gemischtes Potential einer galvanischen Zelle", "kind": "B", "priority": "P2" },
@@ -56,5 +62,17 @@
     "note": "dn/dt = −(n0/τ)·(n/n0)^(2/3) ⇒ n = n0·(1 − t/(3τ))³; τ = 15 s ist geschätzt. Analytisch nur, solange mehr als 10 % da ist: der feste Schritt (0,05 s) hat einen Fehler erster Ordnung in DT/τ(n), und τ geht mit dem Korn gegen null (bei 30 s 0,55 %). Bis zum Ende geprüft gegen das diskrete Verfahren selbst. Zeitpunkte nach dem ersten Lauf so gewählt." },
   { "id": "B23", "title": "Gaslöslichkeit als Funktion von T und Salinität", "kind": "C", "priority": "P2", "pending": "aquasoldb_import_missing" },
   { "id": "B24", "title": "Wärmekapazität/VLE eines Gemischs (ThermoML)", "kind": "C", "priority": "P2", "pending": "thermoml_import_missing" },
-  { "id": "B25", "title": "Speziation/Transport gegen PHREEQC-Beispiele", "kind": "B", "priority": "P2", "pending": "phreeqc_reference_missing" }
+  { "id": "B25", "title": "Speziation gegen PHREEQC: Hydrogencarbonat, Phosphatpuffer, Natriumsulfat (reales Modell)", "kind": "B", "priority": "P2", "model": "phreeqc",
+    "params": { "cases": [
+      { "name": "NaHCO3", "contains": [{ "reagent": "NaHCO3 0.1M", "ml": 50 }], "species": ["HCO3-(aq)", "CO3^2-(aq)", "CO2(aq)"] },
+      { "name": "Phosphatpuffer", "contains": [{ "reagent": "NaH2PO4 0.1M", "ml": 25 }, { "reagent": "Na2HPO4 0.1M", "ml": 25 }], "species": ["H2PO4-(aq)", "HPO4^2-(aq)"] },
+      { "name": "Na2SO4", "contains": [{ "reagent": "Na2SO4 0.1M", "ml": 50 }], "species": ["SO4^2-(aq)", "NaSO4-(aq)"] }
+    ] },
+    "tolerance": { "chemlab": { "pH": 0.01, "lg": 0.02 } },
+    "note": "wie B16; Transport nicht, ChemLab rechnet ihn nicht mit dieser Chemie" },
+  { "id": "B26", "title": "Datenvergleich: die Fälle aus B16 und B25 gegen PHREEQC mit phreeqc.dat", "kind": "B", "priority": "P2", "model": "phreeqc",
+    "params": { "from": ["B16", "B25"] },
+    "tolerance": { "phreeqc.dat": { "pH": 0.1, "lg": 0.1 } },
+    "known": "phreeqc.dat 3.8.6 beschreibt NaSO4- mit einem temperaturabhängigen log K (1,21 bei 25 °C statt 0,94) und -gamma 5,5 0 (ChemLab: 3,5 0,107, aus einer älteren phreeqc.dat), CaSO4(aq) mit log K 2,25 (ChemLab: 2,36 aus minteq.v4.dat); NaHCO3 und NaCO3- fehlen in ChemLab. Gips und Natriumsulfat weichen deshalb um 0,24 bzw. 0,17 in lg c ab. Ob ChemLab die neueren Werte übernimmt, ist offen: Die jetzigen treffen gemessene Aktivitätskoeffizienten von Natriumsulfat bis 0,5 mol/L auf 7 % (README, Grenzen).",
+    "note": "zeigt Unterschiede der Daten, nicht der Rechnung; Grenzen vor dem ersten Lauf festgelegt" }
 ]
