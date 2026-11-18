@@ -11346,6 +11346,34 @@ test("Feld: Säure tropft oben an der Achse ein, die Front wandert nach unten; d
   for (const c of look().cells) near(c.pH, L.view(l, v).pH, 1e-6, "geschüttelt: überall gleich");
 });
 
+test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das Chlorid ankommt; Silber und Chlorid bleiben im Feld", () => {
+  const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "AgNO3 0.01M", ml: 80 }] }], { room: 25 }), v = L.vessel(l, "b");
+  const sums = () => { const F = v.field, solid = F.solid["AgCl(s)"].reduce((a, b) => a + b, 0); return [F.ion["Ag+(aq)"].reduce((a, b) => a + b, 0) + solid, F.ion["Cl-(aq)"].reduce((a, b) => a + b, 0) + solid]; };
+  L.step(l, 1);
+  L.add(l, "b", "NaCl 1M", { ml: 1 });
+  L.step(l, 10);
+  let f = L.view(l, v).field;
+  const cloud = (i, j) => (f.cells[j * f.nr + i].cloud || { alpha: 0 }).alpha;
+  assert.ok(cloud(0, 0) > 0.5, `oben an der Achse trüb: ${cloud(0, 0)}`);
+  assert.equal(cloud(0, f.nz - 1), 0, "unten noch klar");
+  assert.equal(L.view(l, v).cloud.alpha, 0, "die durchmischte Trübung zeigt das Feld nicht ein zweites Mal");
+  assert.equal(L.view(l, v).sediment.ml, 0);
+  assert.equal(L.atRest(l), false, "es wandert noch");
+  const [ag, cl] = sums();
+  near(ag, amount(l, "Ag+(aq)") + amount(l, "AgCl(s)"), 1e-15, "Silber");
+  near(cl, amount(l, "Cl-(aq)") + amount(l, "AgCl(s)"), 1e-15, "Chlorid");
+  L.step(l, 120);
+  f = L.view(l, v).field;
+  assert.ok(cloud(0, 10) > 0.5, "die Front ist in der Mitte des Glases angekommen");
+  near(sums()[0], amount(l, "Ag+(aq)") + amount(l, "AgCl(s)"), 1e-15, "Silber, auch später");
+  L.shake(l, "b", "shake");
+  L.step(l, 1);
+  f = L.view(l, v).field;
+  for (const c of f.cells) near(c.cloud.alpha, f.cells[0].cloud.alpha, 1e-9, "geschüttelt: überall gleich trüb");
+  const svg = L.parts.beaker.draw(L.view(l, v), { lang: "de", uid: "u", t: 0, still: true, seed: 1 });
+  assert.match(svg, /class="cl-field"[\s\S]*fill-opacity/, "die Trübung je Zelle ist gezeichnet");
+});
+
 test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit dem Zeitraffer", () => {
   const run = L.createRun(L.normalize({ room: 25, bench: [{ type: "beaker", id: "b", spatial: 300, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] }] }));
   L.act(run, (l) => L.add(l, "b", "HCl 1M", { ml: 1 }));

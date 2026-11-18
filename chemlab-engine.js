@@ -4553,7 +4553,7 @@
       if (v.drop) return false;                                  // Tropfen schweben noch
       // übersättigt über der Schwelle: die Wartezeit bis zum Keim läuft; ein Feld gleicht sich noch aus
       if (volume(v) > 0 && seeds(v).some(function (e) { return supersaturation(v, e, volume(v)) >= e.nucleate.S; })) return false;
-      if (v.field && v.field.n && (function (f) { var lo = Infinity, hi = -Infinity; f.cells.forEach(function (c) { lo = Math.min(lo, c.pH); hi = Math.max(hi, c.pH); }); return hi - lo > 0.01; })(fieldLook(lab, v))) return false;
+      if (v.field && v.field.n && v.field.calm === false) return false;
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
       if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && filled(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte
@@ -4741,7 +4741,7 @@
   // Die Chemie des Gefäßes selbst bleibt gut durchmischt; nur das pH-Meter liest an seiner Spitze im Feld.
   // shortcut: ohne Strömung (eine schwere Zugabe sinkt in Wirklichkeit ab und mischt sich in Sekunden), schwache Säuren und Puffer, Fällungen und
   // Indikatoren sind überall gleich verteilt, ein D für alle Ionen (Elektroneutralität ohne Nernst-Planck); nur im Becherglas (Zylinder)
-  var FIELD = { nr: 10, nz: 20, D: 2e-9, speed: 600, probe: [1, 18], mix: 1 };      // mix: mit so viel mL mischt sich ein Tropfen oder Strahl beim Auftreffen (geschätzt)      // probe: Zelle (i, j) an der Spitze des pH-Meters, wie gezeichnet (r ≈ R/8, knapp über dem Boden)
+  var FIELD = { nr: 10, nz: 20, D: 2e-9, speed: 600, probe: [1, 18], mix: 1, calm: 1e-7 };      // mix: mit so viel mL mischt sich ein Tropfen oder Strahl beim Auftreffen (geschätzt)      // probe: Zelle (i, j) an der Spitze des pH-Meters, wie gezeichnet (r ≈ R/8, knapp über dem Boden)
   var STRONG = {};
   function strongIon(id) {         // schwach: Säure-Base-Stufe mit genau einem Partner (HCO3- ⇌ CO3^2- + H+); Cl- im Chlor-Gleichgewicht bleibt stark
     if (STRONG[id] === undefined) STRONG[id] = !!L.db.species[id].charge && id !== PROTON && id !== HYDROXIDE &&
@@ -4765,24 +4765,97 @@
     return c.G;
   }
 
+  // Fällungen im Feld: Feststoffe aus starken Ionen (AgCl, AgBr, AgI: kein Säure-Base-Gleichgewicht hängt an ihnen), ohne Gesetz für das
+  // Auflösen. Ihre Ionen wandern je für sich (mit demselben D), der Feststoff bleibt in seiner Zelle. In jeder Zelle stellt sich das
+  // Löslichkeitsgleichgewicht sofort ein (ideal, mit Konzentrationen); mit nucleate fällt dort erst etwas aus, wo Q/K ≥ S ist oder schon Feststoff liegt.
+  // shortcut: ohne die Wartezeit von nucleate je Zelle, ohne Absetzen des Niederschlags und ohne Komplexe (AgCl2-)
+  function fieldSolids() {
+    return L.db.equilibria.filter(function (e) {
+      return e.solid && !e.rate && Object.keys(e.d).every(function (id) { return e.d[id] > 0 && L.db.species[id].phase === "aq" && strongIon(id); });
+    });
+  }
+  function component(v, id, solids) {       // ein Ion gelöst und in den verfolgten Feststoffen, in mol
+    var sum = v.n[id] || 0;
+    solids.forEach(function (e) { if (e.d[id]) sum += e.d[id] * (v.n[e.solid] || 0); });
+    return sum;
+  }
+  function logKsp(v, e) {
+    var own = e.ideal == null ? null : [].concat(e.ideal), h = own && own.length > 1 ? own[1] : heatOf(e);
+    return shift((own ? own[0] : e.logK) * e.f, h == null ? null : h * e.f, v.T + KELVIN);
+  }
+  function precipitate(v, f, G, e) {         // je Zelle ins Löslichkeitsgleichgewicht; x: mol Feststoff mehr (oder weniger)
+    var ions = Object.keys(e.d), K = logKsp(v, e), solid = f.solid[e.solid], k, i, lo, hi, x, mid, logQ, Vk, gate, a, b, P;
+    var pair = ions.length === 2 && e.d[ions[0]] === 1 && e.d[ions[1]] === 1;
+    function excess(x) {                     // lg Q nach dem Umsatz x minus lg K
+      var sum = -K;
+      for (var q = 0; q < ions.length; q++) sum += e.d[ions[q]] * Math.log10(Math.max(1e-300, f.ion[ions[q]][k] - e.d[ions[q]] * x) / Vk);
+      return sum;
+    }
+    for (k = 0; k < G.n; k++) {
+      Vk = G.vol[k] * 1000;
+      hi = Infinity;
+      for (i = 0; i < ions.length; i++) hi = Math.min(hi, Math.max(0, f.ion[ions[i]][k]) / e.d[ions[i]]);
+      lo = -solid[k];
+      logQ = excess(0);
+      gate = solid[k] > 0 ? 0 : e.nucleate ? Math.log10(e.nucleate.S) : 0;      // ohne Feststoff in der Zelle: erst über der Schwelle
+      if (!(logQ > gate) && !(solid[k] > 0 && logQ < 0)) continue;
+      if (solid[k] > 0 && Math.abs(logQ) < 1e-6) continue;      // schon im Gleichgewicht
+      if (pair) {                            // 1:1 (AgCl): (a − x)(b − x) = K·V², geschlossen und ohne Auslöschung
+        a = f.ion[ions[0]][k]; b = f.ion[ions[1]][k]; P = Math.pow(10, K) * Vk * Vk;
+        x = Math.max(lo, 2 * (a * b - P) / (a + b + Math.sqrt((a - b) * (a - b) + 4 * P)));
+      } else if (logQ < 0 && excess(lo) <= 0) x = lo;         // es löst sich alles, was hier liegt
+      else {
+        if (logQ < 0) hi = 0; else lo = 0;
+        for (i = 0; i < 40; i++) { mid = (lo + hi) / 2; if (excess(mid) > 0) lo = mid; else hi = mid; }
+        x = (lo + hi) / 2;
+      }
+      for (i = 0; i < ions.length; i++) f.ion[ions[i]][k] -= e.d[ions[i]] * x;
+      solid[k] = Math.max(0, solid[k] + x);
+    }
+  }
+
   function fieldStep(lab, v) {
-    var f = v.field, G, now, i, add, cells, room = 0, sum;
+    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put;
     if (!f || !L.spatial) return;
     if (!(volume(v) > 0)) { f.n = null; return; }
-    G = fieldGrid(lab, v); now = strongCharge(v);
-    if (!f.n || v.shook > lab.t) { f.n = Array.prototype.slice.call(L.spatial.spread(G, now)); f.total = now; f.ml = volume(v) * 1000; return; }
-    add = volume(v) * 1000 - f.ml;                              // mL, die dazukamen
-    if (now !== f.total) {
+    G = fieldGrid(lab, v);
+    solids = fieldSolids();
+    solids.forEach(function (e) { for (var id in e.d) if (component(v, id, solids) > 0 || (f.ion && f.ion[id])) ids[id] = true; });
+    sid = strongCharge(v);
+    fresh = !f.n || v.shook > lab.t;
+    if (fresh) {                             // gleichmäßig: alles gelöst verteilt, dann fällt in jeder Zelle gleich viel aus
+      f.n = Array.prototype.slice.call(L.spatial.spread(G, sid)); f.total = sid;
+      f.ion = {}; f.tot = {}; f.solid = {};
+      for (id in ids) { f.ion[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.tot[id] = component(v, id, solids)))); }
+    } else {
       // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen; was ohne Zugabe
       // wegging oder sich änderte (Ausgießen, Reaktion), überall gleich
+      add = volume(v) * 1000 - f.ml;
       for (i = 0, cells = []; i < G.n && (i === 0 || (add > 0 && room < Math.max(add, FIELD.mix))); i++) { cells.push(G.near[i]); room += G.vol[G.near[i]] * 1e6; }
-      if (!(add > 0)) cells = G.near, room = 0;
+      if (!(add > 0)) cells = G.near;
       for (i = 0, sum = 0; i < cells.length; i++) sum += G.vol[cells[i]];
-      for (i = 0; i < cells.length; i++) f.n[cells[i]] += (now - f.total) * G.vol[cells[i]] / sum;
+      put = function (arr, delta) { if (delta) for (var q = 0; q < cells.length; q++) arr[cells[q]] += delta * G.vol[cells[q]] / sum; };
+      put(f.n, sid - f.total); f.total = sid;
+      for (id in ids) {
+        if (!f.ion[id]) { f.ion[id] = new Array(G.n).fill(0); f.tot[id] = 0; }
+        put(f.ion[id], component(v, id, solids) - f.tot[id]); f.tot[id] = component(v, id, solids);
+      }
+      L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
+      for (id in f.ion) L.spatial.diffuse(G, f.ion[id], FIELD.D * f.speed, DT);
     }
-    f.total = now; f.ml = volume(v) * 1000;
-    L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
-    for (i = 0; i < f.n.length; i++) if (!isFinite(f.n[i])) { f.n = null; return; }
+    f.ml = volume(v) * 1000;
+    solids.forEach(function (e) {
+      if (!Object.keys(e.d).every(function (id) { return f.ion[id]; })) return;
+      if (!f.solid[e.solid]) f.solid[e.solid] = new Array(G.n).fill(0);
+      precipitate(v, f, G, e);
+    });
+    // ruhig, wenn keine gelöste Menge mehr als FIELD.calm (mol/L) vom Mittel abweicht
+    f.calm = [f.n].concat(Object.keys(f.ion).map(function (id) { return f.ion[id]; })).every(function (arr) {
+      var mean = arr.reduce(function (a, b) { return a + b; }, 0) / (volume(v));
+      for (k = 0; k < G.n; k++) if (!isFinite(arr[k]) || Math.abs(arr[k] / (G.vol[k] * 1000) - mean) > FIELD.calm) return false;
+      return true;
+    });
+    if (!f.n.every(isFinite)) f.n = null;
   }
 
   // Überschuss an starker Lauge je Zelle gegenüber dem Mittel, in mol/L
@@ -4820,14 +4893,24 @@
 
   // Was die Ansicht zeigt: je Zelle pH und Farbe (Reihen von oben), dazu der Zeitraffer
   function fieldLook(lab, v) {
-    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [];
+    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [], G, cell, rgb, sum, id, c;
     if (!f || !f.n || !(volume(v) > 0)) return null;
     ex = fieldExcess(lab, v);
     for (k = 0; k < ex.length; k++) { lo = Math.min(lo, ex[k]); hi = Math.max(hi, ex[k]); }
     rows = fieldTable(lab, v, lo, hi);
-    for (k = 0; k < ex.length; k++) cells.push(fieldAt(rows, ex[k]));
+    G = fieldGrid(lab, v);
+    for (k = 0; k < ex.length; k++) {
+      cell = fieldAt(rows, ex[k]);
+      // Trübung durch den Feststoff dieser Zelle, wie die des Gefäßes (HAZE), in der Farbe der Feststoffe
+      rgb = [0, 0, 0]; sum = 0;
+      for (id in f.solid || {}) { c = f.solid[id][k] / (G.vol[k] * 1000); sum += c; rgbOf(id).forEach(function (q, n) { rgb[n] += q * c; }); }
+      cell.cloud = sum > 0 ? { rgb: rgb.map(function (q) { return Math.round(q / sum); }), alpha: 1 - Math.exp(-sum / HAZE) } : null;
+      cells.push(cell);
+    }
     return { nr: FIELD.nr, nz: FIELD.nz, speed: f.speed, cells: cells };
   }
+
+  function fieldMade(v) { return !!(v.field && v.field.n && v.field.solid && Object.keys(v.field.solid).length); }
 
   function fieldProbe(lab, v) {     // pH an der Spitze des pH-Meters
     var ex = fieldExcess(lab, v), k = FIELD.probe[1] * FIELD.nr + FIELD.probe[0];
@@ -4875,8 +4958,9 @@
       oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
-      cloud: cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),
-      sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: loose },
+      // im Feld zeigt jede Zelle ihren eigenen Niederschlag: die durchmischte Trübung und der Bodensatz fallen dann weg
+      cloud: fieldMade(v) ? { rgb: [255, 255, 255], alpha: 0 } : cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),
+      sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: fieldMade(v) ? 0 : loose },
       // mirror: ein Spiegel am Glas (Farbe, Füllhöhe in mL, bis zu der er reicht, und wie dicht er ist, 0 bis 1), sonst null
       mirror: mirror,
       // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell

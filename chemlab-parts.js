@@ -469,15 +469,16 @@
   function shade(rgb, factor) { return rgb.map(function (c) { return Math.round(c * factor); }); }
 
   // Farbe der Flüssigkeit im Glas: die gerechnete Farbe, bei klaren Lösungen mit dem leichten Blau von Wasser im Glas
-  function liquidColor(rgb) {
+  function liquidRgb(rgb) {          // eine klare Flüssigkeit bekommt einen hellblauen Ton, damit man sie vor der hellen Wand sieht
     var clear = Math.min(rgb[0], rgb[1], rgb[2]) / 255, tint = [222, 238, 250];
-    return css(rgb.map(function (c, i) { return Math.round(c - clear * clear * (255 - tint[i])); }));
+    return rgb.map(function (c, i) { return Math.round(c - clear * clear * (255 - tint[i])); });
   }
+  function liquidColor(rgb) { return css(liquidRgb(rgb)); }
 
   // Feld im Becherglas (spatial): je Zelle die Farbe der Lösung dort, an der Achse gespiegelt, weichgezeichnet wie die Strömung;
   // unten links der Zeitraffer der Diffusion
   function fieldCells(field, box, clip) {
-    var cols = 2 * field.nr, cw = (box.x1 - box.x0) / cols, ch = (box.bottom - box.top) / field.nz, out = "", c, j, i, x, y;
+    var cols = 2 * field.nr, cw = (box.x1 - box.x0) / cols, ch = (box.bottom - box.top) / field.nz, out = "", c, j, i, x, y, cloud;
     if (!(cw > 0 && ch > 0)) return "";
     for (j = 0; j < field.nz; j++) for (c = 0; c < cols; c++) {
       i = c < field.nr ? field.nr - 1 - c : c - field.nr;
@@ -485,6 +486,10 @@
       // die äußeren Zellen reichen über den Rand, damit das Weichzeichnen dort nicht ausbleicht
       out += '<rect x="' + f(c === 0 ? x - cw : x) + '" y="' + f(j === 0 ? y - ch : y) + '" width="' + f(cw * (1 + (c === 0) + (c === cols - 1)) + 0.3) +
         '" height="' + f(ch * (1 + (j === 0) + (j === field.nz - 1)) + 0.3) + '" fill="' + liquidColor(field.cells[j * field.nr + i].rgb) + '"/>';
+      // Niederschlag dieser Zelle: wie die Trübung des ganzen Gefäßes, etwas abgedunkelt, damit Weiß vor der hellen Wand zu sehen ist
+      cloud = field.cells[j * field.nr + i].cloud;
+      if (cloud && cloud.alpha > 0.02) out += '<rect x="' + f(c === 0 ? x - cw : x) + '" y="' + f(j === 0 ? y - ch : y) + '" width="' + f(cw * (1 + (c === 0) + (c === cols - 1)) + 0.3) +
+        '" height="' + f(ch * (1 + (j === 0) + (j === field.nz - 1)) + 0.3) + '" fill="' + css(shade(cloud.rgb, 0.93)) + '" fill-opacity="' + (cloud.alpha * 0.92).toFixed(2) + '"/>';
     }
     return '<filter id="' + clip + '-field" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + f(Math.min(cw, ch) * 0.6) + '"/></filter>' +
       '<g class="cl-field" filter="url(#' + clip + '-field)">' + out + "</g>" +
@@ -2389,6 +2394,7 @@
   L.binIcon = binIcon;
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
+  L.liquidRgb = liquidRgb;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
   L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, flatShape: flatShape, crucible: crucShape, cruc: CRUC, trough: TROUGH, troughSurface: troughSurface, dropAt: dropAt, drop: DROP, buchAt: buchAt, buchner: BUCH, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, flaskSide: SIDE, flaskRod: FLASK_ROD, flaskKit: flaskKit, headBulb: HEAD_BULB, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, refluxR: REFLUX_R, gauge: GAUGE, popBar: POP_BAR, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

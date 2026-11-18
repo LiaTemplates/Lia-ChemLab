@@ -492,7 +492,11 @@
   // Das Feld im Becherglas (spatial, aus L.view) wie flowCells für die 3D-Bühne: color(x, y) mit x quer über das Glas (an der Achse
   // gespiegelt), y von oben, bilinear zwischen den Zellmitten, voll deckend; es strömt nichts, Spurteilchen gibt es keine
   fx.fieldCells = function (field) {
-    function at(i, j) { return field.cells[Math.max(0, Math.min(field.nz - 1, j)) * field.nr + Math.max(0, Math.min(field.nr - 1, i))].rgb; }
+    function at(i, j) {                      // wie in 2D: klare Flüssigkeit hellblau, der Niederschlag der Zelle leicht abgedunkelt darübergelegt
+      var c = field.cells[Math.max(0, Math.min(field.nz - 1, j)) * field.nr + Math.max(0, Math.min(field.nr - 1, i))], a = c.cloud ? c.cloud.alpha * 0.92 : 0;
+      var base = L.liquidRgb ? L.liquidRgb(c.rgb) : c.rgb;
+      return a > 0 ? base.map(function (q, n) { return q + (c.cloud.rgb[n] * 0.93 - q) * a; }) : base;
+    }
     return {
       cols: 2 * field.nr, rows: field.nz,
       color: function (x, y) {
