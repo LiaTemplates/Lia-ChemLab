@@ -6,12 +6,13 @@
   --cl-bg: rgb(var(--color-background, 255, 255, 255));
   --cl-line: rgb(var(--color-border, 205, 211, 219));
   --cl-accent: var(--color-accent, rgb(var(--color-highlight, 20, 115, 117)));
-  --cl-wall: #f4f6f8;
+  --cl-wall: #f2efe8;
+  --cl-tile: #e6e1d7;
   --cl-bench: #d9c9ae;
   --cl-edge: #a8906a;
   --cl-wood: #c29a62;
   --cl-foam: #ece8dc;
-  --cl-glass: #55677a;
+  --cl-glass: #3e5468;
   --cl-shine: #ffffff;
   --cl-mercury: #d8322c;
   --cl-s0: #c0392b; --cl-s1: #1f6fb2; --cl-s2: #2e8b57; --cl-s3: #8e44ad; --cl-s4: #b9770e; --cl-s5: #5d6d7e;
@@ -37,6 +38,7 @@
 
 html.lia-variant-dark .lia-chemlab {
   --cl-wall: #232a33;
+  --cl-tile: #2d353f;
   --cl-bench: #5a4a35;
   --cl-edge: #86704c;
   --cl-wood: #9a7748;
@@ -180,7 +182,7 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-hit.cl-sel { stroke: var(--cl-accent); stroke-width: 2.5; }
 .lia-chemlab .cl-item:focus-visible .cl-hit { stroke: var(--cl-accent); stroke-width: 3; }
 
-.lia-chemlab .cl-glass { fill: none; stroke: var(--cl-glass); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.lia-chemlab .cl-glass { fill: none; stroke: var(--cl-glass); stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
 .lia-chemlab .cl-shine { stroke: var(--cl-shine); stroke-width: 2.5; stroke-linecap: round; opacity: 0.45; }
 .lia-chemlab .cl-surface { stroke: var(--cl-glass); stroke-width: 1; opacity: 0.55; }
 .lia-chemlab .cl-boundary { stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.7; }
@@ -193,9 +195,12 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-droplet { stroke: #ffffff; stroke-width: 0.4; stroke-opacity: 0.8; pointer-events: none; }
 .lia-chemlab .cl-flow-edge { fill: none; stroke: #33475b; stroke-width: 1; stroke-dasharray: 3 2; pointer-events: none; }
 .lia-chemlab .cl-stream { fill: #bcdcf5; fill-opacity: 0.85; stroke: #7fa9cc; stroke-width: 0.4; }
-.lia-chemlab .cl-mark { stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.7; }
+.lia-chemlab .cl-mark { stroke: var(--cl-glass); stroke-width: 0.55; opacity: 0.8; }
+.lia-chemlab .cl-mark-long { stroke-width: 0.85; }
+/* Aufdruck auf Messgeräten (ISO 384, 11) */
+.lia-chemlab .cl-print { fill: var(--cl-glass); font-size: 5.5px; opacity: 0.85; }
 .lia-chemlab .cl-mark-text { fill: var(--cl-glass); font-size: 7px; }
-.lia-chemlab .cl-thermo { fill: var(--cl-bg); fill-opacity: 0.85; stroke: var(--cl-glass); stroke-width: 1; }
+.lia-chemlab .cl-thermo { fill: var(--cl-bg); fill-opacity: 0.85; stroke: var(--cl-glass); stroke-width: 1.25; }
 .lia-chemlab .cl-mercury { fill: var(--cl-mercury); }
 .lia-chemlab .cl-tag rect { fill: var(--cl-bg); stroke: var(--cl-line); }
 .lia-chemlab .cl-tag text { fill: var(--cl-ink); font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -213,7 +218,15 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-meter text { fill: #b8f5c8; font-size: 11px; font-variant-numeric: tabular-nums; }
 .lia-chemlab .cl-stand { fill: #6f7780; }
 .lia-chemlab .cl-rod { stroke: #6f7780; stroke-width: 3; stroke-linecap: round; }
-.lia-chemlab .cl-cock { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 1; }
+.lia-chemlab .cl-cock { fill: var(--cl-bg); stroke: var(--cl-glass); stroke-width: 1.25; }
+/* Schellbachstreifen der Bürette (ISO 385, 7), Doppelmuffe am Stativ, Ringmarke des Messkolbens, Kegelschliff */
+.lia-chemlab .cl-schellbach { fill: #fbfbf7; }
+.lia-chemlab .cl-schellbach-line { fill: #1f5aa6; }
+.lia-chemlab .cl-in-burette { fill-opacity: 0.7; }
+.lia-chemlab .cl-boss { fill: #4f5760; }
+.lia-chemlab .cl-ring { fill: none; stroke: var(--cl-glass); stroke-width: 1.25; }
+.lia-chemlab .cl-ring-back { fill: none; stroke: var(--cl-glass); stroke-width: 0.8; opacity: 0.45; }
+.lia-chemlab .cl-ground { fill: #c9d3dc; opacity: 0.6; }
 .lia-chemlab .cl-cock-grip { stroke: #2c6fb5; stroke-width: 3.5; stroke-linecap: round; }
 
 .lia-chemlab .cl-porcelain { fill: none; stroke: #f1eee6; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
@@ -227,6 +240,11 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-scale-pan { fill: #b9c2cb; stroke: #55677a; stroke-width: 1; }
 .lia-chemlab .cl-burner { fill: #8b949e; stroke: #4f5760; stroke-width: 0.8; }
 .lia-chemlab .cl-hose { fill: none; stroke: #b5533c; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+/* Gashahn am Tisch: Griff gelb für brennbare Kohlenwasserstoff-Gase wie Erdgas (DIN EN 13792, RAL 1021) */
+.lia-chemlab .cl-tap { fill: #8b949e; stroke: #4f5760; stroke-width: 0.8; }
+.lia-chemlab .cl-tap-stem { stroke: #4f5760; stroke-width: 1.5; }
+.lia-chemlab .cl-gas-knob { fill: #f3c300; stroke: #8a6d00; stroke-width: 0.8; }
+.lia-chemlab .cl-tile { fill: none; stroke: var(--cl-tile); stroke-width: 1.2; }
 .lia-chemlab .cl-grommet { fill: #8d96a0; stroke: #55677a; stroke-width: 0.8; }
 .lia-chemlab .cl-tripod { fill: none; stroke: #4f5760; stroke-width: 3; stroke-linecap: round; }
 .lia-chemlab .cl-gauze { fill: #9aa3ad; stroke: #4f5760; stroke-width: 0.5; }

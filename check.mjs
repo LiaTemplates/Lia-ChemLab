@@ -525,6 +525,33 @@ test("Zahlen: Dezimalkomma, Stoffmengen mit Vorsatz, Uhr", () => {
   assert.equal(L.clock(3725), "62:05");
 });
 
+test("Skalen nach ISO 384: Folge der Striche, Ziffern an den langen, gröbere Teilung bei wenig Platz", () => {
+  const kinds = (list) => Object.fromEntries(list.map((m) => [m.v, m.kind]));
+  const one = kinds(L.graduation(50, 1));
+  assert.equal(one[10], "long"); assert.equal(one[5], "medium"); assert.equal(one[3], "short");
+  const two = kinds(L.graduation(100, 2));
+  assert.equal(two[10], "long"); assert.equal(two[4], "short", "Teilung 2: jeder 5. Strich lang, kein mittlerer");
+  const five = kinds(L.graduation(25, 0.5));
+  assert.equal(five[5], "long"); assert.equal(five[1], "medium"); assert.equal(five[0.5], "short");
+  assert.ok(L.graduation(50, 1).every((m) => m.figure === (m.kind === "long")), "beziffert werden nur die langen Striche");
+  const tight = L.graduation(50, 0.1, 4.6, 2.5, true);
+  assert.equal(tight[0].v, 0, "Bürette: mit Nullstrich");
+  assert.equal(tight[1].v, 1, "0,1 mL stünden 0,46 Bildpunkte auseinander: Teilung 1 mL");
+  assert.equal(L.graduation(50, 0.1, null, null, true).length, 501, "ohne Platzangabe bleibt die genormte Teilung (3D)");
+
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H2O", ml: 100 }] }, { type: "burette", id: "bu", over: "b", contains: [{ reagent: "NaOH 0.1M", ml: 30 }] },
+    { type: "cylinder", id: "c", ml: 100, contains: [{ reagent: "H2O", ml: 40 }] }]);
+  const burette = L.parts.burette.draw(look(l, "bu"), ctx(), L.parts.beaker.mount(look(l)));
+  assert.match(burette, /cl-schellbach-line/, "Schellbachstreifen (ISO 385)");
+  assert.match(burette, />50 mL · AS</, "Aufdruck der Bürette");
+  assert.match(burette, /cl-boss/, "Doppelmuffe am Stativ");
+  const cylinder = L.parts.cylinder.draw(look(l, "c"), ctx());
+  assert.match(cylinder, /In · 20 °C/, "Messzylinder: enthaltenes Volumen (ISO 4788)");
+  assert.doesNotMatch(cylinder, /Ex/);
+  assert.doesNotMatch(L.parts.cylinder.draw(look(l, "c"), ctx({ numbers: false })), /cl-print/, "ohne Zahlen kein Aufdruck");
+  assert.match(L.parts.burner.draw({ flame: 0 }, ctx()), /cl-gas-knob/, "Gashahn mit gelbem Griff (DIN EN 13792)");
+});
+
 test("Zeichnung: jedes Gerät, leer und gefüllt, ohne Fehler im SVG", () => {
   const l = lab([
     { type: "testtube", id: "a" },
@@ -10667,7 +10694,9 @@ test("Messkolben: bis zur Marke genau; 4 g Natriumhydroxid im 100-mL-Kolben erge
   near(look(l, "m").ml, 100, 1e-6, "Volumen");
   near(amount(l, "Na+(aq)", "m") / 0.1, 1.0, 0.002, "Konzentration");
   assert.equal(look(l, "m").mark, 100);
-  assert.match(L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 }), /class="cl-mark"/, "Eichstrich");
+  const drawn = L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 });
+  assert.match(drawn, /class="cl-ring"/, "Eichstrich ganz um den Hals (ISO 1042)");
+  assert.match(drawn, />A · In · 20 °C</, "Aufdruck: Klasse, enthaltenes Volumen, Bezugstemperatur");
   const big = lab([{ type: "volflask", id: "m", ml: 250 }]);
   assert.equal(look(big, "m").mark, 250, "auch mit 250 mL");
   L.add(big, "m", "H2O", { ml: 260 });

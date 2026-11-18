@@ -560,6 +560,44 @@
       '" text-anchor="middle">' + no + "</text>" : "";
   }
 
+  // Skala nach ISO 384 (9.3 und 10.4). Die Teilung kommt aus der Reihe 1 – 2 – 5: bei 1 ist jeder 10. Strich lang und in der Mitte
+  // dazwischen ein mittlerer, bei 2 jeder 5. lang, bei 5 jeder 10. lang und jeder 2. mittel. Beziffert werden die langen Striche.
+  // iso: die genormte Teilung (ISO 385, ISO 4788); space: Bildpunkte je Einheit. Stehen die Striche enger als gap, wird die Teilung
+  // um einen Schritt der Reihe gröber, bis sie passt (in 3D bleibt die genormte). zero: auch der Nullstrich (Bürette).
+  function graduation(cap, iso, space, gap, zero) {
+    var d = iso, e, lead, k, n, kind, list = [];
+    function split() { e = Math.pow(10, Math.floor(Math.log(d) / Math.LN10 + 1e-9)); lead = Math.round(d / e); }
+    split();
+    while (space && d * space < (gap || 2.5)) { d = lead === 1 ? 2 * e : lead === 2 ? 5 * e : 10 * e; split(); }
+    n = Math.round(cap / d);
+    for (k = zero ? 0 : 1; k <= n; k++) {
+      kind = lead === 2 ? (k % 5 ? "short" : "long") : k % 10 === 0 ? "long" : (lead === 1 ? k % 5 === 0 : k % 2 === 0) ? "medium" : "short";
+      list.push({ v: +(k * d).toFixed(6), kind: kind, figure: kind === "long" });
+    }
+    return list;
+  }
+  L.graduation = graduation;
+
+  // Striche einer Skala in der Ansicht von vorn (ISO 384, 9.2.2, Muster I): kurze Striche über den halben Umfang, mittlere über
+  // gut zwei Drittel, lange ganz herum. Die kurzen enden auf der Mitte und laufen nach rechts; die Ziffer steht über dem langen Strich,
+  // rechts neben den kurzen (10.4). x: Achse, a: halbe Breite, y(v): Höhe des Werts v.
+  function scaleMarks(list, x, a, y, ctx, figure) {
+    var out = "";
+    list.forEach(function (m) {
+      var my = f(y(m.v)), x0 = m.kind === "long" ? x - a : m.kind === "medium" ? x - 0.45 * a : x;
+      out += '<line class="cl-mark' + (m.kind === "long" ? " cl-mark-long" : "") + '" x1="' + f(x0) + '" x2="' + f(x + a) + '" y1="' + my + '" y2="' + my + '"/>';
+      if (ctx.numbers && m.figure) out += '<text class="cl-mark-text" x="' + f(x + a + 2) + '" y="' + f(y(m.v) - 1.5) + '">' + (figure ? figure(m.v) : trim(m.v, ctx.lang)) + "</text>";
+    });
+    return out;
+  }
+
+  // Aufdruck auf einem Messgerät (ISO 384, 11): Nennvolumen, Klasse, Ex oder In, Bezugstemperatur. Nur, wenn Zahlen gezeigt werden.
+  function print(lines, x, y, ctx, anchor) {
+    if (!ctx.numbers) return "";
+    return '<text class="cl-print" x="' + f(x) + '" y="' + f(y) + '"' + (anchor ? ' text-anchor="' + anchor + '"' : "") + ">" +
+      lines.map(function (s, i) { return '<tspan x="' + f(x) + '" dy="' + (i ? 6.5 : 0) + '">' + esc(s) + "</tspan>"; }).join("") + "</text>";
+  }
+
   function volumeLabel(w, ctx, y) {
     y += ctx.lift || 0;                                         // steht das Gefäß über einem Brenner, bleibt die Angabe am Tisch
     return ctx.numbers && ctx.volumes !== false && w.ml > 0.005
@@ -781,10 +819,11 @@
       };
       var liquid = fill(y);
       if (w.broken) return shards(a, ctx);
+      // Die Skala eines Becherglases zeigt nur ungefähr (ISO 3819, 8.4): wenige Striche, die Zahl über dem Strich wie bei Messgeräten
       for (i = 1; i <= 4; i++) {
         my = -3 - i / 4 * (h - 16);
-        marks += '<line class="cl-mark" x1="' + (a - 14) + '" x2="' + (a - 4) + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
-        if (ctx.numbers && i % 2 === 0) marks += '<text class="cl-mark-text" x="' + (a - 16) + '" y="' + f(my + 3) + '" text-anchor="end">' + w.cap * i / 4 + "</text>";
+        marks += '<line class="cl-mark' + (i % 2 ? "" : " cl-mark-long") + '" x1="' + (a - (i % 2 ? 10 : 14)) + '" x2="' + (a - 3) + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
+        if (ctx.numbers && i % 2 === 0) marks += '<text class="cl-mark-text" x="' + (a - 3) + '" y="' + f(my - 1.5) + '" text-anchor="end">' + w.cap * i / 4 + "</text>";
       }
       return contents(w, ctx, { path: liquid, fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -2, rim: -h, tall: false }) +
         marks +
@@ -889,7 +928,8 @@
         top = -place.lift - 150;
         out += '<rect class="cl-stand" x="30" y="-5" width="46" height="5" rx="2"/>' +
           '<line class="cl-rod" x1="54" x2="54" y1="-5" y2="' + top + '"/>' +
-          '<path class="cl-clamp" d="M54,' + (top + 30) + "L17," + (top + 30) + "M17," + (top + 22) + "L17," + (top + 38) + "M-17," + (top + 22) + "L-17," + (top + 38) + '"/>';
+          '<path class="cl-clamp" d="M54,' + (top + 30) + "L17," + (top + 30) + "M17," + (top + 22) + "L17," + (top + 38) + "M-17," + (top + 22) + "L-17," + (top + 38) + '"/>' +
+          '<rect class="cl-boss" x="49" y="' + (top + 25) + '" width="10" height="10" rx="2"/>';          // Doppelmuffe
       } else if (place) {                                      // Dreifuß mit Drahtnetz
         a = place.foot + 10;
         out += '<path class="cl-tripod" d="M' + -a + "," + -place.lift + "L" + (-a - 8) + ",0M" + a + "," + -place.lift + "L" + (a + 8) + ",0M" + (-a - 2) + "," + -place.lift + "L" + (a + 2) + "," + -place.lift + '"/>' +
@@ -898,7 +938,10 @@
       out += '<rect class="cl-burner" x="-16" y="-6" width="32" height="6" rx="2"/>' +
         '<rect class="cl-burner" x="-4.5" y="' + NOZZLE + '" width="9" height="' + (-NOZZLE - 6) + '"/>' +
         '<rect class="cl-burner" x="-6.5" y="-20" width="13" height="6" rx="1"/>' +
-        '<path class="cl-hose" d="M4.5,-10L13,-10Q22,-10 22,1"/><rect class="cl-grommet" x="17.5" y="-1.2" width="9" height="2.4" rx="1"/>';      // durch eine Tülle in den Tisch
+        // der Schlauch führt zum Gashahn am Tisch; Griff gelb für Erdgas (DIN EN 13792)
+        '<path class="cl-hose" d="M4.5,-10L13,-10Q20,-10 20,-6"/>' +
+        '<rect class="cl-tap" x="17" y="-7" width="10" height="7" rx="1.5"/><line class="cl-tap-stem" x1="25" x2="25" y1="-7" y2="-11"/>' +
+        '<circle class="cl-gas-knob" cx="25" cy="-13" r="3.5"/>';
       if (L.fx) out += L.fx.flame(0, NOZZLE, w.flame, ctx.t || 0, ctx.seed || 1, ctx.still, w.tint && w.tint.rgb);
       return out + badge(place ? (place.clamp ? -30 : 30) : 0, 14, ctx.no);      // unter einem Gefäß steht die Nummer neben dessen Nummer
     }
@@ -1312,6 +1355,8 @@
         contents(w, ctx, { path: flaskFill(y), fill: flaskFill, x0: -half, x1: half, top: y, bottom: FLASK_CY + R - 1, rim: FLASK.rim, tall: true }) +
         '<path class="cl-glass" d="M' + -n + "," + FLASK.rim + "L" + -n + "," + f(meet) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(meet) + "L" + n + "," + FLASK.rim + '"/>' +
         '<path class="cl-glass" d="M' + n + "," + (FLASK.arm - 3) + "L" + (n + 12) + "," + (FLASK.arm + 1) + "M" + n + "," + (FLASK.arm + 3) + "L" + (n + 12) + "," + (FLASK.arm + 7) + '"/>' +
+        // Kegelschliff oben am Hals: mattes Glas (ISO 6414 nennt nur die Kennzahl, etwa 29/32)
+        '<rect class="cl-ground" x="' + (-n + 1) + '" y="' + FLASK.rim + '" width="' + (2 * n - 2) + '" height="9"/>' +
         '<line class="cl-shine" x1="-14" y1="' + (FLASK_CY - 16) + '" x2="-19" y2="' + (FLASK_CY + 4) + '"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
@@ -1358,8 +1403,11 @@
       return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
         contents(w, ctx, { path: vfFill(y), fill: vfFill, x0: -half, x1: half, top: y, bottom: VF_CY + R - 1, rim: VF.rim, tall: true }) +
         '<path class="cl-glass" d="M' + -n + "," + VF.rim + "L" + -n + "," + f(VF_MEET) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(VF_MEET) + "L" + n + "," + VF.rim + '"/>' +
-        '<line class="cl-mark" x1="' + (-n - 3) + '" x2="' + (n + 3) + '" y1="' + VF.mark + '" y2="' + VF.mark + '"/>' +
+        // Ringmarke ganz um den Hals (ISO 1042, OIML R 4): vorn kräftig, hinten durchs Glas gesehen schwächer
+        '<path class="cl-ring-back" d="M' + (-n) + "," + VF.mark + "A" + n + ",1.6 0 0 1 " + n + "," + VF.mark + '"/>' +
+        '<path class="cl-ring" d="M' + (-n) + "," + VF.mark + "A" + n + ",1.6 0 0 0 " + n + "," + VF.mark + '"/>' +
         '<line class="cl-shine" x1="-14" y1="' + (VF_CY - 16) + '" x2="-19" y2="' + (VF_CY + 4) + '"/>' +
+        print([trim(vfMark(w), ctx.lang) + " mL", "A · In · 20 °C"], 0, VF_CY + 2, ctx, "middle") +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
   });
@@ -1442,7 +1490,8 @@
 
   // ------------------------------------------------------------------ Bürette
 
-  var BURETTE = { length: 230, cap: 50 };     // Länge der Skala in Bildpunkten für 50 mL
+  // Länge der Skala in Bildpunkten für 50 mL; Teilung und Aufdruck nach ISO 385 (Klasse AS: 30 s Wartezeit, auf Ablauf justiert)
+  var BURETTE = { length: 230, cap: 50, division: 0.1, print: ["50 mL · AS", "Ex · 20 °C"] };
 
   // mount: wo sie hängt (aus dem Gefäß darunter), sonst steht sie für sich
   function buretteAt(mount) {
@@ -1461,22 +1510,28 @@
     reach: function (mount) { return -buretteAt(mount).high + 16; },        // so hoch reicht sie über den Tisch
     bounds: function (v, mount) { var g = buretteAt(mount); return { x0: g.x - 14, x1: g.x + 14, top: g.high - 8, bottom: g.rim - 2 }; },
     draw: function (w, ctx, mount) {
-      var g = buretteAt(mount), x = g.x, rod = g.rod, level = buretteSurface(w, mount), out, ml, y, open = w.tap > 0;
+      var g = buretteAt(mount), x = g.x, rod = g.rod, level = buretteSurface(w, mount), out, open = w.tap > 0, arms = [g.high + 60, g.low - 30];
       out = '<rect class="cl-stand" x="' + (rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
-        '<line class="cl-rod" x1="' + rod + '" x2="' + rod + '" y1="-5" y2="' + (g.high + 24) + '"/>' +
-        '<line class="cl-rod" x1="' + rod + '" x2="' + (x + 6) + '" y1="' + (g.high + 60) + '" y2="' + (g.high + 60) + '"/>' +
-        '<line class="cl-rod" x1="' + rod + '" x2="' + (x + 6) + '" y1="' + (g.low - 30) + '" y2="' + (g.low - 30) + '"/>';
+        '<line class="cl-rod" x1="' + rod + '" x2="' + rod + '" y1="-5" y2="' + (g.high + 24) + '"/>';
+      arms.forEach(function (y) {          // Bürettenklemme an einer Doppelmuffe
+        out += '<line class="cl-rod" x1="' + rod + '" x2="' + (x + 6) + '" y1="' + y + '" y2="' + y + '"/>' +
+          '<rect class="cl-boss" x="' + (rod - 5) + '" y="' + (y - 5) + '" width="10" height="10" rx="2"/>';
+      });
+      // Schellbachstreifen (ISO 385, 7): weiß mit blauem Mittelstrich auf der Rückwand. Durch die Flüssigkeit gesehen
+      // läuft er am Meniskus zu zwei Spitzen zusammen; dort liest man ab.
+      out += '<rect class="cl-schellbach" x="' + (x - 5) + '" y="' + (g.high - 10) + '" width="10" height="' + (g.low - g.high + 10) + '"/>';
       if (w.ml > 0.005) {
-        out += '<rect class="cl-liquid" x="' + (x - 5) + '" y="' + f(level) + '" width="10" height="' + f(g.low - level) + '" fill="' + liquidColor(w.color.rgb) + '"/>' +
+        out += '<rect class="cl-liquid cl-in-burette" x="' + (x - 5) + '" y="' + f(level) + '" width="10" height="' + f(g.low - level) + '" fill="' + liquidColor(w.color.rgb) + '"/>' +
           '<rect class="cl-liquid" x="' + (x - 1.5) + '" y="' + g.low + '" width="3" height="' + (g.tip - g.low) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
       }
+      out += '<rect class="cl-schellbach-line" x="' + (x - 0.8) + '" y="' + (g.high - 10) + '" width="1.6" height="' + (g.low - g.high + 10) + '"/>' +
+        (w.ml > 0.005 && level < g.low - 6 ? '<path class="cl-schellbach-line" d="M' + (x - 2.6) + "," + f(level - 3.5) + "L" + x + "," + f(level) + "L" + (x + 2.6) + "," + f(level - 3.5) +
+          "ZM" + (x - 2.6) + "," + f(level + 3.5) + "L" + x + "," + f(level) + "L" + (x + 2.6) + "," + f(level + 3.5) + 'Z"/>' : "");
       out += '<rect class="cl-glass" x="' + (x - 6) + '" y="' + (g.high - 10) + '" width="12" height="' + (g.low - g.high + 10) + '" rx="2"/>' +
         '<path class="cl-glass" d="M' + (x - 2.5) + "," + g.low + "L" + (x - 2.5) + "," + (g.tip - 3) + "L" + x + "," + g.tip + "L" + (x + 2.5) + "," + (g.tip - 3) + "L" + (x + 2.5) + "," + g.low + '"/>';
-      for (ml = 0; ml <= BURETTE.cap; ml += 5) {
-        y = g.high + ml / BURETTE.cap * BURETTE.length;
-        out += '<line class="cl-mark" x1="' + (x + 6) + '" x2="' + (x + (ml % 10 ? 9 : 12)) + '" y1="' + f(y) + '" y2="' + f(y) + '"/>';
-        if (ctx.numbers && ml % 10 === 0) out += '<text class="cl-mark-text" x="' + (x - 9) + '" y="' + f(y + 2.5) + '" text-anchor="end">' + ml + "</text>";
-      }
+      // Skala nach ISO 384: genormt ist die Teilung 0,1 mL (ISO 385); in der Übersicht stehen die Striche je Milliliter, in 3D die genormten
+      out += scaleMarks(graduation(BURETTE.cap, BURETTE.division, BURETTE.length / BURETTE.cap, 2.5, true), x, 5, function (ml) { return g.high + ml / BURETTE.cap * BURETTE.length; }, ctx) +
+        print(BURETTE.print, x - 8, g.high + 14, ctx, "end");
       // Hahn: quer heißt zu, längs heißt offen
       out += '<rect class="cl-cock" x="' + (x - 4) + '" y="' + (g.low + 4) + '" width="8" height="8" rx="2"/>' +
         (open ? '<line class="cl-cock-grip" x1="' + x + '" x2="' + x + '" y1="' + (g.low + 1) + '" y2="' + (g.low + 15) + '"/>'
@@ -1514,7 +1569,8 @@
       var g = separatorAt(mount), x = g.x, rod = g.rod, open = w.tap > 0, y = separatorLevel(g, w.ml), out;
       out = '<rect class="cl-stand" x="' + (rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
         '<line class="cl-rod" x1="' + rod + '" x2="' + rod + '" y1="-5" y2="' + (g.top - 10) + '"/>' +
-        '<path class="cl-rod" fill="none" d="M' + rod + "," + (g.top + 40) + "L" + (x + SEP.wide * 0.75) + "," + (g.top + 40) + '"/>';
+        '<path class="cl-rod" fill="none" d="M' + rod + "," + (g.top + 40) + "L" + (x + SEP.wide * 0.75) + "," + (g.top + 40) + '"/>' +
+        '<rect class="cl-boss" x="' + (rod - 5) + '" y="' + (g.top + 35) + '" width="10" height="10" rx="2"/>';
       if (w.ml > 0.005) out += contents(w, ctx, { path: separatorFill(g, y), fill: function (h) { return separatorFill(g, h); }, level: function (ml) { return separatorLevel(g, ml); },
         x0: x - SEP.wide * 0.6, x1: x + SEP.wide * 0.6, top: y, bottom: g.bottom, rim: g.top, tall: true });
       out += '<path class="cl-glass" d="M' + (x - SEP.neck) + "," + g.bottom + "L" + (x - SEP.wide) + "," + g.top + "Q" + x + "," + (g.top - 16) + " " + (x + SEP.wide) + "," + g.top +
@@ -1532,8 +1588,12 @@
   // ------------------------------------------------------------------ Messzylinder
 
   // Breite und Höhe der Röhre in Bildpunkten, Teilung (klein, mit Zahl) in mL
-  // Messzylinder: [Breite, Höhe, kleiner Strich, großer Strich]; Standzylinder (250, 500) ohne Skala
-  var CYL = { 10: [16, 150, 0.5, 2], 25: [22, 165, 1, 5], 50: [28, 180, 1, 10], 100: [36, 200, 2, 20], 250: [56, 175], 500: [68, 205], 1000: [84, 235] }, CYL_FOOT = 8;
+  // Messzylinder: [Breite, Höhe, kleiner Strich, großer Strich, Teilung nach ISO 4788, Tabelle 1]; Standzylinder (250, 500) ohne Skala.
+  // Gezeichnet wird nach ISO 384 (graduation); die beiden alten Werte bleiben für eigene Looks, die sie lesen.
+  var CYL = { 10: [16, 150, 0.5, 2, 0.2], 25: [22, 165, 1, 5, 0.5], 50: [28, 180, 1, 10, 1], 100: [36, 200, 2, 20, 1], 250: [56, 175], 500: [68, 205], 1000: [84, 235] }, CYL_FOOT = 8;
+  // Aufdruck der Messzylinder (ISO 4788): das Volumen ist das enthaltene, also „In“; Klasse A, 20 °C
+  function cylPrint(w) { return [w.cap + " mL · A", "In · 20 °C"]; }
+  function cylScale(w, s, space) { return graduation(w.cap, s[4], space, 2.5); }
 
   function cylSize(w) { return CYL[w.size || w.cap] || CYL[100]; }
   // die Skala reicht vom Boden der Röhre bis 12 Bildpunkte unter den Rand
@@ -1557,15 +1617,14 @@
     },
     mount: function (w) { var s = cylSize(w); return { x: 0, rim: -s[1] - CYL_FOOT, surface: w.ml > 0.005 ? cylSurface(w) : -CYL_FOOT - 2, edge: s[0] / 2 + 14 }; },
     draw: function (w, ctx) {
-      var s = cylSize(w), a = s[0] / 2, h = s[1], rim = -h - CYL_FOOT, y = cylSurface(w), ml, my, marks = "", major;
+      var s = cylSize(w), a = s[0] / 2, h = s[1], rim = -h - CYL_FOOT, y = cylSurface(w), marks = "", at;
       // oben der Meniskus: am Rand hochgezogen, abgelesen wird der tiefste Punkt (level)
       var fill = function (level) { return "M" + (-a + 2) + "," + f(level - 2.5) + "L" + (-a + 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + (-CYL_FOOT - 2) + "L" + (a - 2) + "," + f(level - 2.5) + "Q0," + f(level + 2.5) + " " + (-a + 2) + "," + f(level - 2.5) + "Z"; };
       if (w.broken) return shards(a + 4, ctx);
-      for (ml = s[2]; s[2] && ml <= w.cap + 1e-9; ml += s[2]) {
-        major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
-        my = -CYL_FOOT - 2 - ml / w.cap * (h - 14);
-        marks += '<line class="cl-mark" x1="' + (a - (major ? 9 : 5)) + '" x2="' + a + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
-        if (ctx.numbers && major) marks += '<text class="cl-mark-text" x="' + (a + 3) + '" y="' + f(my + 2.5) + '">' + trim(ml, ctx.lang) + "</text>";
+      if (s[4]) {
+        at = function (ml) { return -CYL_FOOT - 2 - ml / w.cap * (h - 14); };
+        marks = scaleMarks(cylScale(w, s, (h - 14) / w.cap), 0, a - 1, at, ctx) +
+          (a >= 14 ? print(cylPrint(w), -a + 3, rim + 19, ctx) : "");      // zwischen dem obersten und dem nächsten langen Strich
       }
       return contents(w, ctx, { path: fill(y), fill: fill, x0: -a + 2, x1: a - 2, top: y, bottom: -CYL_FOOT - 2, rim: rim, tall: true }) +
         // der Meniskus: Wasser steigt am Rand hoch, abgelesen wird der tiefste Punkt

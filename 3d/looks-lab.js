@@ -9,19 +9,23 @@
 
   function cm(px) { return px / PX; }
 
-  // Skala als Textur auf einem Streifen der Glaswand: marks [{ y in cm, long, text }]
-  function scale(radius, height, marks, side) {
+  // Skala als Textur auf einem Streifen der Glaswand: marks [{ y in cm, kind: "short" | "medium" | "long" (oder long: true), text }].
+  // Weiße Emaille wie auf echtem Laborglas; Folge der Striche und Stellung der Ziffern nach ISO 384 (9.3, 10.4): die Striche beginnen
+  // vorn und laufen nach rechts, kurz, mittel, lang; die Ziffer steht über dem langen Strich, rechts neben den kurzen.
+  function scale(radius, height, marks) {
     var ink = "#" + new THREE.Color(fx.style.marks == null ? 0xffffff : fx.style.marks).getHexString();
     // schmale Rohre (Bürette) bekommen einen breiteren Bogen, sonst würde die Textur viel zu hoch
     var c = doc.createElement("canvas"), g = c.getContext("2d"), tex, mat, arc = Math.min(1.6, Math.max(0.5, 0.5 / radius)), k;
+    var LEN = { short: 34, medium: 46, long: 64 };
     c.width = 128; c.height = Math.min(4096, Math.round(128 * height / (radius * arc)));
-    g.lineWidth = 3; g.font = "bold 30px system-ui, sans-serif"; g.textBaseline = "middle";
+    g.font = "bold 30px system-ui, sans-serif"; g.textBaseline = "alphabetic"; g.textAlign = "left";
     marks.forEach(function (m) {
-      var y = c.height * (1 - m.y / height), x0 = side < 0 ? 4 : 128 - (m.long ? 52 : 34);
+      var y = c.height * (1 - m.y / height), kind = m.kind || (m.long ? "long" : "short");
+      g.lineWidth = kind === "long" ? 3.5 : kind === "medium" ? 3 : 2.5;
       for (k = 0; k < 2; k++) {         // erst ein grauer Schatten, dann weiß: lesbar vor heller Wand und vor Farbe
         g.strokeStyle = g.fillStyle = k ? ink : "rgba(60,70,80,0.55)";
-        g.beginPath(); g.moveTo(x0 + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.lineTo(x0 + (m.long ? 48 : 30) + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.stroke();
-        if (m.text) { g.textAlign = side < 0 ? "left" : "right"; g.fillText(m.text, side < 0 ? 58 + (k ? 0 : 1.5) : 72 + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); }
+        g.beginPath(); g.moveTo(4 + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.lineTo(4 + LEN[kind] + (k ? 0 : 1.5), y + (k ? 0 : 1.5)); g.stroke();
+        if (m.text) g.fillText(m.text, 46 + (k ? 0 : 1.5), y - 6 + (k ? 0 : 1.5));
       }
     });
     tex = new THREE.CanvasTexture(c);
@@ -177,7 +181,11 @@
       u.marksKey = key;
       if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); u.marks = null; }
       if (fx.style.marks == null || !s[2]) return;            // der Standzylinder hat keine Skala
-      for (ml = s[2]; ml <= cap + 1e-9; ml += s[2]) {
+      // in 3D die genormte Teilung (ISO 4788, Tabelle 1); eigene Größen ohne Angabe behalten ihre alte Einteilung
+      if (s[4]) list = L.graduation(cap, s[4]).map(function (m) {
+        return { y: cm(S.cylFoot + 2 + m.v / cap * (s[1] - 14)), kind: m.kind, text: d.ctx.numbers && m.figure ? L.trim(m.v, d.ctx.lang) : "" };
+      });
+      else for (ml = s[2]; ml <= cap + 1e-9; ml += s[2]) {
         major = Math.abs(ml / s[3] - Math.round(ml / s[3])) < 1e-6;
         list.push({ y: cm(S.cylFoot + 2 + ml / cap * (s[1] - 14)), long: major, text: d.ctx.numbers && major ? String(Math.round(ml * 10) / 10) : "" });
       }
@@ -226,13 +234,18 @@
       var drops = new THREE.InstancedMesh(new THREE.SphereGeometry(cm(1.6), 10, 8), flow.material, 3);
       drops.frustumCulled = false;                             // count wechselt: nah herangezoomt fehlten sonst die Tropfen
       var tag = kit.label(0.75);
-      for (i = 0; i <= B.cap; i += 5) marks.push({ y: cm(B.length) * (1 - i / B.cap), long: i % 10 === 0, text: "" });
+      // Schellbachstreifen (ISO 385, 7): weiße Emaille auf der Rückwand, in der Mitte ein blauer Streifen; höchstens 40 % des Umfangs
+      var schellbach = new THREE.Group();
+      schellbach.add(new THREE.Mesh(new THREE.CylinderGeometry(cm(5.8), cm(5.8), 1, 12, 1, true, Math.PI - 1.2, 2.4), new THREE.MeshStandardMaterial({ color: 0xfbfbf7, roughness: 0.5, side: THREE.DoubleSide })),
+        new THREE.Mesh(new THREE.CylinderGeometry(cm(5.7), cm(5.7), 1, 6, 1, true, Math.PI - 0.16, 0.32), new THREE.MeshStandardMaterial({ color: 0x1f5aa6, roughness: 0.5, side: THREE.DoubleSide })));
       glass.renderOrder = tip.renderOrder = body.renderOrder = 2;
-      [foot, rod, arm1, arm2, grip].forEach(function (o) { o.castShadow = true; });
+      // Doppelmuffen, an denen die Klemmen an der Stange sitzen
+      var boss1 = new THREE.Mesh(new THREE.BoxGeometry(1.3, 1.3, 1.3), fx.matte(0x4f5760, 0.45, 0.4)), boss2 = boss1.clone();
+      [foot, rod, arm1, arm2, grip, boss1, boss2].forEach(function (o) { o.castShadow = true; });
       cock.add(body, grip);
-      stand.add(foot, rod, arm1, arm2);
-      group.add(column, neck, glass, tip, cock, stand, flow, drops, tag);
-      group.userData = { body: glass, glass: glass, tip: tip, column: column, neck: neck, liquid: liquid, cock: cock, grip: grip, foot: foot, rod: rod, arm1: arm1, arm2: arm2, flow: flow, drops: drops, tag: tag, marksKey: null };
+      stand.add(foot, rod, arm1, arm2, boss1, boss2);
+      group.add(schellbach, column, neck, glass, tip, cock, stand, flow, drops, tag);
+      group.userData = { body: glass, glass: glass, tip: tip, column: column, neck: neck, liquid: liquid, cock: cock, grip: grip, foot: foot, rod: rod, arm1: arm1, arm2: arm2, boss1: boss1, boss2: boss2, flow: flow, drops: drops, tag: tag, schellbach: schellbach, marksKey: null };
       return group;
     },
     update: function (group, d, kit) {
@@ -255,23 +268,27 @@
       floor = -kit.up(d.lift);
       u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
       u.rod.scale.y = cm(-(g.high + 24)) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
-      [[u.arm1, cm(-(g.high + 60))], [u.arm2, cm(-(g.low - 30))]].forEach(function (a) {
+      [[u.arm1, cm(-(g.high + 60)), u.boss1], [u.arm2, cm(-(g.low - 30)), u.boss2]].forEach(function (a) {
         var dx = x - rod, len = Math.sqrt(dx * dx + Z * Z);
         a[0].scale.set(len, 1, 1);
         a[0].position.set((x + rod) / 2, a[1], Z / 2);
         a[0].rotation.y = Math.atan2(Z, dx);
+        a[2].position.set(rod, a[1], Z);
       });
-      // Skala: Teilstriche alle 5 mL, Zahlen alle 10 mL, wenn Zahlen gezeigt werden
+      // Skala nach ISO 384 mit der genormten Teilung 0,1 mL (ISO 385): jeder Milliliter ein langer Strich mit Ziffer, wenn Zahlen gezeigt werden
       if (u.marksKey !== (d.ctx.numbers ? "#" : "")) {
         u.marksKey = d.ctx.numbers ? "#" : "";
         if (u.marks) { group.remove(u.marks); u.marks.geometry.dispose(); u.marks.material.map.dispose(); u.marks.material.dispose(); }
-        var list = [];
-        for (k = 0; k <= B.cap; k += 5) list.push({ y: cm(B.length) * (1 - k / B.cap), long: k % 10 === 0, text: d.ctx.numbers && k % 10 === 0 ? String(k) : "" });
-        u.marks = scale(cm(6) + 0.01, cm(B.length), list, -1);
+        var list = L.graduation(B.cap, B.division || 1, null, null, true).map(function (m) {
+          return { y: cm(B.length) * (1 - m.v / B.cap), kind: m.kind, text: d.ctx.numbers && m.figure ? String(Math.round(m.v)) : "" };
+        });
+        u.marks = scale(cm(6) + 0.01, cm(B.length), list);
         u.marks.renderOrder = 3;
         group.add(u.marks);
       }
       u.marks.position.set(x, low + cm(B.length) / 2, 0);
+      // Schellbachstreifen an der Rückwand, so hoch wie das Glas
+      u.schellbach.scale.y = u.glass.scale.y; u.schellbach.position.copy(u.glass.position);
       // Strahl oder Tropfen zum Gefäß darunter
       y = d.hang ? cm(-g.surface) : 0;
       u.flow.visible = open && w.ml > 0.001 && !!d.hang && w.tap >= 0.3;

@@ -718,6 +718,14 @@
       return { list: list, width: total };
     }
 
+    // Fliesen an der Wand, 10 cm groß (160 Bildpunkte), von der Tischkante aus gezählt
+    function tiles(width) {
+      var d = "", y, x, T = 160;
+      for (y = bench - T; y > 0; y -= T) d += "M0," + y + "H" + width;
+      for (x = T; x < width; x += T) d += "M" + x + ",0V" + bench;
+      return d ? '<path class="cl-tile" d="' + d + '"/>' : "";
+    }
+
     function renderStage() {
       var plan = layout();
       items = plan.list;
@@ -725,7 +733,7 @@
       ui.svg.setAttribute("viewBox", "0 0 " + plan.width + " " + (bench + FRONT));
       ui.svg.setAttribute("preserveAspectRatio", "xMidYMax meet");
       ui.svg.innerHTML =
-        '<rect class="cl-wall" x="0" y="0" width="' + plan.width + '" height="' + bench + '"/>' +
+        '<rect class="cl-wall" x="0" y="0" width="' + plan.width + '" height="' + bench + '"/>' + tiles(plan.width) +
         '<rect class="cl-bench" x="0" y="' + bench + '" width="' + plan.width + '" height="' + FRONT + '"/>' +
         '<line class="cl-edge" x1="0" x2="' + plan.width + '" y1="' + bench + '" y2="' + bench + '"/>' +
         items.map(function (item) {
