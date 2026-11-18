@@ -40,6 +40,86 @@
     return out;
   };
 
+  // Sieden: Dampfblasen entstehen an festen Keimstellen am Boden (Kratzer, Siedesteine), wachsen dort, lösen sich ab, steigen
+  // beschleunigt auf und werden dabei größer; oben wölben sie die Oberfläche und platzen mit einem Ring und zwei Spritzern.
+  // Gemeinsames Modell für 2D und 3D, in cm, eine reine Funktion der Zeit wie die übrigen Effekte.
+  // level: 0 bis 1 (wie heftig es siedet), depth: Tiefe der Flüssigkeit in cm. Zurück je Blase:
+  // { u, v: Lage am Boden in einer Kreisscheibe (−1 bis 1), y: Höhe über dem Boden, r: Radius (cm), stage: "grow" | "rise" | "burst", q: 0 bis 1 }
+  var BOIL = { grow: 0.3, v0: 4, acc: 10, burst: 0.32 };      // s, cm/s, cm/s², s (sichtbar verlangsamt: echte Blasen steigen mit 20 bis 30 cm/s)
+  fx.boiling = function (level, depth, t, seed, still) {
+    var out = [], n, k, a, d, r0, grow, rise, wait, P, tau, s, y;
+    if (!(level > 0) || !(depth > 0.05)) return out;
+    n = Math.round((5 + 13 * level) * Math.min(2, Math.max(1, depth / 4)));
+    for (k = 0; k < n; k++) {
+      a = pseudo(seed + 21, k) * 6.2832; d = 0.9 * Math.sqrt(pseudo(seed + 23, k));
+      r0 = 0.08 + 0.12 * pseudo(seed + 25, k);
+      grow = BOIL.grow * (1.2 - 0.6 * level) * (0.7 + 0.6 * pseudo(seed + 27, k));
+      rise = (Math.sqrt(BOIL.v0 * BOIL.v0 + 2 * BOIL.acc * depth) - BOIL.v0) / BOIL.acc;      // y = v0 s + acc s²/2 = depth
+      wait = (0.15 + 0.85 * pseudo(seed + 29, k)) * (1.4 - level);
+      P = grow + rise + BOIL.burst + wait;
+      tau = (still ? 0 : t) + pseudo(seed + 31, k) * P;
+      tau -= Math.floor(tau / P) * P;
+      if (tau < grow) out.push({ u: d * Math.cos(a), v: d * Math.sin(a), y: 0, r: r0 * Math.max(0.15, tau / grow), stage: "grow", q: tau / grow });
+      else if (tau < grow + rise) {
+        s = tau - grow; y = Math.min(depth, BOIL.v0 * s + BOIL.acc * s * s / 2);
+        out.push({ u: d * Math.cos(a) + (still ? 0 : 0.04 * Math.sin(9 * s + k)), v: d * Math.sin(a), y: y, r: r0 * (1 + 0.7 * y / depth), stage: "rise", q: y / depth });
+      } else if (tau < grow + rise + BOIL.burst) out.push({ u: d * Math.cos(a), v: d * Math.sin(a), y: depth, r: r0 * 1.7, stage: "burst", q: (tau - grow - rise) / BOIL.burst });
+    }
+    return out;
+  };
+
+  // Das Sieden in 2D: box wie bei fx.bubbles (bottom: Boden, top: Spiegel), Bildpunkte; 16 Bildpunkte sind 1 cm.
+  // above: nur, was über den Spiegel reicht (Wölbung, Ring, Spritzer), sonst nur die Blasen in der Flüssigkeit
+  fx.boil = function (box, level, t, seed, still, above) {
+    var px = 16, half = (box.x1 - box.x0) / 2, mid = (box.x0 + box.x1) / 2, out = "", list = fx.boiling(level, (box.bottom - box.top) / px, t, seed, still);
+    list.forEach(function (b) {
+      var x = mid + b.u * 0.8 * half, r = b.r * px, y, w, h;
+      if ((b.stage === "burst") !== !!above) return;
+      if (b.stage === "grow") out += '<ellipse class="cl-bubble" cx="' + f(x) + '" cy="' + f(box.bottom - r * 0.85) + '" rx="' + f(r) + '" ry="' + f(r * 0.85) + '"/>';
+      else if (b.stage === "rise") { y = box.bottom - r - b.y * px; out += '<circle class="cl-bubble" cx="' + f(x) + '" cy="' + f(Math.max(box.top + r, y)) + '" r="' + f(r) + '"/>'; }
+      else if (b.q < 0.35) {                                     // die Oberfläche wölbt sich über der Blase
+        h = r * 1.1 * (1 - b.q / 0.35);
+        out += '<path class="cl-dome" d="M' + f(x - r * 1.6) + "," + f(box.top) + "Q" + f(x) + "," + f(box.top - 2 * h) + " " + f(x + r * 1.6) + "," + f(box.top) + 'Z"/>';
+      } else {                                                   // geplatzt: ein Ring breitet sich aus, zwei Spritzer springen hoch
+        w = (b.q - 0.35) / 0.65;
+        out += '<ellipse class="cl-burst" cx="' + f(x) + '" cy="' + f(box.top) + '" rx="' + f(r * (1 + 2.5 * w)) + '" ry="' + f(r * 0.35 * (1 + 2.5 * w)) + '" stroke-opacity="' + (1 - w).toFixed(2) + '"/>';
+        if (w < 0.8) [-1, 1].forEach(function (side) {
+          out += '<circle class="cl-spray" cx="' + f(x + side * (1.5 + 4 * w)) + '" cy="' + f(box.top - 7 * Math.sin(Math.PI * w / 0.8)) + '" r="0.9"/>';
+        });
+      }
+    });
+    return out;
+  };
+
+  // Glasbruch: die Wand eines Gefäßes (Radius R, Höhe H, in cm) zerfällt in gezackte Scherben, die nach außen fliegen, sich drehen,
+  // auf den Tisch fallen und sich flach legen. drop: so hoch stand der Boden des Gefäßes über dem Tisch (Dreifuß); age: Sekunden seit
+  // dem Bruch (null oder still: alles liegt schon). Gemeinsam für 2D und 3D; zurück je Scherbe { x, y, z, spin, flat, pts }:
+  // Lage in cm (y über dem Tisch, z zum Betrachter), Drehung in rad, flat 0 bis 1 (liegt), pts: Umriss in cm um die Mitte
+  var SHATTER = { cols: 5, rows: 3, g: 260, slide: 0.2 };      // g: sichtbar verlangsamte Schwerkraft in cm/s²
+  fx.shatter = function (R, H, age, seed, still, drop) {
+    var out = [], cols = SHATTER.cols, rows = SHATTER.rows, k, c, row, p, th, y0, vr, vy, spin, T, w, h, r, y, flat, a, pts, slide;
+    if (still || age == null || !(age >= 0)) age = Infinity;
+    drop = drop || 0;
+    w = Math.min(3, 2 * Math.PI * R / cols * 0.8); h = Math.min(3, H / rows * 0.8);
+    for (k = 0; k < cols * rows; k++) {
+      c = k % cols; row = Math.floor(k / cols); p = function (i) { return pseudo(seed + 41 + i, k); };
+      th = 2 * Math.PI * (c + 0.15 + 0.7 * p(0)) / cols + row * 0.6;
+      y0 = drop + H * (row + 0.3 + 0.4 * p(1)) / rows;
+      vr = 4 + 5 * p(2) + (row === 0 ? 2 : 0); vy = 3 + 6 * p(3); spin = (p(4) - 0.5) * 14;
+      T = (vy + Math.sqrt(vy * vy + 2 * SHATTER.g * y0)) / SHATTER.g;      // wann sie auf dem Tisch landet
+      pts = [[-w / 2 * (0.5 + 0.5 * p(5)), -h / 2 * (0.5 + 0.5 * p(6))], [w / 2 * (0.5 + 0.5 * p(7)), -h / 2 * (0.3 + 0.7 * p(8))], [w / 2 * (0.4 + 0.6 * p(9)), h / 2 * (0.5 + 0.5 * p(10))]];
+      if (p(11) > 0.4) pts.push([-w / 2 * (0.4 + 0.6 * p(12)), h / 2 * (0.4 + 0.6 * p(13))]);      // Drei- oder Vierecke
+      if (age < T) { r = R + vr * age; y = y0 + vy * age - SHATTER.g * age * age / 2; a = spin * age; flat = 0; }
+      else {
+        slide = Math.min(1, (age - T) / SHATTER.slide);
+        r = R + vr * T + vr * 0.06 * (1 - (1 - slide) * (1 - slide));      // rutscht noch ein Stück
+        y = 0; a = spin * T; flat = Math.min(1, (age - T) / 0.1);
+      }
+      out.push({ x: r * Math.sin(th), y: Math.max(0, y), z: r * Math.cos(th), spin: a, flat: flat, pts: pts, landed: age >= T });
+    }
+    return out;
+  };
+
   // Öltropfen im Wasser nach dem Schütteln oder Mixen. box: der trübe Teil der wässrigen Schicht ({ x0, x1, top, bottom }), share: Anteil des Öls
   // in Tropfen, r: ihr Radius in m, up: sie steigen (sonst sinken sie), rgb: Farbe des Öls. Grobe Tropfen steigen sichtbar, feine stehen fast.
   fx.droplets = function (box, share, r, t, seed, still, rgb, up) {

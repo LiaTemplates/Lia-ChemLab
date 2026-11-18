@@ -424,27 +424,41 @@
         drops3.count = nd;
         drops3.instanceMatrix.needsUpdate = true;
 
-        // Blasen: Gas, das entsteht, und beim Sieden der Dampf. Zahl wie in 2D, beim Sieden mehr und größer.
-        n = wet ? Math.min(48, (L.fx && L.fx.count ? L.fx.count(rate) : 0) * 2 + (boil ? 20 : 0)) : 0;
+        // Blasen: Gas, das entsteht, steigt in gleichmäßigen Perlen (Zahl wie in 2D). Beim Sieden kommen die Dampfblasen aus dem
+        // gemeinsamen Modell (L.fx.boiling): an Keimstellen am Boden wachsen, aufsteigen, oben wölben und platzen
+        n = 0;
         top = level - 0.05;
         domes = [];
-        for (k = 0; k < n; k++) {
-          p = pseudo(ctx.seed + 3, k) + t * (0.6 + 0.6 * pseudo(ctx.seed, k)) * (boil ? 1.8 : 1) * (tall ? 0.5 : 1);
+        var gasN = wet && w.gas > 0 ? Math.min(24, (L.fx && L.fx.count ? L.fx.count(w.gas) : 0) * 2) : 0;
+        for (k = 0; k < gasN; k++) {
+          p = pseudo(ctx.seed + 3, k) + t * (0.6 + 0.6 * pseudo(ctx.seed, k)) * (tall ? 0.5 : 1);
           p -= Math.floor(p);
           y = shape.floor + layer + 0.1 + p * Math.max(0, top - shape.floor - layer - 0.1);
           a = pseudo(ctx.seed + 9, k) * 6.2832;
           d = Math.sqrt(pseudo(ctx.seed + 11, k)) * Math.max(0, shape.inner(y) - 0.15) * 0.85;
-          size = (boil ? 0.03 + 0.09 * p : 0.025 + 0.03 * pseudo(ctx.seed + 5, k)) * (tall ? 0.8 : 1);
+          size = (0.025 + 0.03 * pseudo(ctx.seed + 5, k)) * (tall ? 0.8 : 1);
           dummy.position.set(d * Math.cos(a) + (ctx.still ? 0 : 0.08 * Math.sin(t * 5 + k)), y, d * Math.sin(a));
           dummy.scale.set(size, size * 0.85, size);
-          if (boil && p > 0.82) {                       // oben angekommen: Wölbung, dann Mulde mit Ring
-            q = (p - 0.82) / 0.18;
-            dummy.scale.multiplyScalar(q < 0.7 ? 1 : 0);   // geplatzt: die Blase ist weg
-            domes.push(q < 0.7 ? [dummy.position.x, dummy.position.z, 1.3 * size * q / 0.7, 1.6 * size + 0.05, 0, 0]
-              : [dummy.position.x, dummy.position.z, -0.8 * size * (1 - (q - 0.7) / 0.3), 1.2 * size + 0.04, 0.5 * size * (1 - (q - 0.7) / 0.3), 1 + 3 * (q - 0.7) / 0.3]);
-          }
           dummy.updateMatrix();
-          bubbles.setMatrixAt(k, dummy.matrix);
+          bubbles.setMatrixAt(n++, dummy.matrix);
+        }
+        if (wet && boil && L.fx && L.fx.boiling) {
+          var floor = shape.floor + layer, depth = Math.max(0, top - floor);
+          L.fx.boiling(boil, depth, ctx.t, ctx.seed || 1, ctx.still).forEach(function (b) {
+            if (n >= 48) return;
+            var yy = floor + b.y, rr = Math.max(0, shape.inner(Math.min(yy, top)) - 0.15) * 0.85, x = b.u * rr, z = b.v * rr, size = b.r * (tall ? 0.8 : 1), q;
+            if (b.stage === "burst") {                              // oben angekommen: Wölbung, dann Mulde mit Ring
+              q = b.q;
+              domes.push(q < 0.35 ? [x, z, 1.3 * size * q / 0.35, 1.6 * size + 0.05, 0, 0]
+                : [x, z, -0.8 * size * (1 - (q - 0.35) / 0.65), 1.2 * size + 0.04, 0.5 * size * (1 - (q - 0.35) / 0.65), 1 + 3 * (q - 0.35) / 0.65]);
+              if (q >= 0.35) return;                                // geplatzt: die Blase ist weg
+              yy = top - size * 0.4;
+            } else if (b.stage === "grow") yy = floor + size * 0.85;
+            dummy.position.set(x, Math.min(yy, top), z);
+            dummy.scale.set(size, size * 0.85, size);
+            dummy.updateMatrix();
+            bubbles.setMatrixAt(n++, dummy.matrix);
+          });
         }
         bubbles.count = n;
         bubbles.instanceMatrix.needsUpdate = true;
@@ -595,19 +609,31 @@
   };
 
   // Scherben eines zersprungenen Gefäßes, flach auf dem Tisch
-  fx.shards = function (half, seed) {
-    var group = new THREE.Group(), mat = fx.glass(), k, shape, a;
-    mat.opacity = 0.35;
-    for (k = 0; k < 7; k++) {
-      shape = new THREE.Shape();
-      a = pseudo(seed, k) * 0.6 + 0.3;
-      shape.moveTo(0, 0); shape.lineTo(a, 0.1 + pseudo(seed + 1, k) * 0.3); shape.lineTo(0.15 + pseudo(seed + 2, k) * 0.4, a);
-      var m = new THREE.Mesh(new THREE.ShapeGeometry(shape).rotateX(-Math.PI / 2), mat);
-      m.position.set((pseudo(seed + 3, k) - 0.5) * half * 2.4, 0.02, (pseudo(seed + 4, k) - 0.5) * half);
-      m.rotation.y = pseudo(seed + 5, k) * 6.28;
+  // Scherben eines zersprungenen Gefäßes wie in 2D (L.fx.shatter): flache Stücke aus der Wand, die nach außen fliegen, sich drehen
+  // und auf dem Tisch liegen bleiben. R, H: Radius und Höhe des Gefäßes in cm. Bewegt werden sie mit fx.shardsAt
+  fx.shards = function (R, H, seed) {
+    var group = new THREE.Group(), mat = fx.glass(), edge = new THREE.LineBasicMaterial({ color: 0x6f8296, transparent: true, opacity: 0.7 });
+    mat.opacity = 0.45; mat.side = THREE.DoubleSide;
+    (L.fx.shatter(R, H, null, seed, true, 0) || []).forEach(function (s) {
+      var shape = new THREE.Shape();
+      s.pts.forEach(function (q, i) { if (i) shape.lineTo(q[0], q[1]); else shape.moveTo(q[0], q[1]); });
+      var geo = new THREE.ShapeGeometry(shape), m = new THREE.Mesh(geo, mat);
+      m.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), edge));
+      m.renderOrder = 3;
       group.add(m);
-    }
+    });
+    group.userData = { R: R, H: H, seed: seed };
     return group;
+  };
+  // Lage der Scherben age Sekunden nach dem Bruch (null: liegen schon); drop: so hoch stand das Gefäß (cm), floor: Höhe des Tischs
+  fx.shardsAt = function (group, age, still, drop, floor) {
+    var u = group.userData, list = L.fx.shatter(u.R, u.H, age, u.seed, still, drop);
+    list.forEach(function (s, i) {
+      var m = group.children[i], th = Math.atan2(s.x, s.z);
+      if (!m) return;
+      m.position.set(s.x, floor + s.y + 0.02, s.z);
+      m.rotation.set(-Math.PI / 2 * s.flat, th, s.spin, "YXZ");      // im Flug quer zur Wand, liegend flach auf dem Tisch
+    });
   };
 
   // ------------------------------------------------------------------ Teile, die sich nur selten ändern
