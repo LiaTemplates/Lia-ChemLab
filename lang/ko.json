@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "단면",
     "flow3d.particles": "입자",
+    "flow3d.volume": "부피",
     "flow.mix": "섞임 줄무늬",
     "flow.vortex": "소용돌이",
     "flow.pressure": "압력",

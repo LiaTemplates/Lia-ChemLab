@@ -288,6 +288,14 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity" && data.smell !== "rotten") throw fail("species", id + " smell");
+        // passive: ein Metall mit Oxidschicht (siehe passivate): { i: Reststrom in A/cm², pH: [von, bis] (Schicht beständig),
+        // pit: [a, b] mit E_Lochfraß = a + b·lg a(Cl−) in V gegen die Wasserstoffelektrode, on/off: Zeitkonstanten in s, pits: Anteil der Fläche im Lochfraß }
+        if (data.passive != null) {
+          var pv = data.passive, num = function (x) { return typeof x === "number" && isFinite(x); };
+          if (!(phase === "s" && pv && pv.i > 0 && Array.isArray(pv.pH) && pv.pH.length === 2 && pv.pH.every(num) && pv.pH[0] < pv.pH[1] &&
+            (pv.pit == null || (Array.isArray(pv.pit) && pv.pit.length === 2 && pv.pit.every(num))) && pv.on > 0 && pv.off > 0 && (pv.pits == null || (pv.pits > 0 && pv.pits <= 1))))
+            throw fail("species", id + " passive");
+        }
         // fluor: Wellenlänge in nm, in der der gelöste Stoff unter der UV-Lampe leuchtet
         if (data.fluor != null && !(phase === "aq" && typeof data.fluor === "number" && data.fluor >= 380 && data.fluor <= 730)) throw fail("species", id + " fluor");
         // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
@@ -340,6 +348,13 @@
               if (next.species[id].phase !== "aq" || typeof item.rate.order[id] !== "number" || !isFinite(item.rate.order[id])) throw fail("rate", id);
             });
             entry.rate = { k: +item.rate.k, Ea: +item.rate.Ea || 0, order: Object.assign({}, item.rate.order) };
+          }
+          // nucleate: { S, t, grow } – ohne Keim (kein Stück dieses Feststoffs im Gefäß) fällt er erst aus, wenn Q/K mindestens S ist,
+          // und das t Sekunden lang; dann wächst er mit der Zeitkonstante grow in s (Vorgabe GROW). Ein Impfkristall gibt den Weg sofort frei.
+          if (item.nucleate != null) {
+            var nu = item.nucleate;
+            if (!(nu && nu.S > 1 && isFinite(nu.S) && nu.t > 0 && isFinite(nu.t) && (nu.grow == null || (nu.grow > 0 && isFinite(nu.grow))))) throw fail("logK", "nucleate");
+            entry.nucleate = { S: +nu.S, t: +nu.t, grow: nu.grow == null ? GROW : +nu.grow };
           }
           entry.f = -1 / eq.nu[solids[0]];
           entry.d = {};
@@ -969,6 +984,7 @@
     if (d.data) register(d.data);
     if (d.model != null && d.model !== "ideal" && d.model !== "real") throw fail("model", String(d.model));
     if (d.view != null && d.view !== "2d" && d.view !== "3d") throw fail("view", String(d.view));
+    if (d.oxygen != null && typeof d.oxygen !== "boolean") throw fail("oxygen", String(d.oxygen));
     if (d.scatter != null && typeof d.scatter !== "boolean" && !(typeof d.scatter === "number" && isFinite(d.scatter))) throw fail("scatter", String(d.scatter));
     var scene = sceneOf(d.scene);
 
@@ -1015,6 +1031,11 @@
           item.contains = item.oneOf[item.pick].contains;
         } else item.contains = fill(raw.contains);
         if (def.dispenser) item.over = raw.over == null ? null : String(raw.over);
+        // spatial: ein Feld im Becherglas (siehe fieldStep); true oder der Zeitraffer der Diffusion
+        if (raw.spatial != null && raw.spatial !== false) {
+          if (type !== "beaker" || !L.spatial || !(raw.spatial === true || (typeof raw.spatial === "number" && raw.spatial >= 1 && raw.spatial <= 1e5))) throw fail("spatial", item.id);
+          item.spatial = raw.spatial === true ? FIELD.speed : raw.spatial;
+        }
       } else {
         if (raw.unknown != null || raw.oneOf != null) throw fail("sample", item.id);      // nur ein Gefäß kann eine Probe sein
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
@@ -1106,6 +1127,8 @@
       packs: d.packs || [],
       // model: womit die Gleichgewichte rechnen. "ideal": mit Konzentrationen; "real": mit Aktivitäten
       model: d.model == null ? "ideal" : d.model,
+      // oxygen: Luftsauerstoff löst sich in jeder wässrigen Lösung (Henry, über die Oberfläche) und korrodiert Metalle; sonst nur, wo er gebraucht wird
+      oxygen: !!d.oxygen,
       // view: womit die Fläche beginnt; scene: wie sie in 3D aussieht (Raum und Geräte), an der Rechnung ändert sie nichts
       view: d.view || "2d",
       scene: scene
@@ -1418,7 +1441,8 @@
       // fizz: seit wie vielen Rechenschritten Gas entsteht
       flag: { gas: false, color: "colorless", next: "", count: 0, heat: 0, base: lab.room, max: lab.room, solid: {}, boil: false, smell: {}, wet: false, torch: null, shown: 0, opaque: false,
         seen: null, tinted: -1000, fizz: 0 },
-      walk: 0                                                    // Weg der Teilchen in der Teilchenlupe: die Zeit, gewichtet mit der Wurzel der Temperatur
+      walk: 0,                                                   // Weg der Teilchen in der Teilchenlupe: die Zeit, gewichtet mit der Wurzel der Temperatur
+      field: item.spatial ? { speed: item.spatial, n: null, total: 0 } : null      // siehe fieldStep
     };
   }
 
@@ -1459,7 +1483,7 @@
   }
 
   function createLab(config) {
-    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", scatter: config.scatter == null ? null : config.scatter, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
+    var lab = { tick: 0, t: 0, room: config.room, model: config.model === "real" ? "real" : "ideal", oxygen: !!config.oxygen, scatter: config.scatter == null ? null : config.scatter, vessels: [], tools: [], flows: [], used: {}, cache: {}, warm: {}, samples: {} };
     config.bench.forEach(function (item) {                       // unbekannte Proben: welches Gefäß, welche Füllung gezogen wurde, und die möglichen Namen
       if (item.unknown) lab.samples[item.unknown] = { vessel: item.id, pick: item.oneOf ? item.pick : null, names: item.oneOf ? item.oneOf.map(function (o) { return o.name; }) : [] };
     });
@@ -1477,6 +1501,7 @@
       lab.vessels.push(v);
       item.contains.forEach(function (c) { putReagent(lab, v, reagent(c.reagent), c); });
       settle(lab, v);
+      fieldStep(lab, v);                                         // ein Feld beginnt gleichmäßig
     });
     survey(lab);
     lab.tools.forEach(function (t) { prime(lab, t); });
@@ -1883,8 +1908,8 @@
   // Stellt zu dem, was im Gefäß ist, das Gleichungssystem auf:
   // alle gelösten Teilchen, die über die eingetragenen Gleichgewichte erreichbar sind, ausgedrückt durch Grundteilchen,
   // und alle Feststoffe, die daraus ausfallen können oder schon da sind.
-  function system(aq, solid, real) {
-    var key = (real ? "real#" : "") + aq.join("|") + "#" + solid.join("|");
+  function system(aq, solid, real, blocked) {      // blocked: Feststoffe, die (noch) keinen Keim haben
+    var key = (real ? "real#" : "") + aq.join("|") + "#" + solid.join("|") + (blocked && blocked.length ? "#!" + blocked.join("|") : "");
     if (key in systems) return systems[key];
     var set = {}, here = {}, eqs = [], hets = [], grew = true;
     aq.forEach(function (id) { set[id] = true; });
@@ -1901,6 +1926,7 @@
           Object.keys(e.nu).forEach(function (id) { if (id !== WATER) set[id] = true; });
           grew = true;
         } else if (e.solid && hets.indexOf(e) < 0) {
+          if (blocked && blocked.indexOf(e.solid) >= 0) return;      // ohne Keim fällt er nicht aus
           ions = Object.keys(e.d);
           // möglich, wenn der Feststoff da ist oder alle Teilchen gelöst sind, aus denen er ausfällt
           if (!here[e.solid] && !ions.every(function (id) { return e.d[id] < 0 || set[id]; })) return;
@@ -2170,6 +2196,83 @@
 
   // Zeitkonstante, mit der sich ein Feststoff löst. Ein Stück aus dem Regal löst sich über seine Oberfläche:
   // sie schrumpft mit ihm, und so ist es nach endlicher Zeit verschwunden (Körner nach dem Dreifachen von tau).
+  // ------------------------------------------------------------------ Passivschicht
+  // Ein Metall mit passive (Aluminium) trägt eine Oxidschicht, v.film[id] ist ihre Dicke als Anteil der vollen (aus dem Regal: 1).
+  // Liegt der pH der Lösung im Bereich passive.pH, wächst sie nach (Zeitkonstante on), sonst wird sie gleichmäßig dünner und ist nach
+  // off Sekunden fort (Abtrag nullter Ordnung); erst dann liegt das Metall frei: die Wartezeit, bevor Aluminium in Säure loslegt. Darunter geht das
+  // Metall nur mit dem Reststrom passive.i in Lösung, und auch jede Reduktion an ihr ist so begrenzt (sie leitet kaum). Mit Chlorid und
+  // einem Mischpotential über dem Lochfraßpotential reißt die Schicht an einem Anteil pits der Fläche auf (v.pit), bis das Chlorid fort ist.
+  // Ohne Flüssigkeit bleibt sie, wie sie ist.
+  // shortcut: ein pH-Bereich statt der Löslichkeit des Oxids, feste Zeiten, Lochfraß als aktiver Flächenanteil ohne Lochwachstum; nur an Stücken, nicht an Elektroden
+  function filmOf(v, id) {
+    var pv = L.db.species[id].passive, f;
+    if (!pv) return 0;
+    f = v.film && v.film[id] != null ? v.film[id] : 1;
+    f = f > 0 ? 1 : 0;                                           // solange noch Schicht da ist, deckt sie alles
+    return v.pit && v.pit[id] ? f * (1 - (pv.pits || 1)) : f;
+  }
+  // Ändert sich eine Schicht gerade (dünner außerhalb des pH-Bereichs, nachwachsend darin)? Dann ruht das Gefäß nicht.
+  function filming(v, vol) {
+    if (!(vol > 0)) return false;
+    return metalsIn(v).some(function (id) {
+      var pv = L.db.species[id].passive, f = v.film && v.film[id] != null ? v.film[id] : 1, pH;
+      if (!pv) return false;
+      pH = v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
+      return pH >= pv.pH[0] && pH <= pv.pH[1] ? f < 1 - 1e-6 : f > 0;
+    });
+  }
+
+  function passivate(lab, v, vol) {
+    if (!(vol > 0) || thick(v, vol)) return;
+    metalsIn(v).forEach(function (id) {
+      var pv = L.db.species[id].passive, f, pH, inside, cl, phi;
+      if (!pv) return;
+      v.film = v.film || {}; v.pit = v.pit || {};
+      f = v.film[id] != null ? v.film[id] : 1;
+      pH = v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
+      inside = pH >= pv.pH[0] && pH <= pv.pH[1];
+      v.film[id] = inside ? f + (1 - f) * (1 - Math.exp(-DT / pv.on)) : Math.max(0, f - DT / pv.off);
+      cl = v.n["Cl-(aq)"] > 0 ? Math.log10(v.n["Cl-(aq)"] / vol) + gammas(v, vol)("Cl-(aq)") : null;
+      phi = lab.warm[v.id + "/" + id];
+      // ein Loch heilt in Chloridlösung nicht von selbst: es bleibt, bis kein Chlorid mehr da ist
+      if (cl == null) delete v.pit[id];
+      else if (pv.pit && phi != null && phi > pv.pit[0] + pv.pit[1] * cl) v.pit[id] = true;
+    });
+  }
+
+  // ------------------------------------------------------------------ Keimbildung
+  // Ein Feststoff mit nucleate fällt ohne Keim nicht aus, obwohl die Lösung übersättigt ist (metastabil). Steht Q/K mindestens bei S,
+  // zählt die Wartezeit (v.nuc, Anteil an t); ist sie um, darf er ausfallen. Unter Q/K = 1 beginnt sie von vorn. Liegt der Feststoff
+  // im Gefäß (Impfkristall, Bodensatz, schon ausgefallen), ist er sein eigener Keim. Gleich ablaufend für gleiche Lösungen: kein Zufall.
+  // shortcut: eine feste Schwelle und Wartezeit statt der Keimbildungsrate nach der klassischen Theorie (exp(−B/ln²S)), keine Größenklassen;
+  // Werte je Stoff geschätzt, wo nicht anders angegeben
+  function seeds(v) {
+    return L.db.equilibria.filter(function (e) { return e.nucleate && !(v.n[e.solid] > 0); });
+  }
+  function unseeded(v) {
+    return seeds(v).filter(function (e) { return !(v.nuc && v.nuc[e.solid] >= 1); }).map(function (e) { return e.solid; }).sort();
+  }
+  function supersaturation(v, e, vol) {      // Q/K des Feststoffs in der Lösung, wie das Gleichgewicht es rechnet (ideal oder mit Aktivitäten)
+    var own = v.real || e.ideal == null ? null : [].concat(e.ideal), h = own && own.length > 1 ? own[1] : heatOf(e), lg = gammas(v, vol), logQ = 0, id;
+    for (id in e.d) {
+      if (!(v.n[id] > 0)) { if (e.d[id] > 0) return 0; continue; }
+      logQ += e.d[id] * (Math.log10(v.n[id] / vol) + lg(id));
+    }
+    return Math.pow(10, logQ - shift((own ? own[0] : e.logK) * e.f, h == null ? null : h * e.f, v.T + KELVIN));
+  }
+  function nucleation(v, vol) {
+    if (!(vol > 0) || thick(v, vol)) return;
+    seeds(v).forEach(function (e) {
+      var w = supersaturation(v, e, vol);
+      v.nuc = v.nuc || {};
+      if (w < 1) { delete v.nuc[e.solid]; return; }
+      if (w < e.nucleate.S || v.nuc[e.solid] >= 1) return;
+      v.nuc[e.solid] = (v.nuc[e.solid] || 0) + DT / e.nucleate.t;
+      if (v.nuc[e.solid] >= 1) v.dirty = true;                 // nun darf er ausfallen
+    });
+    if (v.nuc) for (var id in v.nuc) if (v.n[id] > 0) delete v.nuc[id];      // er ist da: sein eigener Keim
+  }
+
   function pace(v, id) {
     var tau = MELT;
     v.lumps.forEach(function (l) { if (l.id === id && !l.made) tau = (l.tau || 15) * Math.max(0.01, Math.pow(l.n / l.n0, 1 - l.p)); });
@@ -2303,7 +2406,7 @@
       phase = L.db.species[id].phase;
       if (phase === "aq") aq.push(id); else if (phase === "s") sol.push(id);
     }
-    var sys = system(aq.sort(), sol.sort(), !!v.real);
+    var sys = system(aq.sort(), sol.sort(), !!v.real, unseeded(v));
     if (!sys) return false;
 
     var T = v.T + KELVIN, ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = sys.solids.length;
@@ -2380,7 +2483,7 @@
           for (k = 0; k < np; k++) {
             gap = goal.s[k] - own[k];
             if (!(Math.abs(gap) > 1e-4 * Math.max(goal.s[k], own[k]) + 1e-12)) continue;
-            part = gap > 0 ? GROW : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
+            part = gap > 0 ? (sys.solids[k].eq.nucleate ? sys.solids[k].eq.nucleate.grow : GROW) : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
             // Was dabei langsamer überginge, als man sehen kann (REST), gilt als angekommen: sonst hielte ein Niederschlag,
             // dem eine unmerklich langsame Reaktion Stoff nachliefert, das Gefäß für immer in Bewegung.
             if (Math.abs(gap) * vol / part > REST) slow = Math.max(slow, part);
@@ -2618,7 +2721,7 @@
       for (id in r.rate.needs) most = Math.min(most, Math.max(0, (v.n[id] || 0) / r.rate.needs[id] - (isFinite(done) ? done : 0)));
     }
     r.left.forEach(function (t) {
-      if (AIR[t.id] && !(v.n[t.id] > 0)) return;               // kommt aus der Luft und geht nicht aus
+      if (AIR[t.id] && !(v.n[t.id] > 0)) { most = Math.min(most, airLeft(v, t.id) / t.n); return; }      // kommt aus der Luft; verschlossen nur, was eingeschlossen ist
       most = Math.min(most, (v.n[t.id] || 0) / t.n);
     });
     return most;
@@ -2704,7 +2807,7 @@
       }
       for (id in r.nu) {
         delta = r.nu[id] * x; phase = L.db.species[id].phase;
-        if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;     // aus der Luft
+        if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) breathe(v, id, -delta);                      // aus der Luft
         else if (phase === "s" && delta < 0) takeSolid(v, id, -delta, emit);
         else if (phase === "s") { growSolid(v, id, delta, r.mirror); grew[r.mirror ? id + " mirror" : id] = true; }
         else if ((v.n[id] = (v.n[id] || 0) + delta) < TRACE) delete v.n[id];
@@ -2752,6 +2855,16 @@
   // so dass im Gleichgewicht die Nernst-Gleichung gilt). Bei großem Antrieb begrenzt ihn der Nachschub aus der Lösung (lim).
   // ghost: Diese Richtung bräuchte einen Feststoff, der an der Oberfläche (noch) nicht vorliegt. Sie zählt nur als Gegenspieler:
   // ein Metall scheidet sich erst ab, wenn die Abscheidung seine eigene Auflösung überwiegt.
+  // Ein Gas, das sich 1:1 löst (O2(g) <=> O2(aq)): { e: das Gleichgewicht, aq: der gelöste Stoff }, sonst null
+  var SOLVED = {};
+  function solved(id) {
+    if (SOLVED[id] === undefined) {
+      var e = L.db.equilibria.filter(function (q) { return q.gas === id && Object.keys(q.d).length === 1 && q.d[Object.keys(q.d)[0]] === 1; })[0];
+      SOLVED[id] = e ? { e: e, aq: Object.keys(e.d)[0] } : null;
+    }
+    return SOLVED[id];
+  }
+
   function processes(v, vol, face) {
     var T = v.T + KELVIN, b = 2 * R * T / FARADAY, out = [], lg = gammas(v, vol);
     var feed = FARADAY * face.area * K_FILM * Math.exp(-EA_FILM * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) / 1000;
@@ -2760,6 +2873,8 @@
       var eta = c.over[face.top] != null ? c.over[face.top] : c.over.default, entry = { c: c, E0: c.E0, a: null, k: null, ghost: 0 }, lacks = { a: false, k: false };
       [[c.red, "a", 1], [c.ox, "k", -1]].forEach(function (dir) {
         var q = Math.log(face.area * I_REF) - eta / b, lim = face.area * J_MAX, ok = true, ghost = false;
+        // durch eine Oxidschicht (face.film: bedeckter Anteil) geht jeder Vorgang nur mit dem Reststrom: sie leitet kaum
+        if (face.film > 0) lim = face.area * ((1 - face.film) * J_MAX + face.film * L.db.species[face.top].passive.i);
         if (dir[2] < 0 && face.skip && face.skip[c.key]) return;
         dir[0].forEach(function (t) {
           var sp = L.db.species[t.id], supply;
@@ -2768,6 +2883,12 @@
           if (sp.phase === "g" && face.held && face.held(t.id) > 0) {           // Gas, das an der Elektrode haftet: Druck aus dem Anteil, den sie fassen kann
             q += t.n / c.n * FILM_K * Math.log(Math.min(1, face.held(t.id) / (FILM * face.area)));
             lim = Math.min(lim, c.n / t.n * FARADAY * face.held(t.id) / FILM_T);
+            return;
+          }
+          if (sp.phase === "g" && solved(t.id) && v.n[solved(t.id).aq] > 0) {     // gelöstes Gas (O2 an einem Metall): Druck nach Henry aus der Lösung
+            var e = solved(t.id).e, aq = solved(t.id).aq, h = heatOf(e);
+            q += t.n / c.n * (Math.log(v.n[aq] / vol) + LN10 * (lg(aq) - shift(e.logK * e.f, h == null ? null : h * e.f, T)));
+            lim = Math.min(lim, c.n / t.n * feed * reach(aq));
             return;
           }
           if (sp.phase !== "aq" || !(v.n[t.id] > 0)) { ok = false; return; }      // sonst steht ein Gas nicht als Ausgangsstoff bereit
@@ -2876,6 +2997,8 @@
   // (H+ aus Hydrogencarbonat, Zink-Ionen aus dem Zinkat): das Gleichgewicht der Lösung wird gleich danach neu eingestellt.
   function convert(lab, groups, emit) {
     var need = {}, have = {}, part = 1, key, short = [];
+    // ein Gas, das die Oberfläche nicht hält, kommt gelöst aus der Lösung (wie in processes)
+    function wet(g, id) { return L.db.species[id].phase === "g" && !(g.face.held && g.face.held(id) > 0) && solved(id) ? solved(id).aq : id; }
     function stock(v, id) {
       var sum = v.n[id] || 0;
       (L.db.carriers[id] || []).forEach(function (y) { sum += y.n * (v.n[y.id] || 0); });
@@ -2884,9 +3007,9 @@
     groups.forEach(function (g) {
       g.steps.forEach(function (st) {
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          var hard = L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + t.id;
+          var id = wet(g, t.id), hard = L.db.species[id].phase === "s" || L.db.species[id].phase === "g", k = (hard ? "f " + g.face.id : "v " + g.v.id) + " " + id;
           need[k] = (need[k] || 0) + t.n * st.e / st.c.n;
-          have[k] = hard ? g.face.amount(t.id) : stock(g.v, t.id);
+          have[k] = hard ? g.face.amount(id) : stock(g.v, id);
         });
       });
     });
@@ -2896,10 +3019,11 @@
       g.steps.forEach(function (st) {
         var xi = part * st.e / st.c.n;
         (st.s > 0 ? st.c.red : st.c.ox).forEach(function (t) {
-          if (L.db.species[t.id].phase === "s" || L.db.species[t.id].phase === "g") { g.face.take(t.id, t.n * xi, emit); return; }
-          g.v.n[t.id] = (g.v.n[t.id] || 0) - t.n * xi;
-          if (g.v.n[t.id] < 0) { if (short.indexOf(g.v) < 0) short.push(g.v); }      // überzogen: die Träger gleichen es aus
-          else if (!(g.v.n[t.id] > 1e-22)) delete g.v.n[t.id];
+          var id = wet(g, t.id);
+          if (L.db.species[id].phase === "s" || L.db.species[id].phase === "g") { g.face.take(id, t.n * xi, emit); return; }
+          g.v.n[id] = (g.v.n[id] || 0) - t.n * xi;
+          if (g.v.n[id] < 0) { if (short.indexOf(g.v) < 0) short.push(g.v); }      // überzogen: die Träger gleichen es aus
+          else if (!(g.v.n[id] > 1e-22)) delete g.v.n[id];
         });
         (st.s > 0 ? st.c.ox : st.c.red).forEach(function (t) {
           if (L.db.species[t.id].phase === "s") g.face.give(t.id, t.n * xi, emit);
@@ -2930,7 +3054,7 @@
   // Alle Stücke eines Metalls in einem Gefäß als eine Oberfläche
   function lumpFace(v, id) {
     return {
-      id: id, top: id, whole: id, area: area(v, id), skip: L.db.metals[id].skip,
+      id: id, top: id, whole: id, area: area(v, id), skip: L.db.metals[id].skip, film: filmOf(v, id),
       has: function (x) { return x === id; },
       amount: function (x) { return x === id ? v.n[id] || 0 : 0; },
       take: function (x, n, emit) { takeSolid(v, x, n, emit); },
@@ -3460,29 +3584,51 @@
 
   // Gelöster Sauerstoff (Blaue Flasche): Die Lösung nimmt Sauerstoff aus dem Gasraum auf oder gibt ihn ab, bis sie nach Henry
   // gesättigt ist, an der ruhigen Oberfläche in einer Stunde, beim Schütteln in Sekunden. Gerechnet nur, wo schon O2(aq) ist oder
-  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist; sonst bliebe jede Lösung voll gelöster Luft.
-  // shortcut: aus der Luft ohne Vorrat (auch verschlossen), nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen
+  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist, oder das Labor es will (oxygen: Korrosion); sonst bliebe jede Lösung voll gelöster Luft.
+  // Verschlossen kommt der Sauerstoff aus der eingeschlossenen Luft (v.o2) und dem Gas darüber, mit seinem Partialdruck, und geht dorthin zurück.
+  // shortcut: nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen (CO2 brächte reines Wasser auf pH 5,6: nur als Option einbauen)
   function aerate(lab, v, vol) {
-    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id;
+    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id, y, Vh;
     if (!e || !(vol > 0)) return;
     if (!(v.n["O2(aq)"] > 0) && !L.db.reactions.some(function (r) {
       if (!(r.nu["O2(aq)"] < 0)) return false;
       for (var key in r.nu) if (r.nu[key] < 0 && key !== "O2(aq)" && key !== WATER && !(v.n[key] > 0)) return false;
       return true;
-    })) return;
+    }) && !lab.oxygen) return;                                 // oxygen: jede wässrige Lösung nimmt Sauerstoff aus der Luft
     cap = headroom(lab, v);
     for (id in v.air) sum += v.air[id];
     oxygen = cap > 0 ? AIR["O2(g)"] * Math.max(0, 1 - sum / cap) + (v.air["O2(g)"] || 0) / cap : AIR["O2(g)"];
+    if (sealed(v)) {
+      Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000);
+      oxygen = (v.o2 + (v.air["O2(g)"] || 0)) * R / 100 * (v.T + KELVIN) / Vh / P_AIR;
+    }
     h = heatOf(e);
     sat = Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * oxygen * P_AIR;
     k = v.shook > lab.t ? AERATE.shake : AERATE.still * Math.PI * Math.pow(spec(v).d || 5, 2) / 4 / (vol * 1000);
     x = (sat - (v.n["O2(aq)"] || 0) / vol) * vol * (1 - Math.exp(-k * DT));
+    if (sealed(v) && x > 0) {                                  // erst aus der eingeschlossenen Luft, dann aus dem Gas darüber
+      y = Math.min(x, Math.max(0, x - v.o2), v.air["O2(g)"] || 0);
+      x = Math.min(x, v.o2) + y;
+      if (y > 0 && (v.air["O2(g)"] -= y) <= 1e-15) delete v.air["O2(g)"];
+    }
     if (Math.abs(x) < 1e-15) return;
     v.n["O2(aq)"] = (v.n["O2(aq)"] || 0) + x;
-    if (x > 0) v.taken["O2(g)"] = (v.taken["O2(g)"] || 0) + x;
-    else v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+    if (x > 0) breathe(v, "O2(g)", x - (y || 0));
+    else {
+      v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+      if (sealed(v)) { v.o2 -= x; v.seal -= x; }              // zurück in die eingeschlossene Luft
+    }
     if (!(v.n["O2(aq)"] > 1e-300)) delete v.n["O2(aq)"];
     tally(v, e, x * e.f);
+  }
+
+  // Verschlossen (v.seal: die eingeschlossene Luft in mol) gibt die Luft nur ihren Sauerstoff her: v.o2 mol, ein Teil von v.seal.
+  // Offen ist die Luft im Raum ein unbegrenzter Vorrat (Modellannahme). Was aus ihr kommt, zählt in v.taken.
+  function sealed(v) { return v.seal != null && v.o2 != null; }
+  function airLeft(v, id) { return sealed(v) && id === "O2(g)" ? Math.max(0, v.o2) : Infinity; }
+  function breathe(v, id, x) {
+    if (sealed(v) && id === "O2(g)") { v.o2 = Math.max(0, v.o2 - x); v.seal = Math.max(0, v.seal - x); }
+    v.taken[id] = (v.taken[id] || 0) + x;
   }
 
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
@@ -3807,16 +3953,16 @@
 
   // Im Gasraum: Reaktionen nur aus Gasen, mit Konzentrationen in mol/L des Gasraums (Sauerstoff kommt aus der Luft dazu), und
   // Gleichgewichte nur aus Gasen, mit Partialdrücken in bar. Beides bei der Temperatur des Inhalts.
-  // shortcut: Luftsauerstoff steht auch im verschlossenen Gefäß unbegrenzt bereit; mit v.seal rechnen, wenn ein Versuch das braucht
+  // Verschlossen kommt Sauerstoff nur aus der eingeschlossenen Luft (v.o2).
   function airborne(lab, v) {
     var Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, any = false, id;
     for (id in v.air) if (v.air[id] > 0) any = true;
     if (!any) return;
-    function conc(id) { return (v.air[id] || 0) / Vh + (AIR[id] ? AIR[id] * P_AIR / (RL * T) : 0); }
+    function conc(id) { return (v.air[id] || 0) / Vh + (!AIR[id] ? 0 : sealed(v) ? v.o2 / Vh : AIR[id] * P_AIR / (RL * T)); }
     function move(r, x) {
       for (var id in r.nu) {
         var delta = r.nu[id] * x;
-        if (delta < 0 && AIR[id] && !((v.air[id] || 0) >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;
+        if (delta < 0 && AIR[id] && !((v.air[id] || 0) >= -delta)) breathe(v, id, -delta);
         else if ((v.air[id] = (v.air[id] || 0) + delta) <= 1e-15) delete v.air[id];
       }
     }
@@ -3825,7 +3971,7 @@
       if (!r.air) return;
       k = rate.k * Math.exp(-rate.Ea * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) * Vh;
       for (id in rate.order) k *= Math.pow(conc(id), rate.order[id]);
-      r.left.forEach(function (t) { if (!AIR[t.id]) most = Math.min(most, (v.air[t.id] || 0) / t.n); });
+      r.left.forEach(function (t) { most = Math.min(most, AIR[t.id] ? airLeft(v, t.id) / t.n : (v.air[t.id] || 0) / t.n); });
       x = Math.min(k * DT, most);
       if (!(x > 1e-15)) return;
       move(r, x);
@@ -3897,7 +4043,9 @@
       if (gas > room) for (id in v.air) { x = v.air[id] * (1 - room / gas); v.out[id] = (v.out[id] || 0) + x; v.air[id] -= x; }
       gas = Math.min(gas, room);
       v.seal = Math.max(0, room - gas);
+      v.o2 = AIR["O2(g)"] * v.seal;                            // ihr Sauerstoff, begrenzt
     }
+    if (v.o2 == null) v.o2 = AIR["O2(g)"] * v.seal;              // verschlossen gespeichert, bevor es o2 gab (bis 0.3.0)
     total = v.seal + gas + vap * V / (RL * T);
     p = total * RL * T / V;
     v.p = p;
@@ -3908,7 +4056,11 @@
       }
       return;
     }
-    if (p >= P_AIR) { v.seal = Math.max(0, v.seal - (total - full) * v.seal / total); v.flag.suck = false; return; }
+    if (p >= P_AIR) {                                          // mit dem Überdruck geht eingeschlossene Luft hinaus, ihr Sauerstoff anteilig
+      x = Math.max(0, v.seal - (total - full) * v.seal / total);
+      v.o2 = v.seal > 0 ? v.o2 * x / v.seal : 0;
+      v.seal = x; v.flag.suck = false; return;
+    }
     into = pipe.to ? vessel(lab, pipe.to) : null;
     ml = (full - total) * RL * T / P_AIR * 1000;
     if (into && !into.broken && filled(into) > 0 && ml > 1e-3) {
@@ -3916,7 +4068,7 @@
       ml = transfer(into, v, Math.min(ml, filled(into) * 1000), true);      // was im Rohr ist, kommt von unten
       if (ml > 0 && !v.flag.suck) { v.flag.suck = true; if (emit) emit({ key: "suckBack", vessel: v.id, from: into.id }); }
       if (hot && ml > 0.02) shatter(lab, v, emit);
-    } else v.seal += full - total;                             // aus einem leeren Gefäß strömt Luft zurück
+    } else { v.seal += full - total; v.o2 += AIR["O2(g)"] * (full - total); }      // aus einem leeren Gefäß strömt Luft zurück
   }
 
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
@@ -4052,6 +4204,8 @@
     boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
     hotSpots(lab, v, emit);
+    nucleation(v, volume(v));
+    passivate(lab, v, volume(v));
     if (v.dirty || Math.abs(v.T - v.Teq) > 0.02) {              // auch wenn nur die Temperatur wandert: K hängt von ihr ab
       moving = equilibrate(lab, v, emit);
       v.Teq = v.T;
@@ -4128,6 +4282,7 @@
     });
     v.walk = (v.walk || 0) + DT * Math.sqrt((v.T + KELVIN) / (T_REF + KELVIN));      // je wärmer, desto schneller laufen die Teilchen ihren Weg ab
     notice(lab, v, gases, emit, dissolved, !!bath);
+    fieldStep(lab, v);
   }
 
   // ------------------------------------------------------------------ Proben
@@ -4319,6 +4474,7 @@
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
     if (kind !== "pH") return null;
+    if (v && v.field && v.field.n && vol > 0 && !thick(v, vol)) return fieldProbe(lab, v);
     return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null;
   }
 
@@ -4451,6 +4607,10 @@
       if (lab.t - v.flag.tinted < FADE) return false;            // die Farbe hat sich eben noch geändert
       for (key in v.lit) return false;
       if (v.drop) return false;                                  // Tropfen schweben noch
+      // übersättigt über der Schwelle: die Wartezeit bis zum Keim läuft; ein Feld gleicht sich noch aus
+      if (volume(v) > 0 && seeds(v).some(function (e) { return supersaturation(v, e, volume(v)) >= e.nucleate.S; })) return false;
+      if (v.field && v.field.n && v.field.calm === false) return false;
+      if (filming(v, volume(v))) return false;                    // eine Oxidschicht löst sich auf oder wächst nach
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
       if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && filled(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte
@@ -4628,6 +4788,279 @@
     return tint(conc, spec(v).d);
   }
 
+  // ------------------------------------------------------------------ Feld im Gefäß
+
+  // Ein Becherglas mit "spatial" rechnet, wo im Glas die starke Säure oder Lauge ist: als Zylinder um die Achse (r, z), FIELD.nr × FIELD.nz
+  // Zellen, j = 0 oben. Je Zelle wandert nur die Ladung der starken Ionen (Na+, Cl-, …: die an keinem Gleichgewicht mit H+ oder OH- teilhaben),
+  // in mol; alles andere gilt als gleichmäßig verteilt. Was dazukommt, kommt oben an der Achse an (Tropfen, Bürette, Umgießen), Schütteln
+  // verteilt es gleichmäßig. Die Diffusion läuft im Zeitraffer (speed): D = 2·10⁻⁹ m²/s bräuchte für einen Zentimeter fast einen Tag.
+  // pH und Farbe einer Zelle sind die der ganzen Lösung mit dem Überschuss dieser Zelle (fieldLook); ein gleichmäßiges Feld zeigt also genau das Gefäß.
+  // Die Chemie des Gefäßes selbst bleibt gut durchmischt; nur das pH-Meter liest an seiner Spitze im Feld.
+  // shortcut: ohne Strömung (eine schwere Zugabe sinkt in Wirklichkeit ab und mischt sich in Sekunden), schwache Säuren und Puffer, Fällungen und
+  // Indikatoren sind überall gleich verteilt, ein D für alle Ionen (Elektroneutralität ohne Nernst-Planck); nur im Becherglas (Zylinder)
+  var FIELD = { nr: 10, nz: 20, D: 2e-9, speed: 600, probe: [1, 18], mix: 1, calm: 1e-7 };      // mix: mit so viel mL mischt sich ein Tropfen oder Strahl beim Auftreffen (geschätzt)      // probe: Zelle (i, j) an der Spitze des pH-Meters, wie gezeichnet (r ≈ R/8, knapp über dem Boden)
+  var STRONG = {};
+  function strongIon(id) {         // schwach: Säure-Base-Stufe mit genau einem Partner (HCO3- ⇌ CO3^2- + H+); Cl- im Chlor-Gleichgewicht bleibt stark
+    if (STRONG[id] === undefined) STRONG[id] = !!L.db.species[id].charge && id !== PROTON && id !== HYDROXIDE &&
+      !L.db.equilibria.some(function (e) {
+        return e.aq && e.model !== "real" && e.nu[id] && (e.nu[PROTON] || e.nu[HYDROXIDE]) &&
+          Object.keys(e.nu).filter(function (k) { return k !== PROTON && k !== HYDROXIDE && k !== WATER; }).length === 2;
+      });
+    return STRONG[id];
+  }
+  function strongCharge(v) { var sum = 0, id; for (id in v.n) if (strongIon(id)) sum += L.db.species[id].charge * v.n[id]; return sum; }
+
+  function fieldGrid(lab, v) {      // das Gitter zur jetzigen Füllhöhe; im Cache, damit es nicht in die Aufzeichnung kommt
+    var R = spec(v).d / 200, h = volume(v) / 1000 / (Math.PI * R * R), key = "field " + v.id, c = lab.cache[key];
+    if (!c || Math.abs(c.h - h) > 1e-9) {
+      c = lab.cache[key] = { h: h, G: L.spatial.cylinder(FIELD.nr, FIELD.nz, R, h) };
+      // die Zellen nach ihrem Abstand von der Stelle, an der Zugegebenes ankommt (oben an der Achse)
+      c.G.near = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) {
+        return Math.pow(c.G.r(a), 2) + Math.pow(c.G.z(a), 2) - Math.pow(c.G.r(b), 2) - Math.pow(c.G.z(b), 2);
+      });
+      // … und für eine Zugabe, die absinkt: Ring um Ring von der Achse nach außen, jeder von oben bis zum Boden (eine Fahne)
+      c.G.plume = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) { return c.G.r(a) - c.G.r(b) || c.G.z(a) - c.G.z(b); });
+      // … und für ein Stück, das am Boden liegt und sich löst: nach dem Abstand von der Mitte des Bodens
+      c.G.floor = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) {
+        return Math.pow(c.G.r(a), 2) + Math.pow(h - c.G.z(a), 2) - Math.pow(c.G.r(b), 2) - Math.pow(h - c.G.z(b), 2);
+      });
+    }
+    return c.G;
+  }
+
+  // Fällungen im Feld: Feststoffe aus starken Ionen (AgCl, AgBr, AgI: kein Säure-Base-Gleichgewicht hängt an ihnen), ohne Gesetz für das
+  // Auflösen. Ihre Ionen wandern je für sich (mit demselben D), der Feststoff bleibt in seiner Zelle. In jeder Zelle stellt sich das
+  // Löslichkeitsgleichgewicht sofort ein (ideal, mit Konzentrationen); mit nucleate fällt dort erst etwas aus, wo Q/K ≥ S ist oder schon Feststoff liegt.
+  // shortcut: ohne die Wartezeit von nucleate je Zelle, ohne Absetzen des Niederschlags und ohne Komplexe (AgCl2-)
+  function fieldSolids() {         // schwer löslich (lg K < −4): gut lösliche Salze wie Kochsalz fallen im Feld nicht aus
+    return L.db.equilibria.filter(function (e) {
+      return e.solid && !e.rate && e.logK * e.f < -4 && Object.keys(e.d).every(function (id) { return e.d[id] > 0 && L.db.species[id].phase === "aq" && strongIon(id); });
+    });
+  }
+  // Farbige Ionen im Feld (Permanganat, Kristallviolett, Kupfertetrammin …): gefärbt und stark (kein Säure-Base-Gleichgewicht). Sie wandern
+  // je für sich mit ihrem eigenen D; die Farbe einer Zelle rechnet mit ihrer Menge dort (Lambert-Beer), alles andere aus der pH-Tabelle.
+  // shortcut: Reaktionen eines farbigen Ions in der Lösung (Permanganat mit Peroxid) laufen überall im selben Verhältnis, nicht dort, wo es ist
+  function colored(id) { var sp = L.db.species[id]; return sp.phase === "aq" && !!sp.bands && strongIon(id); }
+
+  function component(v, id, solids) {       // ein Ion gelöst und im Gefäß ausgefallen (ohne ungelöste Stücke aus dem Regal), in mol
+    var sum = v.n[id] || 0;
+    solids.forEach(function (e) { if (e.d[id]) sum += e.d[id] * fresh(v, e.solid); });
+    return sum;
+  }
+  function logKsp(v, e) {
+    var own = e.ideal == null ? null : [].concat(e.ideal), h = own && own.length > 1 ? own[1] : heatOf(e);
+    return shift((own ? own[0] : e.logK) * e.f, h == null ? null : h * e.f, v.T + KELVIN);
+  }
+  function precipitate(v, f, G, e) {         // je Zelle ins Löslichkeitsgleichgewicht; x: mol Feststoff mehr (oder weniger)
+    var ions = Object.keys(e.d), K = logKsp(v, e), solid = f.solid[e.solid], k, i, lo, hi, x, mid, logQ, Vk, gate, a, b, P;
+    var pair = ions.length === 2 && e.d[ions[0]] === 1 && e.d[ions[1]] === 1;
+    function excess(x) {                     // lg Q nach dem Umsatz x minus lg K
+      var sum = -K;
+      for (var q = 0; q < ions.length; q++) sum += e.d[ions[q]] * Math.log10(Math.max(1e-300, f.ion[ions[q]][k] - e.d[ions[q]] * x) / Vk);
+      return sum;
+    }
+    for (k = 0; k < G.n; k++) {
+      Vk = G.vol[k] * 1000;
+      hi = Infinity;
+      for (i = 0; i < ions.length; i++) hi = Math.min(hi, Math.max(0, f.ion[ions[i]][k]) / e.d[ions[i]]);
+      lo = -solid[k];
+      logQ = excess(0);
+      gate = solid[k] > 0 ? 0 : e.nucleate ? Math.log10(e.nucleate.S) : 0;      // ohne Feststoff in der Zelle: erst über der Schwelle
+      if (!(logQ > gate) && !(solid[k] > 0 && logQ < 0)) continue;
+      if (solid[k] > 0 && Math.abs(logQ) < 1e-6) continue;      // schon im Gleichgewicht
+      if (pair) {                            // 1:1 (AgCl): (a − x)(b − x) = K·V², geschlossen und ohne Auslöschung
+        a = f.ion[ions[0]][k]; b = f.ion[ions[1]][k]; P = Math.pow(10, K) * Vk * Vk;
+        x = Math.max(lo, 2 * (a * b - P) / (a + b + Math.sqrt((a - b) * (a - b) + 4 * P)));
+      } else if (logQ < 0 && excess(lo) <= 0) x = lo;         // es löst sich alles, was hier liegt
+      else {
+        if (logQ < 0) hi = 0; else lo = 0;
+        for (i = 0; i < 40; i++) { mid = (lo + hi) / 2; if (excess(mid) > 0) lo = mid; else hi = mid; }
+        x = (lo + hi) / 2;
+      }
+      for (i = 0; i < ions.length; i++) f.ion[ions[i]][k] -= e.d[ions[i]] * x;
+      solid[k] = Math.max(0, solid[k] + x);
+    }
+  }
+
+  function shelfLeft(v) {         // was von den Stücken aus dem Regal noch da ist (mol), und ob eines schwimmt
+    var n = 0, float = false;
+    v.lumps.forEach(function (l) { if (!l.made && l.n > 0) { n += l.n; if (L.db.species[l.id].rho != null && L.db.species[l.id].rho < 1) float = true; } });
+    return { n: n, float: float };
+  }
+
+  function liquidMass(v) {        // g Flüssigkeit samt Gelöstem: wie zoneFactor die Dichte vergleicht
+    var g = 0, id, s;
+    for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") g += v.n[id] * s.M; }
+    return g;
+  }
+
+  function fieldStep(lab, v) {
+    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put, sink, shelf, melt, order;
+    if (!f || !L.spatial) return;
+    if (!(volume(v) > 0)) { f.n = null; return; }
+    G = fieldGrid(lab, v);
+    solids = fieldSolids();
+    solids.forEach(function (e) { for (var id in e.d) if (component(v, id, solids) > 0 || (f.ion && f.ion[id])) ids[id] = true; });
+    sid = strongCharge(v);
+    fresh = !f.n || v.shook > lab.t;
+    if (fresh) {                             // gleichmäßig: alles gelöst verteilt, dann fällt in jeder Zelle gleich viel aus
+      f.n = Array.prototype.slice.call(L.spatial.spread(G, sid)); f.total = sid;
+      f.ion = {}; f.tot = {}; f.solid = {}; f.tr = {}; f.trTot = {};
+      for (id in ids) { f.ion[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.tot[id] = component(v, id, solids)))); }
+      for (id in v.n) if (v.n[id] > 0 && colored(id)) f.tr[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.trTot[id] = v.n[id])));
+    } else {
+      // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen. Ist es schwerer als die
+      // Lösung, sinkt es als Fahne bis zum Boden und mischt sich dabei mit ZONE_SINK-mal seinem Volumen, wie bei der Mischwärme (zoneFactor).
+      // Was ohne Zugabe wegging oder sich änderte (Ausgießen, Reaktion), überall gleich.
+      // shortcut: eine angenommene Mischzone statt gerechneter Strömung; sie entsteht im Augenblick des Zugebens und wandert danach nicht
+      // was zufließt: Zugeben und Umgießen (lab.flows), eine offene Bürette oder ein Filter darüber (drip); ohne Zufluss ändert sich das
+      // Volumen nur durch Lösen oder Reaktion
+      add = lab.flows.some(function (fl) { return fl.to === v.id; }) || lab.vessels.some(function (b) { return b.over === v.id && (b.tap > 0 || L.parts[b.type].filter); }) ||
+        volume(v) * 1000 - f.ml > 1e-3 ? volume(v) * 1000 - f.ml : 0;
+      sink = add > 0 && f.mass > 0 && (liquidMass(v) - f.mass) / add > f.mass / f.ml;
+      // Ohne Zugabe: Ändert sich ein Stück aus dem Regal (es kam dazu oder wird kleiner), kommt, was sich ändert, dort an, wo es liegt (am Boden in der Mitte, ein schwimmendes
+      // oben in der Mitte), in FIELD.mix mL. Sonst (Ausgießen, Reaktion in der ganzen Lösung) überall gleich.
+      // shortcut: in einem Schritt, in dem sich ein Stück löst, gilt jede Änderung als von ihm
+      shelf = shelfLeft(v); melt = !(add > 0) && Math.abs(shelf.n - (f.shelf || 0)) > 1e-15;      // auch im Schritt, in dem das Stück dazukam
+      order = sink ? G.plume : melt ? (shelf.float ? G.near : G.floor) : G.near;
+      // eine sinkende Zugabe reicht in jedem Schritt mindestens durch die innerste Säule bis zum Boden (sonst bliebe ein Strahl, der je Schritt
+      // nur einen Hauch bringt, oben hängen)
+      for (i = 0, cells = []; i < G.n && (i === 0 || ((add > 0 || melt) && (room < (sink ? ZONE_SINK * add : Math.max(add, FIELD.mix)) || (sink && i < FIELD.nz)))); i++) {
+        cells.push(order[i]); room += G.vol[order[i]] * 1e6;
+      }
+      if (!(add > 0) && !melt) cells = G.near;
+      for (i = 0, sum = 0; i < cells.length; i++) sum += G.vol[cells[i]];
+      put = function (arr, delta) { if (delta) for (var q = 0; q < cells.length; q++) arr[cells[q]] += delta * G.vol[cells[q]] / sum; };
+      put(f.n, sid - f.total); f.total = sid;
+      for (id in ids) {
+        if (!f.ion[id]) { f.ion[id] = new Array(G.n).fill(0); f.tot[id] = 0; }
+        put(f.ion[id], component(v, id, solids) - f.tot[id]); f.tot[id] = component(v, id, solids);
+      }
+      f.tr = f.tr || {}; f.trTot = f.trTot || {};
+      for (id in v.n) if (v.n[id] > 0 && colored(id) && !f.tr[id]) { f.tr[id] = new Array(G.n).fill(0); f.trTot[id] = 0; }
+      for (id in f.tr) {
+        k = (v.n[id] || 0) - f.trTot[id];
+        // was dazukam oder sich löste, dort, wo es herkommt; was in der Lösung verbraucht wurde, überall im selben Verhältnis (nie negativ)
+        if (k < 0 && !(add > 0) && !melt) { sum = f.trTot[id] > 0 ? (v.n[id] || 0) / f.trTot[id] : 0; for (i = 0; i < G.n; i++) f.tr[id][i] *= sum; }
+        else put(f.tr[id], k);
+        f.trTot[id] = v.n[id] || 0;
+        L.spatial.diffuse(G, f.tr[id], (typeof L.db.species[id].D === "number" ? L.db.species[id].D : 1) * 1e-9 * f.speed, DT);
+      }
+      L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
+      for (id in f.ion) L.spatial.diffuse(G, f.ion[id], FIELD.D * f.speed, DT);
+    }
+    f.ml = volume(v) * 1000; f.mass = liquidMass(v); f.shelf = shelfLeft(v).n;
+    solids.forEach(function (e) {
+      if (!Object.keys(e.d).every(function (id) { return f.ion[id]; })) return;
+      if (!f.solid[e.solid]) f.solid[e.solid] = new Array(G.n).fill(0);
+      precipitate(v, f, G, e);
+    });
+    // ruhig, wenn keine gelöste Menge mehr als FIELD.calm (mol/L) vom Mittel abweicht
+    f.calm = [f.n].concat(Object.keys(f.ion).map(function (id) { return f.ion[id]; }), Object.keys(f.tr || {}).map(function (id) { return f.tr[id]; })).every(function (arr) {
+      var mean = arr.reduce(function (a, b) { return a + b; }, 0) / (volume(v));
+      for (k = 0; k < G.n; k++) if (!isFinite(arr[k]) || Math.abs(arr[k] / (G.vol[k] * 1000) - mean) > FIELD.calm) return false;
+      return true;
+    });
+    if (!f.n.every(isFinite)) f.n = null;
+  }
+
+  // Ladung der starken Ionen je Zelle in mol/L
+  function fieldConc(lab, v) {
+    var f = v.field, G = fieldGrid(lab, v), out = new Array(G.n), k;
+    for (k = 0; k < G.n; k++) out[k] = f.n[k] / (G.vol[k] * 1000);
+    return out;
+  }
+
+  // pH und Farbe zu einem Überschuss x (mol/L): die Lösung des Gefäßes mit x mol/L Natronlauge (x > 0) oder Salzsäure (x < 0) mehr, ins
+  // Gleichgewicht gebracht. Als Tabelle über den Bereich des Felds (lo bis hi, Ladung der starken Ionen in mol/L), asinh-geteilt; x zählt
+  // ab dem Mittel beim Aufbau (mean). Kommt nur starke Säure oder Lauge dazu (ein Plätzchen löst sich), gilt sie weiter; neu, wenn sich
+  // anderes in der Lösung geändert hat (stamp: je Element, was in den übrigen gelösten Stoffen steckt, auf 0,01 %, ohne H und O, damit ein
+  // Indikator, der nur seine Form wechselt, nicht zählt; und die Temperatur, auf 0,05 K) oder der Bereich nicht reicht.
+  function fieldStamp(v) {
+    var out = { T: v.T, n: {} }, id, el, atoms;
+    for (id in v.n) {
+      if (L.db.species[id].phase !== "aq" || id === PROTON || id === HYDROXIDE || strongIon(id)) continue;
+      atoms = parse(id).atoms;
+      for (el in atoms) if (el !== "H" && el !== "O") out.n[el] = (out.n[el] || 0) + atoms[el] * v.n[id];
+    }
+    return out;
+  }
+  function sameStamp(a, b) {
+    var id;
+    if (Math.abs(a.T - b.T) > 0.05) return false;
+    for (id in a.n) if (!(Math.abs(a.n[id] - (b.n[id] || 0)) <= 1e-4 * a.n[id] + 1e-15)) return false;
+    for (id in b.n) if (!(id in a.n) && b.n[id] > 1e-15) return false;
+    return true;
+  }
+  function fieldTable(lab, v, lo, hi) {
+    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, a, b, S = 1e-7, more, mean = v.field.total / vol, stamp = fieldStamp(v);
+    if (c && c.lo <= lo && c.hi >= hi && Math.abs(c.vol - vol) <= 1e-6 * vol && sameStamp(c.stamp, stamp)) return c;
+    lo = Math.min(lo, mean) - mean; hi = Math.max(hi, mean) - mean;
+    a = (hi - lo) / 2; lo -= a; hi += a;                       // mit Reserve: wächst der Bereich (ein Plätzchen löst sich), reicht sie eine Weile
+    function row(x) {
+      // nur die Lösung: ein Feststoff in der Kopie löste sich sonst auf einmal (ein Plätzchen, das sich erst nach und nach löst)
+      var w = { id: v.id + "#field", type: v.type, size: v.size, n: {}, lumps: [], T: v.T, real: v.real, org: {}, ext: {}, rate: {}, flag: { solid: {} } }, id;
+      for (id in v.n) if (L.db.species[id].phase !== "s") w.n[id] = v.n[id];
+      if (x > 0) { w.n["Na+(aq)"] = (w.n["Na+(aq)"] || 0) + x * vol; w.n[HYDROXIDE] = (w.n[HYDROXIDE] || 0) + x * vol; }
+      else if (x < 0) { w.n["Cl-(aq)"] = (w.n["Cl-(aq)"] || 0) - x * vol; w.n[PROTON] = (w.n[PROTON] || 0) - x * vol; }
+      equilibrate(lab, w, null);
+      var conc = {};
+      for (id in w.n) if (L.db.species[id].bands && L.db.species[id].phase === "aq" && !colored(id)) conc[id] = w.n[id] / vol;      // für die Farbe neben den farbigen Ionen
+      return { x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb, conc: conc };
+    }
+    a = Math.asinh(lo / S); b = Math.asinh(hi / S);
+    for (i = 0; i <= 16; i++) rows.push(row(S * Math.sinh(a + (b - a) * i / 16)));
+    // wo der pH zwischen zwei Zeilen springt (am Äquivalenzpunkt), dazwischen verfeinern, bis 0,3 oder höchstens 80 Zeilen
+    do {
+      more = false;
+      for (i = rows.length - 1; i > 0 && rows.length < 80; i--) {
+        if (rows[i].pH == null || rows[i - 1].pH == null || Math.abs(rows[i].pH - rows[i - 1].pH) <= 0.3 || rows[i].x - rows[i - 1].x < 1e-12) continue;
+        rows.splice(i, 0, row((rows[i].x + rows[i - 1].x) / 2));
+        more = true;
+      }
+    } while (more && rows.length < 80);
+    return (lab.cache[key] = { lo: lo + mean, hi: hi + mean, rows: rows, mean: mean, stamp: stamp, vol: vol });
+  }
+
+  function fieldAt(rows, x, local, d) {       // linear zwischen den Zeilen der Tabelle; local: farbige Ionen dieser Zelle (mol/L), d: Weite in cm
+    var i = 1, u, a, b, conc = {}, id, any = false;
+    while (i < rows.length - 1 && rows[i].x < x) i++;
+    a = rows[i - 1]; b = rows[i]; u = b.x > a.x ? Math.max(0, Math.min(1, (x - a.x) / (b.x - a.x))) : 0;
+    for (id in local || {}) any = true;
+    if (any) {                                   // Farbe nach Lambert-Beer: die Stoffe aus der Tabelle und die farbigen Ionen der Zelle
+      for (id in a.conc) conc[id] = a.conc[id] + ((b.conc[id] || 0) - a.conc[id]) * u;
+      for (id in b.conc) if (!(id in conc)) conc[id] = b.conc[id] * u;
+      for (id in local) conc[id] = Math.max(0, local[id]);
+    }
+    return { pH: a.pH == null || b.pH == null ? null : a.pH + (b.pH - a.pH) * u,
+      rgb: any ? tint(conc, d).rgb : a.rgb.map(function (q, k) { return Math.round(q + (b.rgb[k] - q) * u); }) };
+  }
+
+  // Was die Ansicht zeigt: je Zelle pH und Farbe (Reihen von oben), dazu der Zeitraffer
+  function fieldLook(lab, v) {
+    var f = v.field, s, lo, hi, table, k, cells = [], G, cell, rgb, sum, id, c, local;
+    if (!f || !f.n || !(volume(v) > 0)) return null;
+    s = fieldConc(lab, v); lo = Math.min.apply(null, s); hi = Math.max.apply(null, s);
+    table = fieldTable(lab, v, lo, hi);
+    G = fieldGrid(lab, v);
+    for (k = 0; k < s.length; k++) {
+      local = {};
+      for (id in f.tr || {}) local[id] = f.tr[id][k] / (G.vol[k] * 1000);
+      cell = fieldAt(table.rows, s[k] - table.mean, local, spec(v).d);
+      // Trübung durch den Feststoff dieser Zelle, wie die des Gefäßes (HAZE), in der Farbe der Feststoffe
+      rgb = [0, 0, 0]; sum = 0;
+      for (id in f.solid || {}) { c = f.solid[id][k] / (G.vol[k] * 1000); sum += c; rgbOf(id).forEach(function (q, n) { rgb[n] += q * c; }); }
+      cell.cloud = sum > 0 ? { rgb: rgb.map(function (q) { return Math.round(q / sum); }), alpha: 1 - Math.exp(-sum / HAZE) } : null;
+      cells.push(cell);
+    }
+    return { nr: FIELD.nr, nz: FIELD.nz, speed: f.speed, cells: cells };
+  }
+
+  function fieldProbe(lab, v) {     // pH an der Spitze des pH-Meters
+    var s = fieldConc(lab, v), table = fieldTable(lab, v, Math.min.apply(null, s), Math.max.apply(null, s));
+    return fieldAt(table.rows, s[FIELD.probe[1] * FIELD.nr + FIELD.probe[0]] - table.mean).pH;
+  }
+
   // ------------------------------------------------------------------ Ablesen
 
   // Alles, was man an einem Gefäß sieht oder daran abliest
@@ -4647,6 +5080,7 @@
     v.lumps.forEach(function (l) {                             // Niederschlag: was schwebt, trübt; was liegt, ist Bodensatz
       var color = rgbOf(l.id), down = vol > 0 ? l.settled : 1, k;   // ohne Flüssigkeit liegt alles am Boden
       if (!l.made) return;
+      if (v.field && v.field.n && v.field.solid && v.field.solid[l.id]) return;      // ihn zeigt das Feld Zelle für Zelle
       if (l.mirror) {                                          // ein Spiegel am Glas: wie dicht er die benetzte Wand bedeckt; bei zweien zählt der dichtere
         share = l.n > 0 ? Math.min(1, l.n / (MIRROR * wall(v, l.wet))) : 0;
         if (share > 0 && !(mirror && mirror.share >= share)) mirror = { rgb: color, ml: l.wet, share: share };
@@ -4675,6 +5109,7 @@
       mirror: mirror,
       // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell
       pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
+      field: v.field && !paste ? fieldLook(lab, v) : null,      // spatial: pH und Farbe je Zelle
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
       // foam: Schaum über der Flüssigkeit in mL; fog: Farbe des Gasraums (farbige Gase wie NO2), sonst null
@@ -5075,6 +5510,7 @@
       if (v.broken) return;
       if (def.sizes) item.ml = v.size;
       if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
+      if (v.field) item.spatial = v.field.speed === FIELD.speed ? true : v.field.speed;
       if (cfg && cfg.unknown) {                                 // eine unbekannte Probe bleibt unbekannt: wie sie beschrieben war, ohne was danach hineinkam
         item.unknown = cfg.unknown;
         if (cfg.oneOf) item.oneOf = cfg.oneOf.map(function (o) { return { name: o.name, contains: o.contains.map(plain) }; });

@@ -196,6 +196,8 @@ html.lia-variant-dark .lia-chemlab {
 .lia-chemlab .cl-spray { fill: #ffffff; stroke: #6f8296; stroke-width: 0.4; }
 .lia-chemlab .cl-flow, .lia-chemlab .cl-flow-dot { pointer-events: none; }
 .lia-chemlab .cl-flow-dot { fill: #33475b; fill-opacity: 0.7; }      /* dunkel, damit sie nicht wie Gasblasen aussehen */
+.lia-chemlab .cl-field, .lia-chemlab .cl-field-speed { pointer-events: none; }
+.lia-chemlab .cl-field-speed { font-size: 9px; fill: #33475b; fill-opacity: 0.8; }      /* Zeitraffer der Diffusion im Feld */
 .lia-chemlab .cl-droplet { stroke: #ffffff; stroke-width: 0.4; stroke-opacity: 0.8; pointer-events: none; }
 .lia-chemlab .cl-flow-edge { fill: none; stroke: #33475b; stroke-width: 1; stroke-dasharray: 3 2; pointer-events: none; }
 .lia-chemlab .cl-stream { fill: #bcdcf5; fill-opacity: 0.85; stroke: #7fa9cc; stroke-width: 0.4; }

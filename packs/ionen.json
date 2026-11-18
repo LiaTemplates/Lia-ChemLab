@@ -86,6 +86,32 @@
       "color": "#b9b6ab",
       "src": "element: enthalpy of formation zero by definition; S: NBS Tables of Chemical Thermodynamic Properties (Wagman et al. 1982); colour of the metal"
     },
+    "Al(s)": {
+      "name": {
+        "de": "Aluminium",
+        "en": "aluminium"
+      },
+      "Hf": 0,
+      "S": 28.3,
+      "cp": 24.2,
+      "rho": 2.7,
+      "color": "#c9ccd1",
+      "passive": {
+        "i": 9e-08,
+        "pH": [
+          4,
+          8.5
+        ],
+        "pit": [
+          -0.559,
+          -0.11
+        ],
+        "on": 1,
+        "off": 60,
+        "pits": 0.001
+      },
+      "src": "element: enthalpy of formation zero by definition; S, cp: CODATA Key Values (Cox, Wagman, Medvedev 1989); passive: i = 0.09 µA/cm2, corrosion current of pure Al in 0.01 M NaCl, and the pitting potential there, -0.580 V vs SCE = -0.339 V vs SHE (Christudasjustus et al., J. Electrochem. Soc. 2023, doi:10.1149/1945-7111/acc7ce, Table II); slope -0.11 V per decade of chloride (Kaesche 1962, Scully; reported in the review doi:10.1515/corrrev-2022-0077); pH 4 to 8.5: range of passivity from the Pourbaix diagram (Pourbaix, Atlas of Electrochemical Equilibria, 1974), not reproducible with the amorphous Al(OH)3 of this pack; on (regrowth time constant), off (time in s until the film has dissolved outside the pH range) and pits (share of the surface in pits): estimated"
+    },
     "Ni^2+(aq)": {
       "name": {
         "de": "Nickel(II)-Ion",
@@ -571,6 +597,18 @@
       "E0": -0.2363,
       "over": 0.1,
       "src": "llnl.dat (USGS): Ni + 2 H+ + 0.5 O2 = H2O + Ni+2, log_k 50.9914; referred to the hydrogen electrode with H2(g) + 0.5 O2 = H2O, log_k 43.0016. Overpotential estimated"
+    },
+    {
+      "eq": "Al^3+(aq) + 3 e- <=> Al(s)",
+      "E0": -1.662,
+      "over": 0.15,
+      "src": "CRC Handbook of Chemistry and Physics, electrochemical series: Al+3 + 3e- = Al, E0 = -1.662 V. Overpotential estimated"
+    },
+    {
+      "eq": "Al(OH)4-(aq) + 3 e- <=> Al(s) + 4 OH-(aq)",
+      "E0": -2.328,
+      "over": 0.15,
+      "src": "CRC Handbook of Chemistry and Physics, electrochemical series: H2AlO3- + H2O + 3e- = Al + 4OH-, E0 = -2.33 V (written with Al(OH)4-); in lye aluminium dissolves as aluminate, like zinc as zincate. Overpotential estimated"
     }
   ],
   "reagents": {
@@ -649,6 +687,20 @@
       },
       "solid": "Ni(s)",
       "area": 6,
+      "group": "solid"
+    },
+    "Al foil": {
+      "ghs": {
+        "fixed": [],
+        "src": "aluminium foil (massive metal): not classified; only aluminium powder is flammable"
+      },
+      "name": {
+        "de": "Aluminiumfolie",
+        "en": "aluminium foil"
+      },
+      "solid": "Al(s)",
+      "area": 400,
+      "shape": 0,
       "group": "solid"
     },
     "H2S water": {

@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "剖面",
     "flow3d.particles": "粒子",
+    "flow3d.volume": "体积",
     "flow.mix": "混合条纹",
     "flow.vortex": "涡流",
     "flow.pressure": "压强",

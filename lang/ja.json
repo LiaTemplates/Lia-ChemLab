@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "断面",
     "flow3d.particles": "粒子",
+    "flow3d.volume": "体積",
     "flow.mix": "混合のすじ",
     "flow.vortex": "渦",
     "flow.pressure": "圧力",

@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "przekrój",
     "flow3d.particles": "cząstki",
+    "flow3d.volume": "objętość",
     "flow.mix": "smugi mieszania",
     "flow.vortex": "wiry",
     "flow.pressure": "ciśnienie",

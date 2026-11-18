@@ -1,0 +1,105 @@
+{
+ "phreeqc": "3.8.6-17100",
+ "database": "phreeqc.dat",
+ "date": "2026-11-18",
+ "cases": {
+  "B16/Gips/chemlab": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Ca 0.05004972750\n  Cl 0.1000994550\n  Na 0.1000994550\n  S 0.05004972750\nEQUILIBRIUM_PHASES 1\n  Solid0 0 0\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities Ca+2 SO4-2 CaSO4 NaSO4-\nEND\n",
+   "database": "SOLUTION_MASTER_SPECIES\nH H+ -1.0 H 1.008\nH(1) H+ -1.0 0\nE e- 0.0 0.0 0.0\nO H2O 0.0 O 16.00\nO(-2) H2O 0.0 0\nCa Ca+2 0.0 40.0780 40.0780\nCl Cl- 0.0 35.4500 35.4500\nNa Na+ 0.0 22.9900 22.9900\nS SO4-2 0.0 96.0560 96.0560\nSOLUTION_SPECIES\nH+ = H+\n  -gamma 9 0\ne- = e-\nH2O = H2O\n2 H+ + 2 e- = H2\n  log_k -3.15\n2 H2O = O2 + 4 H+ + 4 e-\n  log_k -86.08\nCa+2 = Ca+2\n  -gamma 5 0.165\nCl- = Cl-\n  -gamma 3.63 0.017\nNa+ = Na+\n  -gamma 4.08 0.082\nSO4-2 = SO4-2\n  -gamma 5 -0.04\n1 H2O = OH- + 1 H+\n  log_k -14.000000\n  -gamma 3.5 0\n1 H+ + 1 SO4-2 = HSO4-\n  log_k 1.990000\n1 Na+ + 1 SO4-2 = NaSO4-\n  log_k 0.940000\n  -gamma 3.5 0.1072\n1 Ca+2 + 1 SO4-2 = CaSO4\n  log_k 2.360000\n  -gamma 0 0.0445\n1 Ca+2 + 1 H2O = CaOH+ + 1 H+\n  log_k -12.697000\nPHASES\nSolid0\n  CaSO4:2H2O = 1 Ca+2 + 1 SO4-2 + 2 H2O\n  log_k -4.610000\n",
+   "pH": 7.03403,
+   "m": {
+    "Ca^2+(aq)": 0.017121,
+    "SO4^2-(aq)": 0.013477,
+    "CaSO4(aq)": 0.0055757,
+    "NaSO4-(aq)": 0.0036439
+   }
+  },
+  "B16/Gips/phreeqc.dat": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Ca 0.05004972750\n  Cl 0.1000994550\n  Na 0.1000994550\n  S(6) 0.05004972750\nEQUILIBRIUM_PHASES 1\n  Gypsum 0 0\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities Ca+2 SO4-2 CaSO4 NaSO4-\nEND\n",
+   "database": "phreeqc.dat",
+   "pH": 7.03731,
+   "m": {
+    "Ca^2+(aq)": 0.019219,
+    "SO4^2-(aq)": 0.012952,
+    "CaSO4(aq)": 0.0045142,
+    "NaSO4-(aq)": 0.0062675
+   }
+  },
+  "B16/Fluorit/chemlab": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Ca 0.05000000013\n  Cl 0.1000000003\n  Na 0.05000000013\n  F 0.05000000013\nEQUILIBRIUM_PHASES 1\n  Solid0 0 0\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities Ca+2 F- HF\nEND\n",
+   "database": "SOLUTION_MASTER_SPECIES\nH H+ -1.0 H 1.008\nH(1) H+ -1.0 0\nE e- 0.0 0.0 0.0\nO H2O 0.0 O 16.00\nO(-2) H2O 0.0 0\nCa Ca+2 0.0 40.0780 40.0780\nCl Cl- 0.0 35.4500 35.4500\nNa Na+ 0.0 22.9900 22.9900\nF F- 0.0 18.9980 18.9980\nSOLUTION_SPECIES\nH+ = H+\n  -gamma 9 0\ne- = e-\nH2O = H2O\n2 H+ + 2 e- = H2\n  log_k -3.15\n2 H2O = O2 + 4 H+ + 4 e-\n  log_k -86.08\nCa+2 = Ca+2\n  -gamma 5 0.165\nCl- = Cl-\n  -gamma 3.63 0.017\nNa+ = Na+\n  -gamma 4.08 0.082\nF- = F-\n1 H2O = OH- + 1 H+\n  log_k -14.000000\n  -gamma 3.5 0\n1 Ca+2 + 1 H2O = CaOH+ + 1 H+\n  log_k -12.697000\n1 H+ + 1 F- = HF\n  log_k 3.180000\nPHASES\nSolid0\n  CaF2 = 1 Ca+2 + 2 F-\n  log_k -10.610000\n",
+   "pH": 6.95767,
+   "m": {
+    "Ca^2+(aq)": 0.025226,
+    "F-(aq)": 0.00006711,
+    "HF(aq)": 8.3592e-9
+   }
+  },
+  "B16/Fluorit/phreeqc.dat": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Ca 0.05000000013\n  Cl 0.1000000003\n  Na 0.05000000013\n  F 0.05000000013\nEQUILIBRIUM_PHASES 1\n  Fluorite 0 0\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities Ca+2 F- HF\nEND\n",
+   "database": "phreeqc.dat",
+   "pH": 6.96504,
+   "m": {
+    "Ca^2+(aq)": 0.025228,
+    "F-(aq)": 0.000070175,
+    "HF(aq)": 8.2405e-9
+   }
+  },
+  "B25/NaHCO3/chemlab": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.09999771790\n  C 0.09999771790\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities HCO3- CO3-2 CO2\nEND\n",
+   "database": "SOLUTION_MASTER_SPECIES\nH H+ -1.0 H 1.008\nH(1) H+ -1.0 0\nE e- 0.0 0.0 0.0\nO H2O 0.0 O 16.00\nO(-2) H2O 0.0 0\nNa Na+ 0.0 22.9900 22.9900\nC CO3-2 0.0 60.0080 60.0080\nSOLUTION_SPECIES\nH+ = H+\n  -gamma 9 0\ne- = e-\nH2O = H2O\n2 H+ + 2 e- = H2\n  log_k -3.15\n2 H2O = O2 + 4 H+ + 4 e-\n  log_k -86.08\nNa+ = Na+\n  -gamma 4.08 0.082\nCO3-2 = CO3-2\n  -gamma 5.4 0\n1 H2O = OH- + 1 H+\n  log_k -14.000000\n  -gamma 3.5 0\n1 H+ + 1 CO3-2 = HCO3-\n  log_k 10.329000\n  -gamma 5.4 0.0078\n1 H+ + 1 HCO3- = CO2 + 1 H2O\n  log_k 6.352000\n  -gamma 0 0.066\nPHASES\n",
+   "pH": 8.12954,
+   "m": {
+    "HCO3-(aq)": 0.098281,
+    "CO3^2-(aq)": 0.001276,
+    "CO2(aq)": 0.0012778
+   }
+  },
+  "B25/NaHCO3/phreeqc.dat": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.09999771790\n  C(4) 0.09999771790\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities HCO3- CO3-2 CO2\nEND\n",
+   "database": "phreeqc.dat",
+   "pH": 8.13266,
+   "m": {
+    "HCO3-(aq)": 0.093755,
+    "CO3^2-(aq)": 0.001211,
+    "CO2(aq)": 0.0012128
+   }
+  },
+  "B25/Phosphatpuffer/chemlab": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.1500000003\n  P 0.1000000002\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities H2PO4- HPO4-2\nEND\n",
+   "database": "SOLUTION_MASTER_SPECIES\nH H+ -1.0 H 1.008\nH(1) H+ -1.0 0\nE e- 0.0 0.0 0.0\nO H2O 0.0 O 16.00\nO(-2) H2O 0.0 0\nNa Na+ 0.0 22.9900 22.9900\nP PO4-3 0.0 94.9700 94.9700\nSOLUTION_SPECIES\nH+ = H+\n  -gamma 9 0\ne- = e-\nH2O = H2O\n2 H+ + 2 e- = H2\n  log_k -3.15\n2 H2O = O2 + 4 H+ + 4 e-\n  log_k -86.08\nNa+ = Na+\n  -gamma 4.08 0.082\nPO4-3 = PO4-3\n1 H2O = OH- + 1 H+\n  log_k -14.000000\n  -gamma 3.5 0\n1 H+ + 1 PO4-3 = HPO4-2\n  log_k 12.346000\n1 H+ + 1 HPO4-2 = H2PO4-\n  log_k 7.207000\n1 H+ + 1 H2PO4- = H3PO4\n  log_k 2.168000\nPHASES\n",
+   "pH": 6.82506,
+   "m": {
+    "H2PO4-(aq)": 0.050655,
+    "HPO4^2-(aq)": 0.050655
+   }
+  },
+  "B25/Phosphatpuffer/phreeqc.dat": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.1500000003\n  P 0.1000000002\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities H2PO4- HPO4-2\nEND\n",
+   "database": "phreeqc.dat",
+   "pH": 6.77611,
+   "m": {
+    "H2PO4-(aq)": 0.050328,
+    "HPO4^2-(aq)": 0.046321
+   }
+  },
+  "B25/Na2SO4/chemlab": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.1999999997\n  S 0.09999999987\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities SO4-2 NaSO4-\nEND\n",
+   "database": "SOLUTION_MASTER_SPECIES\nH H+ -1.0 H 1.008\nH(1) H+ -1.0 0\nE e- 0.0 0.0 0.0\nO H2O 0.0 O 16.00\nO(-2) H2O 0.0 0\nNa Na+ 0.0 22.9900 22.9900\nS SO4-2 0.0 96.0560 96.0560\nSOLUTION_SPECIES\nH+ = H+\n  -gamma 9 0\ne- = e-\nH2O = H2O\n2 H+ + 2 e- = H2\n  log_k -3.15\n2 H2O = O2 + 4 H+ + 4 e-\n  log_k -86.08\nNa+ = Na+\n  -gamma 4.08 0.082\nSO4-2 = SO4-2\n  -gamma 5 -0.04\n1 H2O = OH- + 1 H+\n  log_k -14.000000\n  -gamma 3.5 0\n1 H+ + 1 SO4-2 = HSO4-\n  log_k 1.990000\n1 Na+ + 1 SO4-2 = NaSO4-\n  log_k 0.940000\n  -gamma 3.5 0.1072\nPHASES\n",
+   "pH": 7.2128,
+   "m": {
+    "SO4^2-(aq)": 0.071845,
+    "NaSO4-(aq)": 0.029596
+   }
+  },
+  "B25/Na2SO4/phreeqc.dat": {
+   "input": "SOLUTION 1\n  temp 25\n  units mol/l\n  density 1\n  pH 7 charge\n  Na 0.1999999997\n  S(6) 0.09999999987\nSELECTED_OUTPUT 1\n  -file out.sel\n  -reset false\n  -pH true\n  -molalities SO4-2 NaSO4-\nEND\n",
+   "database": "phreeqc.dat",
+   "pH": 7.18795,
+   "m": {
+    "SO4^2-(aq)": 0.058378,
+    "NaSO4-(aq)": 0.043063
+   }
+  }
+ }
+}

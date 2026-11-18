@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "snitt",
     "flow3d.particles": "partiklar",
+    "flow3d.volume": "volym",
     "flow.mix": "schlieren",
     "flow.vortex": "virvlar",
     "flow.pressure": "tryck",

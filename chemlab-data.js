@@ -112,7 +112,7 @@
       "CO3^2-(aq)": { name: name("carbonate ion"), Hf: -675.23, S: -50.0, D: 0.955, src: CODATA + DW },
       "HCO3-(aq)": { name: name("hydrogen carbonate ion"), Hf: -689.93, S: 98.4, D: 1.18, src: CODATA + DW },
       "CO2(aq)": { name: name("carbon dioxide, dissolved"), Hf: -413.26, S: 119.36, src: CODATA },
-      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, src: NBS },
+      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, D: 2.10, src: NBS + "; D: CRC Handbook of Chemistry and Physics, diffusion coefficients in water at 25 °C (2.10e-9 m²/s)" },
       // Spülmittel: das Tensid vereinfacht als Dodecylsulfat; foam: es hält aufsteigendes Gas als Schaum fest
       "C12H25SO4-(aq)": { name: name("dodecyl sulfate ion (detergent)"), symbol: "DS⁻", Hf: null, foam: true, src: NONE + "; the surfactant of washing-up liquid, simplified as dodecyl sulfate" },
       "H2O2(aq)": { name: name("hydrogen peroxide"), Hf: -191.17, src: "textbook value: enthalpy of formation in solution -191.17 kJ/mol" },
@@ -479,7 +479,7 @@
       { eq: "I2(s) + I-(aq) <=> I3-(aq)", logK: -0.0806, dH: 5.44, src: LLNL + "I2 + H2O = 0.5 O2 + 2 H+ + 2 I-, log_k -24.8084, delta_H 165.967 kJ/mol, and 3 I- + 2 H+ + 0.5 O2 = I3- + H2O, log_k 24.7278, delta_H -160.528 kJ/mol; added together" },
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
-      { eq: "KNO3(s) <=> K+(aq) + NO3-(aq)", logK: -0.2061, ideal: [1.141, 50.6], src: LLNL + "Niter, KNO3 = K+ + NO3-, log_k -0.2061; ideal: logK and solution enthalpy fitted so that the ideal model (without activities) reaches the measured solubility at 20 and 60 °C, 31.6 and 110 g in 100 g water (CRC Handbook)" },
+      { eq: "KNO3(s) <=> K+(aq) + NO3-(aq)", logK: -0.2061, ideal: [1.141, 50.6], nucleate: { S: 1.4, t: 5, grow: 8 }, src: LLNL + "Niter, KNO3 = K+ + NO3-, log_k -0.2061; ideal: logK and solution enthalpy fitted so that the ideal model (without activities) reaches the measured solubility at 20 and 60 °C, 31.6 and 110 g in 100 g water (CRC Handbook); nucleate: illustrative, estimated for the demonstration (without a seed crystal the solution stays supersaturated until Q/K reaches 1.4, a few kelvin below the saturation temperature), not measured" },
       { eq: "KCl(s) <=> K+(aq) + Cl-(aq)", logK: 0.8459, ideal: 1.383, src: LLNL + "Sylvite, KCl = Cl- + K+, log_k 0.8459; ideal: fitted so that the ideal model (without activities) reaches the measured solubility of 4.81 mol/kg at 25 °C (CRC Handbook, Aqueous Solubility of Inorganic Compounds: 26.4 %)" },
       { eq: "NaHCO3(s) <=> Na+(aq) + HCO3-(aq)", logK: -0.1118, ideal: 0.17, src: LLNL + "Nahcolite, NaHCO3 = HCO3- + Na+, log_k -0.1118; ideal: fitted so that the ideal model (without activities) reaches the measured solubility of 1.22 mol/kg at 25 °C (CRC Handbook: 9.32 %)" },
       { eq: "Na2CO3(s) <=> 2 Na+(aq) + CO3^2-(aq)", logK: 0.853, ideal: 2.01, src: LLNL + "Na2CO3 + H+ = HCO3- + 2 Na+, log_k 11.1822; converted with CO3-2 + H+ = HCO3-, log_k 10.329; ideal: fitted so that the ideal model (without activities) reaches the measured solubility of 2.90 mol/kg at 25 °C (CRC Handbook: 23.5 %)" },

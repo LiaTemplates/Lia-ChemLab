@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "corte",
     "flow3d.particles": "partículas",
+    "flow3d.volume": "volume",
     "flow.mix": "estrias de mistura",
     "flow.vortex": "redemoinhos",
     "flow.pressure": "pressão",
