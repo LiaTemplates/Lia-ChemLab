@@ -54,3 +54,4 @@ Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nu
 - [x] Meilenstein 7: veröffentlicht am 17.11.2026 als [LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab), Version 0.0.1. Neue Fassungen: `version:` im Kopf erhöhen (unter 1.0.0 bleiben) und ein Tag mit derselben Nummer pushen.
 - [x] Version 0.1.0 veröffentlicht am 18.11.2026: 13 Erweiterungen, Gasgesetze, Strömung, zweite flüssige Phase und die zehn Stoff- und Effektpakete.
 - [x] Version 0.1.1 veröffentlicht am 18.11.2026: Gase aus erhitzten Feststoffen, Methan, Stickstoff.
+- [x] Version 0.1.2 veröffentlicht am 18.11.2026: Löslichkeit im idealen Modell, Messkolben, Phosphorsäure, Flusssäure, starke Säuren, zwei Indikatoren, Kaliumnitrat, Pyridin (Vergleich mit ChemCollective).
