@@ -98,6 +98,11 @@
       "eq": "C6H12(aq) + Br2(aq) -> C6H12Br2(aq)",
       "rate": {"k": 100, "order": {"C6H12(aq)": 1, "Br2(aq)": 1}},
       "src": "Addition von Brom an die Doppelbindung: so schnell, dass sich Bromwasser sofort entfärbt (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "Cr2O7^2-(aq) + 3 C2H5OH(aq) + 8 H+(aq) -> 2 Cr^3+(aq) + 3 CH3CHO(aq) + 7 H2O(l)",
+      "rate": {"k": 0.1, "Ea": 60, "order": {"Cr2O7^2-(aq)": 1, "C2H5OH(aq)": 1, "H+(aq)": 1}},
+      "src": "Alkoholtest wie im alten Prüfröhrchen: angesäuertes Dichromat wird mit Ethanol in etwa einer Minute von orange grün (geschätzt, so dass der Schulversuch gelingt)"
     }
   ],
   "reagents": {

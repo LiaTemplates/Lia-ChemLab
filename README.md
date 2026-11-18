@@ -1241,7 +1241,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen und mit Nickel. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1457,6 +1457,30 @@ Viele Übergangsmetalle zeigen ihre Oxidationsstufe an der Farbe. Zwei klassisch
  "show":{"charts":false}}
 ```
 
+## Farben der Übergangsmetalle
+
+@[ChemLab.pack](packs/ionen.json)
+
+@[ChemLab.pack](packs/organic.json)
+
+Nickel-, Kobalt- und Chromsalze sind in vielen Schulen nicht mehr erlaubt, weil sie Krebs erzeugen können. Hier geht es gefahrlos:
+
+- **Nickel** (Glas 1, grün): Tropfe Ammoniak-Lösung dazu. Zuerst fällt grünes Nickelhydroxid, mit mehr Ammoniak löst es sich zum blauen Ammin-Komplex. Diacetyldioxim fällt dann leuchtend rotes Nickel-Diacetyldioxim, den klassischen Nachweis für Nickel. In stark saurer Lösung bleibt er aus.
+- **Chrom(III)** (Glas 2, Chromalaun, grün): Natronlauge fällt graugrünes Chrom(III)-hydroxid, im Überschuss löst es sich wieder grün. Chrom(III)-hydroxid ist amphoter: Es löst sich in Säure und in Lauge.
+- **Kobalt** (Glas 3, rosa): Natronlauge fällt rosa Kobalt(II)-hydroxid.
+- **Alkoholtest** (Glas 4, angesäuertes Dichromat, orange): Gib 1 mL Ethanol dazu. In einer halben Minute wird die Lösung grün: Das Dichromat oxidiert den Alkohol zu Ethanal und wird dabei selbst zu Chrom(III). So funktionierte das alte Prüfröhrchen der Polizei.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"ni","contains":[{"reagent":"NiSO4 0.1M","ml":5}]},
+  {"type":"testtube","id":"cr","contains":[{"reagent":"KCr(SO4)2 0.1M","ml":5}]},
+  {"type":"testtube","id":"co","contains":[{"reagent":"CoCl2 0.1M","ml":5}]},
+  {"type":"testtube","id":"alk","contains":[{"reagent":"K2Cr2O7 0.1M","ml":2},{"reagent":"H2SO4 1M","ml":3}]}
+ ],
+ "shelf":["NH3 2M","NaOH 1M","dimethylglyoxime","ethanol","H2SO4 1M","testtube","beaker","electrode-Ni","electrode-Cu","supply","Ni granules"],
+ "show":{"charts":false}}
+```
+
 ## 3D-Ansicht
 
 Der Knopf **3D** neben „Ton“ zeigt die Arbeitsfläche räumlich; noch einmal antippen schaltet zurück. Der Versuch läuft dabei weiter. In 3D dreht Ziehen die Ansicht, das Mausrad oder zwei Finger zoomen, Antippen wirkt wie in 2D. Mit der Tab-Taste kommt man von Gerät zu Gerät, Enter tippt es an.
@@ -1635,7 +1659,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `ZnSO4`, `ZnI2`, `CuCl2`, `FeSO4`, `KNO3` | Zinksulfat, Zinkiodid, Kupferchlorid, Eisen(II)-sulfat, Kaliumnitrat | `ml` |
 | `Na2S2O3`, `Na2SO3`, `K2S2O8` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat | `ml` |
 | `NaOCl` | Natriumhypochlorit-Lösung (Bleichlauge) mit gleich viel Kochsalz und etwas Natronlauge | `ml` |
-| `K2CrO4`, `K2Cr2O7`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
+| `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
 | `H2O2`, `sugar` | Wasserstoffperoxid, Zuckerlösung | `ml` |
 | `BTB`, `PP`, `MO`, `UI` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator | `drops` |

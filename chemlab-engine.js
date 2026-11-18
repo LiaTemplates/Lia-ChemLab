@@ -764,7 +764,7 @@
   registerPart("paper", { kind: "test", probe: "paper" });         // feuchtes Universalindikatorpapier für den Gasraum
   // Elektroden: electrode: Material, g: Masse in g. Angezeigt und aufgezeichnet wird ihre Masse.
   // hold: an Platin und Graphit haftet ein Teil des Gases, das an ihnen entsteht (siehe FILM)
-  ["C", "Pt", "Cu", "Zn", "Fe", "Ag", "Pb"].forEach(function (el) {
+  ["C", "Pt", "Cu", "Zn", "Fe", "Ag", "Pb", "Ni"].forEach(function (el) {
     registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7, hold: el === "C" || el === "Pt" });
   });
   // circuit: Glied eines Stromkreises. Der Stromkreis gehört zu dem Gefäß, an dem das Gerät steht, und führt über dessen zwei Elektroden.

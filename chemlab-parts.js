@@ -52,7 +52,7 @@
       "part.conductometer": "conductivity meter", "part.supply": "power supply", "part.ammeter": "ammeter",
       "part.voltmeter": "voltmeter", "part.lamp": "lamp", "part.bridge": "salt bridge",
       "part.electrode-C": "graphite electrode", "part.electrode-Pt": "platinum electrode", "part.electrode-Cu": "copper electrode",
-      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode", "part.electrode-Pb": "lead electrode",
+      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode", "part.electrode-Pb": "lead electrode", "part.electrode-Ni": "nickel electrode",
       "group.water": "", "group.acid": "Acids and bases", "group.salt": "Salt solutions", "group.indicator": "Indicators",
       "group.solid": "Solids", "group.gear": "Equipment", "group.other": "Other solutions", "group.electric": "Electricity",
       "hint.electrode": "Now tap the beaker it should dip into.",

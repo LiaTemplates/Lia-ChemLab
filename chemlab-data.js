@@ -172,6 +172,12 @@
         src: LLNL + "Cr2O7-2, Enthalpy of formation -356.2 kcal/mol; absorption bands estimated from usual table values (350 nm and shoulder around 450 nm)" },
       "Co^2+(aq)": { name: name("cobalt(II) ion"), Hf: -58.16, D: 0.732, bands: [[510, 85, 4.8]],
         src: LLNL + "Co+2, Enthalpy of formation -13.9 kcal/mol" + DL + "; absorption band estimated from usual table values (510 nm, 4.8 L/(mol cm))" },
+      // Chrom(III): in Lösung grün, wie meist im Schulversuch (mit Sulfat oder Chlorid; das violette Hexaaqua-Ion bleibt außen vor)
+      "Cr^3+(aq)": { name: name("chromium(III) ion"), Hf: null, bands: [[595, 100, 16], [420, 80, 18]],
+        src: NONE + "; absorption bands estimated from the usual colour of chromium(III) solutions in school (green)" },
+      "CrOH^2+(aq)": { name: name("chromium(III) hydroxide ion"), Hf: null, bands: [[595, 100, 16], [420, 80, 18]], src: NONE + BAND + " (as for the chromium(III) ion)" },
+      "Cr(OH)4-(aq)": { name: name("tetrahydroxidochromate(III) ion"), Hf: null, bands: [[600, 100, 20], [440, 80, 25]],
+        src: NONE + "; absorption bands estimated from the usual colour of chromite solution (green)" },
       "CoCl4^2-(aq)": { name: name("tetrachlorocobaltate(II) ion"), Hf: null, bands: [[690, 70, 600], [625, 70, 350]],
         src: NONE + "; absorption bands estimated from usual table values (maxima around 690 and 625 nm, about 600 L/(mol cm))" },
       "MnO4-(aq)": { name: name("permanganate ion"), Hf: -541.41, D: 1.632, bands: [[526, 70, 2400]],
@@ -282,6 +288,8 @@
       // settle: Zeitkonstante in s, mit der sich der Niederschlag absetzt; flockige Hydroxide brauchen länger
       "Cu(OH)2(s)": { name: name("copper(II) hydroxide"), Hf: null, color: "#86bfe8", settle: 60, src: LOOK },
       "Fe(OH)3(s)": { name: name("iron(III) hydroxide"), Hf: null, color: "#8a4a22", settle: 60, src: LOOK },
+      "Co(OH)2(s)": { name: name("cobalt(II) hydroxide"), Hf: null, color: "#c27a8c", settle: 60, src: LOOK + " (rose; fresh it is blue, then turns rose)" },
+      "Cr(OH)3(s)": { name: name("chromium(III) hydroxide"), Hf: null, color: "#7d9a78", settle: 60, src: LOOK + " (grey-green)" },
       "Mg(OH)2(s)": { name: name("magnesium hydroxide"), Hf: null, color: WHITE, settle: 60, src: LOOK },
 
       // ---------------------------------------------------------------- Indikatoren
@@ -402,6 +410,14 @@
       { eq: "PbSO4(s) <=> Pb^2+(aq) + SO4^2-(aq)", logK: -7.79, src: MINTEQ + "Anglesite, PbSO4 = Pb+2 + SO4-2, log_k -7.79" },
       { eq: "BaSO4(s) <=> Ba^2+(aq) + SO4^2-(aq)", logK: -9.98, dH: 23, src: MINTEQ + "Barite, BaSO4 = Ba+2 + SO4-2, log_k -9.98, delta_h 23 kJ" },
       { eq: "Cu(OH)2(s) <=> Cu^2+(aq) + 2 OH-(aq)", logK: -19.326, dH: 55.2, src: MINTEQ + "Cu(OH)2 + 2 H+ = Cu+2 + 2 H2O, log_k 8.674, delta_h -56.42 kJ; converted with the ion product of water" },
+      { eq: "Co(OH)2(s) <=> Co^2+(aq) + 2 OH-(aq)", logK: -14.906, src: MINTEQ + "Co(OH)2 + 2 H+ = Co+2 + 2 H2O, log_k 13.094; converted with the ion product of water" },
+      { eq: "Cr^3+(aq) + H2O(l) <=> CrOH^2+(aq) + H+(aq)", logK: -4, src: LLNL + "H2O + Cr+3 = CrOH+2 + H+, log_k -4" },
+      { eq: "Cr(OH)3(s) <=> Cr^3+(aq) + 3 OH-(aq)", logK: -30.2,
+        src: "adjusted: textbook solubility product 6.3·10⁻³¹ (CRC Handbook), so that chrome alum solutions stay clear as in the lab; " +
+          MINTEQ + "Cr(OH)3(am) with Cr(OH)2+ + 2 H+ = Cr+3 + 2 H2O gives -33.181, with which the hydrolysis from llnl.dat would precipitate it from 0.3 mol/L" },
+      { eq: "Cr^3+(aq) + 4 H2O(l) <=> Cr(OH)4-(aq) + 4 H+(aq)", logK: -26.2,
+        src: "adjusted: fresh chromium(III) hydroxide dissolves in excess sodium hydroxide solution as in the school experiment (Cr(OH)3 + OH- = Cr(OH)4-, log K -0.4, with the solubility product above). " +
+          MINTEQ + "Cr(OH)2+ + 2 H2O = Cr(OH)4- + 2 H+, log_k -17.8192, and Cr(OH)2+ + 2 H+ = Cr+3 + 2 H2O, log_k 9.5688, give -27.388" },
       { eq: "Fe(OH)3(s) <=> Fe^3+(aq) + 3 OH-(aq)", logK: -37.109, src: "phreeqc.dat (USGS): Fe(OH)3(a), freshly precipitated, Fe(OH)3 + 3 H+ = Fe+3 + 3 H2O, log_k 4.891; converted with the ion product of water" },
       { eq: "Mg(OH)2(s) <=> Mg^2+(aq) + 2 OH-(aq)", logK: -11.156, dH: -2.4, src: MINTEQ + "Brucite, Mg(OH)2 + 2 H+ = Mg+2 + 2 H2O, log_k 16.844, delta_h -113.996 kJ; converted with the ion product of water" },
 
@@ -633,6 +649,7 @@
       "K2CrO4": { name: name("potassium chromate solution"), solution: { "K+(aq)": 2, "CrO4^2-(aq)": 1 }, molar: true, group: "salt" },
       "K2Cr2O7": { name: name("potassium dichromate solution"), solution: { "K+(aq)": 2, "Cr2O7^2-(aq)": 1 }, molar: true, group: "salt" },
       "CoCl2": { name: name("cobalt(II) chloride solution"), solution: { "Co^2+(aq)": 1, "Cl-(aq)": 2 }, molar: true, group: "salt" },
+      "KCr(SO4)2": { name: name("chrome alum solution"), solution: { "K+(aq)": 1, "Cr^3+(aq)": 1, "SO4^2-(aq)": 2 }, molar: true, group: "salt" },
       "KMnO4": { name: name("potassium permanganate solution"), solution: { "K+(aq)": 1, "MnO4-(aq)": 1 }, molar: true, group: "salt" },
       "K2S2O8": { name: name("potassium peroxodisulfate solution"), solution: { "K+(aq)": 2, "S2O8^2-(aq)": 1 }, molar: true, group: "salt" },
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
@@ -747,6 +764,7 @@
     "FeSO4": { ate: 500, irrit: 10, src: "CLP Annex VI 026-003-00-7" },
     "K2CrO4": { cmr: [1, 0.1], irrit: 10, stot: [3], sens: 0.5, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 024-006-00-8 (SCL Skin Sens.); M factor of the suppliers (Merck)" },
     "K2Cr2O7": { cmr: [1, 0.1], ate: 90.5, inh: 0.05, stot: [[1], [3, 5]], corr: [5, 1, 3, 1], resp: 1, sens: 1, aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 024-002-00-6 (SCL STOT SE 3); ATE oral of the supplier (Morphisto SDS), inhalation: conversion value of Acute Tox. 2" },
+    "KCr(SO4)2": { fixed: [], src: "chromium potassium sulfate dodecahydrate: not classified (supplier SDS, e.g. Carl Roth)" },
     "CoCl2": { cmr: [1, 0.01], ate: 500, resp: 1, sens: 1, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 027-004-00-5 (SCL Carc. 0.01 %, M = 10)" },
     "KMnO4": { cmr: [2, 3], ate: 1090, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 025-002-00-9; M factors and ATE of the suppliers" },
     "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },

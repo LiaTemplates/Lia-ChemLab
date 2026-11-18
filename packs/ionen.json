@@ -1,5 +1,5 @@
 {
-  "about": "Ionen: Vanadium und seine Oxidationsstufen; weitere Übergangsmetalle und der Trennungsgang folgen",
+  "about": "Ionen: Vanadium und seine Oxidationsstufen, Nickel; der Trennungsgang folgt",
   "species": {
     "VO2+(aq)": {
       "name": {
@@ -75,6 +75,92 @@
         ]
       ],
       "src": "no enthalpy of formation entered; absorption bands estimated from the usual colour of vanadium(II) solution (violet)"
+    },
+    "Ni(s)": {
+      "name": {
+        "de": "Nickel",
+        "en": "nickel"
+      },
+      "Hf": 0,
+      "S": 29.87,
+      "color": "#b9b6ab",
+      "src": "element: enthalpy of formation zero by definition; S: NBS Tables of Chemical Thermodynamic Properties (Wagman et al. 1982); colour of the metal"
+    },
+    "Ni^2+(aq)": {
+      "name": {
+        "de": "Nickel(II)-Ion",
+        "en": "nickel(II) ion"
+      },
+      "Hf": null,
+      "D": 0.661,
+      "bands": [
+        [
+          395,
+          70,
+          5.2
+        ],
+        [
+          720,
+          110,
+          2.1
+        ],
+        [
+          655,
+          70,
+          1.9
+        ]
+      ],
+      "src": "no enthalpy of formation entered; diffusion coefficient: phreeqc.dat (USGS), -dw; absorption bands: usual table values for the hexaaqua ion (395, 655 and 720 nm)"
+    },
+    "Ni(NH3)6^2+(aq)": {
+      "name": {
+        "de": "Hexaamminnickel(II)-Ion",
+        "en": "hexaamminenickel(II) ion"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          580,
+          110,
+          10
+        ],
+        [
+          360,
+          70,
+          12
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption bands estimated from usual table values (around 360 and 580 nm, blue-violet)"
+    },
+    "Ni(OH)2(s)": {
+      "name": {
+        "de": "Nickel(II)-hydroxid",
+        "en": "nickel(II) hydroxide"
+      },
+      "Hf": null,
+      "color": "#8fbf72",
+      "settle": 60,
+      "src": "colour of the solid from its usual appearance (pale green)"
+    },
+    "C4H8N2O2(aq)": {
+      "name": {
+        "de": "Diacetyldioxim",
+        "en": "dimethylglyoxime"
+      },
+      "symbol": "H₂dmg",
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Ni(C4H7N2O2)2(s)": {
+      "name": {
+        "de": "Nickel-Diacetyldioxim",
+        "en": "nickel dimethylglyoximate"
+      },
+      "symbol": "Ni(Hdmg)₂",
+      "Hf": null,
+      "color": "#d42a46",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (strawberry red)"
     }
   },
   "couples": [
@@ -92,6 +178,12 @@
       "eq": "V^3+(aq) + e- <=> V^2+(aq)",
       "E0": -0.255,
       "src": "minteq.v4.dat (USGS): V+3 + e- = V+2, log_k -4.31"
+    },
+    {
+      "eq": "Ni^2+(aq) + 2 e- <=> Ni(s)",
+      "E0": -0.2363,
+      "over": 0.1,
+      "src": "llnl.dat (USGS): Ni + 2 H+ + 0.5 O2 = H2O + Ni+2, log_k 50.9914; referred to the hydrogen electrode with H2(g) + 0.5 O2 = H2O, log_k 43.0016. Overpotential estimated"
     }
   ],
   "reagents": {
@@ -115,6 +207,62 @@
       },
       "group": "salt",
       "src": "5.85 g ammonium metavanadate per litre of sulfuric acid 1 mol/L; the vanadate takes up two H+ per vanadium and is VO2+"
+    },
+    "NiSO4 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ],
+        "signal": "danger",
+        "src": "nickel sulfate, CLP Annex VI 028-009-00-5 (Carc. 1A, Muta. 2, Repr. 1B, STOT RE 1, Resp. and Skin Sens. 1, Aquatic Chronic 1); 1.5 % lies above the limits of these classes"
+      },
+      "name": {
+        "de": "Nickelsulfat-Lösung (0,1 mol/L)",
+        "en": "nickel sulfate solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Ni^2+(aq)": 0.1,
+        "SO4^2-(aq)": 0.1
+      },
+      "group": "salt"
+    },
+    "dimethylglyoxime": {
+      "ghs": {
+        "fixed": [
+          "GHS02"
+        ],
+        "signal": "danger",
+        "src": "1 % in ethanol: the ethanol makes it Flam. Liq. 2 (CLP Annex VI 603-002-00-5); dimethylglyoxime itself is not classified at this content"
+      },
+      "name": {
+        "de": "Diacetyldioxim (1 % in Ethanol)",
+        "en": "dimethylglyoxime (1 % in ethanol)"
+      },
+      "solution": {
+        "C4H8N2O2(aq)": 0.086
+      },
+      "drops": true,
+      "group": "indicator",
+      "src": "1 g per 100 mL; the ethanol is not modelled"
+    },
+    "Ni granules": {
+      "ghs": {
+        "fixed": [
+          "GHS07",
+          "GHS08"
+        ],
+        "signal": "warning",
+        "src": "nickel metal, CLP Annex VI 028-002-00-7 (Carc. 2, STOT RE 1, Skin Sens. 1)"
+      },
+      "name": {
+        "de": "Nickel (Granalien)",
+        "en": "nickel granules"
+      },
+      "solid": "Ni(s)",
+      "area": 6,
+      "group": "solid"
     }
   },
   "reactions": [
@@ -138,6 +286,23 @@
         "fast": true
       },
       "src": "textbook: comproportionation of vanadium(V) and vanadium(II)"
+    }
+  ],
+  "equilibria": [
+    {
+      "eq": "Ni(OH)2(s) <=> Ni^2+(aq) + 2 OH-(aq)",
+      "logK": -15.206,
+      "src": "minteq.v4.dat (USGS): Ni(OH)2 + 2 H+ = Ni+2 + 2 H2O, log_k 12.794; converted with the ion product of water"
+    },
+    {
+      "eq": "Ni^2+(aq) + 6 NH3(aq) <=> Ni(NH3)6^2+(aq)",
+      "logK": 8.7344,
+      "src": "llnl.dat (USGS): 6 NH3 + Ni+2 = Ni(NH3)6+2, log_k 8.7344"
+    },
+    {
+      "eq": "Ni^2+(aq) + 2 C4H8N2O2(aq) <=> Ni(C4H7N2O2)2(s) + 2 H+(aq)",
+      "logK": 2.5,
+      "src": "estimated from textbook values (stability of the bis complex and acidity of dimethylglyoxime): the red precipitate forms in ammoniacal or acetate-buffered solution, not in strong acid"
     }
   ]
 }

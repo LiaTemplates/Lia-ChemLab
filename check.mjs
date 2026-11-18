@@ -110,8 +110,8 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
     () => L.register({ species: { "Zz(s)": {} } }),
     (e) => e.code === "data" && /Zz/.test(e.detail));
   assert.throws(
-    () => L.register({ reactions: [{ eq: "Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)", rate: { k: 1 } }] }),
-    (e) => e.code === "data" && /Ni/.test(e.detail), "unbekannte Stoffe");
+    () => L.register({ reactions: [{ eq: "Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)", rate: { k: 1 } }] }),
+    (e) => e.code === "data" && /Ru/.test(e.detail), "unbekannte Stoffe");
   assert.throws(
     () => L.register({ equilibria: [{ eq: "H2O(l) <=> H+(aq) + 2 OH-(aq)", logK: -14 }] }),
     (e) => e.code === "data", "nicht ausgeglichen");
@@ -122,17 +122,17 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
 test("Daten: ein eigener Stoff mit Reaktion lässt sich nachtragen", () => {
   L.register({
     species: {
-      "Ni(s)": { name: { de: "Nickel" }, Hf: 0, src: "Test" },
-      "Ni^2+(aq)": { name: { de: "Nickel(II)-Ion" }, Hf: -54.0, src: "Test" }
+      "Ru(s)": { name: { de: "Ruthenium (Beispiel)" }, Hf: 0, src: "Test" },
+      "Ru^2+(aq)": { name: { de: "Ruthenium-Ion (Beispiel)" }, Hf: -54.0, src: "Test" }
     },
-    reactions: [{ eq: "Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)", rate: { k: 1e-6, surface: "Ni(s)", order: { "H+(aq)": 1 } }, src: "Test" }],
-    reagents: { "Ni filings": { name: { de: "Nickelspäne" }, solid: "Ni(s)", area: 5 } }
+    reactions: [{ eq: "Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)", rate: { k: 1e-6, surface: "Ru(s)", order: { "H+(aq)": 1 } }, src: "Test" }],
+    reagents: { "Ru filings": { name: { de: "Rutheniumspäne (Beispiel)" }, solid: "Ru(s)", area: 5 } }
   });
   const l = beaker([{ reagent: "HCl 1M", ml: 20 }]);
-  L.add(l, "b", "Ni filings", { g: 0.5 });
+  L.add(l, "b", "Ru filings", { g: 0.5 });
   L.step(l, 60);
-  assert.ok(amount(l, "Ni^2+(aq)") > 0, "Nickel geht in Lösung");
-  near(L.enthalpy("Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)"), -54.0, 0.01);
+  assert.ok(amount(l, "Ru^2+(aq)") > 0, "Ruthenium geht in Lösung");
+  near(L.enthalpy("Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)"), -54.0, 0.01);
 });
 
 test("Daten: Konzentration steht im Namen der Vorratsflasche", () => {
@@ -10314,4 +10314,64 @@ test("Chamäleon: grünes Manganat wird mit Säure wieder violett, Braunstein f�
   L.step(l, 1);
   assert.ok(amount(l, "MnO4^2-(aq)") < 0.01 * manganate, "Manganat zerfällt in Säure");
   near(amount(l, "MnO4-(aq)") - permanganate, 2 / 3 * manganate, 0.1 * manganate, "zwei Drittel werden wieder Permanganat");
+});
+
+test("Nickel: grün; wenig Ammoniak fällt grünes Hydroxid, viel Ammoniak löst es blau; Diacetyldioxim fällt rot, aber nicht in Säure", () => {
+  L.register(ionen());
+  const l = tubeOf([{ reagent: "NiSO4 0.1M", ml: 10 }]);
+  L.step(l, 1);
+  assert.equal(look(l).color.name, "green", "Nickel(II) ist grün");
+  L.add(l, "b", "NH3 2M", { ml: 1 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(OH)2(s)") > 5e-4, "grüner Niederschlag");
+  L.add(l, "b", "NH3 2M", { ml: 5 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(NH3)6^2+(aq)") > 5e-4, "der Ammin-Komplex löst den Niederschlag");
+  assert.equal(look(l).color.name, "blue");
+  L.add(l, "b", "dimethylglyoxime", { drops: 5 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(C4H7N2O2)2(s)") > 0, "roter Niederschlag mit Diacetyldioxim");
+  const acid = tubeOf([{ reagent: "NiSO4 0.1M", ml: 5 }, { reagent: "H2SO4 1M", ml: 5 }]);
+  L.add(acid, "b", "dimethylglyoxime", { drops: 5 });
+  L.step(acid, 5);
+  assert.equal(amount(acid, "Ni(C4H7N2O2)2(s)"), 0, "in starker Säure fällt nichts");
+  // Zink verdrängt Nickel; die Nickel-Elektrode gibt es als Gerät
+  const zinc = tubeOf([{ reagent: "NiSO4 0.1M", ml: 10 }]);
+  L.add(zinc, "b", "Zn granules", { g: 1 });
+  L.step(zinc, 100);
+  assert.ok(amount(zinc, "Ni(s)") > 1e-5, "Nickel scheidet sich auf dem Zink ab");
+  assert.equal(L.parts["electrode-Ni"].electrode, "Ni(s)");
+});
+
+test("Chrom(III) und Kobalt: Chromalaun ist sauer; Lauge fällt graugrünes Hydroxid, im Überschuss löst es sich grün; Kobalthydroxid fällt rosa", () => {
+  const l = tubeOf([{ reagent: "KCr(SO4)2 0.1M", ml: 5 }]);
+  L.step(l, 1);
+  near(look(l).pH, 3.2, 0.3, "pH der Chromalaun-Lösung");
+  assert.equal(look(l).color.name, "green");
+  L.add(l, "b", "NaOH 1M", { ml: 1 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Cr(OH)3(s)") > 2e-4, "Chrom(III)-hydroxid fällt");
+  L.add(l, "b", "NaOH 1M", { ml: 6 });
+  L.step(l, 5);
+  assert.ok(amount(l, "Cr(OH)4-(aq)") > 0.9 * 5e-4, "im Überschuss gelöst");
+  assert.equal(look(l).color.name, "green");
+  const co = tubeOf([{ reagent: "CoCl2 0.1M", ml: 5 }]);
+  L.add(co, "b", "NaOH 1M", { ml: 1 });
+  L.step(co, 3);
+  assert.ok(amount(co, "Co(OH)2(s)") > 0.9 * 5e-4, "Kobalthydroxid fällt");
+  assert.equal(L.species("Co(OH)2(s)").color, "#c27a8c");
+});
+
+test("Alkoholtest: angesäuertes Dichromat wird mit Ethanol in etwa einer halben Minute grün; ohne Ethanol bleibt es orange", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const start = () => tubeOf([{ reagent: "K2Cr2O7 0.1M", ml: 2 }, { reagent: "H2SO4 1M", ml: 3 }]);
+  const l = start(), seen = [];
+  L.add(l, "b", "ethanol", { ml: 1 });
+  const t = until(l, () => look(l).color.name === "green", 120, seen);
+  assert.ok(t >= 10 && t <= 60, `grün nach ${t} s`);
+  assert.ok(amount(l, "CH3CHO(aq)") > 0, "Ethanol wird zu Ethanal");
+  const blank = start();
+  L.add(blank, "b", "H2O", { ml: 1 });
+  L.step(blank, 60);
+  assert.equal(look(blank).color.name, "orange");
 });
