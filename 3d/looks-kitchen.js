@@ -43,7 +43,7 @@
           sub.add(fx.rod(V(1.4 * Math.cos(a), H - 0.3, 1.4 * Math.sin(a)), V(4.4 * Math.cos(a), top - 0.15, 4.4 * Math.sin(a)), 0.13, steel));
           sub.add(fx.rod(V(4.4 * Math.cos(a), top - 0.15, 4.4 * Math.sin(a)), V(2.2 * Math.cos(a), top - 0.15, 2.2 * Math.sin(a)), 0.13, steel));
         }
-        if (place && place.clamp) fx.stand(sub, cm(54) + 2, -4, 0, top + cm(150), [{ y: top + cm(120), x: 0, r: cm(13) }]);
+        if (place && place.clamp) fx.stand(sub, cm(54) + 2, fx.STAND.z, 0, top + cm(150), [{ y: top + cm(120), x: 0, r: cm(13) }]);
       });
       u.body = group.userData.stove;
       u.light.intensity = f ? f[3] * (0.9 + 0.1 * Math.sin(t * 23)) : 0;
@@ -90,7 +90,7 @@
         water.position.y = (level + plate + 0.2) / 2; water.renderOrder = 1;
         sub.add(water);
         sub.add(mesh(new THREE.TorusGeometry(R * 0.6, 0.08, 6, 32).rotateX(Math.PI / 2), steel, 0, grate - 0.1));      // Untersetzer im Topf
-        if (p.clamp) fx.stand(sub, -R - 1.6, -4, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
+        if (p.clamp) fx.stand(sub, -R - 1.6, fx.STAND.z, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
         sub.add(mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.5, 16).rotateX(Math.PI / 2), fx.matte(0x202326, 0.5), R - 0.4, plate / 2, R + 1.7));     // Regler
       });
       u.screen.position.set(-0.8, Math.min(4, kit.up(BATH.lift) - 0.6) / 2, a + 0.4 + 1.51);

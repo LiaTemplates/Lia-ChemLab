@@ -638,9 +638,19 @@
   fx.iron = function () { return fx.matte(0x33373d, 0.45, 0.7); };
 
   // Stativ: Fuß und Stange bei (x, z) vom Boden floor bis top; grips: Klemmen [{ y, x, r, across }] mit Backen um ein Rohr bei x (z = 0)
+  // Stativ: Platte und Stange hinter der Reihe der Geräte. Die Platte liegt mittig unter der Stange und reicht nach hinten,
+  // so steht sie keinem Gefäß im Weg (die Gefäße stehen bei z = 0 und sind bis knapp 5 cm tief); die Klemmen reichen nach vorn.
+  fx.STAND = { z: -7, w: 6, h: 0.35, d: 8, back: 3 };
+  // Die Platte zeigt vom Gerät weg, in Richtung des Arms: so, wie man ein Stativ auf den Aufbau ausrichtet
+  fx.placeFoot = function (foot, rod, z, x, y) {
+    var ux = rod - x, uz = z, n = Math.sqrt(ux * ux + uz * uz) || 1;
+    ux /= n; uz /= n;
+    foot.rotation.y = Math.atan2(ux, uz);
+    foot.position.set(rod + ux * fx.STAND.back, y, z + uz * fx.STAND.back);
+  };
   fx.stand = function (sub, x, z, floor, top, grips) {
-    var steel = fx.steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(7, 0.35, 11), fx.matte(0x3a3f45, 0.5, 0.3));
-    foot.position.set(x, floor + 0.175, z - 2);
+    var steel = fx.steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(fx.STAND.w, fx.STAND.h, fx.STAND.d), fx.matte(0x3a3f45, 0.5, 0.3));
+    fx.placeFoot(foot, x, z, grips && grips.length ? grips[0].x : x, floor + fx.STAND.h / 2);
     foot.castShadow = foot.receiveShadow = true;
     sub.add(foot, fx.rod(new THREE.Vector3(x, floor, z), new THREE.Vector3(x, top, z), 0.4, steel));
     (grips || []).forEach(function (g) {

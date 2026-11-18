@@ -69,7 +69,7 @@
         if (!place) return;
         Y = kit.up(place.lift);
         if (place.clamp) {
-          fx.stand(sub, cm(54), -4, 0, Y + cm(150), [{ y: Y + cm(120), x: 0, r: cm(13) }]);
+          fx.stand(sub, cm(54), fx.STAND.z, 0, Y + cm(150), [{ y: Y + cm(120), x: 0, r: cm(13) }]);
           return;
         }
         a = cm(place.foot + 10) + 0.4;
@@ -143,7 +143,7 @@
         var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(fx.style.device, 0.5), a + 2, 3, 0);
         sub.add(box, fx.rod(V(a + 1.2, 6, 0), V(a + 1.2, top + 0.8, 0), 0.18, fx.steel()), fx.rod(V(a + 1.2, top + 0.8, 0), V(a - 0.8, top + 0.8, 0), 0.18, fx.steel()),
           fx.rod(V(a - 0.8, top + 0.8, 0), V(a - 0.8, grate + 1, 0), 0.18, fx.steel()));
-        if (p.clamp) fx.stand(sub, -a - 1.3, -4, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
+        if (p.clamp) fx.stand(sub, -a - 1.3, fx.STAND.z, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
       });
       u.screen.position.set(a + 2, 4.3, 2.52);
       u.screen.userData.write(d.ctx.numbers ? L.num(r.temp, 0, d.ctx.lang) + " °C" : "");
@@ -377,7 +377,7 @@
           var hose = new THREE.CatmullRomCurve3([V(cm(p.x), cm(-(p.rim - 4)), 0), V(cm(p.x), y - 0.3, 0), V(cm(p.x) + 0.4, y, 0), V(x0, y, 0)]);
           sub.add(stopper, mesh(new THREE.TubeGeometry(hose, 30, 0.12, 8), fx.matte(0xc0462e, 0.6)));
         }
-        fx.stand(sub, x0 + len / 2, -4, floor, y + 1.2, [{ y: y, x: x0 + len / 2, r: R, across: true }]);
+        fx.stand(sub, x0 + len / 2, fx.STAND.z, floor, y + 1.2, [{ y: y, x: x0 + len / 2, r: R, across: true }]);
       });
       var px = x0 + cm(6 + (BARREL - 14) * value / 100), gas = u.body.getObjectByName("gas");
       u.body.getObjectByName("plunger").position.set(px, y, 0);

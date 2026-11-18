@@ -234,7 +234,7 @@
       var cock = new THREE.Group(), body = new THREE.Mesh(new THREE.CylinderGeometry(cm(3.5), cm(3.5), cm(14), 16).rotateZ(Math.PI / 2), fx.glass());
       var grip = new THREE.Mesh(new THREE.BoxGeometry(cm(4), cm(16), cm(3)), fx.matte(0x2f6fb0, 0.45));
       var stand = new THREE.Group(), m = steel();
-      var foot = new THREE.Mesh(new THREE.BoxGeometry(cm(46), cm(5), 9), fx.matte(0x3a3f45, 0.5, 0.3));
+      var foot = new THREE.Mesh(new THREE.BoxGeometry(fx.STAND.w, fx.STAND.h, fx.STAND.d), fx.matte(0x3a3f45, 0.5, 0.3));
       var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m);
       var arm1 = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m), arm2 = arm1.clone();
       var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
@@ -259,7 +259,7 @@
     },
     update: function (group, d, kit) {
       var u = group.userData, w = d.data, g = S.buretteAt(d.hang), x = cm(g.x), low = cm(-g.low), high = cm(-g.high), tipY = cm(-g.tip);
-      var level = cm(-L.parts.burette.surface(w, d.hang)), open = w.tap > 0, rod = cm(g.rod), Z = -5, t = d.ctx.still ? 0 : d.ctx.t, k, y, p, B = S.burette, floor;
+      var level = cm(-L.parts.burette.surface(w, d.hang)), open = w.tap > 0, rod = cm(g.rod), Z = fx.STAND.z, t = d.ctx.still ? 0 : d.ctx.t, k, y, p, B = S.burette, floor;
       u.glass.scale.y = high + cm(10) - low; u.glass.position.set(x, (low + high + cm(10)) / 2, 0);
       u.tip.scale.y = low - tipY; u.tip.position.set(x, (low + tipY) / 2, 0);
       u.column.visible = u.neck.visible = w.ml > 0.005;
@@ -276,7 +276,7 @@
       // Stativ: Fuß und Stange hinter der Reihe der Geräte, zwei Klemmen nach vorn zur Bürette
       // steht das Gefäß darunter gehoben (Dreifuß, Wasserbad), reicht das Stativ trotzdem bis auf den Tisch
       floor = -kit.up(d.lift);
-      u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
+      fx.placeFoot(u.foot, rod, Z, x, floor + fx.STAND.h / 2);
       u.rod.scale.y = cm(-(g.high + 24)) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
       [[u.arm1, cm(-(g.high + 60)), u.boss1, u.jaw1], [u.arm2, cm(-(g.low - 30)), u.boss2, u.jaw2]].forEach(function (a) {
         var dx = x - rod, len = Math.sqrt(dx * dx + Z * Z);
@@ -328,7 +328,7 @@
       var stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(2), cm(1), 1, 12, 1, true), fx.glass());
       var cock = new THREE.Group(), barrel = new THREE.Mesh(new THREE.CylinderGeometry(cm(3.5), cm(3.5), cm(14), 16).rotateZ(Math.PI / 2), fx.glass());
       var grip = new THREE.Mesh(new THREE.BoxGeometry(cm(4), cm(16), cm(3)), fx.matte(0x2f6fb0, 0.45));
-      var foot = new THREE.Mesh(new THREE.BoxGeometry(cm(46), cm(5), 9), fx.matte(0x3a3f45, 0.5, 0.3));
+      var foot = new THREE.Mesh(new THREE.BoxGeometry(fx.STAND.w, fx.STAND.h, fx.STAND.d), fx.matte(0x3a3f45, 0.5, 0.3));
       var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), ring = new THREE.Mesh(new THREE.TorusGeometry(1, 0.06, 8, 32).rotateX(Math.PI / 2), m);
       var arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
       var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
@@ -340,7 +340,7 @@
       return group;
     },
     update: function (group, d, kit) {
-      var u = group.userData, w = d.data, g = S.separatorAt(d.hang), P = S.separator, x = cm(g.x), floor = cm(-g.bottom), rim = cm(-g.top), Z = -5;
+      var u = group.userData, w = d.data, g = S.separatorAt(d.hang), P = S.separator, x = cm(g.x), floor = cm(-g.bottom), rim = cm(-g.top), Z = fx.STAND.z;
       var neck = cm(P.neck), wide = cm(P.wide), shape = { id: "separator" + floor.toFixed(2), floor: floor, rim: rim, steps: 12,
         inner: function (y) { return neck + (wide - neck) * Math.max(0, Math.min(1, (y - floor) / (rim - floor))); } };
       var level = cm(-L.parts.separator.surface(w, d.hang)), lower = w.oil ? (w.oil.top ? w.ml - w.oil.ml : w.oil.ml) : 0, open = w.tap > 0, tip = cm(-g.tip), y, t = d.ctx.still ? 0 : d.ctx.t;
@@ -362,7 +362,7 @@
       u.grip.position.set(cm(10), 0, 0);
       // Stativ mit Ring um den Trichter
       var base = -kit.up(d.lift), rodX = cm(g.rod), ringY = rim - (rim - floor) * 0.35, dx = x - rodX, len;
-      u.foot.position.set(rodX + cm(13), base + cm(2.5), Z);
+      fx.placeFoot(u.foot, rodX, Z, x, base + fx.STAND.h / 2);
       u.rod.scale.y = rim + 1 - base; u.rod.position.set(rodX, base + u.rod.scale.y / 2, Z);
       u.ring.scale.setScalar(wide * 0.75 + 0.1); u.ring.position.set(x, ringY, 0);
       len = Math.sqrt(dx * dx + Z * Z);
@@ -382,30 +382,39 @@
   // Kegel mit der Spitze unten im Ursprung, Höhe 1 und oberer Radius r: so lassen sich Papier, Füllung und Rückstand gleich skalieren
   function cone(r, open) { return new THREE.CylinderGeometry(r, 0.002, 1, 32, 1, !!open).translate(0, 0.5, 0); }
 
+  var RING = 0.66;                // Höhe des Trichterrings als Anteil der Kegelhöhe
+
   L.registerLook("funnel", "lab", {
     build: function (kit, d) {
       var group = new THREE.Group(), U = S.funnel, H = cm(U.h), R = cm(U.a);
       var glass = new THREE.Mesh(cone(R, true), fx.glass()), stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(2.5), 1, 12, 1, true), fx.glass());
-      var paper = new THREE.Mesh(cone(R * 0.92, true), fx.matte(0xfbfbf6, 0.95));
+      // das Filterpapier endet knapp unter dem Glasrand (sonst sieht man vom Trichter nur Papier); der Rand des Glases ist ein dünner Wulst
+      var paper = new THREE.Mesh(cone(R * 0.97, true), fx.matte(0xfbfbf6, 0.95));
+      var lip = new THREE.Mesh(new THREE.TorusGeometry(R, 0.05, 8, 40).rotateX(Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0xd5dee6, roughness: 0.1, transparent: true, opacity: 0.8 }));
       var liquid = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transmission: 1, thickness: 0.5, ior: 1.33, attenuationColor: new THREE.Color(0xffffff), attenuationDistance: 2 });
       var fill = new THREE.Mesh(cone(R * 0.9), liquid), rest = new THREE.Mesh(cone(R * 0.9), fx.matte(0x888888, 0.9));
-      var m = steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(cm(46), cm(5), 9), fx.matte(0x3a3f45, 0.5, 0.3));
+      var m = steel(), foot = new THREE.Mesh(new THREE.BoxGeometry(fx.STAND.w, fx.STAND.h, fx.STAND.d), fx.matte(0x3a3f45, 0.5, 0.3));
       var rod = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 1, 12), m), arm = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1, 8).rotateZ(Math.PI / 2), m);
-      var ring = new THREE.Mesh(new THREE.TorusGeometry(R + 0.12, 0.08, 8, 32).rotateX(Math.PI / 2), m);
+      // der Trichterring trägt den Kegel dort, wo dessen Außenseite so weit ist wie der Ring (bei zwei Dritteln der Höhe)
+      var ring = new THREE.Mesh(new THREE.TorusGeometry(R * RING + 0.1, 0.08, 8, 32).rotateX(Math.PI / 2), m);
       var drops = new THREE.InstancedMesh(new THREE.SphereGeometry(cm(1.6), 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }), 3);
       drops.frustumCulled = false;                             // count wechselt: nah herangezoomt fehlten sonst die Tropfen
       var tag = kit.label(0.75);
       paper.material.side = THREE.DoubleSide;
       glass.renderOrder = stem.renderOrder = 2;
       [foot, rod, arm, ring].forEach(function (o) { o.castShadow = true; });
-      glass.scale.y = paper.scale.y = H;
+      glass.scale.y = H;
+      paper.scale.set(0.86, 0.86 * H, 0.86);
+      lip.position.y = 1;                                    // oben am Kegel: das Glas ist in der Höhe auf H gestreckt
+      glass.add(lip);
+      lip.scale.y = 1 / H;                                   // der Wulst hängt am Glas, das in der Höhe gestreckt ist
       group.add(paper, fill, rest, glass, stem, foot, rod, arm, ring, drops, tag);
       group.userData = { body: glass, glass: glass, stem: stem, fill: fill, rest: rest, paper: paper, liquid: liquid, foot: foot, rod: rod, arm: arm, ring: ring, drops: drops, tag: tag };
       return group;
     },
     update: function (group, d, kit) {
       var u = group.userData, w = d.data, U = S.funnel, g = S.funnelAt(d.hang), x = cm(g.x), apex = cm(-g.apex), top = cm(-g.top), tipY = cm(-g.tip), H = cm(U.h);
-      var level = cm(-L.parts.funnel.surface(w, d.hang)), rod = cm(g.rod), Z = -5, t = d.ctx.still ? 0 : d.ctx.t, floor = -kit.up(d.lift), k, p, y, sed = w.sediment, h;
+      var level = cm(-L.parts.funnel.surface(w, d.hang)), rod = cm(g.rod), Z = fx.STAND.z, t = d.ctx.still ? 0 : d.ctx.t, floor = -kit.up(d.lift), k, p, y, sed = w.sediment, h;
       u.glass.position.set(x, apex, 0); u.paper.position.set(x, apex + 0.04, 0);
       u.stem.scale.y = apex - tipY; u.stem.position.set(x, (apex + tipY) / 2, 0);
       u.fill.visible = w.ml > 0.005;
@@ -424,13 +433,13 @@
       // das Papier nimmt die Farbe des Rückstands an
       u.paper.material.color.copy(fx.color(u.rest.visible ? sed.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.55); }) : [251, 251, 246]));
       // Stativ hinter der Reihe der Geräte, ein Ring hält den Trichter
-      u.foot.position.set(rod + cm(13), floor + cm(2.5), Z);
+      fx.placeFoot(u.foot, rod, Z, x, floor + fx.STAND.h / 2);
       u.rod.scale.y = top + cm(16) - floor; u.rod.position.set(rod, floor + u.rod.scale.y / 2, Z);
-      u.ring.position.set(x, top - cm(8), 0);
+      u.ring.position.set(x, apex + RING * H, 0);
       // der Arm endet am Ring, nicht in der Mitte des Trichters
-      var R = cm(U.a) + 0.12, ex = x + R * (rod - x) / Math.sqrt((rod - x) * (rod - x) + Z * Z), ez = R * Z / Math.sqrt((rod - x) * (rod - x) + Z * Z);
+      var R = cm(U.a) * RING + 0.1, ex = x + R * (rod - x) / Math.sqrt((rod - x) * (rod - x) + Z * Z), ez = R * Z / Math.sqrt((rod - x) * (rod - x) + Z * Z);
       var dx = ex - rod, dz = ez - Z, len = Math.sqrt(dx * dx + dz * dz);
-      u.arm.scale.set(len, 1, 1); u.arm.position.set((ex + rod) / 2, top - cm(8), (ez + Z) / 2); u.arm.rotation.y = Math.atan2(-dz, dx);
+      u.arm.scale.set(len, 1, 1); u.arm.position.set((ex + rod) / 2, apex + RING * H, (ez + Z) / 2); u.arm.rotation.y = Math.atan2(-dz, dx);
       // das Filtrat tropft ins Gefäß darunter
       y = d.hang ? cm(-g.surface) : 0;
       u.drops.count = w.ml > 0.001 && d.hang && !w.blocked ? 3 : 0;
