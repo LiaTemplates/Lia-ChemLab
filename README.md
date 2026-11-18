@@ -1583,6 +1583,40 @@ Im Kationentrennungsgang fällt man die Metall-Ionen einer unbekannten Lösung g
  "show":{"charts":false}}
 ```
 
+## Trennungsgang: unbekannte Probe
+
+@[ChemLab.pack](packs/ionen.json)
+
+In der Probe X sind drei Kationen. Welche, wird beim Laden gezogen. Bestimme sie mit dem Trennungsgang: Fälle Gruppe für Gruppe, lass den Niederschlag absetzen (oder zentrifugiere ihn), gieße die Lösung in ein frisches Becherglas ab und wasche den Niederschlag mit etwas Wasser. Dann prüfe jeden Niederschlag mit seinen Nachweisen.
+
+| Gruppe | Fällen mit | Untertrennung und Nachweise |
+|---|---|---|
+| Salzsäure | Salzsäure 2 mol/L | Bleichlorid löst sich in heißem Wasser, mit Kaliumchromat gelbes Bleichromat; Silberchlorid löst sich in Ammoniak und fällt mit Salpetersäure wieder |
+| Schwefelwasserstoff | Schwefelwasserstoffwasser in salzsaurer Lösung | gelbes Ammoniumpolysulfid löst Zinn und Antimon (mit Säure wieder gelb und orange); den Rest in heißer Salpetersäure lösen: Blei mit Schwefelsäure weiß, Bismut mit Ammoniak weiß und mit Stannit schwarz, Kupfer mit Ammoniak tiefblau, Cadmium nach Eisenpulver mit Schwefelwasserstoff gelb |
+| Ammoniumsulfid | Ammoniumchlorid, Ammoniak, Ammoniumsulfid | in verdünnter Salzsäure bleiben Nickel- und Cobaltsulfid; mit etwas Wasserstoffperoxid lösen: Nickel rot mit Diacetyldioxim, Cobalt blau mit Thiocyanat. Die Lösung mit Natronlauge und Wasserstoffperoxid: Eisen (mit Thiocyanat rot) und Mangan (mit Bleidioxid in heißer Salpetersäure violett) fallen; Chromat gelb (mit Bariumchlorid), Aluminium (mit Ammoniumchlorid weiß), Zink (mit Ammoniumsulfid weiß) bleiben gelöst |
+| Ammoniumcarbonat | Ammoniumcarbonat | Barium mit Kaliumchromat gelb, Strontium mit Schwefelsäure weiß, Calcium mit Ammoniumoxalat weiß; dazu die Flammenfärbung |
+| lösliche Gruppe | – | Magnesium mit Natronlauge weiß; Natrium und Kalium in der Flamme |
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"id":"probe","unknown":"X","oneOf":[
+    {"name":"Silber, Kupfer, Nickel","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"CuSO4 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2}]},
+    {"name":"Blei, Bismut, Kalium","contains":[{"reagent":"Pb(NO3)2 0.1M","ml":2},{"reagent":"Bi(NO3)3 0.1M","ml":2},{"reagent":"KNO3 0.1M","ml":2}]},
+    {"name":"Cadmium, Cobalt, Magnesium","contains":[{"reagent":"CdSO4 0.1M","ml":2},{"reagent":"CoCl2 0.1M","ml":2},{"reagent":"MgCl2 0.1M","ml":2}]},
+    {"name":"Kupfer, Eisen, Barium","contains":[{"reagent":"CuCl2 0.1M","ml":2},{"reagent":"FeCl3 0.1M","ml":2},{"reagent":"BaCl2 0.1M","ml":2}]},
+    {"name":"Zinn, Mangan, Calcium","contains":[{"reagent":"SnCl2 0.1M","ml":2},{"reagent":"MnCl2 0.1M","ml":2},{"reagent":"CaCl2 0.1M","ml":2}]},
+    {"name":"Silber, Nickel, Zink","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"ZnSO4 0.1M","ml":2}]}]},
+  {"type":"beaker","ml":250,"id":"a"},
+  {"type":"beaker","ml":250,"id":"b"},
+  {"type":"beaker","ml":250,"id":"c"},
+  {"type":"testtube","id":"t1"},
+  {"type":"testtube","id":"t2"}
+ ],
+ "shelf":["HCl 2M","H2S water","NH4Cl 1M","NH3 2M","(NH4)2S","(NH4)2Sx","(NH4)2CO3","HNO3 3M","HNO3 12M","H2SO4 1M","NaOH 2M","H2O2 1M","K2CrO4 0.1M","KSCN 2M","BaCl2 0.1M","dimethylglyoxime","(NH4)2C2O4","SnCl2 0.1M","Fe powder","PbO2 powder","H2O","rod","beaker","testtube","bath","centrifuge"],
+ "task":{"text":"Bestimme die drei Kationen in Probe X.","goals":[{"identify":"X"}]},
+ "show":{"charts":false}}
+```
+
 ## 3D-Ansicht
 
 Der Knopf **3D** neben „Ton“ zeigt die Arbeitsfläche räumlich; noch einmal antippen schaltet zurück. Der Versuch läuft dabei weiter. In 3D dreht Ziehen die Ansicht, das Mausrad oder zwei Finger zoomen, Antippen wirkt wie in 2D. Mit der Tab-Taste kommt man von Gerät zu Gerät, Enter tippt es an.

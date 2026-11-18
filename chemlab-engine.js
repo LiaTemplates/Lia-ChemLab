@@ -2064,9 +2064,8 @@
         // Niederschlag wandelt sich ganz in einen viel schwerer löslichen um (Silberchromat in Silbersulfid). Versucht wird,
         // frühere wegzulassen; sie lösen sich dann ganz.
         // Erst einer, dann zwei zugleich (Silberoxid wandelt Zink- und Bismutsulfid in Silbersulfid um), die kleinsten zuerst.
-        order = before.map(function (q, i) { return { q: [q], s: state ? state.s[i] : 0 }; });
-        order.slice().forEach(function (a, i) { order.slice(i + 1).forEach(function (b) { if (b.q.length === 1) order.push({ q: a.q.concat(b.q), s: 1e6 + a.s + b.s }); }); });
-        order.sort(function (a, b) { return a.s - b.s; });
+        order = before.map(function (q, i) { return { q: [q], s: state ? state.s[i] : 0 }; }).sort(function (a, b) { return a.s - b.s; });
+        order.slice(0, 4).forEach(function (a, i, small) { small.slice(i + 1).forEach(function (b) { order.push({ q: a.q.concat(b.q), s: 1e6 + a.s + b.s }); }); });      // Paare nur aus den vier kleinsten
         // gilt nur, wenn danach keiner eine negative Menge hätte; sonst der erste, der sich überhaupt rechnen ließ
         var joined = active.slice(before.length), first = null, keep = null;
         for (t = 0; t < order.length; t++) {

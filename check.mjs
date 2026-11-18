@@ -8825,17 +8825,17 @@ test("@ChemLab.pack: ein Paket wird geladen; Flächen warten, solange es lädt",
 });
 
 test("packs: eine Fläche lädt ihre Pakete selbst, bevor sie den Aufbau liest", async () => {
-  const url = "https://example.org/packs/bismuth.json", saved = globalThis.fetch;
-  const bismuth = { species: { "Bi(s)": { name: { de: "Bismut", en: "bismuth" }, Hf: 0, S: 56.74, src: "Test" } },
-    reagents: { "Bi granules": { name: { de: "Bismut (Körner)", en: "bismuth granules" }, solid: "Bi(s)", area: 6 } } };
-  globalThis.fetch = fakeFetch({ [url]: bismuth });
+  const url = "https://example.org/packs/tungsten.json", saved = globalThis.fetch;
+  const tungsten = { species: { "W(s)": { name: { de: "Wolfram (Beispiel)", en: "tungsten (example)" }, Hf: 0, S: 32.6, src: "Test" } },
+    reagents: { "W granules": { name: { de: "Wolfram (Körner)", en: "tungsten granules" }, solid: "W(s)", area: 6 } } };
+  globalThis.fetch = fakeFetch({ [url]: tungsten });
   try {
-    const source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "Bi granules", g: 1 }] }] };
+    const source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "W granules", g: 1 }] }] };
     const el = mount(source);
     assert.match(el.innerHTML, /Pakete werden geladen/);
     await settleAll();
     assert.doesNotMatch(el.innerHTML, /role="alert"/);
-    assert.ok(L.vessel(state(el).run.lab, "b").n["Bi(s)"] > 0, "der Aufbau steht, mit dem Stoff aus dem Paket");
+    assert.ok(L.vessel(state(el).run.lab, "b").n["W(s)"] > 0, "der Aufbau steht, mit dem Stoff aus dem Paket");
     assert.deepEqual(state(el).config.packs, [url]);
     const missing = mount({ packs: ["https://example.org/nichts.json"] });
     await settleAll();
@@ -10563,4 +10563,125 @@ test("Trennungsgang: Bleichlorid löst sich in heißem Wasser", () => {
   L.step(l, 300);
   assert.ok(cold > 1e-4, "kalt fällt Bleichlorid");
   assert.ok(amount(l, "PbCl2(s)") < 0.3 * cold, "heiß löst es sich");
+});
+
+// ---------------------------------------------------------------- Trennungsgang: Untertrennungen und Nachweise
+
+// Niederschlag absetzen lassen, Lösung bis auf 1 mL abgießen, mit Wasser waschen und wieder abgießen (Dekantieren)
+const decant = (l, from, to) => {
+  for (let k = 0; k < 2; k++) {
+    L.step(l, 200);
+    assert.ok(L.pour(l, from, to, L.view(l, L.vessel(l, from)).ml - 1), "abgießen");
+    L.step(l, 30);
+    if (!k) L.add(l, from, "H2O", { ml: 30 });
+  }
+};
+const full = 2e-4;
+
+test("Trennungsgang, Kupfergruppe: die gewaschenen Sulfide lösen sich in heißer Salpetersäure, kalt kaum", () => {
+  L.register(ionen());
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: ["CuSO4 0.1M", "Pb(NO3)2 0.1M", "Bi(NO3)3 0.1M", "CdSO4 0.1M"].map((reagent) => ({ reagent, ml: 2 })).concat([{ reagent: "HCl 2M", ml: 5 }]) },
+    { type: "beaker", ml: 600, id: "w" }, { type: "bath", id: "wb", under: "b", temp: 25 }], { room: 25 });
+  L.add(l, "b", "H2S water", { ml: 30 });
+  decant(l, "b", "w");
+  assert.ok(amount(l, "H2S(aq)") < 1e-5, "gewaschen: kaum noch Schwefelwasserstoff");
+  L.add(l, "b", "HNO3 3M", { ml: 10 });
+  L.step(l, 120);
+  assert.ok(amount(l, "CuS(s)") > 0.9 * full, "kalt löst sich in zwei Minuten kaum etwas");
+  L.tool(l, "wb").temp = 90;
+  L.step(l, 180);
+  for (const id of ["CuS(s)", "PbS(s)", "Bi2S3(s)", "CdS(s)"]) assert.ok(amount(l, id) < 0.05 * full, id + " hat sich gelöst");
+  assert.ok(amount(l, "S(s)") > 2 * full, "Schwefel bleibt zurück");
+  assert.ok(gasOf(l, "NO(g)") + gasOf(l, "NO2(g)") > 0, "Stickstoffoxide entweichen");
+});
+
+test("Trennungsgang, Nachweise der Kupfergruppe: Blei als Sulfat und Chromat, Bismut mit Stannit schwarz, Cadmium gelb nach dem Zementieren des Kupfers", () => {
+  L.register(ionen());
+  let g = precipitate(["Pb(NO3)2 0.1M"], null, [["H2SO4 1M", { ml: 2 }]], 30);
+  assert.ok(g.out["PbSO4(s)"] > 0.9 * full, "weißes Bleisulfat");
+  g = precipitate(["Pb(NO3)2 0.1M"], null, [["K2CrO4 0.1M", { ml: 3 }]], 30);
+  assert.ok(g.out["PbCrO4(s)"] > 0.99 * full, "gelbes Bleichromat");
+  g = precipitate(["Bi(NO3)3 0.1M"], null, [["NH3 2M", { ml: 5 }]], 10);
+  assert.ok(g.out["Bi(OH)3(s)"] > 0.99 * full, "weißes Bismuthydroxid mit Ammoniak");
+  L.add(g.l, "b", "SnCl2 0.1M", { ml: 4 });
+  L.add(g.l, "b", "NaOH 2M", { ml: 5 });
+  L.step(g.l, 5);
+  assert.ok(amount(g.l, "Bi(s)") > 0.95 * full, "Stannit reduziert zu schwarzem Bismut");
+  assert.equal(L.species("Bi(s)").color, "#141414");
+  // Kupfer und Cadmium: Eisenpulver scheidet das Kupfer ab, Schwefelwasserstoff fällt dann nur Cadmium, gelb
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 2 }, { reagent: "CdSO4 0.1M", ml: 2 }, { reagent: "H2SO4 1M", ml: 1 }] }], { room: 25 });
+  L.add(l, "b", "Fe powder", { g: 0.5 });
+  L.step(l, 300);
+  assert.ok(amount(l, "Cu^2+(aq)") + amount(l, "CuSO4(aq)") < 1e-6, "das Kupfer ist abgeschieden");
+  assert.ok(amount(l, "Cd^2+(aq)") > 0.9 * full, "Cadmium bleibt gelöst");
+  L.add(l, "b", "H2S water", { ml: 20 });
+  L.step(l, 30);
+  assert.ok(amount(l, "CdS(s)") > 0.9 * full && !(amount(l, "CuS(s)") > 1e-6), "nur gelbes Cadmiumsulfid");
+});
+
+test("Trennungsgang, Zinngruppe: gelbes Ammoniumpolysulfid löst Zinn- und Antimonsulfid, nicht Kupfersulfid; Säure fällt sie wieder", () => {
+  L.register(ionen());
+  const g = precipitate(["SnCl2 0.1M", "SbCl3 0.1M", "CuSO4 0.1M"], null, [["H2S water", { ml: 20 }]], 60);
+  L.add(g.l, "b", "NaOH 2M", { ml: 5 });
+  L.add(g.l, "b", "(NH4)2Sx", { ml: 10 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "SnS(s)") < 0.02 * full && amount(g.l, "Sb2S3(s)") < 0.01 * full, "Zinn und Antimon gelöst");
+  assert.ok(amount(g.l, "CuS(s)") > 0.99 * full, "Kupfersulfid bleibt");
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "SnS2(s)") > 0.95 * full, "gelbes Zinn(IV)-sulfid");
+  assert.ok(amount(g.l, "Sb2S3(s)") > 0.95 * full / 2, "orangefarbenes Antimonsulfid");
+  assert.ok(!(amount(g.l, "S2^2-(aq)") > 1e-9), "das Polysulfid zerfällt in der Säure");
+});
+
+test("Trennungsgang, Nickel und Cobalt: der schwarze Rest löst sich mit Wasserstoffperoxid; Nickel rot mit Diacetyldioxim, Cobalt blau mit Thiocyanat", () => {
+  L.register(ionen());
+  const g = precipitate(["NiSO4 0.1M", "CoCl2 0.1M"], [{ reagent: "NH4Cl 1M", ml: 5 }, { reagent: "NH3 2M", ml: 5 }], [["(NH4)2S", { ml: 5 }]], 60);
+  assert.ok(g.out["NiS(s)"] > 0.95 * full && g.out["CoS(s)"] > 0.95 * full, "beide als schwarze Sulfide");
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 30);
+  assert.ok(amount(g.l, "NiS(s)") > 0.95 * full && amount(g.l, "CoS(s)") > 0.95 * full, "in Salzsäure bleiben sie");
+  L.add(g.l, "b", "H2O2 1M", { ml: 5 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "NiS(s)") < 0.02 * full && amount(g.l, "CoS(s)") < 0.02 * full, "mit Wasserstoffperoxid gelöst");
+  const ni = precipitate(["NiSO4 0.1M"], null, [["NH3 2M", { ml: 5 }], ["dimethylglyoxime", { drops: 20 }]], 5);
+  assert.ok(ni.out["Ni(C4H7N2O2)2(s)"] > 0, "rot mit Diacetyldioxim");
+  const co = lab([{ type: "testtube", id: "b", contains: [{ reagent: "CoCl2 0.1M", ml: 1 }] }], { room: 25 });
+  L.add(co, "b", "KSCN 2M", { ml: 5 });
+  L.step(co, 3);
+  assert.equal(look(co).color.name, "blue", "blau mit Thiocyanat");
+});
+
+test("Trennungsgang, Eisen, Mangan, Chrom, Aluminium, Zink: Natronlauge mit Wasserstoffperoxid trennt; jedes Ion für sich nachgewiesen", () => {
+  L.register(ionen());
+  const g = precipitate(["FeCl3 0.1M", "MnCl2 0.1M", "KCr(SO4)2 0.1M", "AlCl3 0.1M", "ZnSO4 0.1M"], null, [["NaOH 2M", { ml: 10 }], ["H2O2 1M", { ml: 5 }]], 180);
+  assert.ok(g.out["Fe(OH)3(s)"] > 0.99 * full && g.out["MnO2(s)"] > 0.99 * full, "Eisenhydroxid und Braunstein fallen");
+  assert.ok(amount(g.l, "CrO4^2-(aq)") > 0.85 * full, "Chrom als gelbes Chromat gelöst");
+  assert.ok(amount(g.l, "Al(OH)4-(aq)") > 0.95 * full, "Aluminium als Aluminat gelöst");
+  assert.ok(amount(g.l, "Zn(OH)4^2-(aq)") + amount(g.l, "Zn(OH)3-(aq)") > 0.9 * full, "Zink als Zinkat gelöst");
+  assert.equal(look(g.l).color.name, "yellow");
+  // Mangan: mit Bleidioxid in konzentrierter Salpetersäure heiß violett, kalt nicht
+  const crum = (temp) => {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "MnCl2 0.1M", ml: 0.5 }, { reagent: "HNO3 12M", ml: 5 }] }, { type: "bath", under: "b", temp }], { room: 25 });
+    L.add(l, "b", "PbO2 powder", { g: 0.5 });
+    L.step(l, 60);
+    return amount(l, "MnO4-(aq)");
+  };
+  assert.ok(crum(95) > 0.7 * 5e-5, "heiß: Permanganat");
+  assert.ok(crum(25) < 0.05 * 5e-5, "kalt: nichts");
+  // Aluminium: Ammoniumchlorid fällt aus dem Aluminat das Hydroxid
+  const al = precipitate(["AlCl3 0.1M"], [{ reagent: "NaOH 2M", ml: 2 }], [["NH4Cl 2M", { ml: 5 }]], 30);
+  assert.ok(al.out["Al(OH)3(s)"] > 0.9 * full, "weißes Aluminiumhydroxid");
+  // Chrom: Bariumchlorid fällt gelbes Bariumchromat
+  const cr = precipitate(["K2CrO4 0.1M"], null, [["BaCl2 0.1M", { ml: 3 }]], 30);
+  assert.ok(cr.out["BaCrO4(s)"] > 0.99 * full, "gelbes Bariumchromat");
+  // Zink: aus dem Zinkat fällt Ammoniumsulfid weißes Zinksulfid
+  const zn = precipitate(["ZnSO4 0.1M"], [{ reagent: "NaOH 2M", ml: 3 }], [["(NH4)2S", { ml: 2 }]], 30);
+  assert.ok(zn.out["ZnS(s)"] > 0.99 * full, "weißes Zinksulfid");
+});
+
+test("Trennungsgang, Calcium: Ammoniumoxalat fällt weißes Calciumoxalat, auch in essigsaurer Lösung", () => {
+  L.register(ionen());
+  const g = precipitate(["CaCl2 0.1M"], [{ reagent: "CH3COOH 1M", ml: 2 }], [["(NH4)2C2O4", { ml: 5 }]], 30);
+  assert.ok(g.out["CaC2O4(s)"] > 0.99 * full, "Calciumoxalat");
 });

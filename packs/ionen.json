@@ -1,5 +1,5 @@
 {
-  "about": "Ionen: Vanadium und seine Oxidationsstufen, Nickel, Aluminium, Cadmium, Zinn, Antimon, Bismut und die Sulfide für den Trennungsgang",
+  "about": "Ionen: Vanadium, Nickel, Aluminium, Cadmium, Zinn, Antimon, Bismut und der vollständige Kationentrennungsgang mit Untertrennungen und Nachweisen",
   "species": {
     "VO2+(aq)": {
       "name": {
@@ -430,6 +430,124 @@
       "color": "#f4f4f1",
       "settle": 20,
       "src": "colour of the solid from its usual appearance (white needles)"
+    },
+    "PbCrO4(s)": {
+      "name": {
+        "de": "Blei(II)-chromat",
+        "en": "lead(II) chromate"
+      },
+      "Hf": null,
+      "color": "#f2c100",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (chrome yellow)"
+    },
+    "Sn(OH)3-(aq)": {
+      "name": {
+        "de": "Stannit-Ion (Trihydroxidostannat(II))",
+        "en": "stannite ion (trihydroxidostannate(II))"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Sn(OH)6^2-(aq)": {
+      "name": {
+        "de": "Hexahydroxidostannat(IV)-Ion",
+        "en": "hexahydroxidostannate(IV) ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Bi(s)": {
+      "name": {
+        "de": "Bismut",
+        "en": "bismuth"
+      },
+      "Hf": 0,
+      "color": "#141414",
+      "settle": 30,
+      "src": "colour of the solid from its usual appearance (finely divided: black)"
+    },
+    "S2^2-(aq)": {
+      "name": {
+        "de": "Disulfid-Ion (Polysulfid)",
+        "en": "disulfide ion (polysulfide)"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          380,
+          90,
+          600
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption band estimated from the usual colour of yellow ammonium polysulfide"
+    },
+    "SnS3^2-(aq)": {
+      "name": {
+        "de": "Thiostannat-Ion",
+        "en": "thiostannate ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "SbS3^3-(aq)": {
+      "name": {
+        "de": "Thioantimonit-Ion",
+        "en": "thioantimonite ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "SnS2(s)": {
+      "name": {
+        "de": "Zinn(IV)-sulfid",
+        "en": "tin(IV) sulfide"
+      },
+      "Hf": null,
+      "color": "#e6c22a",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (yellow)"
+    },
+    "Co(SCN)4^2-(aq)": {
+      "name": {
+        "de": "Tetrathiocyanatocobaltat(II)-Ion",
+        "en": "tetrathiocyanatocobaltate(II) ion"
+      },
+      "Hf": null,
+      "bands": [
+        [
+          620,
+          90,
+          1800
+        ]
+      ],
+      "src": "no enthalpy of formation entered; absorption band estimated (blue, around 620 nm)"
+    },
+    "C2O4^2-(aq)": {
+      "name": {
+        "de": "Oxalat-Ion",
+        "en": "oxalate ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "HC2O4-(aq)": {
+      "name": {
+        "de": "Hydrogenoxalat-Ion",
+        "en": "hydrogen oxalate ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "CaC2O4(s)": {
+      "name": {
+        "de": "Calciumoxalat",
+        "en": "calcium oxalate"
+      },
+      "Hf": null,
+      "color": "#f4f4f0",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (white, fine crystals)"
     }
   },
   "couples": [
@@ -738,6 +856,83 @@
         "Cl-(aq)": 0.2
       },
       "group": "salt"
+    },
+    "(NH4)2Sx": {
+      "ghs": {
+        "fixed": [
+          "GHS05",
+          "GHS06",
+          "GHS09"
+        ],
+        "src": "yellow ammonium polysulfide solution as labelled by suppliers (like ammonium sulfide solution)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Ammoniumpolysulfid-Lösung (gelb)",
+        "en": "ammonium polysulfide solution (yellow)"
+      },
+      "solution": {
+        "NH4+(aq)": 1,
+        "HS-(aq)": 0.5,
+        "S2^2-(aq)": 0.25,
+        "NH3(aq)": 0.5
+      },
+      "group": "other"
+    },
+    "(NH4)2C2O4": {
+      "ghs": {
+        "fixed": [
+          "GHS07"
+        ],
+        "src": "ammonium oxalate, CLP Annex VI 607-007-00-3 (Acute Tox. 4 oral and dermal)",
+        "signal": "warning"
+      },
+      "name": {
+        "de": "Ammoniumoxalat-Lösung (0,25 mol/L)",
+        "en": "ammonium oxalate solution (0.25 mol/L)"
+      },
+      "solution": {
+        "NH4+(aq)": 0.5,
+        "C2O4^2-(aq)": 0.25
+      },
+      "group": "salt"
+    },
+    "PbO2 powder": {
+      "ghs": {
+        "fixed": [
+          "GHS03",
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ],
+        "src": "lead dioxide, CLP Annex VI 082-001-00-6 group entry (Repr. 1A, STOT RE 1, Aquatic 1) and Ox. Sol. 1 as labelled by suppliers",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Bleidioxid (Pulver)",
+        "en": "lead dioxide powder"
+      },
+      "solid": "PbO2(s)",
+      "area": 300,
+      "form": "powder",
+      "group": "solid"
+    },
+    "Fe powder": {
+      "ghs": {
+        "fixed": [
+          "GHS02"
+        ],
+        "src": "iron powder: Flam. Sol. 1 as labelled by suppliers",
+        "signal": "warning"
+      },
+      "name": {
+        "de": "Eisenpulver",
+        "en": "iron powder"
+      },
+      "solid": "Fe(s)",
+      "area": 300,
+      "form": "powder",
+      "group": "solid"
     }
   },
   "reactions": [
@@ -797,6 +992,159 @@
         }
       },
       "src": "estimated: nickel and cobalt sulfide form slowly; with the little HS- of acidic solution they hardly form, from ammonium sulfide solution at once (free cobalt ion). Once formed they do not dissolve again in dilute hydrochloric acid (aged precipitate), so they stand in no solubility equilibrium"
+    },
+    {
+      "eq": "3 CuS(s) + 8 H+(aq) + 2 NO3-(aq) -> 3 Cu^2+(aq) + 3 S(s) + 2 NO(g) + 4 H2O(l)",
+      "rate": {
+        "k": 3e-07,
+        "Ea": 80,
+        "order": {
+          "H+(aq)": 1,
+          "NO3-(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: the sulfide dissolves in hot dilute nitric acid within a minute or two, cold only slowly; sulfur stays behind"
+    },
+    {
+      "eq": "3 PbS(s) + 8 H+(aq) + 2 NO3-(aq) -> 3 Pb^2+(aq) + 3 S(s) + 2 NO(g) + 4 H2O(l)",
+      "rate": {
+        "k": 3e-07,
+        "Ea": 80,
+        "order": {
+          "H+(aq)": 1,
+          "NO3-(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: the sulfide dissolves in hot dilute nitric acid within a minute or two, cold only slowly; sulfur stays behind"
+    },
+    {
+      "eq": "Bi2S3(s) + 8 H+(aq) + 2 NO3-(aq) -> 2 Bi^3+(aq) + 3 S(s) + 2 NO(g) + 4 H2O(l)",
+      "rate": {
+        "k": 3e-07,
+        "Ea": 80,
+        "order": {
+          "H+(aq)": 1,
+          "NO3-(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: the sulfide dissolves in hot dilute nitric acid within a minute or two, cold only slowly; sulfur stays behind"
+    },
+    {
+      "eq": "3 CdS(s) + 8 H+(aq) + 2 NO3-(aq) -> 3 Cd^2+(aq) + 3 S(s) + 2 NO(g) + 4 H2O(l)",
+      "rate": {
+        "k": 3e-07,
+        "Ea": 80,
+        "order": {
+          "H+(aq)": 1,
+          "NO3-(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: the sulfide dissolves in hot dilute nitric acid within a minute or two, cold only slowly; sulfur stays behind"
+    },
+    {
+      "eq": "NiS(s) + H2O2(aq) + 2 H+(aq) -> Ni^2+(aq) + S(s) + 2 H2O(l)",
+      "rate": {
+        "k": 0.05,
+        "Ea": 50,
+        "order": {
+          "H2O2(aq)": 1,
+          "H+(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: hydrochloric acid with a little hydrogen peroxide dissolves the black residue within a minute"
+    },
+    {
+      "eq": "CoS(s) + H2O2(aq) + 2 H+(aq) -> Co^2+(aq) + S(s) + 2 H2O(l)",
+      "rate": {
+        "k": 0.05,
+        "Ea": 50,
+        "order": {
+          "H2O2(aq)": 1,
+          "H+(aq)": 1
+        }
+      },
+      "src": "estimated from the usual separation scheme: hydrochloric acid with a little hydrogen peroxide dissolves the black residue within a minute"
+    },
+    {
+      "eq": "2 Bi(OH)3(s) + 3 Sn(OH)3-(aq) + 3 OH-(aq) -> 2 Bi(s) + 3 Sn(OH)6^2-(aq)",
+      "rate": {
+        "fast": true
+      },
+      "src": "textbook: alkaline stannite reduces bismuth hydroxide at once to black bismuth (detection of bismuth)"
+    },
+    {
+      "eq": "2 Cr(OH)4-(aq) + 3 H2O2(aq) + 2 OH-(aq) -> 2 CrO4^2-(aq) + 8 H2O(l)",
+      "rate": {
+        "k": 0.05,
+        "Ea": 50,
+        "order": {
+          "Cr(OH)4-(aq)": 1,
+          "H2O2(aq)": 1
+        }
+      },
+      "src": "estimated: hydrogen peroxide oxidises green chromite to yellow chromate in sodium hydroxide solution within a minute or two"
+    },
+    {
+      "eq": "Mn^2+(aq) + H2O2(aq) + 2 OH-(aq) -> MnO2(s) + 2 H2O(l)",
+      "rate": {
+        "k": 10,
+        "Ea": 40,
+        "order": {
+          "Mn^2+(aq)": 1,
+          "H2O2(aq)": 1,
+          "OH-(aq)": 1
+        }
+      },
+      "src": "estimated: hydrogen peroxide in alkaline solution precipitates manganese at once as brown manganese dioxide"
+    },
+    {
+      "eq": "2 Mn^2+(aq) + 5 PbO2(s) + 4 H+(aq) -> 2 MnO4-(aq) + 5 Pb^2+(aq) + 2 H2O(l)",
+      "rate": {
+        "k": 1e-10,
+        "Ea": 90,
+        "surface": "PbO2(s)",
+        "order": {
+          "Mn^2+(aq)": 1,
+          "H+(aq)": 1
+        }
+      },
+      "src": "estimated from the usual school experiment (Crum's test): boiled with lead dioxide in concentrated nitric acid, manganese turns violet as permanganate; cold nothing happens"
+    },
+    {
+      "eq": "Co(OH)2(s) + HS-(aq) -> CoS(s) + OH-(aq) + H2O(l)",
+      "rate": {
+        "k": 0.05,
+        "Ea": 50,
+        "order": {
+          "HS-(aq)": 1
+        }
+      },
+      "src": "estimated: in ammonium sulfide solution precipitated cobalt hydroxide turns into black cobalt sulfide within half a minute"
+    },
+    {
+      "eq": "S2^2-(aq) + 2 H+(aq) -> S(s) + H2S(aq)",
+      "rate": {
+        "fast": true
+      },
+      "src": "textbook: polysulfide decomposes in acid to sulfur and hydrogen sulfide"
+    },
+    {
+      "eq": "SnS(s) + S2^2-(aq) -> SnS3^2-(aq)",
+      "rate": {
+        "k": 0.05,
+        "order": {
+          "S2^2-(aq)": 1
+        }
+      },
+      "src": "estimated: polysulfide oxidises tin(II) sulfide to thiostannate, which dissolves within a minute; plain ammonium sulfide does not dissolve it"
+    },
+    {
+      "eq": "SnS3^2-(aq) + 2 H+(aq) -> SnS2(s) + H2S(aq)",
+      "rate": {
+        "fast": true
+      },
+      "logK": 12,
+      "src": "estimated: on acidifying, thiostannate gives yellow tin(IV) sulfide at once; in ammoniacal solution it stays dissolved"
     }
   ],
   "equilibria": [
@@ -923,6 +1271,36 @@
       "logK": -4.78,
       "dH": 26.14,
       "src": "minteq.v4.dat (USGS): Cotunnite, log_k -4.78; enthalpy of solution from llnl.dat (26.14 kJ/mol): it dissolves in hot water"
+    },
+    {
+      "eq": "PbCrO4(s) <=> Pb^2+(aq) + CrO4^2-(aq)",
+      "logK": -12.7177,
+      "src": "llnl.dat (USGS): Crocoite, PbCrO4 = CrO4-2 + Pb+2, log_k -12.7177"
+    },
+    {
+      "eq": "Sn^2+(aq) + 3 H2O(l) <=> Sn(OH)3-(aq) + 3 H+(aq)",
+      "logK": -16.591,
+      "src": "minteq.v4.dat (USGS): Sn(OH)2 + H2O = Sn(OH)3- + H+, log_k -9.497, and Sn(OH)2 + 2 H+ = Sn+2 + 2 H2O, log_k 7.094"
+    },
+    {
+      "eq": "Sb(OH)3(aq) + 3 HS-(aq) <=> SbS3^3-(aq) + 3 H2O(l)",
+      "logK": 11.23,
+      "src": "estimated: antimony sulfide dissolves in ammonium sulfide as thioantimonite and precipitates again on acidifying (for the solid: Sb2S3 + 3 HS- = 2 SbS3-3 + 3 H+, log K -28, together with stibnite from minteq.v4.dat)"
+    },
+    {
+      "eq": "Co^2+(aq) + 4 SCN-(aq) <=> Co(SCN)4^2-(aq)",
+      "logK": 3.0,
+      "src": "textbook value (stability constant about 1e3); simplified: in the lab the blue complex is shaken into amyl alcohol or acetone, here it shows in concentrated thiocyanate solution"
+    },
+    {
+      "eq": "HC2O4-(aq) <=> H+(aq) + C2O4^2-(aq)",
+      "logK": -4.27,
+      "src": "textbook value: pKa2 of oxalic acid 4.27 (CRC Handbook)"
+    },
+    {
+      "eq": "CaC2O4(s) <=> Ca^2+(aq) + C2O4^2-(aq)",
+      "logK": -8.64,
+      "src": "textbook value: solubility product of calcium oxalate monohydrate (CRC Handbook)"
     }
   ]
 }
