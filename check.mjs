@@ -11372,6 +11372,22 @@ test("Feld: ein Plätzchen löst sich dort, wo es liegt: am Boden in der Mitte; 
   assert.ok(L.view(l, v).pH > 11, "das Gefäß selbst rechnet durchmischt (und die Tabelle nimmt das Plätzchen nicht vorweg)");
 });
 
+test("Feld: ein Permanganat-Kristall löst sich am Boden, die Farbe steigt mit dem Diffusionskoeffizienten des Ions; am Ende die Farbe des Gefäßes", () => {
+  const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "H2O", ml: 80 }] }], { room: 25 }), v = L.vessel(l, "b");
+  L.step(l, 1);
+  L.add(l, "b", "KMnO4 crystals", { g: 0.05 });
+  L.step(l, 5);
+  let f = L.view(l, v).field;
+  const rgb = (i, j) => f.cells[j * f.nr + i].rgb, tracer = () => v.field.tr["MnO4-(aq)"].reduce((a, b) => a + b, 0);
+  assert.ok(rgb(0, f.nz - 1)[1] < 50, `unten in der Mitte tief violett: ${rgb(0, f.nz - 1)}`);
+  assert.deepEqual(rgb(f.nr - 1, 0), [255, 255, 255], "oben außen noch klar");
+  near(tracer(), amount(l, "MnO4-(aq)"), 1e-15, "Permanganat im Feld wie im Gefäß");
+  assert.ok(v.field.tr["MnO4-(aq)"].every((x) => x >= 0), "nirgends weniger als nichts");
+  L.step(l, 1500);
+  f = L.view(l, v).field;
+  for (const c of f.cells) c.rgb.forEach((q, k) => near(q, look(l).color.rgb[k], 2, "ausgeglichen: die Farbe des Gefäßes"));
+});
+
 test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das Chlorid ankommt; Silber und Chlorid bleiben im Feld", () => {
   const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "AgNO3 0.01M", ml: 80 }] }], { room: 25 }), v = L.vessel(l, "b");
   const sums = () => { const F = v.field, solid = F.solid["AgCl(s)"].reduce((a, b) => a + b, 0); return [F.ion["Ag+(aq)"].reduce((a, b) => a + b, 0) + solid, F.ion["Cl-(aq)"].reduce((a, b) => a + b, 0) + solid]; };

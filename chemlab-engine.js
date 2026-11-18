@@ -4836,6 +4836,11 @@
       return e.solid && !e.rate && Object.keys(e.d).every(function (id) { return e.d[id] > 0 && L.db.species[id].phase === "aq" && strongIon(id); });
     });
   }
+  // Farbige Ionen im Feld (Permanganat, Kristallviolett, Kupfertetrammin …): gefärbt und stark (kein Säure-Base-Gleichgewicht). Sie wandern
+  // je für sich mit ihrem eigenen D; die Farbe einer Zelle rechnet mit ihrer Menge dort (Lambert-Beer), alles andere aus der pH-Tabelle.
+  // shortcut: Reaktionen eines farbigen Ions in der Lösung (Permanganat mit Peroxid) laufen überall im selben Verhältnis, nicht dort, wo es ist
+  function colored(id) { var sp = L.db.species[id]; return sp.phase === "aq" && !!sp.bands && strongIon(id); }
+
   function component(v, id, solids) {       // ein Ion gelöst und in den verfolgten Feststoffen, in mol
     var sum = v.n[id] || 0;
     solids.forEach(function (e) { if (e.d[id]) sum += e.d[id] * (v.n[e.solid] || 0); });
@@ -4899,8 +4904,9 @@
     fresh = !f.n || v.shook > lab.t;
     if (fresh) {                             // gleichmäßig: alles gelöst verteilt, dann fällt in jeder Zelle gleich viel aus
       f.n = Array.prototype.slice.call(L.spatial.spread(G, sid)); f.total = sid;
-      f.ion = {}; f.tot = {}; f.solid = {};
+      f.ion = {}; f.tot = {}; f.solid = {}; f.tr = {}; f.trTot = {};
       for (id in ids) { f.ion[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.tot[id] = component(v, id, solids)))); }
+      for (id in v.n) if (v.n[id] > 0 && colored(id)) f.tr[id] = Array.prototype.slice.call(L.spatial.spread(G, (f.trTot[id] = v.n[id])));
     } else {
       // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen. Ist es schwerer als die
       // Lösung, sinkt es als Fahne bis zum Boden und mischt sich dabei mit ZONE_SINK-mal seinem Volumen, wie bei der Mischwärme (zoneFactor).
@@ -4927,6 +4933,16 @@
         if (!f.ion[id]) { f.ion[id] = new Array(G.n).fill(0); f.tot[id] = 0; }
         put(f.ion[id], component(v, id, solids) - f.tot[id]); f.tot[id] = component(v, id, solids);
       }
+      f.tr = f.tr || {}; f.trTot = f.trTot || {};
+      for (id in v.n) if (v.n[id] > 0 && colored(id) && !f.tr[id]) { f.tr[id] = new Array(G.n).fill(0); f.trTot[id] = 0; }
+      for (id in f.tr) {
+        k = (v.n[id] || 0) - f.trTot[id];
+        // was dazukam oder sich löste, dort, wo es herkommt; was in der Lösung verbraucht wurde, überall im selben Verhältnis (nie negativ)
+        if (k < 0 && !(add > 0) && !melt) { sum = f.trTot[id] > 0 ? (v.n[id] || 0) / f.trTot[id] : 0; for (i = 0; i < G.n; i++) f.tr[id][i] *= sum; }
+        else put(f.tr[id], k);
+        f.trTot[id] = v.n[id] || 0;
+        L.spatial.diffuse(G, f.tr[id], (typeof L.db.species[id].D === "number" ? L.db.species[id].D : 1) * 1e-9 * f.speed, DT);
+      }
       L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
       for (id in f.ion) L.spatial.diffuse(G, f.ion[id], FIELD.D * f.speed, DT);
     }
@@ -4937,7 +4953,7 @@
       precipitate(v, f, G, e);
     });
     // ruhig, wenn keine gelöste Menge mehr als FIELD.calm (mol/L) vom Mittel abweicht
-    f.calm = [f.n].concat(Object.keys(f.ion).map(function (id) { return f.ion[id]; })).every(function (arr) {
+    f.calm = [f.n].concat(Object.keys(f.ion).map(function (id) { return f.ion[id]; }), Object.keys(f.tr || {}).map(function (id) { return f.tr[id]; })).every(function (arr) {
       var mean = arr.reduce(function (a, b) { return a + b; }, 0) / (volume(v));
       for (k = 0; k < G.n; k++) if (!isFinite(arr[k]) || Math.abs(arr[k] / (G.vol[k] * 1000) - mean) > FIELD.calm) return false;
       return true;
@@ -4966,7 +4982,9 @@
       if (x > 0) { w.n["Na+(aq)"] = (w.n["Na+(aq)"] || 0) + x * vol; w.n[HYDROXIDE] = (w.n[HYDROXIDE] || 0) + x * vol; }
       else if (x < 0) { w.n["Cl-(aq)"] = (w.n["Cl-(aq)"] || 0) - x * vol; w.n[PROTON] = (w.n[PROTON] || 0) - x * vol; }
       equilibrate(lab, w, null);
-      return { x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb };
+      var conc = {};
+      for (id in w.n) if (L.db.species[id].bands && L.db.species[id].phase === "aq" && !colored(id)) conc[id] = w.n[id] / vol;      // für die Farbe neben den farbigen Ionen
+      return { x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb, conc: conc };
     }
     a = Math.asinh(lo / S); b = Math.asinh(hi / S);
     for (i = 0; i <= 16; i++) rows.push(row(S * Math.sinh(a + (b - a) * i / 16)));
@@ -4983,23 +5001,32 @@
     return rows;
   }
 
-  function fieldAt(rows, x) {       // linear zwischen den Zeilen der Tabelle
-    var i = 1, u, a, b;
+  function fieldAt(rows, x, local, d) {       // linear zwischen den Zeilen der Tabelle; local: farbige Ionen dieser Zelle (mol/L), d: Weite in cm
+    var i = 1, u, a, b, conc = {}, id, any = false;
     while (i < rows.length - 1 && rows[i].x < x) i++;
     a = rows[i - 1]; b = rows[i]; u = b.x > a.x ? Math.max(0, Math.min(1, (x - a.x) / (b.x - a.x))) : 0;
-    return { pH: a.pH == null || b.pH == null ? null : a.pH + (b.pH - a.pH) * u, rgb: a.rgb.map(function (q, k) { return Math.round(q + (b.rgb[k] - q) * u); }) };
+    for (id in local || {}) any = true;
+    if (any) {                                   // Farbe nach Lambert-Beer: die Stoffe aus der Tabelle und die farbigen Ionen der Zelle
+      for (id in a.conc) conc[id] = a.conc[id] + ((b.conc[id] || 0) - a.conc[id]) * u;
+      for (id in b.conc) if (!(id in conc)) conc[id] = b.conc[id] * u;
+      for (id in local) conc[id] = Math.max(0, local[id]);
+    }
+    return { pH: a.pH == null || b.pH == null ? null : a.pH + (b.pH - a.pH) * u,
+      rgb: any ? tint(conc, d).rgb : a.rgb.map(function (q, k) { return Math.round(q + (b.rgb[k] - q) * u); }) };
   }
 
   // Was die Ansicht zeigt: je Zelle pH und Farbe (Reihen von oben), dazu der Zeitraffer
   function fieldLook(lab, v) {
-    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [], G, cell, rgb, sum, id, c;
+    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [], G, cell, rgb, sum, id, c, local;
     if (!f || !f.n || !(volume(v) > 0)) return null;
     ex = fieldExcess(lab, v);
     for (k = 0; k < ex.length; k++) { lo = Math.min(lo, ex[k]); hi = Math.max(hi, ex[k]); }
     rows = fieldTable(lab, v, lo, hi);
     G = fieldGrid(lab, v);
     for (k = 0; k < ex.length; k++) {
-      cell = fieldAt(rows, ex[k]);
+      local = {};
+      for (id in f.tr || {}) local[id] = f.tr[id][k] / (G.vol[k] * 1000);
+      cell = fieldAt(rows, ex[k], local, spec(v).d);
       // Trübung durch den Feststoff dieser Zelle, wie die des Gefäßes (HAZE), in der Farbe der Feststoffe
       rgb = [0, 0, 0]; sum = 0;
       for (id in f.solid || {}) { c = f.solid[id][k] / (G.vol[k] * 1000); sum += c; rgbOf(id).forEach(function (q, n) { rgb[n] += q * c; }); }

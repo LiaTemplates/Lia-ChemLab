@@ -1352,6 +1352,22 @@ So verfolgt das Feld Niederschläge, deren Ionen nicht an Säure-Base-Gleichgewi
  "show":{"charts":false}}
 ```
 
+## Ein Kristall löst sich
+
+Ein Kristall Kaliumpermanganat sinkt im Becherglas mit Wasser zu Boden und löst sich dort. Warten (▶): Unten in der Mitte wird es tief violett, und die Farbe steigt langsam nach oben und außen, bis das ganze Glas gleichmäßig gefärbt ist. Das Permanganat-Ion wandert dabei mit seinem eigenen Diffusionskoeffizienten (1,6·10⁻⁹ m²/s, im Zeitraffer).
+
+In der 3D-Ansicht schaltet der Knopf „3D: …“ in der Karte des Glases (Glas antippen) auf „Volumen“: Dann sieht man die Farbe im ganzen Glas, nicht nur im Schnitt. Auch ein Natriumhydroxid-Plätzchen in Wasser mit Universalindikator löst sich dort, wo es liegt: Die Lauge färbt das Glas von unten her.
+
+So verfolgt das Feld farbige Ionen, die nicht an Säure-Base-Gleichgewichten hängen (Permanganat, Kristallviolett, Kupfertetrammin, Tetrachlorocobaltat …), je für sich. Was sich von einem Stück löst, kommt dort an, wo es liegt. Reagiert ein farbiges Ion in der Lösung, etwa Permanganat mit Wasserstoffperoxid, nimmt es überall im selben Verhältnis ab, nicht nur dort, wo es gerade ist.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"glas","spatial":true,"contains":[{"reagent":"H2O","ml":80}]}
+ ],
+ "shelf":["KMnO4 crystals","NaOH pellets","UI","H2O"],
+ "show":{"charts":false}}
+```
+
 ## Ideale und reale Lösung
 
 Der Baustein kennt zwei Rechenmodelle. In der Vorgabe rechnet er **ideal**, mit Konzentrationen: Salzsäure mit 0,1 mol/L hat dann den pH-Wert 1,00, und am Halbäquivalenzpunkt einer schwachen Säure gilt pH = pKs, wie es im Lehrbuch steht. Mit `"model": "real"` rechnet er mit **Aktivitäten**: Ionen schirmen einander ab und wirken deshalb schwächer, als ihre Konzentration erwarten lässt. Dann zeigt das pH-Meter, was man im Labor misst, bei derselben Salzsäure 1,08.
@@ -2392,7 +2408,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Kaliumnitrat folgt im idealen Modell der gemessenen Löslichkeitskurve von 0 bis 60 °C, mit eigener Lösungsenthalpie (`ideal: [logK, dH]`). Im realen Modell löst es sich viel zu wenig (bei 20 °C 13 statt 32 g in 100 g Wasser): Für so konzentrierte Lösungen sind die Aktivitätskoeffizienten dort zu klein.
 - Salzsäure und Salpetersäure rechnen bis 12 mol/L; konzentrierte Salpetersäure (65 %, 14 mol/L) steht deshalb als 12 mol/L im Regal. Welcher Weg beim Lösen von Kupfer überwiegt (NO oder NO2), folgt einem geschätzten Geschwindigkeitsgesetz, nicht dem Gleichgewicht der Stickstoffoxide in der Lösung.
 - Im verschlossenen Gefäß (Stopfen, Manometer, Rohr) gibt es nur den Sauerstoff der eingeschlossenen Luft. Am Kolbenprober steht Luftsauerstoff weiter unbegrenzt bereit. Stickstoff und Kohlenstoffdioxid der Luft lösen sich nicht.
-- Jede Schicht gilt als durchmischt, außer im Feld eines Becherglases (`spatial`): Dort wandern die Ladung der starken Ionen und die Ionen von Silberchlorid, -bromid und -iodid durch Diffusion im Zeitraffer, ohne Strömung (eine schwerere Zugabe sinkt in einer angenommenen Mischzone bis zum Boden, mit dem Zehnfachen ihres Volumens); nur Farbe, Trübung und pH-Meter zeigen es, die Menge des Niederschlags im Gefäß rechnet durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
+- Jede Schicht gilt als durchmischt, außer im Feld eines Becherglases (`spatial`): Dort wandern die Ladung der starken Ionen die Ionen von Silberchlorid, -bromid und -iodid und farbige Ionen ohne Säure-Base-Gleichgewicht (Permanganat …) durch Diffusion im Zeitraffer, ohne Strömung (eine schwerere Zugabe sinkt in einer angenommenen Mischzone bis zum Boden, mit dem Zehnfachen ihres Volumens); nur Farbe, Trübung und pH-Meter zeigen es, die Menge des Niederschlags im Gefäß rechnet durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
 - Das reale Modell gilt bis zu einer Ionenstärke von etwa 1 mol/L. Darüber trifft es Kochsalz noch gut (bis 5 mol/L auf 4 %), konzentrierte Säuren aber nicht: Für Salzsäure mit 6 mol/L ist der Koeffizient um 80 % zu klein. Ein Modell, das auch dort stimmt (Pitzer), braucht Wechselwirkungsparameter für jedes Ionenpaar, und die gibt es in den verwendeten Quellen nur für etwa die Hälfte der Ionen dieses Bausteins.
