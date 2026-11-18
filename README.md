@@ -1321,7 +1321,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1427,6 +1427,26 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
   {"type":"testtube","id":"brom","contains":[{"reagent":"bromine water","ml":5}]}
  ],
  "shelf":["ethanal","glucose","acetone","hexene","hexane","Fehling I","Fehling II","Tollens","bromine water","testtube","bath"],
+ "show":{"charts":false}}
+```
+
+## Blaue Flasche und Ampel
+
+@[ChemLab.pack](packs/organic.json)
+
+In beiden Kolben sind Glucose-Lösung und Natronlauge, links mit ein paar Tropfen Methylenblau, rechts mit Indigocarmin. Frisch angesetzt ist links alles blau und rechts grün.
+
+- **Warten** (▶): Die Glucose reduziert den Farbstoff. Links wird es in Sekunden farblos, rechts über Rot gelb.
+- **Schütteln** (Kolben antippen, unter **Inhalt**): Die Lösung nimmt Sauerstoff aus der Luft im Kolben auf, und der oxidiert den Farbstoff zurück. Links wird es wieder blau, rechts grün.
+- Die Glucose reduziert den Farbstoff weiter, doch solange gelöster Sauerstoff da ist, wird er sofort neu oxidiert. Erst wenn der Sauerstoff verbraucht ist, nach knapp einer Minute, verschwindet das Blau. Die Ampel springt von Grün über Rot nach Gelb, denn Indigocarmin wird in zwei Schritten reduziert.
+- Das lässt sich viele Male wiederholen, bis die Glucose verbraucht ist. Im warmen Wasserbad ist die Farbe schneller wieder weg.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"flask","id":"blau","contains":[{"reagent":"glucose","ml":40},{"reagent":"NaOH 1M","ml":5},{"reagent":"methylene blue","drops":5}]},
+  {"type":"flask","id":"ampel","contains":[{"reagent":"glucose","ml":40},{"reagent":"NaOH 1M","ml":5},{"reagent":"indigo carmine","drops":10}]}
+ ],
+ "shelf":["glucose","NaOH 1M","methylene blue","indigo carmine","flask","bath","stopper"],
  "show":{"charts":false}}
 ```
 
@@ -2054,7 +2074,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Beide Modelle rechnen mit mol/L, wo Tabellen mol/kg Wasser meinen. Bis 1 mol/L macht das wenige Prozent aus; gesättigte Kochsalzlösung hat hier 6,2 mol/L (im realen Modell 6,3) statt 5,4 mol/L.
 - Redoxreaktionen laufen an Metallen und Elektroden ab. Zwischen gelösten Teilchen laufen nur die eigens eingetragenen: Peroxodisulfat mit Iodid, Iod mit Thiosulfat, Permanganat mit Eisen(II) und mit Wasserstoffperoxid, Kupfer(II) und Eisen(III) mit Iodid. Andere bleiben ohne Wirkung, etwa Permanganat mit Oxalsäure oder mit Iodid und Dichromat mit Eisen(II). Auch Metalle reduzieren Permanganat nicht, weil dafür kein Redoxpaar eingetragen ist.
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
-- Gelöster Luftsauerstoff wird nicht gerechnet. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
+- Gelöster Luftsauerstoff wird nur gerechnet, wo eine Reaktion ihn verbraucht (Blaue Flasche, Ampel): Die Lösung nimmt ihn an der Oberfläche langsam auf, beim Schütteln in Sekunden; die blaue Schicht oben an der Oberfläche eines ruhig stehenden Kolbens fehlt, denn jede Schicht gilt als durchmischt. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
 - Chlor löst sich nach dem Henry-Gesetz und bildet mit Wasser hypochlorige Säure; gelöstes Chlor, hypochlorige Säure und das Hypochlorit-Ion bleichen die Indikatorfarbstoffe und Kristallviolett zu einem farblosen Stoff, der vereinfacht ein Sauerstoffatom mehr trägt. Die Geschwindigkeit des Bleichens ist geschätzt. Andere Farbstoffe (Iod-Stärke, Metallkomplexe) bleicht es nicht, und Chlor oxidiert Iodid oder Bromid hier nicht.
 - Ein Belag auf einer Elektrode hemmt den Strom nicht, außer Bleisulfat und Bleidioxid. Das Silberchlorid, mit dem sich eine Silber-Elektrode am Pluspol in Kochsalzlösung überzieht, wächst deshalb beliebig weiter; im Labor wird die Schicht dicht, und der Strom geht zurück. Die Bleibeläge decken die Platte dagegen ab einer festen Dicke ganz ab (geschätzt 1 µm), bezogen auf die eingetauchte Fläche: Wer nachfüllt, legt wieder Blei frei. Ein Bleiakku fasst deshalb immer gleich viel; dass er mit jedem Laden mehr fasst (Formieren), fehlt. Ganz entladen zeigt er ohne Last etwa 1 V statt knapp 2 V, weil das Blei unter dem dichten Bleisulfat im Modell kein festes Potential mehr hat.
 - Zink löst sich in Natronlauge nur langsam und nur als Pulver sichtbar, in der Wärme deutlich schneller. Wie schnell genau, ist geschätzt.

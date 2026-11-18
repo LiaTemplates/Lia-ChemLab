@@ -1200,6 +1200,7 @@
     var v = vessel(lab, vesselId);
     if (!v || v.broken || !(filled(v) > 0) || !BEADS[how]) return false;
     if (oilVolume(v) > 0 && volume(v) > 0) v.drop = { share: 1, r: BEADS[how], until: lab.t + AGITATE };
+    v.shook = lab.t + AGITATE;                                 // es nimmt dabei Luft auf (aerate)
     v.dirty = true;
     return true;
   }
@@ -1797,6 +1798,7 @@
   var OPAQUE = 0.9;               // ab dieser Deckkraft sieht man nicht mehr hindurch
   var FOAM_C = 0.002;             // mol/L Tensid (foam), ab dem fast alles aufsteigende Gas im Schaum hängen bleibt
   var FOAM_T = 40;                // s: in dieser Zeit zerfällt Schaum auf ein Drittel (1/e)
+  var AERATE = { still: 1e-4, shake: 0.3 };    // Sauerstoff aus der Luft: k_L in cm/s an der ruhigen Oberfläche, k_L·a in 1/s beim Schütteln (geschätzt)
 
   // Reaktionswärme in kJ/mol: nach Hess aus den Bildungsenthalpien; fehlt eine davon, gilt die Angabe dH am Eintrag.
   function heatOf(r) {
@@ -3388,6 +3390,33 @@
     return sum / vol;
   }
 
+  // Gelöster Sauerstoff (Blaue Flasche): Die Lösung nimmt Sauerstoff aus dem Gasraum auf oder gibt ihn ab, bis sie nach Henry
+  // gesättigt ist, an der ruhigen Oberfläche in einer Stunde, beim Schütteln in Sekunden. Gerechnet nur, wo schon O2(aq) ist oder
+  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist; sonst bliebe jede Lösung voll gelöster Luft.
+  // shortcut: aus der Luft ohne Vorrat (auch verschlossen), nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen
+  function aerate(lab, v, vol) {
+    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id;
+    if (!e || !(vol > 0)) return;
+    if (!(v.n["O2(aq)"] > 0) && !L.db.reactions.some(function (r) {
+      if (!(r.nu["O2(aq)"] < 0)) return false;
+      for (var key in r.nu) if (r.nu[key] < 0 && key !== "O2(aq)" && key !== WATER && !(v.n[key] > 0)) return false;
+      return true;
+    })) return;
+    cap = headroom(lab, v);
+    for (id in v.air) sum += v.air[id];
+    oxygen = cap > 0 ? AIR["O2(g)"] * Math.max(0, 1 - sum / cap) + (v.air["O2(g)"] || 0) / cap : AIR["O2(g)"];
+    h = heatOf(e);
+    sat = Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * oxygen * P_AIR;
+    k = v.shook > lab.t ? AERATE.shake : AERATE.still * Math.PI * Math.pow(spec(v).d || 5, 2) / 4 / (vol * 1000);
+    x = (sat - (v.n["O2(aq)"] || 0) / vol) * vol * (1 - Math.exp(-k * DT));
+    if (Math.abs(x) < 1e-15) return;
+    v.n["O2(aq)"] = (v.n["O2(aq)"] || 0) + x;
+    if (x > 0) v.taken["O2(g)"] = (v.taken["O2(g)"] || 0) + x;
+    else v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+    if (!(v.n["O2(aq)"] > 1e-300)) delete v.n["O2(aq)"];
+    tally(v, e, x * e.f);
+  }
+
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
 
   // So viel Gas (mol) hat über der Flüssigkeit im Gefäß Platz
@@ -3735,10 +3764,11 @@
   // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
   // Wie viel eine Blase des Gases mit dem Lösungsgleichgewicht e auf ihrem Weg durch die Flüssigkeit in v abgibt (siehe bubbleInto)
   function bubbleShare(v, e) {
-    var h = heatOf(e);
+    var h = heatOf(e), part;
     if (Object.keys(e.d).length !== 1) return 1;
-    return 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
+    part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
       (1 + LYE * (v.n["OH-(aq)"] || 0) / volume(v)));
+    return part < 0.1 ? 0 : part;                              // schwer Lösliches (Sauerstoff) perlt ganz durch; gelöst wird es nur an der Oberfläche (aerate)
   }
 
   function bubbleInto(lab, v, id, x) {
@@ -3930,6 +3960,7 @@
     vol = volume(v);
     dissolved = above(v, vol);
     dissolved.forEach(function (g) { if (g.p > P_AIR * OVER) fizz(v, g, vol); });
+    aerate(lab, v, vol);
 
     v.q += warmth(lab, v).q * DT;                              // die Flamme heizt
     if (v.q) v.T += v.q / heatCapacity(v);
@@ -3942,6 +3973,7 @@
       var eq = L.db.equilibria.filter(function (q) { return q.gas === id; })[0], x, key;
       if (!eq || !(v.n[id] > 0)) continue;
       x = Math.min(v.n[id], v.egas[id]) * bubbleShare(v, eq);
+      if (!(x > 0)) continue;
       v.n[id] -= x;
       v.eg -= x;                                               // was sich gelöst hat, perlt nicht mehr an der Elektrode
       for (key in eq.d) v.n[key] = (v.n[key] || 0) + eq.d[key] * x;

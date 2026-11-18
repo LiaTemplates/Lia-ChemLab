@@ -103,6 +103,7 @@
       "CO3^2-(aq)": { name: name("carbonate ion"), Hf: -675.23, S: -50.0, D: 0.955, src: CODATA + DW },
       "HCO3-(aq)": { name: name("hydrogen carbonate ion"), Hf: -689.93, S: 98.4, D: 1.18, src: CODATA + DW },
       "CO2(aq)": { name: name("carbon dioxide, dissolved"), Hf: -413.26, S: 119.36, src: CODATA },
+      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, src: NBS },
       // Spülmittel: das Tensid vereinfacht als Dodecylsulfat; foam: es hält aufsteigendes Gas als Schaum fest
       "C12H25SO4-(aq)": { name: name("dodecyl sulfate ion (detergent)"), symbol: "DS⁻", Hf: null, foam: true, src: NONE + "; the surfactant of washing-up liquid, simplified as dodecyl sulfate" },
       "H2O2(aq)": { name: name("hydrogen peroxide"), Hf: -191.17, src: "textbook value: enthalpy of formation in solution -191.17 kJ/mol" },
@@ -393,6 +394,8 @@
       { eq: "Cl2(aq) + H2O(l) <=> HOCl(aq) + H+(aq) + Cl-(aq)", logK: -3.29, src: "hydrolysis constant 5.1e-4 at 25 °C: Wang and Margerum, Inorg. Chem. 33 (1994) 1123" },
       { eq: "HOCl(aq) <=> H+(aq) + OCl-(aq)", logK: -7.53, src: "pKa 7.53 at 25 °C: Morris, J. Phys. Chem. 70 (1966) 3798" },
       { eq: "SO2(g) <=> SO2(aq)", logK: 0.17, src: LLNL + "SO2(g), SO2 = SO2, log_k 0.17" },
+      // Luft (21 % Sauerstoff) über Wasser: 0,27 mmol/L bei 25 °C; aufgenommen wird er an der Oberfläche und beim Schütteln (Blaue Flasche)
+      { eq: "O2(g) <=> O2(aq)", logK: -2.8983, src: LLNL + "O2(g), O2 = O2, log_k -2.8983; the temperature dependence follows from the enthalpies of formation (-11.7 kJ/mol; LLNL: -12.13)" },
       // im Gasraum, mit Partialdrücken in bar: kalt fast nur farbloses N2O4, warm mehr braunes NO2
       { eq: "2 NO2(g) <=> N2O4(g)", logK: 0.829, src: "from the Gibbs energies of formation (NIST-JANAF): ΔG = 97.79 − 2 · 51.26 kJ/mol; K = 6.7 per bar at 25 °C; the temperature dependence follows from the enthalpies of formation (−57 kJ/mol)" },
       { eq: "NH3(g) <=> NH3(aq)", logK: 1.7966, dH: -35.23, src: LLNL + "NH3(g), NH3 = NH3, log_k 1.7966, delta_H -35.2251 kJ/mol" },

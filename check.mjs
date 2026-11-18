@@ -10376,6 +10376,54 @@ test("Alkoholtest: angesäuertes Dichromat wird mit Ethanol in etwa einer halben
   assert.equal(look(blank).color.name, "orange");
 });
 
+// ---------------------------------------------------------------- Blaue Flasche und Ampel
+
+// Glucose und Natronlauge im Erlenmeyerkolben, dazu ein Farbstoff in Tropfen
+const bottle = (dye, drops, room) => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "flask", id: "b", contains: [{ reagent: "glucose", ml: 40 }, { reagent: "NaOH 1M", ml: 5 }] }], { room: room == null ? 25 : room });
+  L.add(l, "b", dye, { drops });
+  L.step(l, 60);
+  return l;
+};
+
+test("Blaue Flasche: geschüttelt blau, nach knapp einer Minute farblos, und wieder; warm schneller; Sauerstoff aus der Luft", () => {
+  const l = bottle("methylene blue", 5), before = totals(l);
+  assert.equal(look(l).color.name, "colorless", "ruhig stehend farblos");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "blue", "geschüttelt blau");
+  near(amount(l, "O2(aq)") / 0.045, 2.6e-4, 0.5e-4, "fast mit Luft gesättigt (Henry)");
+  const t = until(l, () => look(l).color.name === "colorless", 300);
+  assert.ok(t >= 20 && t <= 90, `farblos nach ${t} s`);
+  L.step(l, 120);
+  assert.equal(look(l).color.name, "colorless", "bleibt farblos");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "blue", "wieder blau");
+  near(totals(l).mass, before.mass, 1e-9, "Masse mit dem Sauerstoff aus der Luft");
+  const warm = bottle("methylene blue", 5, 35);
+  L.shake(warm, "b", "shake");
+  L.step(warm, 10);
+  assert.ok(until(warm, () => look(warm).color.name === "colorless", 300) < t, "warm schneller");
+  const plain = lab([{ type: "flask", id: "b", contains: [{ reagent: "H2O", ml: 40 }] }]);
+  L.shake(plain, "b", "shake");
+  L.step(plain, 10);
+  assert.equal(amount(plain, "O2(aq)"), 0, "reines Wasser rechnet ohne gelösten Sauerstoff");
+});
+
+test("Ampel: Indigocarmin geschüttelt grün, dann rot, dann gelb", () => {
+  const l = bottle("indigo carmine", 10), seen = [];
+  assert.equal(look(l).color.name, "yellow", "ruhig stehend gelb");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "green", "geschüttelt grün");
+  until(l, () => { seen.push(look(l).color.name); return seen.at(-1) === "yellow"; }, 300);
+  const red = seen.indexOf("red"), yellow = seen.indexOf("yellow");
+  assert.ok(seen.lastIndexOf("green") >= 15, `grün für ${seen.lastIndexOf("green")} s`);
+  assert.ok(red > 0 && yellow > red + 5, `rot, dann gelb: ${[...new Set(seen)].join(", ")}`);
+});
+
 // ---------------------------------------------------------------- Landolt-Reaktion
 
 // Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag
