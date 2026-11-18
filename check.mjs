@@ -1444,7 +1444,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
-  assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "todo.md", "tools", "vendor"]);
+  assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "benchmarks", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-spatial.js", "chemlab-ui.js", "chemlab.css", "docs", "lang", "packs", "todo.md", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "ionen.json", "organic.json"], "Erweiterungspakete");
   assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["check-parallel.mjs", "import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner

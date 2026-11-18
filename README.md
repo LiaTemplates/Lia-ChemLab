@@ -1621,6 +1621,16 @@ In beiden Kolben sind Glucose-Lösung und Natronlauge, links mit ein paar Tropfe
  "show":{"charts":false}}
 ```
 
+**Verschlossen geht der Sauerstoff aus.** Dasselbe im Reagenzglas mit Manometer statt Stopfen: Über der Lösung stehen nur knapp 4 mL Luft, darin rund 30 µmol Sauerstoff. Jedes Schütteln löst einen Teil davon, die Glucose verbraucht ihn über den Farbstoff. Nach etwa zwanzig Runden (Schütteln, eine Minute warten) bleibt die Lösung farblos, so oft man auch schüttelt. Das Manometer fällt dabei von 1 bar auf knapp 0,8 bar: Der Sauerstoff, ein Fünftel der Luft, ist verbraucht. Offen nähme die Lösung immer neuen Sauerstoff aus der Raumluft auf.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"zu","contains":[{"reagent":"glucose","ml":14},{"reagent":"NaOH 1M","ml":2},{"reagent":"methylene blue","drops":3}]},
+  {"type":"manometer","in":"zu"}
+ ],
+ "show":{"charts":false}}
+```
+
 ## Leuchten: Luminol und UV-Lampe
 
 @[ChemLab.pack](packs/organic.json)

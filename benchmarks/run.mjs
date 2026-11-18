@@ -69,6 +69,56 @@ const models = {
       check("temperature_reached", Math.abs(v.T - to), 0.05)];
   },
 
+  // B02: verschlossenes Reagenzglas, Wasser ohne O2 (angeimpft), geschüttelt, dann im Bad erwärmt (O2 perlt zurück in den Gasraum):
+  // der Sauerstoff im Glas (eingeschlossene Luft + gelöst) bleibt gleich, und was die Bilanz als aus der Luft genommen zählt, fehlt dort
+  sealedOxygen({ ml, shakes, warm }, tol) {
+    const l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "H2O", ml }] }, { type: "stopper", id: "s", in: "t" }, { type: "bath", id: "wb", under: "t", temp: 25 }]);
+    const v = L.vessel(l, "t");
+    v.n["O2(aq)"] = 1e-12;
+    L.step(l, 0.05);
+    const o2 = () => v.o2 + (v.n["O2(aq)"] || 0) + ((v.air || {})["O2(g)"] || 0), drawn = () => (v.taken["O2(g)"] || 0) - (v.out["O2(g)"] || 0);
+    const start = o2(), d0 = drawn(), seal0 = v.o2;
+    for (let i = 0; i < shakes; i++) { L.shake(l, "t", "shake"); L.step(l, 10); }
+    const dissolved = v.n["O2(aq)"];
+    L.setTemp(l, "wb", warm);
+    L.step(l, 1800);
+    return [check("o2_error", rel(o2(), start), tol.relative), check("ledger_error", Math.abs((seal0 - v.o2) - (drawn() - d0)) / seal0, tol.relative),
+      check("released_when_warm", v.n["O2(aq)"] < dissolved ? 0 : 1, 0)];
+  },
+
+  // B06: so lange geschüttelt, bis Gasraum und Lösung im Gleichgewicht sind. Analytisch: n = p·Vh/(RT) + K_H·p·V_l
+  sealedHenry({ ml, shakes }, tol) {
+    const l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "H2O", ml }] }, { type: "stopper", id: "s", in: "t" }]);
+    const v = L.vessel(l, "t");
+    v.n["O2(aq)"] = 1e-12;
+    L.step(l, 0.05);
+    const total = v.o2 + v.n["O2(aq)"];
+    for (let i = 0; i < shakes; i++) { L.shake(l, "t", "shake"); L.step(l, 10); }
+    const Vl = L.volume(v), Vh = (spec(v).cap - Vl * 1000) / 1000, RT = 8.314462618 / 100 * (v.T + 273.15), KH = 10 ** -2.8983;
+    const p = total / (Vh / RT + KH * Vl);
+    return [check("dissolved_error", rel(v.n["O2(aq)"] / Vl, KH * p), tol.relative), check("headspace_error", rel(v.o2 * RT / Vh, p), tol.relative)];
+  },
+
+  // B07: Blaue Flasche im verschlossenen Reagenzglas mit Manometer: jedes Schütteln löst O2, Glucose verbraucht es über den Farbstoff.
+  // Am Ende ist aller Sauerstoff der eingeschlossenen Luft verbraucht: p = p_Dampf + (1 − 0,21)·(p_beim_Verschließen − p_Dampf),
+  // die Lösung bleibt auch geschüttelt farblos, und es kam kein O2 von außen
+  sealedConsumption({ shakes }, tol) {
+    if (!L.db.species["C16H18N3S+(aq)"]) L.register(JSON.parse(fs.readFileSync(new URL("../packs/organic.json", here), "utf8")));
+    const l = lab([{ type: "testtube", id: "t", contains: [{ reagent: "glucose", ml: 14 }, { reagent: "NaOH 1M", ml: 2 }] }, { type: "manometer", id: "m", in: "t" }]);
+    L.add(l, "t", "methylene blue", { drops: 3 });
+    const v = L.vessel(l, "t");
+    L.step(l, 60);
+    const vap = () => Math.exp(-40650 / 8.314462618 * (1 / (v.T + 273.15) - 1 / 373.15));      // wie pressure() in der Engine: Dampfdruck reinen Wassers
+    const room = () => (spec(v).cap - L.volume(v) * 1000) / (v.T + 273.15);                      // Vh/T: Stoffmenge ∝ p·Vh/T
+    const dry0 = (v.p - vap()) * room(), seal0 = v.o2, drawn = () => (v.taken["O2(g)"] || 0) - (v.out["O2(g)"] || 0), d0 = drawn();
+    for (let i = 0; i < shakes; i++) { L.shake(l, "t", "shake"); L.step(l, 60); }
+    L.shake(l, "t", "shake");
+    L.step(l, 10);
+    return [check("pressure_error", rel(v.p, vap() + 0.79 * dry0 / room()), tol.pressure_relative),
+      check("ledger_error", Math.abs((seal0 - v.o2) - (drawn() - d0)) / seal0, tol.balance_relative),
+      check("stays_colorless", L.view(l, v).color.name === "colorless" ? 0 : 1, 0)];
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {

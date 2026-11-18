@@ -2618,7 +2618,7 @@
       for (id in r.rate.needs) most = Math.min(most, Math.max(0, (v.n[id] || 0) / r.rate.needs[id] - (isFinite(done) ? done : 0)));
     }
     r.left.forEach(function (t) {
-      if (AIR[t.id] && !(v.n[t.id] > 0)) return;               // kommt aus der Luft und geht nicht aus
+      if (AIR[t.id] && !(v.n[t.id] > 0)) { most = Math.min(most, airLeft(v, t.id) / t.n); return; }      // kommt aus der Luft; verschlossen nur, was eingeschlossen ist
       most = Math.min(most, (v.n[t.id] || 0) / t.n);
     });
     return most;
@@ -2704,7 +2704,7 @@
       }
       for (id in r.nu) {
         delta = r.nu[id] * x; phase = L.db.species[id].phase;
-        if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;     // aus der Luft
+        if (delta < 0 && AIR[id] && !(v.n[id] >= -delta)) breathe(v, id, -delta);                      // aus der Luft
         else if (phase === "s" && delta < 0) takeSolid(v, id, -delta, emit);
         else if (phase === "s") { growSolid(v, id, delta, r.mirror); grew[r.mirror ? id + " mirror" : id] = true; }
         else if ((v.n[id] = (v.n[id] || 0) + delta) < TRACE) delete v.n[id];
@@ -3461,9 +3461,10 @@
   // Gelöster Sauerstoff (Blaue Flasche): Die Lösung nimmt Sauerstoff aus dem Gasraum auf oder gibt ihn ab, bis sie nach Henry
   // gesättigt ist, an der ruhigen Oberfläche in einer Stunde, beim Schütteln in Sekunden. Gerechnet nur, wo schon O2(aq) ist oder
   // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist; sonst bliebe jede Lösung voll gelöster Luft.
-  // shortcut: aus der Luft ohne Vorrat (auch verschlossen), nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen
+  // Verschlossen kommt der Sauerstoff aus der eingeschlossenen Luft (v.o2) und dem Gas darüber, mit seinem Partialdruck, und geht dorthin zurück.
+  // shortcut: nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen (CO2 brächte reines Wasser auf pH 5,6: nur als Option einbauen)
   function aerate(lab, v, vol) {
-    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id;
+    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id, y, Vh;
     if (!e || !(vol > 0)) return;
     if (!(v.n["O2(aq)"] > 0) && !L.db.reactions.some(function (r) {
       if (!(r.nu["O2(aq)"] < 0)) return false;
@@ -3473,16 +3474,37 @@
     cap = headroom(lab, v);
     for (id in v.air) sum += v.air[id];
     oxygen = cap > 0 ? AIR["O2(g)"] * Math.max(0, 1 - sum / cap) + (v.air["O2(g)"] || 0) / cap : AIR["O2(g)"];
+    if (sealed(v)) {
+      Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000);
+      oxygen = (v.o2 + (v.air["O2(g)"] || 0)) * R / 100 * (v.T + KELVIN) / Vh / P_AIR;
+    }
     h = heatOf(e);
     sat = Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * oxygen * P_AIR;
     k = v.shook > lab.t ? AERATE.shake : AERATE.still * Math.PI * Math.pow(spec(v).d || 5, 2) / 4 / (vol * 1000);
     x = (sat - (v.n["O2(aq)"] || 0) / vol) * vol * (1 - Math.exp(-k * DT));
+    if (sealed(v) && x > 0) {                                  // erst aus der eingeschlossenen Luft, dann aus dem Gas darüber
+      y = Math.min(x, Math.max(0, x - v.o2), v.air["O2(g)"] || 0);
+      x = Math.min(x, v.o2) + y;
+      if (y > 0 && (v.air["O2(g)"] -= y) <= 1e-15) delete v.air["O2(g)"];
+    }
     if (Math.abs(x) < 1e-15) return;
     v.n["O2(aq)"] = (v.n["O2(aq)"] || 0) + x;
-    if (x > 0) v.taken["O2(g)"] = (v.taken["O2(g)"] || 0) + x;
-    else v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+    if (x > 0) breathe(v, "O2(g)", x - (y || 0));
+    else {
+      v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+      if (sealed(v)) { v.o2 -= x; v.seal -= x; }              // zurück in die eingeschlossene Luft
+    }
     if (!(v.n["O2(aq)"] > 1e-300)) delete v.n["O2(aq)"];
     tally(v, e, x * e.f);
+  }
+
+  // Verschlossen (v.seal: die eingeschlossene Luft in mol) gibt die Luft nur ihren Sauerstoff her: v.o2 mol, ein Teil von v.seal.
+  // Offen ist die Luft im Raum ein unbegrenzter Vorrat (Modellannahme). Was aus ihr kommt, zählt in v.taken.
+  function sealed(v) { return v.seal != null && v.o2 != null; }
+  function airLeft(v, id) { return sealed(v) && id === "O2(g)" ? Math.max(0, v.o2) : Infinity; }
+  function breathe(v, id, x) {
+    if (sealed(v) && id === "O2(g)") { v.o2 = Math.max(0, v.o2 - x); v.seal = Math.max(0, v.seal - x); }
+    v.taken[id] = (v.taken[id] || 0) + x;
   }
 
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
@@ -3807,16 +3829,16 @@
 
   // Im Gasraum: Reaktionen nur aus Gasen, mit Konzentrationen in mol/L des Gasraums (Sauerstoff kommt aus der Luft dazu), und
   // Gleichgewichte nur aus Gasen, mit Partialdrücken in bar. Beides bei der Temperatur des Inhalts.
-  // shortcut: Luftsauerstoff steht auch im verschlossenen Gefäß unbegrenzt bereit; mit v.seal rechnen, wenn ein Versuch das braucht
+  // Verschlossen kommt Sauerstoff nur aus der eingeschlossenen Luft (v.o2).
   function airborne(lab, v) {
     var Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, any = false, id;
     for (id in v.air) if (v.air[id] > 0) any = true;
     if (!any) return;
-    function conc(id) { return (v.air[id] || 0) / Vh + (AIR[id] ? AIR[id] * P_AIR / (RL * T) : 0); }
+    function conc(id) { return (v.air[id] || 0) / Vh + (!AIR[id] ? 0 : sealed(v) ? v.o2 / Vh : AIR[id] * P_AIR / (RL * T)); }
     function move(r, x) {
       for (var id in r.nu) {
         var delta = r.nu[id] * x;
-        if (delta < 0 && AIR[id] && !((v.air[id] || 0) >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;
+        if (delta < 0 && AIR[id] && !((v.air[id] || 0) >= -delta)) breathe(v, id, -delta);
         else if ((v.air[id] = (v.air[id] || 0) + delta) <= 1e-15) delete v.air[id];
       }
     }
@@ -3825,7 +3847,7 @@
       if (!r.air) return;
       k = rate.k * Math.exp(-rate.Ea * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) * Vh;
       for (id in rate.order) k *= Math.pow(conc(id), rate.order[id]);
-      r.left.forEach(function (t) { if (!AIR[t.id]) most = Math.min(most, (v.air[t.id] || 0) / t.n); });
+      r.left.forEach(function (t) { most = Math.min(most, AIR[t.id] ? airLeft(v, t.id) / t.n : (v.air[t.id] || 0) / t.n); });
       x = Math.min(k * DT, most);
       if (!(x > 1e-15)) return;
       move(r, x);
@@ -3897,6 +3919,7 @@
       if (gas > room) for (id in v.air) { x = v.air[id] * (1 - room / gas); v.out[id] = (v.out[id] || 0) + x; v.air[id] -= x; }
       gas = Math.min(gas, room);
       v.seal = Math.max(0, room - gas);
+      v.o2 = AIR["O2(g)"] * v.seal;                            // ihr Sauerstoff, begrenzt
     }
     total = v.seal + gas + vap * V / (RL * T);
     p = total * RL * T / V;
@@ -3908,7 +3931,11 @@
       }
       return;
     }
-    if (p >= P_AIR) { v.seal = Math.max(0, v.seal - (total - full) * v.seal / total); v.flag.suck = false; return; }
+    if (p >= P_AIR) {                                          // mit dem Überdruck geht eingeschlossene Luft hinaus, ihr Sauerstoff anteilig
+      x = Math.max(0, v.seal - (total - full) * v.seal / total);
+      v.o2 = v.seal > 0 ? v.o2 * x / v.seal : 0;
+      v.seal = x; v.flag.suck = false; return;
+    }
     into = pipe.to ? vessel(lab, pipe.to) : null;
     ml = (full - total) * RL * T / P_AIR * 1000;
     if (into && !into.broken && filled(into) > 0 && ml > 1e-3) {
@@ -3916,7 +3943,7 @@
       ml = transfer(into, v, Math.min(ml, filled(into) * 1000), true);      // was im Rohr ist, kommt von unten
       if (ml > 0 && !v.flag.suck) { v.flag.suck = true; if (emit) emit({ key: "suckBack", vessel: v.id, from: into.id }); }
       if (hot && ml > 0.02) shatter(lab, v, emit);
-    } else v.seal += full - total;                             // aus einem leeren Gefäß strömt Luft zurück
+    } else { v.seal += full - total; v.o2 += AIR["O2(g)"] * (full - total); }      // aus einem leeren Gefäß strömt Luft zurück
   }
 
   // Die flüchtigen Teile einer Flüssigkeit: Wasser und gelöste Stoffe mit Siedepunkt (Tb). x: Stoffmengenanteil unter ihnen,
