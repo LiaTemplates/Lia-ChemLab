@@ -11294,3 +11294,19 @@ test("Siedepunkterhöhung: gelöste Teilchen lassen später sieden, beim Eindamp
   L.step(salty, 600);
   assert.ok(!(L.view(salty, L.vessel(salty, "b")).ml > 0), "es dampft trotzdem ganz ein");
 });
+
+// ---------------------------------------------------------------- Benchmarks (benchmarks/run.mjs)
+
+test("Benchmarks: kein gerechneter Fall schlägt fehl, und kein Fall heißt PASS, ohne gerechnet zu sein", async () => {
+  const { cases, run } = await import("./benchmarks/run.mjs");
+  const ids = new Set();
+  for (const c of cases) {
+    assert.match(c.id, /^B\d\d$/);
+    assert.ok(!ids.has(c.id), `${c.id} doppelt`);
+    ids.add(c.id);
+    assert.ok(["A", "B", "C", "D"].includes(c.kind), `${c.id}: Art ${c.kind}`);
+    const r = run(c);
+    if (r.status === "PASS" || r.status === "FAIL") assert.ok(r.checks && r.checks.length, `${c.id}: Status ohne Prüfungen`);
+    assert.notEqual(r.status, "FAIL", `${c.id}: ${JSON.stringify(r.checks || r.reason)}`);
+  }
+});
