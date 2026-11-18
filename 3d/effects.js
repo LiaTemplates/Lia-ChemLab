@@ -102,6 +102,9 @@
     // Schaum über der Flüssigkeit, und was über den Rand quillt, als Haube
     var froth = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
     var heap = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), froth.material);
+    // farbiges Gas im Gasraum (NO2): ein durchscheinender Körper vom Spiegel bis zum Rand
+    var fog = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+    fog.renderOrder = 1;
     // ein Spiegel am Glas (Silberspiegel): eine Metallhaut knapp innerhalb der Wand
     var mirror = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 1, roughness: 0.12, transparent: true, side: THREE.DoubleSide }));
     mirror.renderOrder = 1;
@@ -127,7 +130,7 @@
       new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
     drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
-    group.add(body, upper, beads, cut, swarm, surface, ground, crust, froth, heap, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
+    group.add(body, upper, beads, cut, swarm, surface, ground, crust, froth, heap, fog, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -365,6 +368,12 @@
             heap.scale.set(wide, dome, wide);
             heap.position.set(0, shape.rim, 0);
           }
+        }
+        fog.visible = !!w.fog && Math.min.apply(null, w.fog.rgb) < 247;
+        if (fog.visible) {
+          fill(fog, shape, wet ? Math.max(level, froth.visible ? Math.min(froth3, shape.rim) : level) : shape.floor, shape.rim, "fog");
+          fog.material.color.copy(fx.color(w.fog.rgb));
+          fog.material.opacity = Math.min(0.85, (255 - Math.min.apply(null, w.fog.rgb)) / 255);
         }
         crust.visible = w.residue > 1e-7;
         if (crust.visible) fill(crust, shape, shape.floor, shape.floor + Math.min(14, 2.5 + 30 * Math.sqrt(w.residue)) / 16, "crust");

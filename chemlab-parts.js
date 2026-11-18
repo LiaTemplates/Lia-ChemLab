@@ -593,7 +593,12 @@
   // Inhalt eines Gefäßes: Flüssigkeit, Feststoff, Blasen, Zulauf. shape: { path, x0, x1, top, bottom, rim, tall }
   function contents(w, ctx, shape) {
     var out = "", clip = "cl-" + ctx.uid + "-" + w.id + "-clip", box = { x0: shape.x0, x1: shape.x1, top: shape.top, bottom: shape.bottom };
-    var layer;
+    var layer, dim;
+    // farbiges Gas (NO2) im Gasraum: vom Rand bis zur Flüssigkeit, so deckend, wie es dunkel ist
+    if (w.fog && shape.fill && !w.broken) {
+      dim = Math.min(0.85, (255 - Math.min.apply(null, w.fog.rgb)) / 255);
+      if (dim > 0.03) out += '<path class="cl-fog" d="' + shape.fill(shape.rim) + '" fill="' + css(w.fog.rgb) + '" fill-opacity="' + dim.toFixed(2) + '"/>';
+    }
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
         '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';

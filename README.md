@@ -658,6 +658,30 @@ Das Magnesiastäbchen wählen und ein Reagenzglas antippen: Das Stäbchen wird i
  "show":{"charts":false,"equations":false}}
 ```
 
+## Kupfer und Salpetersäure
+
+Kupfer ist ein edles Metall: Salzsäure greift es nicht an. Salpetersäure aber löst es, denn sie oxidiert selbst. Gib in jedes Reagenzglas ein Stück Kupferblech:
+
+- In **verdünnter** Salpetersäure (Glas 1) entsteht langsam farbloses Stickstoffmonoxid. Am Glas wird es braun: Mit dem Sauerstoff der Luft wird daraus Stickstoffdioxid. Im Wasserbad geht es schneller.
+- In **konzentrierter** Salpetersäure (Glas 2) braust es heftig, und gleich steigen braune Dämpfe auf, die stechend riechen. Die Lösung wird blau vom Kupfer.
+
+Stickstoffdioxid steht mit seinem farblosen Dimer N₂O₄ im Gleichgewicht: 2 NO₂ ⇌ N₂O₄. Die beiden verschlossenen Kolben enthalten je ein Schnipsel Kupfer in konzentrierter Salpetersäure. Im Eisbad (links) bleibt der Gasraum blass, denn in der Kälte überwiegt N₂O₄. Im warmen Wasserbad bei 50 °C (rechts) wird er braun. Heißer sollte es nicht sein: Luft, Wasserdampf und Gas drückten den Stopfen heraus. Stell die beiden Bäder um, und die Farben tauschen.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"verd","contains":[{"reagent":"HNO3 3M","ml":5}]},
+  {"type":"testtube","id":"konz","contains":[{"reagent":"HNO3 12M","ml":5}]},
+  {"type":"flask","id":"kalt","contains":[{"reagent":"HNO3 12M","ml":5},{"reagent":"Cu sheet","g":0.03}]},
+  {"type":"stopper","in":"kalt"},
+  {"type":"bath","under":"kalt","temp":0},
+  {"type":"flask","id":"heiss","contains":[{"reagent":"HNO3 12M","ml":5},{"reagent":"Cu sheet","g":0.03}]},
+  {"type":"stopper","in":"heiss"},
+  {"type":"bath","under":"heiss","temp":50}
+ ],
+ "shelf":["Cu sheet","HNO3 3M","HNO3 12M","HCl 2M","testtube","bath"],
+ "show":{"charts":false}}
+```
+
 ## Metalle und Salzlösungen
 
 Ein unedles Metall verdrängt ein edleres aus dessen Lösung. Zinkpulver in die Kupfersulfat-Lösung geben: Kupfer scheidet sich ab, die Lösung verliert ihre Farbe und wird warm. Kupferblech in Silbernitrat-Lösung überzieht sich mit Silber, und die Lösung färbt sich nach und nach blassblau. Kupfer in Zinksulfat-Lösung: nichts. In Salzsäure entwickelt Zink Wasserstoff, Kupfer nicht.
@@ -1703,7 +1727,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `reagent` | Stoff | Menge |
 |---|---|---|
 | `H2O` | destilliertes Wasser | `ml` |
-| `HCl`, `H2SO4`, `CH3COOH` | Salzsäure, Schwefelsäure, Essigsäure | `ml` |
+| `HCl`, `H2SO4`, `HNO3`, `CH3COOH` | Salzsäure, Schwefelsäure, Salpetersäure (bis 12 mol/L), Essigsäure | `ml` |
 | `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻ und setzt dabei etwa 73 kJ/mol frei; je Mol braucht sie dafür drei Mol Wasser, so dass sich mit wenig Wasser nur ein Teil löst | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
@@ -1790,6 +1814,8 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 Steht in der Gleichung ein Feststoff, ist es ein **Löslichkeitsgleichgewicht**: `{"eq":"AgCl(s) <=> Ag+(aq) + Cl-(aq)","logK":-9.75}`. Mehr braucht es für eine Fällung nicht. Der Feststoff fällt aus, sobald die Lösung übersättigt ist, und löst sich, wenn etwas anderes seine Ionen bindet. Mit `rate` (`k` in mol/(s cm²) je (mol/L) hoch Ordnung, `Ea`, `order`) folgt die Auflösung eines Stücks aus dem Regal einem Geschwindigkeitsgesetz: Wohin es geht, sagt weiter das Gleichgewicht, wie schnell, die Oberfläche und die Lösung. So ist Marmor eingetragen, mit `"order":{"H+(aq)":1}`.
 
 Steht in der Gleichung ein Gas, ist es die **Löslichkeit eines Gases**: `{"eq":"CO2(g) <=> CO2(aq)","logK":-1.468}`; `logK` ist die gelöste Konzentration in mol/L bei 1 bar. Ist mehr gelöst, perlt das Gas aus; beim Sieden geht es mit dem Dampf fort, beim Eindampfen entweicht es ganz.
+
+Stehen in einer Gleichung **nur Gase**, gilt sie im **Gasraum** über der Flüssigkeit: als Gleichgewicht mit `logK` für die Partialdrücke in bar, `{"eq":"2 NO2(g) <=> N2O4(g)","logK":0.829}`, oder als Reaktion mit Geschwindigkeit, deren Ordnung den Gasen gilt, mit ihren Konzentrationen im Gasraum in mol/L: `{"eq":"2 NO(g) + O2(g) -> 2 NO2(g)","rate":{"k":7200,"order":{"NO(g)":2,"O2(g)":1}}}`. Sauerstoff kommt dabei aus der Luft dazu. Ein Gas mit `bands` färbt den Gasraum, je nachdem, wie viel davon darin steht (Stickstoffdioxid braun).
 
 **Redoxpaare** (`couples`): die oxidierte Form mit ihren Elektronen und die reduzierte Form, dazu das Standardpotential `E0` in V: `{"eq":"Cu^2+(aq) + 2 e- <=> Cu(s)","E0":0.3386}`. Ein Metall kann mehrere Paare haben, wenn es auf verschiedenen Wegen in dieselbe Oxidationsstufe übergeht: Zink zu Zink-Ionen oder in Lauge zu Zinkat, Silber zu Silber-Ionen oder mit Chlorid zu Silberchlorid, das dann als Belag auf der Elektrode sitzt. Solche Paare gelten als ein System; ihre Potentiale müssen zueinander passen (umgerechnet mit der Konstante des Komplexes oder dem Löslichkeitsprodukt). Aus den Redoxpaaren leitet der Baustein her, was an einem Metallstück und an einer Elektrode geschieht: welches Metall welches verdrängt, was sich bei der Elektrolyse abscheidet, welche Spannung eine Zelle liefert. `over` ist die Überspannung in V bei 1 mA/cm², mit der der Vorgang an einer Oberfläche in Gang kommt: eine Zahl für jede Oberfläche oder je Material, zum Beispiel `{"default":0.6,"Pt(s)":0.09,"Zn(s)":0.36}` für Wasserstoff. Ohne `over` läuft der Vorgang ungehemmt. Eine eingetragene Reaktion (`reactions`) mit derselben Gleichung geht der hergeleiteten vor.
 

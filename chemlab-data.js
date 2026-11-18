@@ -49,6 +49,7 @@
   var WHITE = "#f5f5f2";
   var GLOW = "; flame colour estimated from the usual appearance";
   var GAS = "; heat capacity: usual table value";
+  var JANAF = "NIST-JANAF Thermochemical Tables (Chase 1998), as given in the NIST Chemistry WebBook: enthalpy of formation, entropy and heat capacity at 25 °C";
   var BURN = "estimated: ignition temperature and burning time from the usual course of the school experiment";
   var DW = "; diffusion coefficient: phreeqc.dat (USGS), -dw";
   var DL = "; diffusion coefficient: textbook value";
@@ -231,6 +232,11 @@
       "SO2(g)": { name: name("sulfur dioxide"), Hf: -296.81, S: 248.223, cp: 39.9, smell: true, src: CODATA + GAS },
       "CH3COOH(g)": { name: name("acetic acid vapour"), Hf: null, cp: 63.4, smell: true, src: NONE + GAS },
       "H2O2(g)": { name: name("hydrogen peroxide vapour"), Hf: null, cp: 43.1, src: NONE + GAS },
+      // Stickstoffoxide: Stickstoffmonoxid ist farblos und wird an der Luft zu braunem Stickstoffdioxid; das steht mit dem farblosen Dimer im Gleichgewicht
+      "NO(g)": { name: name("nitrogen monoxide"), Hf: 90.29, S: 210.76, cp: 29.86, src: JANAF },
+      "NO2(g)": { name: name("nitrogen dioxide"), Hf: 33.10, S: 240.04, cp: 36.97, smell: true, bands: [[400, 150, 160], [490, 110, 70]],
+        src: JANAF + "; absorption: broad band around 400 nm, cross section about 6·10⁻¹⁹ cm² (textbook value), reaching into the green; widths and the second band estimated" },
+      "N2O4(g)": { name: name("dinitrogen tetroxide"), Hf: 9.08, S: 304.38, cp: 77.26, src: JANAF + "; colourless" },
       "Cl2(g)": { name: name("chlorine"), Hf: 0, S: 223.081, cp: 33.9, smell: true, src: CODATA + GAS },
       // Chlor in Wasser: gelöst, als hypochlorige Säure und als Hypochlorit-Ion; die beiden letzten bleichen Farbstoffe
       "Cl2(aq)": { name: name("chlorine, dissolved"), Hf: -23.4, S: 121, bands: [[325, 70, 70]], src: NBS + "; absorption band estimated (chlorine water is pale yellow-green)" },
@@ -387,6 +393,8 @@
       { eq: "Cl2(aq) + H2O(l) <=> HOCl(aq) + H+(aq) + Cl-(aq)", logK: -3.29, src: "hydrolysis constant 5.1e-4 at 25 °C: Wang and Margerum, Inorg. Chem. 33 (1994) 1123" },
       { eq: "HOCl(aq) <=> H+(aq) + OCl-(aq)", logK: -7.53, src: "pKa 7.53 at 25 °C: Morris, J. Phys. Chem. 70 (1966) 3798" },
       { eq: "SO2(g) <=> SO2(aq)", logK: 0.17, src: LLNL + "SO2(g), SO2 = SO2, log_k 0.17" },
+      // im Gasraum, mit Partialdrücken in bar: kalt fast nur farbloses N2O4, warm mehr braunes NO2
+      { eq: "2 NO2(g) <=> N2O4(g)", logK: 0.829, src: "from the Gibbs energies of formation (NIST-JANAF): ΔG = 97.79 − 2 · 51.26 kJ/mol; K = 6.7 per bar at 25 °C; the temperature dependence follows from the enthalpies of formation (−57 kJ/mol)" },
       { eq: "NH3(g) <=> NH3(aq)", logK: 1.7966, dH: -35.23, src: LLNL + "NH3(g), NH3 = NH3, log_k 1.7966, delta_H -35.2251 kJ/mol" },
       { eq: "HCl(g) <=> H+(aq) + Cl-(aq)", logK: 6.3055, src: LLNL + "HCl(g), HCl = Cl- + H+, log_k 6.3055" },
       { eq: "CH3COOH(g) <=> CH3COOH(aq)", logK: 3.6, dH: -52, src: "textbook value: Henry constant about 4·10³ mol/(L bar) at 25 °C, enthalpy of solution about -52 kJ/mol" },
@@ -572,6 +580,26 @@
         rate: { k: 0.1, Ea: 60, order: { "C21H18O11^2-(aq)": 1, "OH-(aq)": 1 } },
         src: CABBAGE + "; rate estimated: in sodium hydroxide solution 0.1 mol/L the green turns yellow within a few minutes, at pH 11 it stays green for hours"
       },
+      // Kupfer in Salpetersäure: in verdünnter Säure entsteht farbloses Stickstoffmonoxid, in konzentrierter braunes Stickstoffdioxid.
+      // Der erste Weg wächst mit der dritten, der zweite mit der sechsten Potenz der Konzentration (empirisch); ab etwa 6 mol/L überwiegt der zweite.
+      // In neutraler Nitratlösung (Silbernitrat) geschieht nichts.
+      // k in mol/(s cm²) je (mol/L) hoch Ordnung
+      {
+        eq: "3 Cu(s) + 8 H+(aq) + 2 NO3-(aq) -> 3 Cu^2+(aq) + 2 NO(g) + 4 H2O(l)",
+        rate: { k: 1e-8, Ea: 45, surface: "Cu(s)", order: { "H+(aq)": 2, "NO3-(aq)": 1 } },
+        src: "estimated from the usual school experiment: copper sheet in nitric acid 3 mol/L bubbles steadily, the colourless gas turns brown at the mouth"
+      },
+      {
+        eq: "Cu(s) + 4 H+(aq) + 2 NO3-(aq) -> Cu^2+(aq) + 2 NO2(g) + 2 H2O(l)",
+        rate: { k: 4.6e-11, Ea: 45, surface: "Cu(s)", order: { "H+(aq)": 3, "NO3-(aq)": 3 } },
+        src: "estimated from the usual school experiment: copper in concentrated nitric acid reacts violently with brown fumes"
+      },
+      {
+        // Stickstoffmonoxid und Luftsauerstoff im Gasraum: dritte Ordnung. k in L²/(mol² s)
+        eq: "2 NO(g) + O2(g) -> 2 NO2(g)",
+        rate: { k: 7.2e3, order: { "NO(g)": 2, "O2(g)": 1 } },
+        src: "textbook value: rate constant about 2·10⁻³⁸ cm⁶/(molecule² s) at 25 °C, nearly independent of temperature"
+      },
       {
         // Kristallviolett verblasst in Lauge: aus dem farbigen Kation wird das farblose Carbinol. k in L/(mol s)
         eq: "C25H30N3+(aq) + OH-(aq) -> C25H31N3O(aq)",
@@ -651,6 +679,7 @@
     reagents: {
       "H2O": { name: name("distilled water"), liquid: "H2O(l)", group: "water" },
 
+      "HNO3": { name: name("nitric acid"), solution: { "H+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "acid" },
       "HCl": { name: name("hydrochloric acid"), solution: { "H+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "acid" },
       "H2SO4": { name: name("sulfuric acid"), solution: { "H+(aq)": 1, "HSO4-(aq)": 1 }, molar: true, group: "acid" },
       "H2SO4 conc": { name: name("sulfuric acid, concentrated"), liquid: "H2SO4(l)", group: "acid" },
@@ -778,6 +807,7 @@
   // Entwürfe (Kaliumbromid und Lithiumchlorid als fortpflanzungsgefährdend, 24. Anpassung) und Angaben einzelner Lieferanten.
   // Fertiglösungen (Indikatoren) tragen das Etikett der üblichen Schulprodukte, auch wo das Labor nur ihren Farbstoff rechnet.
   var GHS_DATA = {
+    "HNO3": { corr: [5, 1, 3, 1], high: [[65, "GHS03", true]], vm: 30, src: "CLP Annex VI 007-004-00-1 (SCL Skin Corr. 1A from 20 %, 1B from 5 %; Ox. Liq. 3 from 65 %)" },
     "HCl": { corr: [25, 10, 25, 10], stot: [3, 10], met: 0.3, vm: 20, src: "CLP Annex VI 017-002-01-X (SCL); H290 from 0.1 mol/L as suppliers label it (ITW, Neofroxx)" },
     "H2SO4": { corr: [15, 5, 15, 5], met: 0.5, src: "CLP Annex VI 016-020-00-8 (SCL); H290 as suppliers label it" },
     "H2SO4 conc": { corr: [15, 5, 15, 5], src: "CLP Annex VI 016-020-00-8" },

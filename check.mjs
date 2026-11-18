@@ -10463,3 +10463,49 @@ test("Elefantenzahnpasta: Wasserstoffperoxid mit Spülmittel und Kaliumiodid sch
   const after = totals(plain.l), added = 0.005 * 2 * (39.098 + 126.904) + 0.005 * 55.508 * 18.015;
   assert.ok(Math.abs(after.mass - plain.before.mass - added) < 0.01 * added + 0.05, "Masse: nur das Zugegebene kam dazu");
 });
+
+// ---------------------------------------------------------------- Stickstoffoxide: Gase, die im Gasraum reagieren und ihn färben
+
+// Stickstoff in den Gasen (im Gasraum und entwichen), in mol
+const nitrogenGas = (l) => ["NO(g)", "NO2(g)", "N2O4(g)"].reduce((sum, id) => sum + gasOf(l, id) * (id === "N2O4(g)" ? 2 : 1), 0);
+
+test("Kupfer und Salpetersäure: verdünnt entsteht Stickstoffmonoxid, das an der Luft braun wird; konzentriert gleich Stickstoffdioxid", () => {
+  const run = (acid, s, g) => {
+    const l = tubeOf([{ reagent: acid, ml: 5 }], { room: 20 }), before = totals(l), seen = [];
+    L.add(l, "b", "Cu sheet", { g });
+    const cu = amount(l, "Cu(s)");
+    L.step(l, s, (e) => seen.push(e));
+    return { l, seen, before, g, used: cu - amount(l, "Cu(s)") };
+  };
+  const dilute = run("HNO3 3M", 120, 0.5), strong = run("HNO3 12M", 30, 0.2);
+  assert.ok(dilute.used > 1e-4 && strong.used > 1e-3, "Kupfer löst sich, in konzentrierter Säure viel schneller");
+  near(nitrogenGas(dilute.l) / dilute.used, 2 / 3, 0.15, "verdünnt: 3 Cu geben 2 NO");
+  assert.ok(nitrogenGas(strong.l) / strong.used > 1.5, "konzentriert: 1 Cu gibt 2 NO2");
+  assert.ok(gasOf(dilute.l, "NO2(g)") > 0, "das Stickstoffmonoxid wird an der Luft zu Stickstoffdioxid");
+  assert.ok(look(strong.l).fog && ["orange", "brown", "red", "yellow"].includes(look(strong.l).fog.name), "brauner Gasraum");
+  assert.ok(strong.seen.some((e) => e.key === "smell" && e.species === "NO2(g)"), "es riecht stechend");
+  assert.equal(look(strong.l).color.name, "blue", "die Lösung wird blau vom Kupfer");
+  for (const r of [dilute, strong]) {
+    const after = totals(r.l);
+    near(after.charge, r.before.charge, 1e-9, "Ladung");
+    near(after.mass, r.before.mass + r.g, 1e-6, "Masse: nur das Kupfer kam dazu");
+  }
+});
+
+test("Gasraum: Stickstoffdioxid steht mit farblosem N2O4 im Gleichgewicht – kalt blass, warm braun", () => {
+  const flask = (temp) => {
+    const l = lab([{ type: "flask", id: "b", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "stopper", in: "b" }, { type: "bath", under: "b", temp }], { room: 20 });
+    L.step(l, 60);
+    L.vessel(l, "b").air["NO2(g)"] = 3e-4;
+    L.step(l, 2);
+    return l;
+  };
+  const share = (l) => gasOf(l, "NO2(g)") / (gasOf(l, "NO2(g)") + 2 * gasOf(l, "N2O4(g)"));
+  const cold = flask(0), warm = flask(80);
+  assert.ok(share(cold) < 0.5 * share(warm), `kalt ${share(cold)}, warm ${share(warm)}`);
+  const dark = (l) => Math.min(...look(l).fog.rgb);
+  assert.ok(dark(warm) < dark(cold), "warm ist der Gasraum dunkler");
+  // bei 25 °C: K = p(N2O4) / p(NO2)² ≈ 6,7 je bar
+  const room = flask(25), v = L.vessel(room, "b"), Vh = (L.view(room, v).cap - L.view(room, v).ml) / 1000, RT = 0.08314 * (v.T + 273.15);
+  near(Math.log10((v.air["N2O4(g)"] * RT / Vh) / (v.air["NO2(g)"] * RT / Vh) ** 2), 0.829, 0.05, "lg K bei 25 °C");
+});
