@@ -1,5 +1,5 @@
 {
-  "about": "Ionen: Vanadium und seine Oxidationsstufen, Nickel; der Trennungsgang folgt",
+  "about": "Ionen: Vanadium und seine Oxidationsstufen, Nickel, Aluminium, Cadmium, Zinn, Antimon, Bismut und die Sulfide für den Trennungsgang",
   "species": {
     "VO2+(aq)": {
       "name": {
@@ -161,6 +161,275 @@
       "color": "#d42a46",
       "settle": 40,
       "src": "colour of the solid from its usual appearance (strawberry red)"
+    },
+    "H2S(g)": {
+      "name": {
+        "de": "Schwefelwasserstoff",
+        "en": "hydrogen sulfide"
+      },
+      "Hf": -20.6,
+      "S": 205.81,
+      "smell": "rotten",
+      "src": "CODATA Key Values for Thermodynamics (1989); smells of rotten eggs"
+    },
+    "H2S(aq)": {
+      "name": {
+        "de": "Schwefelwasserstoff (gelöst)",
+        "en": "hydrogen sulfide (dissolved)"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "HS-(aq)": {
+      "name": {
+        "de": "Hydrogensulfid-Ion",
+        "en": "hydrogen sulfide ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "CuS(s)": {
+      "name": {
+        "de": "Kupfer(II)-sulfid",
+        "en": "copper(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#1d1d1f",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "PbS(s)": {
+      "name": {
+        "de": "Blei(II)-sulfid",
+        "en": "lead(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#232326",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "Ag2S(s)": {
+      "name": {
+        "de": "Silbersulfid",
+        "en": "silver sulfide"
+      },
+      "Hf": null,
+      "color": "#1f1f22",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "Bi2S3(s)": {
+      "name": {
+        "de": "Bismut(III)-sulfid",
+        "en": "bismuth(III) sulfide"
+      },
+      "Hf": null,
+      "color": "#3d2b1f",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "CdS(s)": {
+      "name": {
+        "de": "Cadmiumsulfid",
+        "en": "cadmium sulfide"
+      },
+      "Hf": null,
+      "color": "#f0c000",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "Sb2S3(s)": {
+      "name": {
+        "de": "Antimon(III)-sulfid",
+        "en": "antimony(III) sulfide"
+      },
+      "Hf": null,
+      "color": "#e5641a",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "SnS(s)": {
+      "name": {
+        "de": "Zinn(II)-sulfid",
+        "en": "tin(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#5c3b22",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "ZnS(s)": {
+      "name": {
+        "de": "Zinksulfid",
+        "en": "zinc sulfide"
+      },
+      "Hf": null,
+      "color": "#f3f3ef",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "FeS(s)": {
+      "name": {
+        "de": "Eisen(II)-sulfid",
+        "en": "iron(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#1e1e1e",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "MnS(s)": {
+      "name": {
+        "de": "Mangan(II)-sulfid",
+        "en": "manganese(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#e6b2a3",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "NiS(s)": {
+      "name": {
+        "de": "Nickel(II)-sulfid",
+        "en": "nickel(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#1b1b1b",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "CoS(s)": {
+      "name": {
+        "de": "Cobalt(II)-sulfid",
+        "en": "cobalt(II) sulfide"
+      },
+      "Hf": null,
+      "color": "#1b1b1d",
+      "settle": 40,
+      "src": "colour of the solid from its usual appearance (freshly precipitated)"
+    },
+    "Al^3+(aq)": {
+      "name": {
+        "de": "Aluminium-Ion",
+        "en": "aluminium ion"
+      },
+      "Hf": null,
+      "D": 0.559,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "AlOH^2+(aq)": {
+      "name": {
+        "de": "Aluminiumhydroxid-Ion",
+        "en": "aluminium hydroxide ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Al(OH)4-(aq)": {
+      "name": {
+        "de": "Tetrahydroxidoaluminat-Ion",
+        "en": "tetrahydroxidoaluminate ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Al(OH)3(s)": {
+      "name": {
+        "de": "Aluminiumhydroxid",
+        "en": "aluminium hydroxide"
+      },
+      "Hf": null,
+      "color": "#f1f1ec",
+      "settle": 60,
+      "src": "colour of the solid from its usual appearance (white, gelatinous)"
+    },
+    "Cd^2+(aq)": {
+      "name": {
+        "de": "Cadmium-Ion",
+        "en": "cadmium ion"
+      },
+      "Hf": null,
+      "D": 0.717,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Cd(NH3)4^2+(aq)": {
+      "name": {
+        "de": "Tetraammincadmium-Ion",
+        "en": "tetraamminecadmium ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Cd(OH)2(s)": {
+      "name": {
+        "de": "Cadmiumhydroxid",
+        "en": "cadmium hydroxide"
+      },
+      "Hf": null,
+      "color": "#f2f2ee",
+      "settle": 60,
+      "src": "colour of the solid from its usual appearance (white)"
+    },
+    "Sn^2+(aq)": {
+      "name": {
+        "de": "Zinn(II)-Ion",
+        "en": "tin(II) ion"
+      },
+      "Hf": -8.9,
+      "S": -16.7,
+      "src": "CODATA Key Values"
+    },
+    "SbO+(aq)": {
+      "name": {
+        "de": "Antimonyl-Ion",
+        "en": "antimonyl ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless; antimony(III) in acidic solution, simplified"
+    },
+    "Sb(OH)3(aq)": {
+      "name": {
+        "de": "Antimon(III)-hydroxid (gelöst)",
+        "en": "antimony(III) hydroxide (dissolved)"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Bi^3+(aq)": {
+      "name": {
+        "de": "Bismut(III)-Ion",
+        "en": "bismuth(III) ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "BiOH^2+(aq)": {
+      "name": {
+        "de": "Bismuthydroxid-Ion",
+        "en": "bismuth hydroxide ion"
+      },
+      "Hf": null,
+      "src": "no enthalpy of formation entered; colourless"
+    },
+    "Bi(OH)3(s)": {
+      "name": {
+        "de": "Bismut(III)-hydroxid",
+        "en": "bismuth(III) hydroxide"
+      },
+      "Hf": null,
+      "color": "#f2f2ee",
+      "settle": 60,
+      "src": "colour of the solid from its usual appearance (white)"
+    },
+    "PbCl2(s)": {
+      "name": {
+        "de": "Blei(II)-chlorid",
+        "en": "lead(II) chloride"
+      },
+      "Hf": null,
+      "color": "#f4f4f1",
+      "settle": 20,
+      "src": "colour of the solid from its usual appearance (white needles)"
     }
   },
   "couples": [
@@ -263,6 +532,212 @@
       "solid": "Ni(s)",
       "area": 6,
       "group": "solid"
+    },
+    "H2S water": {
+      "ghs": {
+        "fixed": [
+          "GHS02",
+          "GHS06",
+          "GHS09"
+        ],
+        "src": "hydrogen sulfide, CLP Annex VI 016-001-00-4 (Flam. Gas 1, Acute Tox. 2 inhalation, Aquatic Acute 1): the gas escapes from the solution",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Schwefelwasserstoffwasser",
+        "en": "hydrogen sulfide water"
+      },
+      "solution": {
+        "H2S(aq)": 0.1
+      },
+      "group": "other",
+      "src": "saturated solution, about 0.1 mol/L"
+    },
+    "(NH4)2S": {
+      "ghs": {
+        "fixed": [
+          "GHS05",
+          "GHS06",
+          "GHS09"
+        ],
+        "src": "ammonium sulfide solution as labelled by suppliers (Skin Corr. 1B, Acute Tox. 3, Aquatic Acute 1; releases hydrogen sulfide)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Ammoniumsulfid-Lösung (1 mol/L)",
+        "en": "ammonium sulfide solution (1 mol/L)"
+      },
+      "solution": {
+        "NH4+(aq)": 1,
+        "HS-(aq)": 1,
+        "NH3(aq)": 1
+      },
+      "group": "other"
+    },
+    "(NH4)2CO3": {
+      "ghs": {
+        "fixed": [
+          "GHS07"
+        ],
+        "src": "ammonium carbonate as labelled by suppliers (Acute Tox. 4, Eye Irrit. 2)",
+        "signal": "warning"
+      },
+      "name": {
+        "de": "Ammoniumcarbonat-Lösung (2 mol/L)",
+        "en": "ammonium carbonate solution (2 mol/L)"
+      },
+      "solution": {
+        "NH4+(aq)": 4,
+        "CO3^2-(aq)": 2
+      },
+      "group": "salt"
+    },
+    "AlCl3 0.1M": {
+      "ghs": {
+        "fixed": [],
+        "src": "1.3 % aluminium chloride: below the limits of its classes"
+      },
+      "name": {
+        "de": "Aluminiumchlorid-Lösung (0,1 mol/L)",
+        "en": "aluminium chloride solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Al^3+(aq)": 0.1,
+        "Cl-(aq)": 0.3
+      },
+      "group": "salt"
+    },
+    "CdSO4 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS06",
+          "GHS08",
+          "GHS09"
+        ],
+        "src": "cadmium sulfate, CLP Annex VI 048-009-00-9 (Carc. 1B, Muta. 1B, Repr. 1B, Acute Tox. 2 inhalation, STOT RE 1, Aquatic 1)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Cadmiumsulfat-Lösung (0,1 mol/L)",
+        "en": "cadmium sulfate solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Cd^2+(aq)": 0.1,
+        "SO4^2-(aq)": 0.1
+      },
+      "group": "salt"
+    },
+    "SnCl2 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS05",
+          "GHS07"
+        ],
+        "src": "tin(II) chloride in hydrochloric acid 1 mol/L, as labelled by suppliers (Skin Corr. 1B, Skin Sens. 1)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Zinn(II)-chlorid in Salzsäure (0,1 mol/L)",
+        "en": "tin(II) chloride in hydrochloric acid (0.1 mol/L)"
+      },
+      "solution": {
+        "Sn^2+(aq)": 0.1,
+        "H+(aq)": 1,
+        "Cl-(aq)": 1.2
+      },
+      "group": "salt"
+    },
+    "SbCl3 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS05",
+          "GHS09"
+        ],
+        "src": "antimony trichloride, CLP Annex VI 051-002-00-3 (Skin Corr. 1B, Aquatic Chronic 2), in hydrochloric acid 2 mol/L",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Antimon(III)-chlorid in Salzsäure (0,1 mol/L)",
+        "en": "antimony(III) chloride in hydrochloric acid (0.1 mol/L)"
+      },
+      "solution": {
+        "SbO+(aq)": 0.1,
+        "H+(aq)": 2.2,
+        "Cl-(aq)": 2.3
+      },
+      "group": "salt"
+    },
+    "Bi(NO3)3 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS05"
+        ],
+        "src": "nitric acid 1 mol/L keeps the bismuth from hydrolysing (Skin Corr. 1B)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Bismutnitrat in Salpetersäure (0,1 mol/L)",
+        "en": "bismuth nitrate in nitric acid (0.1 mol/L)"
+      },
+      "solution": {
+        "Bi^3+(aq)": 0.1,
+        "H+(aq)": 1,
+        "NO3-(aq)": 1.3
+      },
+      "group": "salt"
+    },
+    "Pb(NO3)2 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS07",
+          "GHS08",
+          "GHS09"
+        ],
+        "src": "lead nitrate, CLP Annex VI 082-001-00-6 (Repr. 1A, STOT RE 1, Aquatic 1)",
+        "signal": "danger"
+      },
+      "name": {
+        "de": "Bleinitrat-Lösung (0,1 mol/L)",
+        "en": "lead nitrate solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Pb^2+(aq)": 0.1,
+        "NO3-(aq)": 0.2
+      },
+      "group": "salt"
+    },
+    "MnCl2 0.1M": {
+      "ghs": {
+        "fixed": [
+          "GHS07"
+        ],
+        "signal": "warning",
+        "src": "manganese(II) chloride (Acute Tox. 3 oral, Eye Dam. 1 as labelled by suppliers): 1.3 % is an eye irritant"
+      },
+      "name": {
+        "de": "Mangan(II)-chlorid-Lösung (0,1 mol/L)",
+        "en": "manganese(II) chloride solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Mn^2+(aq)": 0.1,
+        "Cl-(aq)": 0.2
+      },
+      "group": "salt"
+    },
+    "MgCl2 0.1M": {
+      "ghs": {
+        "fixed": [],
+        "src": "magnesium chloride: not classified"
+      },
+      "name": {
+        "de": "Magnesiumchlorid-Lösung (0,1 mol/L)",
+        "en": "magnesium chloride solution (0.1 mol/L)"
+      },
+      "solution": {
+        "Mg^2+(aq)": 0.1,
+        "Cl-(aq)": 0.2
+      },
+      "group": "salt"
     }
   },
   "reactions": [
@@ -286,6 +761,42 @@
         "fast": true
       },
       "src": "textbook: comproportionation of vanadium(V) and vanadium(II)"
+    },
+    {
+      "eq": "Ni^2+(aq) + HS-(aq) -> NiS(s) + H+(aq)",
+      "rate": {
+        "k": 1000,
+        "Ea": 50,
+        "order": {
+          "Ni^2+(aq)": 1,
+          "HS-(aq)": 1
+        }
+      },
+      "src": "estimated: nickel and cobalt sulfide form slowly; with the little HS- of acidic solution they hardly form, from ammonium sulfide solution at once (free nickel ion). Once formed they do not dissolve again in dilute hydrochloric acid (aged precipitate), so they stand in no solubility equilibrium"
+    },
+    {
+      "eq": "Ni(NH3)6^2+(aq) + HS-(aq) -> NiS(s) + 5 NH3(aq) + NH4+(aq)",
+      "rate": {
+        "k": 100,
+        "Ea": 50,
+        "order": {
+          "Ni(NH3)6^2+(aq)": 1,
+          "HS-(aq)": 1
+        }
+      },
+      "src": "estimated: nickel and cobalt sulfide form slowly; with the little HS- of acidic solution they hardly form, from ammonium sulfide solution at once (nickel ammine complex). Once formed they do not dissolve again in dilute hydrochloric acid (aged precipitate), so they stand in no solubility equilibrium"
+    },
+    {
+      "eq": "Co^2+(aq) + HS-(aq) -> CoS(s) + H+(aq)",
+      "rate": {
+        "k": 1000,
+        "Ea": 50,
+        "order": {
+          "Co^2+(aq)": 1,
+          "HS-(aq)": 1
+        }
+      },
+      "src": "estimated: nickel and cobalt sulfide form slowly; with the little HS- of acidic solution they hardly form, from ammonium sulfide solution at once (free cobalt ion). Once formed they do not dissolve again in dilute hydrochloric acid (aged precipitate), so they stand in no solubility equilibrium"
     }
   ],
   "equilibria": [
@@ -303,6 +814,115 @@
       "eq": "Ni^2+(aq) + 2 C4H8N2O2(aq) <=> Ni(C4H7N2O2)2(s) + 2 H+(aq)",
       "logK": 2.5,
       "src": "estimated from textbook values (stability of the bis complex and acidity of dimethylglyoxime): the red precipitate forms in ammoniacal or acetate-buffered solution, not in strong acid"
+    },
+    {
+      "eq": "H2S(g) <=> H2S(aq)",
+      "logK": -0.99,
+      "dH": -19,
+      "src": "minteq.v4.dat (USGS): H2S(g), H2S = H+ + HS-, log_k -8.01, with H+ + HS- = H2S, log_k 7.02; enthalpy of solution estimated (-19 kJ/mol)"
+    },
+    {
+      "eq": "H2S(aq) <=> H+(aq) + HS-(aq)",
+      "logK": -7.02,
+      "dH": 22,
+      "src": "minteq.v4.dat (USGS): H+ + HS- = H2S, log_k 7.02, delta_h -22 kJ; written in reverse"
+    },
+    {
+      "eq": "CuS(s) + H+(aq) <=> Cu^2+(aq) + HS-(aq)",
+      "logK": -22.3,
+      "src": "minteq.v4.dat (USGS): Covellite, log_k -22.3"
+    },
+    {
+      "eq": "PbS(s) + H+(aq) <=> Pb^2+(aq) + HS-(aq)",
+      "logK": -13.97,
+      "src": "minteq.v4.dat (USGS): Galena, log_k -13.97"
+    },
+    {
+      "eq": "Ag2S(s) + H+(aq) <=> 2 Ag+(aq) + HS-(aq)",
+      "logK": -36.22,
+      "src": "minteq.v4.dat (USGS): Acanthite, log_k -36.22"
+    },
+    {
+      "eq": "CdS(s) + H+(aq) <=> Cd^2+(aq) + HS-(aq)",
+      "logK": -14.36,
+      "src": "minteq.v4.dat (USGS): Greenockite, log_k -14.36"
+    },
+    {
+      "eq": "FeS(s) + H+(aq) <=> Fe^2+(aq) + HS-(aq)",
+      "logK": -2.95,
+      "src": "minteq.v4.dat (USGS): FeS(ppt), freshly precipitated, log_k -2.95"
+    },
+    {
+      "eq": "ZnS(s) + H+(aq) <=> Zn^2+(aq) + HS-(aq)",
+      "logK": -9.052,
+      "src": "minteq.v4.dat (USGS): ZnS(am), freshly precipitated, log_k -9.052"
+    },
+    {
+      "eq": "MnS(s) + H+(aq) <=> Mn^2+(aq) + HS-(aq)",
+      "logK": 3.34,
+      "src": "textbook value for pink manganese(II) sulfide (log K 3.34): it precipitates only from ammoniacal solution"
+    },
+    {
+      "eq": "SnS(s) + H+(aq) <=> Sn^2+(aq) + HS-(aq)",
+      "logK": -12.02,
+      "src": "minteq.v4.dat (USGS): SnS + 2 H2O = Sn(OH)2 + H+ + HS-, log_k -19.114, and Sn(OH)2 + 2 H+ = Sn+2 + 2 H2O, log_k 7.094"
+    },
+    {
+      "eq": "Sb2S3(s) + 6 H2O(l) <=> 2 Sb(OH)3(aq) + 3 H+(aq) + 3 HS-(aq)",
+      "logK": -50.46,
+      "src": "minteq.v4.dat (USGS): Stibnite, log_k -50.46"
+    },
+    {
+      "eq": "SbO+(aq) + 2 H2O(l) <=> Sb(OH)3(aq) + H+(aq)",
+      "logK": -0.9228,
+      "src": "minteq.v4.dat (USGS): Sb(OH)3 + H+ = SbO+ + 2 H2O, log_k 0.9228; written in reverse"
+    },
+    {
+      "eq": "Bi2S3(s) + 3 H+(aq) <=> 2 Bi^3+(aq) + 3 HS-(aq)",
+      "logK": -45.1,
+      "src": "textbook value: solubility product of bismuth sulfide about 1e-97 (with S2-), converted with pKa 17.3 of HS- as in minteq.v4.dat (USGS), so that it fits the other sulfides"
+    },
+    {
+      "eq": "Bi^3+(aq) + H2O(l) <=> BiOH^2+(aq) + H+(aq)",
+      "logK": -1.1,
+      "src": "textbook value: first hydrolysis constant of bismuth(III)"
+    },
+    {
+      "eq": "Bi(OH)3(s) <=> Bi^3+(aq) + 3 OH-(aq)",
+      "logK": -30.4,
+      "src": "textbook value: solubility product of bismuth hydroxide about 4e-31"
+    },
+    {
+      "eq": "Al^3+(aq) + H2O(l) <=> AlOH^2+(aq) + H+(aq)",
+      "logK": -4.997,
+      "dH": 47.81,
+      "src": "minteq.v4.dat (USGS): Al+3 + H2O = AlOH+2 + H+, log_k -4.997, delta_h 47.81 kJ"
+    },
+    {
+      "eq": "Al(OH)3(s) <=> Al^3+(aq) + 3 OH-(aq)",
+      "logK": -31.2,
+      "src": "minteq.v4.dat (USGS): Al(OH)3(am), Al(OH)3 + 3 H+ = Al+3 + 3 H2O, log_k 10.8; converted with the ion product of water"
+    },
+    {
+      "eq": "Al^3+(aq) + 4 H2O(l) <=> Al(OH)4-(aq) + 4 H+(aq)",
+      "logK": -22.688,
+      "src": "minteq.v4.dat (USGS): Al+3 + 4 H2O = Al(OH)4- + 4 H+, log_k -22.688"
+    },
+    {
+      "eq": "Cd(OH)2(s) <=> Cd^2+(aq) + 2 OH-(aq)",
+      "logK": -14.27,
+      "src": "minteq.v4.dat (USGS): Cd(OH)2(am), Cd(OH)2 + 2 H+ = Cd+2 + 2 H2O, log_k 13.73; converted with the ion product of water"
+    },
+    {
+      "eq": "Cd^2+(aq) + 4 NH3(aq) <=> Cd(NH3)4^2+(aq)",
+      "logK": 7.2914,
+      "src": "llnl.dat (USGS): 4 NH3 + Cd+2 = Cd(NH3)4+2, log_k 7.2914"
+    },
+    {
+      "eq": "PbCl2(s) <=> Pb^2+(aq) + 2 Cl-(aq)",
+      "logK": -4.78,
+      "dH": 26.14,
+      "src": "minteq.v4.dat (USGS): Cotunnite, log_k -4.78; enthalpy of solution from llnl.dat (26.14 kJ/mol): it dissolves in hot water"
     }
   ]
 }

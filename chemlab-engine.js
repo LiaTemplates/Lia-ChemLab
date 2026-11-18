@@ -287,7 +287,7 @@
           throw fail("species", id + " Tb/Hvap");
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
-        if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
+        if (data.smell != null && data.smell !== true && data.smell !== "fruity" && data.smell !== "rotten") throw fail("species", id + " smell");
         // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
         if (data.oil != null && !(phase === "aq" && data.Vm > 0 && data.oil && typeof data.oil.sol === "number" && data.oil.sol >= 0)) throw fail("species", id + " oil");
         // kd: Verteilung c(Ölschicht)/c(Wasser) eines gelösten Stoffs; oilBands: seine Banden, wenn er im Öl gelöst ist
@@ -2007,7 +2007,7 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, found, k, round, worst, at, value, melt, out;
+    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, before = null, found, k, round, worst, at, value, melt, out, order, t;
     // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
@@ -2045,7 +2045,7 @@
     function join(q) {
       var alpha = depends(q), gone = -1, least = Infinity, i;
       used[q] = true;
-      if (!alpha) { active.push(q); return; }
+      if (!alpha) { before = active.slice(); active.push(q); return; }
       for (i = 0; i < active.length; i++) {
         if (alpha[i] > 1e-9 && state.s[i] / alpha[i] < least) { least = state.s[i] / alpha[i]; gone = i; }
       }
@@ -2059,7 +2059,27 @@
         active = saved;
         found = attempt();
       }
-      saved = null;
+      if (!found && before) {
+        // Der zuletzt Aufgenommene verdrängt einen der anderen, ohne dass ihre Zusammensetzungen voneinander abhängen: Ein
+        // Niederschlag wandelt sich ganz in einen viel schwerer löslichen um (Silberchromat in Silbersulfid). Versucht wird,
+        // frühere wegzulassen; sie lösen sich dann ganz.
+        // Erst einer, dann zwei zugleich (Silberoxid wandelt Zink- und Bismutsulfid in Silbersulfid um), die kleinsten zuerst.
+        order = before.map(function (q, i) { return { q: [q], s: state ? state.s[i] : 0 }; });
+        order.slice().forEach(function (a, i) { order.slice(i + 1).forEach(function (b) { if (b.q.length === 1) order.push({ q: a.q.concat(b.q), s: 1e6 + a.s + b.s }); }); });
+        order.sort(function (a, b) { return a.s - b.s; });
+        // gilt nur, wenn danach keiner eine negative Menge hätte; sonst der erste, der sich überhaupt rechnen ließ
+        var joined = active.slice(before.length), first = null, keep = null;
+        for (t = 0; t < order.length; t++) {
+          active = before.filter(function (q) { return order[t].q.indexOf(q) < 0; }).concat(joined);
+          found = attempt();
+          if (!found) continue;
+          if (found.s.every(function (x) { return x >= -1e-15; })) { keep = null; break; }
+          if (!first) { first = found; keep = active.slice(); }
+          found = null;
+        }
+        if (!found && first) { found = first; active = keep; }
+      }
+      saved = null; before = null;
       if (!found) return null;
       state = found;
       worst = -1e-15; at = -1;                                  // wer aufgebraucht ist, scheidet aus
@@ -2074,7 +2094,7 @@
       }
       // Ein Feststoff, der sich lösen müsste, kommt versuchsweise dazu: Meist löst er sich nur zum Teil, und die Lösung ist dann
       // mit ihm gesättigt.
-      if (at >= 0 && melt) { used[at] = true; saved = active.slice(); active.push(at); continue; }
+      if (at >= 0 && melt) { used[at] = true; saved = active.slice(); before = active.slice(); active.push(at); continue; }
       if (at >= 0) { join(at); continue; }
       out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });

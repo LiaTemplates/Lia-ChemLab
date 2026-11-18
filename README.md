@@ -1321,7 +1321,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen und mit Nickel. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1558,6 +1558,28 @@ Nickel-, Kobalt- und Chromsalze sind in vielen Schulen nicht mehr erlaubt, weil 
   {"type":"testtube","id":"alk","contains":[{"reagent":"K2Cr2O7 0.1M","ml":2},{"reagent":"H2SO4 1M","ml":3}]}
  ],
  "shelf":["NH3 2M","NaOH 1M","dimethylglyoxime","ethanol","H2SO4 1M","testtube","beaker","electrode-Ni","electrode-Cu","supply","Ni granules"],
+ "show":{"charts":false}}
+```
+
+## Trennungsgang: die Gruppen
+
+@[ChemLab.pack](packs/ionen.json)
+
+Im Kationentrennungsgang fällt man die Metall-Ionen einer unbekannten Lösung gruppenweise aus, eine Gruppe nach der anderen. Hier steht jede Gruppe in ihrem eigenen Becherglas, schon mit den Ionen, die zu ihr gehören:
+
+1. **Salzsäuregruppe**: Gib Salzsäure (2 mol/L) dazu. Silberchlorid und Bleichlorid fallen weiß aus. Bleichlorid löst sich in heißem Wasser wieder.
+2. **Schwefelwasserstoffgruppe**: In salzsaurer Lösung fällt Schwefelwasserstoffwasser nur die schwerst­löslichen Sulfide: Kupfer, Blei und Bismut dunkel, Cadmium gelb, Antimon orange, Zinn braun. Zink, Nickel, Cobalt, Eisen und Mangan bleiben gelöst. Es riecht nach faulen Eiern.
+3. **Ammoniumsulfidgruppe**: In ammoniakalischer Lösung fällt Ammoniumsulfid die übrigen Sulfide (Zink weiß, Mangan rosa, Eisen, Nickel und Cobalt schwarz), dazu Aluminium- und Chromhydroxid. Gib danach verdünnte Salzsäure dazu: Alles löst sich wieder, nur Nickel- und Cobaltsulfid bleiben schwarz zurück.
+4. **Ammoniumcarbonatgruppe**: Ammoniumcarbonat fällt Barium, Strontium und Calcium als Carbonate. Magnesium bleibt in der ammoniumreichen Lösung gelöst und gehört mit Natrium, Kalium und Ammonium zur löslichen Gruppe.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"g1","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"Pb(NO3)2 0.1M","ml":2},{"reagent":"CuSO4 0.1M","ml":2}]},
+  {"type":"beaker","id":"g2","ml":250,"contains":[{"reagent":"CuSO4 0.1M","ml":2},{"reagent":"Bi(NO3)3 0.1M","ml":2},{"reagent":"CdSO4 0.1M","ml":2},{"reagent":"SbCl3 0.1M","ml":2},{"reagent":"SnCl2 0.1M","ml":2},{"reagent":"ZnSO4 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"HCl 2M","ml":5}]},
+  {"type":"beaker","id":"g3","ml":250,"contains":[{"reagent":"ZnSO4 0.1M","ml":2},{"reagent":"MnCl2 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"CoCl2 0.1M","ml":2},{"reagent":"AlCl3 0.1M","ml":2},{"reagent":"KCr(SO4)2 0.1M","ml":2},{"reagent":"NH4Cl 1M","ml":5},{"reagent":"NH3 2M","ml":5}]},
+  {"type":"beaker","id":"g4","contains":[{"reagent":"BaCl2 0.1M","ml":2},{"reagent":"SrCl2 0.1M","ml":2},{"reagent":"CaCl2 0.1M","ml":2},{"reagent":"MgCl2 0.1M","ml":2},{"reagent":"NH4Cl 2M","ml":10}]}
+ ],
+ "shelf":["HCl 2M","H2S water","(NH4)2S","(NH4)2CO3","NH3 2M","NH4Cl 1M","beaker","bath","centrifuge"],
  "show":{"charts":false}}
 ```
 
@@ -1984,6 +2006,9 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
+- Übersättigung gibt es nicht: Was ausfallen kann, fällt aus. Darum fällt Magnesiumcarbonat mit Ammoniumcarbonat teilweise aus (mit viel Ammoniumchlorid etwa ein Fünftel), während es im Labor übersättigt gelöst bleibt. Nickel- und Cobaltsulfid fallen dagegen mit Absicht als langsame Reaktion, damit sie in salzsaurer Lösung ausbleiben und sich danach in verdünnter Salzsäure nicht wieder lösen, wie im Trennungsgang.
+- Salzsäure und Salpetersäure rechnen bis 12 mol/L; konzentrierte Salpetersäure (65 %, 14 mol/L) steht deshalb als 12 mol/L im Regal. Welcher Weg beim Lösen von Kupfer überwiegt (NO oder NO2), folgt einem geschätzten Geschwindigkeitsgesetz, nicht dem Gleichgewicht der Stickstoffoxide in der Lösung.
+- Luftsauerstoff steht im Gasraum auch eines verschlossenen Gefäßes unbegrenzt bereit.
 - Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.

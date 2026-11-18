@@ -5640,19 +5640,19 @@ test("Ruhe: ein Metall, das sich unterhalb der Sichtbarkeit löst, hält die Uhr
 test("Ruhe: ein Niederschlag, der unmerklich langsam nachwächst, hält die Uhr nicht am Laufen", () => {
   L.register({
     species: {
-      "CdO(s)": { name: { de: "Cadmiumoxid" }, Hf: null, color: "#3a4a3a", src: "Test" },
-      "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" },
-      "Cd(OH)2(s)": { name: { de: "Cadmiumhydroxid" }, Hf: null, color: "#d98aa0", src: "Test" }
+      "RhO(s)": { name: { de: "Rhodiumoxid (Beispiel)" }, Hf: null, color: "#3a4a3a", src: "Test" },
+      "Rh^2+(aq)": { name: { de: "Rhodium-Ion (Beispiel)" }, Hf: null, src: "Test" },
+      "Rh(OH)2(s)": { name: { de: "Rhodiumhydroxid (Beispiel)" }, Hf: null, color: "#d98aa0", src: "Test" }
     },
-    equilibria: [{ eq: "Cd(OH)2(s) <=> Cd^2+(aq) + 2 OH-(aq)", logK: -15, src: "Test" }],
-    reactions: [{ eq: "CdO(s) + H2O(l) -> Cd^2+(aq) + 2 OH-(aq)", rate: { k: 1e-11, surface: "CdO(s)" }, src: "Test" }],
-    reagents: { "CdO": { name: { de: "Cadmiumoxid" }, solid: "CdO(s)", area: 10 } }
+    equilibria: [{ eq: "Rh(OH)2(s) <=> Rh^2+(aq) + 2 OH-(aq)", logK: -15, src: "Test" }],
+    reactions: [{ eq: "RhO(s) + H2O(l) -> Rh^2+(aq) + 2 OH-(aq)", rate: { k: 1e-11, surface: "RhO(s)" }, src: "Test" }],
+    reagents: { "RhO": { name: { de: "Rhodiumoxid (Beispiel)" }, solid: "RhO(s)", area: 10 } }
   });
-  const l = tubeOf([{ reagent: "NaOH 0.01M", ml: 10 }, { reagent: "CdO", g: 3 }]);
+  const l = tubeOf([{ reagent: "NaOH 0.01M", ml: 10 }, { reagent: "RhO", g: 3 }]);
   L.step(l, 60);
-  const first = solid(l, "Cd(OH)2(s)");
+  const first = solid(l, "Rh(OH)2(s)");
   L.step(l, 60);
-  const grown = solid(l, "Cd(OH)2(s)") - first;
+  const grown = solid(l, "Rh(OH)2(s)") - first;
   assert.ok(grown > 6e-9 && grown < 6e-8, `in einer Minute wachsen ${grown} mol Niederschlag nach: unter 1 nmol/s`);
   assert.ok(L.atRest(l), "das sieht niemand: die Uhr steht");
 });
@@ -7114,15 +7114,15 @@ test("Auflösung nach Gesetz: zwei Feststoffe im selben Glas folgen jeder seinem
     for (const [k, share] of [[5e-9, 0], [5.11e-6, 0.1]]) {
       L.db = before;
       L.register({
-        species: { "CdCO3(s)": { name: { de: "Cadmiumcarbonat" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" } },
-        equilibria: [{ eq: "CdCO3(s) <=> Cd^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
-        reagents: { "cadmium carbonate": { name: { de: "Cadmiumcarbonat" }, solid: "CdCO3(s)", area: 6 } }
+        species: { "RhCO3(s)": { name: { de: "Rhodiumcarbonat (Beispiel)" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Rh^2+(aq)": { name: { de: "Rhodium-Ion (Beispiel)" }, Hf: null, src: "Test" } },
+        equilibria: [{ eq: "RhCO3(s) <=> Rh^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
+        reagents: { "rhodium carbonate": { name: { de: "Rhodiumcarbonat (Beispiel)" }, solid: "RhCO3(s)", area: 6 } }
       });
       const l = lime("HCl 1M", "marble", 1);
-      L.add(l, "b", "cadmium carbonate", { g: 1 });
+      L.add(l, "b", "rhodium carbonate", { g: 1 });
       L.step(l, 10);
       near(calcium(l), calcium(alone), 0.03 * calcium(alone), `Marmor neben einem Stück mit k = ${k}`);
-      near(dissolved(l, "Cd"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
+      near(dissolved(l, "Rh"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
       assert.equal(L.atRest(l), false);
       assert.equal(l.failed || 0, 0);
     }
@@ -10508,4 +10508,59 @@ test("Gasraum: Stickstoffdioxid steht mit farblosem N2O4 im Gleichgewicht – ka
   // bei 25 °C: K = p(N2O4) / p(NO2)² ≈ 6,7 je bar
   const room = flask(25), v = L.vessel(room, "b"), Vh = (L.view(room, v).cap - L.view(room, v).ml) / 1000, RT = 0.08314 * (v.T + 273.15);
   near(Math.log10((v.air["N2O4(g)"] * RT / Vh) / (v.air["NO2(g)"] * RT / Vh) ** 2), 0.829, 0.05, "lg K bei 25 °C");
+});
+
+// ---------------------------------------------------------------- Trennungsgang (Paket ionen.json)
+
+// Becherglas mit je 2 mL der Lösungen (0,2 mmol jedes Ions), dazu Zugaben; zurück: das Labor und was ausgefallen ist (mol)
+const precipitate = (reagents, extra, adds, wait) => {
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: reagents.map((reagent) => ({ reagent, ml: 2 })).concat(extra || []) }], { room: 25 }), seen = [];
+  for (const [r, a] of adds) L.add(l, "b", r, a);
+  L.step(l, wait || 120, (e) => seen.push(e));
+  const out = {};
+  L.vessel(l, "b").lumps.forEach((x) => { if (x.made) out[x.id] = (out[x.id] || 0) + x.n; });
+  return { l, out, seen };
+};
+
+test("Trennungsgang: die Gruppen fallen in der Reihenfolge des Lehrbuchs", () => {
+  L.register(ionen());
+  const full = 2e-4;
+  // Salzsäuregruppe
+  let g = precipitate(["AgNO3 0.1M", "Pb(NO3)2 0.1M", "CuSO4 0.1M", "ZnSO4 0.1M"], null, [["HCl 2M", { ml: 5 }]]);
+  assert.ok(g.out["AgCl(s)"] > 0.99 * full && g.out["PbCl2(s)"] > 0.9 * full, "Silber und Blei fallen als Chloride");
+  assert.ok(!g.out["CuCl(s)"] && !g.out["ZnS(s)"], "Kupfer und Zink bleiben gelöst");
+  // Schwefelwasserstoffgruppe in salzsaurer Lösung
+  g = precipitate(["Pb(NO3)2 0.1M", "CuSO4 0.1M", "Bi(NO3)3 0.1M", "CdSO4 0.1M", "SnCl2 0.1M", "SbCl3 0.1M", "ZnSO4 0.1M", "NiSO4 0.1M", "CoCl2 0.1M", "FeSO4 0.1M", "MnCl2 0.1M", "AlCl3 0.1M"],
+    [{ reagent: "HCl 2M", ml: 5 }], [["H2S water", { ml: 30 }]]);
+  for (const [id, n] of [["CuS(s)", full], ["PbS(s)", full], ["CdS(s)", full], ["SnS(s)", full], ["Bi2S3(s)", full / 2], ["Sb2S3(s)", full / 2]]) assert.ok(g.out[id] > 0.95 * n, id);
+  for (const id of ["ZnS(s)", "NiS(s)", "CoS(s)", "FeS(s)", "MnS(s)", "Al(OH)3(s)"]) assert.ok(!(g.out[id] > 0.01 * full), id + " bleibt gelöst");
+  const smell = g.seen.find((e) => e.key === "smell" && e.species === "H2S(g)");
+  assert.ok(smell, "es riecht nach Schwefelwasserstoff");
+  assert.equal(L.say(smell, { lang: "de", names: { b: "Becherglas 1" } }), "Becherglas 1: Es riecht nach faulen Eiern: Schwefelwasserstoff.");
+  // Ammoniumsulfidgruppe
+  g = precipitate(["ZnSO4 0.1M", "NiSO4 0.1M", "CoCl2 0.1M", "FeSO4 0.1M", "MnCl2 0.1M", "AlCl3 0.1M", "KCr(SO4)2 0.1M", "MgCl2 0.1M"],
+    [{ reagent: "NH4Cl 1M", ml: 5 }], [["NH3 2M", { ml: 5 }], ["(NH4)2S", { ml: 5 }]]);
+  for (const id of ["ZnS(s)", "NiS(s)", "CoS(s)", "FeS(s)", "MnS(s)", "Cr(OH)3(s)"]) assert.ok(g.out[id] > 0.95 * full, id);
+  assert.ok(g.out["Al(OH)3(s)"] > 0.5 * full, "Aluminiumhydroxid");
+  assert.ok(!g.out["Mg(OH)2(s)"], "Magnesium bleibt gelöst");
+  // Nickel- und Cobaltsulfid lösen sich in kalter verdünnter Salzsäure nicht, die übrigen Sulfide schon
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "NiS(s)") > 0.9 * full && amount(g.l, "CoS(s)") > 0.9 * full, "NiS und CoS bleiben zurück");
+  for (const id of ["ZnS(s)", "FeS(s)", "MnS(s)"]) assert.ok(amount(g.l, id) < 0.05 * full, id + " löst sich");
+  // Ammoniumcarbonatgruppe; Magnesium bleibt in der ammoniumreichen Lösung größtenteils gelöst
+  g = precipitate(["BaCl2 0.1M", "SrCl2 0.1M", "CaCl2 0.1M", "MgCl2 0.1M"], [{ reagent: "NH4Cl 2M", ml: 10 }], [["(NH4)2CO3", { ml: 2 }]]);
+  for (const id of ["BaCO3(s)", "SrCO3(s)", "CaCO3(s)"]) assert.ok(g.out[id] > 0.95 * full, id);
+  assert.ok(!(g.out["MgCO3*3H2O(s)"] > 0.3 * full), "Magnesium fällt kaum");
+});
+
+test("Trennungsgang: Bleichlorid löst sich in heißem Wasser", () => {
+  L.register(ionen());
+  const l = lab([{ type: "beaker", ml: 100, id: "b", contains: [{ reagent: "Pb(NO3)2 0.1M", ml: 4 }, { reagent: "HCl 2M", ml: 1 }, { reagent: "H2O", ml: 15 }] }, { type: "bath", id: "wb", under: "b", temp: 20 }], { room: 20 });
+  L.step(l, 60);
+  const cold = amount(l, "PbCl2(s)");
+  L.tool(l, "wb").temp = 95;
+  L.step(l, 300);
+  assert.ok(cold > 1e-4, "kalt fällt Bleichlorid");
+  assert.ok(amount(l, "PbCl2(s)") < 0.3 * cold, "heiß löst es sich");
 });

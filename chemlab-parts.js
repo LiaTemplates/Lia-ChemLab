@@ -88,7 +88,7 @@
       "say.boil": "{vessel}: The liquid boils.", "say.boilEnd": "{vessel}: The boiling stops.",
       "say.dry": "{vessel}: The liquid has evaporated, a solid residue remains.",
       "say.dryNone": "{vessel}: The liquid has evaporated completely.",
-      "say.smell": "{vessel}: There is a pungent smell of {name}.", "say.smellFruity": "{vessel}: There is a fruity smell of {name}.",
+      "say.smell": "{vessel}: There is a pungent smell of {name}.", "say.smellFruity": "{vessel}: There is a fruity smell of {name}.", "say.smellRotten": "{vessel}: It smells of rotten eggs: {name}.",
       "say.ignite": "{vessel}: {name} catches fire.", "say.fireEnd": "{vessel}: The fire has gone out.",
       "say.splint": "{splint} held to {vessel}: {result}.",
       "splint.pop1": "a soft pop (hydrogen test positive)", "splint.pop2": "a squeaky pop (hydrogen test positive)",
@@ -208,7 +208,7 @@
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
       "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}",
       "unknown.contents": "The contents are unknown.", "identify": "This is:", "identify.pick": "– choose –",
-      "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
+      "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.rotten": "{vessel}: It smells of rotten eggs.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
       "hidden.ignite": "{vessel}: Something catches fire.", "hidden.gone": "{vessel}: A substance is used up.", "hidden.plated": "{vessel}: A deposit forms.", "goal.gone": "{name}: no longer present",
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
@@ -366,7 +366,7 @@
     var veiled = event.hidden || !!(ctx.hidden && ctx.hidden[event.vessel]);
     if (veiled) switch (event.key) {
       case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
-      case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
+      case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : L.species(event.species).smell === "rotten" ? "hidden.rotten" : "hidden.smell", lang, vars);
       case "solid": if (event.colloid) return text("hidden.haze", lang, vars); if (event.mirror) return text("hidden.mirror", lang, vars);
     }
     switch (event.key) {
@@ -432,6 +432,7 @@
       case "smell":
         vars.name = nameOf(L.species(event.species), lang);
         if (L.species(event.species).smell === "fruity") return text("say.smellFruity", lang, vars);
+        if (L.species(event.species).smell === "rotten") return text("say.smellRotten", lang, vars);
         break;
       case "ignite": vars.name = nameOf(L.species(event.species), lang); break;
       case "splint":
