@@ -4819,6 +4819,10 @@
       });
       // … und für eine Zugabe, die absinkt: Ring um Ring von der Achse nach außen, jeder von oben bis zum Boden (eine Fahne)
       c.G.plume = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) { return c.G.r(a) - c.G.r(b) || c.G.z(a) - c.G.z(b); });
+      // … und für ein Stück, das am Boden liegt und sich löst: nach dem Abstand von der Mitte des Bodens
+      c.G.floor = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) {
+        return Math.pow(c.G.r(a), 2) + Math.pow(h - c.G.z(a), 2) - Math.pow(c.G.r(b), 2) - Math.pow(h - c.G.z(b), 2);
+      });
     }
     return c.G;
   }
@@ -4872,6 +4876,12 @@
     }
   }
 
+  function shelfLeft(v) {         // was von den Stücken aus dem Regal noch da ist (mol), und ob eines schwimmt
+    var n = 0, float = false;
+    v.lumps.forEach(function (l) { if (!l.made && l.n > 0) { n += l.n; if (L.db.species[l.id].rho != null && L.db.species[l.id].rho < 1) float = true; } });
+    return { n: n, float: float };
+  }
+
   function liquidMass(v) {        // g Flüssigkeit samt Gelöstem: wie zoneFactor die Dichte vergleicht
     var g = 0, id, s;
     for (id in v.n) { s = L.db.species[id]; if (s.phase === "l" || s.phase === "aq") g += v.n[id] * s.M; }
@@ -4879,7 +4889,7 @@
   }
 
   function fieldStep(lab, v) {
-    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put, sink;
+    var f = v.field, G, i, k, add, cells, room = 0, sum, solids, ids = {}, fresh, sid, id, put, sink, shelf, melt, order;
     if (!f || !L.spatial) return;
     if (!(volume(v) > 0)) { f.n = null; return; }
     G = fieldGrid(lab, v);
@@ -4896,14 +4906,20 @@
       // Lösung, sinkt es als Fahne bis zum Boden und mischt sich dabei mit ZONE_SINK-mal seinem Volumen, wie bei der Mischwärme (zoneFactor).
       // Was ohne Zugabe wegging oder sich änderte (Ausgießen, Reaktion), überall gleich.
       // shortcut: eine angenommene Mischzone statt gerechneter Strömung; sie entsteht im Augenblick des Zugebens und wandert danach nicht
-      add = volume(v) * 1000 - f.ml;
+      // was zufließt (Zugeben, Umgießen, Bürette), steht in lab.flows; ohne Zufluss ändert sich das Volumen nur durch Lösen oder Reaktion
+      add = lab.flows.some(function (fl) { return fl.to === v.id; }) || volume(v) * 1000 - f.ml > 1e-3 ? volume(v) * 1000 - f.ml : 0;
       sink = add > 0 && f.mass > 0 && (liquidMass(v) - f.mass) / add > f.mass / f.ml;
+      // Ohne Zugabe: Ändert sich ein Stück aus dem Regal (es kam dazu oder wird kleiner), kommt, was sich ändert, dort an, wo es liegt (am Boden in der Mitte, ein schwimmendes
+      // oben in der Mitte), in FIELD.mix mL. Sonst (Ausgießen, Reaktion in der ganzen Lösung) überall gleich.
+      // shortcut: in einem Schritt, in dem sich ein Stück löst, gilt jede Änderung als von ihm
+      shelf = shelfLeft(v); melt = !(add > 0) && Math.abs(shelf.n - (f.shelf || 0)) > 1e-15;      // auch im Schritt, in dem das Stück dazukam
+      order = sink ? G.plume : melt ? (shelf.float ? G.near : G.floor) : G.near;
       // eine sinkende Zugabe reicht in jedem Schritt mindestens durch die innerste Säule bis zum Boden (sonst bliebe ein Strahl, der je Schritt
       // nur einen Hauch bringt, oben hängen)
-      for (i = 0, cells = []; i < G.n && (i === 0 || (add > 0 && (room < (sink ? ZONE_SINK * add : Math.max(add, FIELD.mix)) || (sink && i < FIELD.nz)))); i++) {
-        cells.push((sink ? G.plume : G.near)[i]); room += G.vol[(sink ? G.plume : G.near)[i]] * 1e6;
+      for (i = 0, cells = []; i < G.n && (i === 0 || ((add > 0 || melt) && (room < (sink ? ZONE_SINK * add : Math.max(add, FIELD.mix)) || (sink && i < FIELD.nz)))); i++) {
+        cells.push(order[i]); room += G.vol[order[i]] * 1e6;
       }
-      if (!(add > 0)) cells = G.near;
+      if (!(add > 0) && !melt) cells = G.near;
       for (i = 0, sum = 0; i < cells.length; i++) sum += G.vol[cells[i]];
       put = function (arr, delta) { if (delta) for (var q = 0; q < cells.length; q++) arr[cells[q]] += delta * G.vol[cells[q]] / sum; };
       put(f.n, sid - f.total); f.total = sid;
@@ -4914,7 +4930,7 @@
       L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
       for (id in f.ion) L.spatial.diffuse(G, f.ion[id], FIELD.D * f.speed, DT);
     }
-    f.ml = volume(v) * 1000; f.mass = liquidMass(v);
+    f.ml = volume(v) * 1000; f.mass = liquidMass(v); f.shelf = shelfLeft(v).n;
     solids.forEach(function (e) {
       if (!Object.keys(e.d).every(function (id) { return f.ion[id]; })) return;
       if (!f.solid[e.solid]) f.solid[e.solid] = new Array(G.n).fill(0);
@@ -4939,19 +4955,31 @@
   // pH und Farbe zu einem Überschuss x (mol/L): die Lösung des Gefäßes mit x mol/L Natronlauge (x > 0) oder Salzsäure (x < 0) mehr, ins
   // Gleichgewicht gebracht. Als Tabelle über den Bereich des Felds (asinh-geteilt), neu, wenn die Uhr eine Viertelsekunde weiterlief oder der Bereich nicht reicht.
   function fieldTable(lab, v, lo, hi) {
-    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, x, w, a, b, S = 1e-7;
-    if (c && Math.abs(c.tick - lab.tick) < TICKS / 4 && c.lo <= lo && c.hi >= hi) return c.rows;
+    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, a, b, S = 1e-7, more;
+    // neu nach einer Viertelsekunde, wenn der Bereich nicht reicht oder sich die Lösung selbst geändert hat (ein Plätzchen löst sich)
+    if (c && Math.abs(c.tick - lab.tick) < TICKS / 4 && c.lo <= lo && c.hi >= hi && Math.abs(c.total - v.field.total) <= 1e-6 * vol) return c.rows;
     lo = Math.min(lo, 0); hi = Math.max(hi, 0);
-    a = Math.asinh(lo / S); b = Math.asinh(hi / S);
-    for (i = 0; i <= 24; i++) {
-      x = S * Math.sinh(a + (b - a) * i / 24);
-      w = { id: v.id + "#field", type: v.type, size: v.size, n: Object.assign({}, v.n), lumps: [], T: v.T, real: v.real, org: {}, ext: {}, rate: {}, flag: { solid: {} } };
+    function row(x) {
+      // nur die Lösung: ein Feststoff in der Kopie löste sich sonst auf einmal (ein Plätzchen, das sich erst nach und nach löst)
+      var w = { id: v.id + "#field", type: v.type, size: v.size, n: {}, lumps: [], T: v.T, real: v.real, org: {}, ext: {}, rate: {}, flag: { solid: {} } }, id;
+      for (id in v.n) if (L.db.species[id].phase !== "s") w.n[id] = v.n[id];
       if (x > 0) { w.n["Na+(aq)"] = (w.n["Na+(aq)"] || 0) + x * vol; w.n[HYDROXIDE] = (w.n[HYDROXIDE] || 0) + x * vol; }
       else if (x < 0) { w.n["Cl-(aq)"] = (w.n["Cl-(aq)"] || 0) - x * vol; w.n[PROTON] = (w.n[PROTON] || 0) - x * vol; }
       equilibrate(lab, w, null);
-      rows.push({ x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb });
+      return { x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb };
     }
-    lab.cache[key] = { tick: lab.tick, lo: lo, hi: hi, rows: rows };
+    a = Math.asinh(lo / S); b = Math.asinh(hi / S);
+    for (i = 0; i <= 16; i++) rows.push(row(S * Math.sinh(a + (b - a) * i / 16)));
+    // wo der pH zwischen zwei Zeilen springt (am Äquivalenzpunkt), dazwischen verfeinern, bis 0,3 oder höchstens 80 Zeilen
+    do {
+      more = false;
+      for (i = rows.length - 1; i > 0 && rows.length < 80; i--) {
+        if (rows[i].pH == null || rows[i - 1].pH == null || Math.abs(rows[i].pH - rows[i - 1].pH) <= 0.3 || rows[i].x - rows[i - 1].x < 1e-12) continue;
+        rows.splice(i, 0, row((rows[i].x + rows[i - 1].x) / 2));
+        more = true;
+      }
+    } while (more && rows.length < 80);
+    lab.cache[key] = { tick: lab.tick, lo: lo, hi: hi, rows: rows, total: v.field.total };
     return rows;
   }
 

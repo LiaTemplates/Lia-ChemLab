@@ -11360,6 +11360,18 @@ test("Feld: eine leichtere Zugabe bleibt oben, eine schwerere sinkt (Natronlauge
   assert.ok(bottom2 > 0.05, `2 mol/L (80 g/L, schwerer): sie sinkt bis zum Boden (${top2}, ${bottom2})`);
 });
 
+test("Feld: ein Plätzchen löst sich dort, wo es liegt: am Boden in der Mitte; oben bleibt die Säure", () => {
+  const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "HCl 0.001M", ml: 80 }, { reagent: "UI", drops: 10 }] }], { room: 25 }), v = L.vessel(l, "b");
+  L.step(l, 1);
+  L.add(l, "b", "NaOH pellets", { g: 0.2 });
+  L.step(l, 10);
+  const f = L.view(l, v).field, pH = (i, j) => f.cells[j * f.nr + i].pH;
+  assert.ok(pH(0, f.nz - 1) > 13, `unten in der Mitte Lauge: ${pH(0, f.nz - 1)}`);
+  assert.ok(pH(0, 0) < 3.5 && pH(f.nr - 1, 0) < 3.5, `oben noch die Säure: ${pH(0, 0)}`);
+  near(v.field.n.reduce((a, b) => a + b, 0), strongCharge(l), 1e-15, "Bilanz");
+  assert.ok(L.view(l, v).pH > 11, "das Gefäß selbst rechnet durchmischt (und die Tabelle nimmt das Plätzchen nicht vorweg)");
+});
+
 test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das Chlorid ankommt; Silber und Chlorid bleiben im Feld", () => {
   const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "AgNO3 0.01M", ml: 80 }] }], { room: 25 }), v = L.vessel(l, "b");
   const sums = () => { const F = v.field, solid = F.solid["AgCl(s)"].reduce((a, b) => a + b, 0); return [F.ion["Ag+(aq)"].reduce((a, b) => a + b, 0) + solid, F.ion["Cl-(aq)"].reduce((a, b) => a + b, 0) + solid]; };
