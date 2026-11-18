@@ -10375,3 +10375,37 @@ test("Alkoholtest: angesäuertes Dichromat wird mit Ethanol in etwa einer halben
   L.step(blank, 60);
   assert.equal(look(blank).color.name, "orange");
 });
+
+// ---------------------------------------------------------------- Landolt-Reaktion
+
+// Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag
+const landolt = (iodate, room) => {
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "KIO3 " + (iodate || 0.02) + "M", ml: 50 }, { reagent: "H2SO4 1M", ml: 5 }, { reagent: "starch", ml: 2 }] }], { room: room == null ? 25 : room }), seen = [];
+  L.add(l, "b", "Na2SO3 0.01M", { ml: 50 });
+  const t = until(l, () => seen.some((e) => e.key === "color"), 600, seen);
+  return { l, seen, t };
+};
+
+test("Landolt: die Lösung bleibt farblos, solange Sulfit da ist, und wird dann schlagartig blauschwarz", () => {
+  const { l, seen, t } = landolt();
+  assert.ok(t >= 10 && t <= 30, `Umschlag nach ${t} s`);
+  assert.ok(["blue", "black"].includes(seen.find((e) => e.key === "color").name));
+  L.step(l, 2);
+  assert.ok(amount(l, "HSO3-(aq)") + amount(l, "SO2(aq)") + amount(l, "SO3^2-(aq)") < 1e-8, "das Sulfit ist verbraucht");
+  assert.ok(amount(l, "C108H180O90I3-(aq)") > 0, "Iod sitzt in der Stärke");
+  const half = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "KIO3 0.02M", ml: 50 }, { reagent: "H2SO4 1M", ml: 5 }, { reagent: "starch", ml: 2 }] }], { room: 25 });
+  const before = totals(half);
+  L.add(half, "b", "Na2SO3 0.01M", { ml: 50 });
+  L.step(half, Math.floor(t / 2));
+  assert.equal(look(half).color.name, "colorless", "auf halbem Weg noch farblos");
+  L.step(half, 60);
+  const after = totals(half), added = 0.05 * 0.01 * (2 * 22.99 + 32.06 + 3 * 15.999) + 0.05 * 55.508 * 18.015;
+  near(after.charge, before.charge, 1e-12, "Ladung");
+  assert.ok(Math.abs(after.mass - before.mass - added) < 0.01 * added, "Masse: nur das Zugegebene kam dazu");
+});
+
+test("Landolt: halb so viel Iodat, doppelte Zeit; 10 K wärmer, kürzere Zeit", () => {
+  const base = landolt().t, dilute = landolt(0.01).t, warm = landolt(0.02, 35).t;
+  near(dilute / base, 2, 0.3, `halbes Iodat: ${dilute} s statt ${base} s`);
+  assert.ok(warm < 0.8 * base, `10 K wärmer: ${warm} s statt ${base} s`);
+});

@@ -874,6 +874,20 @@ Stärke und Iodlösung stehen auch im Regal. Ein Reagenzglas mit 10 mL Wasser, 2
  "show":{"charts":["n","T"]}}
 ```
 
+## Landolt-Reaktion
+
+Die zweite klassische Ioduhr, benannt nach Hans Landolt (1886). Im Becherglas: Kaliumiodat-Lösung, etwas Schwefelsäure und Stärke. Gieße die Natriumsulfit-Lösung dazu und miss die Zeit: Lange bleibt alles farblos, dann wird die Lösung auf einen Schlag blauschwarz.
+
+Iodat oxidiert das Hydrogensulfit langsam zu Sulfat und wird dabei selbst zu Iodid. Das Iodid gibt mit noch vorhandenem Iodat Iod, doch solange Sulfit da ist, wird dieses Iod sofort wieder zu Iodid. Erst wenn das Sulfit aufgebraucht ist, bleibt Iod übrig und färbt die Stärke. Mit halb so viel Iodat dauert es doppelt so lange, in warmer Lösung geht es schneller.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"id":"uhr","contains":[{"reagent":"KIO3 0.02M","ml":50},{"reagent":"H2SO4 1M","ml":5},{"reagent":"starch","ml":2}]}
+ ],
+ "shelf":["Na2SO3 0.01M","KIO3 0.02M","KIO3 0.01M","H2SO4 1M","starch","H2O","beaker","bath"],
+ "show":{"charts":false}}
+```
+
 ## Fotometer: Farbe messen
 
 Das Fotometer schickt Licht einer Wellenlänge durch 1 cm Lösung und zeigt die Extinktion: wie viel davon fehlt. Sie ist der Konzentration proportional (Lambert-Beer). 50 mL Wasser zugeben: Die Extinktion halbiert sich. Das Fotometer antippen und die Wellenlänge verstellen: Das Spektrum zeigt, wo Permanganat am stärksten absorbiert, nämlich im Grünen; deshalb sieht die Lösung rosa bis violett aus.
@@ -1657,7 +1671,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `Na2CO3`, `NaHCO3` | Natriumcarbonat (Soda), Natriumhydrogencarbonat (Natron) | `ml` |
 | `CaCl2`, `SrCl2`, `LiCl` | Calciumchlorid, Strontiumchlorid, Lithiumchlorid | `ml` |
 | `ZnSO4`, `ZnI2`, `CuCl2`, `FeSO4`, `KNO3` | Zinksulfat, Zinkiodid, Kupferchlorid, Eisen(II)-sulfat, Kaliumnitrat | `ml` |
-| `Na2S2O3`, `Na2SO3`, `K2S2O8` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat | `ml` |
+| `Na2S2O3`, `Na2SO3`, `K2S2O8`, `KIO3` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat, Kaliumiodat | `ml` |
 | `NaOCl` | Natriumhypochlorit-Lösung (Bleichlauge) mit gleich viel Kochsalz und etwas Natronlauge | `ml` |
 | `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |

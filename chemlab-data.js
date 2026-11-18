@@ -83,6 +83,7 @@
       "K+(aq)": { name: name("potassium ion"), Hf: -252.14, S: 101.20, D: 1.96, flame: "#b08cff", src: CODATA + DW + GLOW },
       "Cl-(aq)": { name: name("chloride ion"), Hf: -167.080, S: 56.60, D: 2.033, src: CODATA + DW },
       "Br-(aq)": { name: name("bromide ion"), Hf: -121.41, S: 82.55, D: 2.09, src: CODATA + DW },
+      "IO3-(aq)": { name: name("iodate ion"), Hf: -221.3, D: 1.078, src: LLNL + "IO3-, Enthalpy of formation -52.9 kcal/mol" + DW },
       "I-(aq)": { name: name("iodide ion"), Hf: -56.78, S: 106.45, D: 2.045, src: CODATA + DL },
       "NO3-(aq)": { name: name("nitrate ion"), Hf: -206.85, S: 146.70, D: 1.9, src: CODATA + DW },
       "SO4^2-(aq)": { name: name("sulfate ion"), Hf: -909.34, S: 18.50, D: 1.07, src: CODATA + DW },
@@ -567,6 +568,22 @@
         src: "estimated from usual lab course data: first order in both substances, at the salt contents usual there about 4·10⁻³ L/(mol s) at 25 °C, " +
           "activation energy about 52 kJ/mol"
       },
+      // Landolt-Reaktion: Iodat oxidiert Hydrogensulfit langsam; das Iodid daraus gibt mit Iodat Iod, das das Sulfit sofort wieder verbraucht.
+      // Erst wenn das Sulfit aufgebraucht ist, bleibt Iod übrig und färbt die Stärke blau
+      {
+        eq: "IO3-(aq) + 3 HSO3-(aq) -> I-(aq) + 3 SO4^2-(aq) + 3 H+(aq)",
+        rate: { k: 10, Ea: 50, order: { "IO3-(aq)": 1, "HSO3-(aq)": 1, "H+(aq)": 1 } },
+        src: "estimated from the usual school experiment (Landolt reaction): first order in iodate, hydrogen sulfite and H+"
+      },
+      {
+        eq: "IO3-(aq) + 8 I-(aq) + 6 H+(aq) -> 3 I3-(aq) + 3 H2O(l)",
+        rate: { k: 1e8, Ea: 40, order: { "IO3-(aq)": 1, "I-(aq)": 2, "H+(aq)": 2 } },
+        src: "Dushman reaction: rate law after Dushman (1904), second order in iodide and in H+; constant estimated so that the school experiment works"
+      },
+      {
+        eq: "I3-(aq) + HSO3-(aq) + H2O(l) -> 3 I-(aq) + SO4^2-(aq) + 3 H+(aq)", rate: { fast: true },
+        src: "textbook: iodine oxidises hydrogen sulfite instantly (basis of iodometry)"
+      },
       {
         // fast: läuft sofort ab. Solange Thiosulfat da ist, fängt es das Iod ab; erst danach färbt Iod die Stärke blau.
         eq: "I3-(aq) + 2 S2O3^2-(aq) -> 3 I-(aq) + S4O6^2-(aq)", rate: { fast: true },
@@ -652,6 +669,7 @@
       "KCr(SO4)2": { name: name("chrome alum solution"), solution: { "K+(aq)": 1, "Cr^3+(aq)": 1, "SO4^2-(aq)": 2 }, molar: true, group: "salt" },
       "KMnO4": { name: name("potassium permanganate solution"), solution: { "K+(aq)": 1, "MnO4-(aq)": 1 }, molar: true, group: "salt" },
       "K2S2O8": { name: name("potassium peroxodisulfate solution"), solution: { "K+(aq)": 2, "S2O8^2-(aq)": 1 }, molar: true, group: "salt" },
+      "KIO3": { name: name("potassium iodate solution"), solution: { "K+(aq)": 1, "IO3-(aq)": 1 }, molar: true, group: "salt" },
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
       // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
       "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 2.05, "OCl-(aq)": 1, "Cl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
@@ -767,6 +785,7 @@
     "KCr(SO4)2": { fixed: [], src: "chromium potassium sulfate dodecahydrate: not classified (supplier SDS, e.g. Carl Roth)" },
     "CoCl2": { cmr: [1, 0.01], ate: 500, resp: 1, sens: 1, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 027-004-00-5 (SCL Carc. 0.01 %, M = 10)" },
     "KMnO4": { cmr: [2, 3], ate: 1090, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 025-002-00-9; M factors and ATE of the suppliers" },
+    "KIO3": { ate: 531, irrit: 10, src: "potassium iodate, not harmonised: self-classification of the suppliers (Acute Tox. 4, LD50 oral mouse 531 mg/kg; Skin Irrit. 2; Ox. Sol. 2 only as solid)" },
     "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },
     "NaOCl": { corr: [5, 1, 3, 1], aq: { acute: 10, chronic: [1, 1] }, per: { species: "OCl-(aq)", M: 74.44 }, src: "CLP Annex VI 017-011-00-1 (M = 10 acute, 1 chronic)" },
     "H2O2": { corr: [50, 35, 8, 5], ate: 1026, inh: 1.5, stot: [3, 35], high: [[50, "GHS03", true]], vm: 22,
