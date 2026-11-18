@@ -2164,7 +2164,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Die Geschwindigkeiten (Magnesium in Säure, Zerfall von Wasserstoffperoxid an Braunstein, Thiosulfat in Säure, Entwässern) sind an die übliche Dauer des Schulversuchs angepasst, nicht gemessen. Solche Werte sind in den Daten als „estimated“ (geschätzt) gekennzeichnet.
 - Die Simulation ersetzt keine Sicherheitsunterweisung. Was hier gefahrlos geht, braucht im Labor Schutzbrille und Aufsicht.
 
-Geprüft wird der Baustein mit `node --test check.mjs`.
+Geprüft wird der Baustein mit `node --test check.mjs`. Schneller geht es mit `node tools/check-parallel.mjs`: Er verteilt die Prüfungen auf alle Kerne (mit 16 Kernen gut eine Minute statt sechseinhalb) und nennt am Ende, was fehlschlug.
 
 ## Lizenz
 

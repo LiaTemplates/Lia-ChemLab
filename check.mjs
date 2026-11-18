@@ -1,5 +1,5 @@
 // Prüfungen für ChemLab. Aufruf: node --test check.mjs
-import test from "node:test";
+import nodeTest from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
@@ -8,6 +8,11 @@ import "./chemlab-engine.js";
 import "./chemlab-data.js";
 
 const L = globalThis.LiaChemLab;
+
+// Aufteilen auf mehrere Prozesse (tools/check-parallel.mjs): SHARD=i/n führt nur jede n-te Prüfung aus, beginnend mit der i-ten
+const [shard, shards] = (process.env.SHARD || "1/1").split("/").map(Number);
+let tests = 0;
+const test = (...args) => (tests++ % shards === shard - 1 ? nodeTest(...args) : undefined);
 const here = new URL(".", import.meta.url);
 
 const near = (actual, expected, tolerance, label) =>
@@ -1356,7 +1361,7 @@ test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", 
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
   assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "todo.md", "tools", "vendor"]);
   assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "ionen.json", "organic.json"], "Erweiterungspakete");
-  assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
+  assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["check-parallel.mjs", "import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
   const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
   assert.ok(loads.length >= 5, loads.join(", "));
