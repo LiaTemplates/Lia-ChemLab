@@ -55,3 +55,4 @@ Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nu
 - [x] Version 0.1.0 veröffentlicht am 18.11.2026: 13 Erweiterungen, Gasgesetze, Strömung, zweite flüssige Phase und die zehn Stoff- und Effektpakete.
 - [x] Version 0.1.1 veröffentlicht am 18.11.2026: Gase aus erhitzten Feststoffen, Methan, Stickstoff.
 - [x] Version 0.1.2 veröffentlicht am 18.11.2026: Löslichkeit im idealen Modell, Messkolben, Phosphorsäure, Flusssäure, starke Säuren, zwei Indikatoren, Kaliumnitrat, Pyridin (Vergleich mit ChemCollective).
+- [x] Version 0.1.3 veröffentlicht am 18.11.2026: Siedepunkterhöhung (gelöste Teilchen nach Raoult).
