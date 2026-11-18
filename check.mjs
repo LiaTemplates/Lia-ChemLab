@@ -11481,6 +11481,22 @@ test("Keimbildung: Kaliumnitrat bleibt knapp unter der Sättigung klar, ein Impf
   assert.ok(waited, "erst nach der Wartezeit, die im Zustand des Gefäßes steht (und damit in der Aufzeichnung)");
 });
 
+// ---------------------------------------------------------------- Spielstände aus 0.3.0
+
+test("Spielstand aus 0.3.0: ein verschlossenes Gefäß ohne o2 bekommt beim Laden den Sauerstoff seiner eingeschlossenen Luft", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const config = L.normalize({ room: 25, bench: [{ type: "testtube", id: "t", contains: [{ reagent: "glucose", ml: 14 }, { reagent: "NaOH 1M", ml: 2 }, { reagent: "methylene blue", drops: 3 }] }, { type: "manometer", id: "m", in: "t" }] });
+  const run = L.createRun(config);
+  L.advance(run, 60);
+  const saved = JSON.parse(JSON.stringify(L.saveRun(run))), state = JSON.parse(saved.s);
+  for (const v of state.vessels) { delete v.o2; delete v.field; delete v.nuc; delete v.film; delete v.pit; }      // wie 0.3.0 speicherte
+  saved.s = JSON.stringify(state);
+  const old = L.loadRun(config, saved);
+  for (let i = 0; i < 30; i++) { L.act(old, (l) => L.shake(l, "t", "shake")); L.advance(old, 60); }
+  near(L.vessel(old.lab, "t").p, 0.797, 0.01, "der Sauerstoff geht auch im alten Spielstand aus");
+  assert.equal(old.lab.failed || 0, 0);
+});
+
 // ---------------------------------------------------------------- Benchmarks (benchmarks/run.mjs)
 
 test("Benchmarks: kein gerechneter Fall schlägt fehl, und kein Fall heißt PASS, ohne gerechnet zu sein", async () => {

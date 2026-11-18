@@ -4045,6 +4045,7 @@
       v.seal = Math.max(0, room - gas);
       v.o2 = AIR["O2(g)"] * v.seal;                            // ihr Sauerstoff, begrenzt
     }
+    if (v.o2 == null) v.o2 = AIR["O2(g)"] * v.seal;              // verschlossen gespeichert, bevor es o2 gab (bis 0.3.0)
     total = v.seal + gas + vap * V / (RL * T);
     p = total * RL * T / V;
     v.p = p;
