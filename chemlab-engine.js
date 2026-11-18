@@ -4832,9 +4832,9 @@
   // Auflösen. Ihre Ionen wandern je für sich (mit demselben D), der Feststoff bleibt in seiner Zelle. In jeder Zelle stellt sich das
   // Löslichkeitsgleichgewicht sofort ein (ideal, mit Konzentrationen); mit nucleate fällt dort erst etwas aus, wo Q/K ≥ S ist oder schon Feststoff liegt.
   // shortcut: ohne die Wartezeit von nucleate je Zelle, ohne Absetzen des Niederschlags und ohne Komplexe (AgCl2-)
-  function fieldSolids() {
+  function fieldSolids() {         // schwer löslich (lg K < −4): gut lösliche Salze wie Kochsalz fallen im Feld nicht aus
     return L.db.equilibria.filter(function (e) {
-      return e.solid && !e.rate && Object.keys(e.d).every(function (id) { return e.d[id] > 0 && L.db.species[id].phase === "aq" && strongIon(id); });
+      return e.solid && !e.rate && e.logK * e.f < -4 && Object.keys(e.d).every(function (id) { return e.d[id] > 0 && L.db.species[id].phase === "aq" && strongIon(id); });
     });
   }
   // Farbige Ionen im Feld (Permanganat, Kristallviolett, Kupfertetrammin …): gefärbt und stark (kein Säure-Base-Gleichgewicht). Sie wandern
@@ -4842,9 +4842,9 @@
   // shortcut: Reaktionen eines farbigen Ions in der Lösung (Permanganat mit Peroxid) laufen überall im selben Verhältnis, nicht dort, wo es ist
   function colored(id) { var sp = L.db.species[id]; return sp.phase === "aq" && !!sp.bands && strongIon(id); }
 
-  function component(v, id, solids) {       // ein Ion gelöst und in den verfolgten Feststoffen, in mol
+  function component(v, id, solids) {       // ein Ion gelöst und im Gefäß ausgefallen (ohne ungelöste Stücke aus dem Regal), in mol
     var sum = v.n[id] || 0;
-    solids.forEach(function (e) { if (e.d[id]) sum += e.d[id] * (v.n[e.solid] || 0); });
+    solids.forEach(function (e) { if (e.d[id]) sum += e.d[id] * fresh(v, e.solid); });
     return sum;
   }
   function logKsp(v, e) {
@@ -4913,8 +4913,10 @@
       // Lösung, sinkt es als Fahne bis zum Boden und mischt sich dabei mit ZONE_SINK-mal seinem Volumen, wie bei der Mischwärme (zoneFactor).
       // Was ohne Zugabe wegging oder sich änderte (Ausgießen, Reaktion), überall gleich.
       // shortcut: eine angenommene Mischzone statt gerechneter Strömung; sie entsteht im Augenblick des Zugebens und wandert danach nicht
-      // was zufließt (Zugeben, Umgießen, Bürette), steht in lab.flows; ohne Zufluss ändert sich das Volumen nur durch Lösen oder Reaktion
-      add = lab.flows.some(function (fl) { return fl.to === v.id; }) || volume(v) * 1000 - f.ml > 1e-3 ? volume(v) * 1000 - f.ml : 0;
+      // was zufließt: Zugeben und Umgießen (lab.flows), eine offene Bürette oder ein Filter darüber (drip); ohne Zufluss ändert sich das
+      // Volumen nur durch Lösen oder Reaktion
+      add = lab.flows.some(function (fl) { return fl.to === v.id; }) || lab.vessels.some(function (b) { return b.over === v.id && (b.tap > 0 || L.parts[b.type].filter); }) ||
+        volume(v) * 1000 - f.ml > 1e-3 ? volume(v) * 1000 - f.ml : 0;
       sink = add > 0 && f.mass > 0 && (liquidMass(v) - f.mass) / add > f.mass / f.ml;
       // Ohne Zugabe: Ändert sich ein Stück aus dem Regal (es kam dazu oder wird kleiner), kommt, was sich ändert, dort an, wo es liegt (am Boden in der Mitte, ein schwimmendes
       // oben in der Mitte), in FIELD.mix mL. Sonst (Ausgießen, Reaktion in der ganzen Lösung) überall gleich.
@@ -4962,20 +4964,39 @@
     if (!f.n.every(isFinite)) f.n = null;
   }
 
-  // Überschuss an starker Lauge je Zelle gegenüber dem Mittel, in mol/L
-  function fieldExcess(lab, v) {
-    var f = v.field, G = fieldGrid(lab, v), mean = f.total / volume(v), out = new Array(G.n), k;
-    for (k = 0; k < G.n; k++) out[k] = f.n[k] / (G.vol[k] * 1000) - mean;
+  // Ladung der starken Ionen je Zelle in mol/L
+  function fieldConc(lab, v) {
+    var f = v.field, G = fieldGrid(lab, v), out = new Array(G.n), k;
+    for (k = 0; k < G.n; k++) out[k] = f.n[k] / (G.vol[k] * 1000);
     return out;
   }
 
   // pH und Farbe zu einem Überschuss x (mol/L): die Lösung des Gefäßes mit x mol/L Natronlauge (x > 0) oder Salzsäure (x < 0) mehr, ins
-  // Gleichgewicht gebracht. Als Tabelle über den Bereich des Felds (asinh-geteilt), neu, wenn die Uhr eine Viertelsekunde weiterlief oder der Bereich nicht reicht.
+  // Gleichgewicht gebracht. Als Tabelle über den Bereich des Felds (lo bis hi, Ladung der starken Ionen in mol/L), asinh-geteilt; x zählt
+  // ab dem Mittel beim Aufbau (mean). Kommt nur starke Säure oder Lauge dazu (ein Plätzchen löst sich), gilt sie weiter; neu, wenn sich
+  // anderes in der Lösung geändert hat (stamp: je Element, was in den übrigen gelösten Stoffen steckt, auf 0,01 %, ohne H und O, damit ein
+  // Indikator, der nur seine Form wechselt, nicht zählt; und die Temperatur, auf 0,05 K) oder der Bereich nicht reicht.
+  function fieldStamp(v) {
+    var out = { T: v.T, n: {} }, id, el, atoms;
+    for (id in v.n) {
+      if (L.db.species[id].phase !== "aq" || id === PROTON || id === HYDROXIDE || strongIon(id)) continue;
+      atoms = parse(id).atoms;
+      for (el in atoms) if (el !== "H" && el !== "O") out.n[el] = (out.n[el] || 0) + atoms[el] * v.n[id];
+    }
+    return out;
+  }
+  function sameStamp(a, b) {
+    var id;
+    if (Math.abs(a.T - b.T) > 0.05) return false;
+    for (id in a.n) if (!(Math.abs(a.n[id] - (b.n[id] || 0)) <= 1e-4 * a.n[id] + 1e-15)) return false;
+    for (id in b.n) if (!(id in a.n) && b.n[id] > 1e-15) return false;
+    return true;
+  }
   function fieldTable(lab, v, lo, hi) {
-    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, a, b, S = 1e-7, more;
-    // neu nach einer Viertelsekunde, wenn der Bereich nicht reicht oder sich die Lösung selbst geändert hat (ein Plätzchen löst sich)
-    if (c && Math.abs(c.tick - lab.tick) < TICKS / 4 && c.lo <= lo && c.hi >= hi && Math.abs(c.total - v.field.total) <= 1e-6 * vol) return c.rows;
-    lo = Math.min(lo, 0); hi = Math.max(hi, 0);
+    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, a, b, S = 1e-7, more, mean = v.field.total / vol, stamp = fieldStamp(v);
+    if (c && c.lo <= lo && c.hi >= hi && Math.abs(c.vol - vol) <= 1e-6 * vol && sameStamp(c.stamp, stamp)) return c;
+    lo = Math.min(lo, mean) - mean; hi = Math.max(hi, mean) - mean;
+    a = (hi - lo) / 2; lo -= a; hi += a;                       // mit Reserve: wächst der Bereich (ein Plätzchen löst sich), reicht sie eine Weile
     function row(x) {
       // nur die Lösung: ein Feststoff in der Kopie löste sich sonst auf einmal (ein Plätzchen, das sich erst nach und nach löst)
       var w = { id: v.id + "#field", type: v.type, size: v.size, n: {}, lumps: [], T: v.T, real: v.real, org: {}, ext: {}, rate: {}, flag: { solid: {} } }, id;
@@ -4998,8 +5019,7 @@
         more = true;
       }
     } while (more && rows.length < 80);
-    lab.cache[key] = { tick: lab.tick, lo: lo, hi: hi, rows: rows, total: v.field.total };
-    return rows;
+    return (lab.cache[key] = { lo: lo + mean, hi: hi + mean, rows: rows, mean: mean, stamp: stamp, vol: vol });
   }
 
   function fieldAt(rows, x, local, d) {       // linear zwischen den Zeilen der Tabelle; local: farbige Ionen dieser Zelle (mol/L), d: Weite in cm
@@ -5018,16 +5038,15 @@
 
   // Was die Ansicht zeigt: je Zelle pH und Farbe (Reihen von oben), dazu der Zeitraffer
   function fieldLook(lab, v) {
-    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [], G, cell, rgb, sum, id, c, local;
+    var f = v.field, s, lo, hi, table, k, cells = [], G, cell, rgb, sum, id, c, local;
     if (!f || !f.n || !(volume(v) > 0)) return null;
-    ex = fieldExcess(lab, v);
-    for (k = 0; k < ex.length; k++) { lo = Math.min(lo, ex[k]); hi = Math.max(hi, ex[k]); }
-    rows = fieldTable(lab, v, lo, hi);
+    s = fieldConc(lab, v); lo = Math.min.apply(null, s); hi = Math.max.apply(null, s);
+    table = fieldTable(lab, v, lo, hi);
     G = fieldGrid(lab, v);
-    for (k = 0; k < ex.length; k++) {
+    for (k = 0; k < s.length; k++) {
       local = {};
       for (id in f.tr || {}) local[id] = f.tr[id][k] / (G.vol[k] * 1000);
-      cell = fieldAt(rows, ex[k], local, spec(v).d);
+      cell = fieldAt(table.rows, s[k] - table.mean, local, spec(v).d);
       // Trübung durch den Feststoff dieser Zelle, wie die des Gefäßes (HAZE), in der Farbe der Feststoffe
       rgb = [0, 0, 0]; sum = 0;
       for (id in f.solid || {}) { c = f.solid[id][k] / (G.vol[k] * 1000); sum += c; rgbOf(id).forEach(function (q, n) { rgb[n] += q * c; }); }
@@ -5037,11 +5056,9 @@
     return { nr: FIELD.nr, nz: FIELD.nz, speed: f.speed, cells: cells };
   }
 
-  function fieldMade(v) { return !!(v.field && v.field.n && v.field.solid && Object.keys(v.field.solid).length); }
-
   function fieldProbe(lab, v) {     // pH an der Spitze des pH-Meters
-    var ex = fieldExcess(lab, v), k = FIELD.probe[1] * FIELD.nr + FIELD.probe[0];
-    return fieldAt(fieldTable(lab, v, Math.min.apply(null, ex), Math.max.apply(null, ex)), ex[k]).pH;
+    var s = fieldConc(lab, v), table = fieldTable(lab, v, Math.min.apply(null, s), Math.max.apply(null, s));
+    return fieldAt(table.rows, s[FIELD.probe[1] * FIELD.nr + FIELD.probe[0]] - table.mean).pH;
   }
 
   // ------------------------------------------------------------------ Ablesen
@@ -5063,6 +5080,7 @@
     v.lumps.forEach(function (l) {                             // Niederschlag: was schwebt, trübt; was liegt, ist Bodensatz
       var color = rgbOf(l.id), down = vol > 0 ? l.settled : 1, k;   // ohne Flüssigkeit liegt alles am Boden
       if (!l.made) return;
+      if (v.field && v.field.n && v.field.solid && v.field.solid[l.id]) return;      // ihn zeigt das Feld Zelle für Zelle
       if (l.mirror) {                                          // ein Spiegel am Glas: wie dicht er die benetzte Wand bedeckt; bei zweien zählt der dichtere
         share = l.n > 0 ? Math.min(1, l.n / (MIRROR * wall(v, l.wet))) : 0;
         if (share > 0 && !(mirror && mirror.share >= share)) mirror = { rgb: color, ml: l.wet, share: share };
@@ -5085,9 +5103,8 @@
       oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,
       // cloud: Trübung (Farbe und Deckkraft), sediment: Bodensatz (Farbe und lockeres Volumen in mL)
-      // im Feld zeigt jede Zelle ihren eigenen Niederschlag: die durchmischte Trübung und der Bodensatz fallen dann weg
-      cloud: fieldMade(v) ? { rgb: [255, 255, 255], alpha: 0 } : cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),
-      sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: fieldMade(v) ? 0 : loose },
+      cloud: cloudy(v, cloud.map(function (c) { return hanging > 0 ? Math.round(c / hanging) : 255; }), vol > 0 ? 1 - Math.exp(-hanging / vol / HAZE) : 0),
+      sediment: { rgb: ground.map(function (c) { return lying > 0 ? Math.round(c / lying) : 255; }), ml: loose },
       // mirror: ein Spiegel am Glas (Farbe, Füllhöhe in mL, bis zu der er reicht, und wie dicht er ist, 0 bis 1), sonst null
       mirror: mirror,
       // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell

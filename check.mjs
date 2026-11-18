@@ -11416,6 +11416,25 @@ test("Feld: Kochsalz in Silbernitrat, das Silberchlorid fällt dort aus, wo das 
   assert.match(svg, /class="cl-field"[\s\S]*fill-opacity/, "die Trübung je Zelle ist gezeichnet");
 });
 
+test("Feld: ein Niederschlag, den das Feld nicht führt, bleibt als Trübung sichtbar; eine langsame Bürette tropft oben in der Mitte ein", () => {
+  const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "AgNO3 0.01M", ml: 50 }] }], { room: 25 }), v = L.vessel(l, "b");
+  L.add(l, "b", "NaCl 1M", { ml: 1 });
+  L.step(l, 5);
+  L.add(l, "b", "FeCl3 0.1M", { ml: 5 });
+  L.step(l, 5);
+  L.add(l, "b", "NaOH 1M", { ml: 3 });
+  L.step(l, 20);
+  assert.ok(v.field.solid["AgCl(s)"].some((x) => x > 0), "Silberchlorid zeigt das Feld");
+  assert.ok(amount(l, "Fe(OH)3(s)") > 1e-4 && look(l).cloud.alpha > 0.1, `Eisen(III)-hydroxid trübt das Glas: ${look(l).cloud.alpha}`);
+  assert.deepEqual(Object.keys(v.field.solid), ["AgCl(s)"], "gut lösliche Salze (Kochsalz) führt das Feld nicht");
+  const t = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] },
+    { type: "burette", id: "bu", over: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }], { room: 25 });
+  L.setTap(t, "bu", 0.01);
+  L.step(t, 30);
+  const f = L.view(t, L.vessel(t, "b")).field;
+  assert.ok(f.cells[0].pH < f.cells[f.cells.length - 1].pH - 1, `0,01 mL/s: oben in der Mitte saurer als unten außen (${f.cells[0].pH}, ${f.cells[f.cells.length - 1].pH})`);
+});
+
 test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit dem Zeitraffer", () => {
   const run = L.createRun(L.normalize({ room: 25, bench: [{ type: "beaker", id: "b", spatial: 300, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] }] }));
   L.act(run, (l) => L.add(l, "b", "HCl 1M", { ml: 1 }));
