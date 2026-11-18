@@ -322,6 +322,11 @@
         var rest = ids.filter(function (id) { return id !== WATER && next.species[id].phase !== "aq" && next.species[id].phase !== "s"; });
         entry.aq = !solids.length && !rest.length;
         if (item.model != null && !entry.aq) throw fail("model", String(item.eq));      // nur ein Gleichgewicht in der Lösung kann einem Modell vorbehalten sein
+        // ideal: logK, mit dem das ideale Modell (ohne Aktivitäten) die gemessene Löslichkeit eines sehr gut löslichen Salzes trifft;
+        // als [logK, dH] auch mit eigener Lösungsenthalpie in kJ/mol, damit die Löslichkeitskurve stimmt
+        var idealOk = function (x) { return typeof x === "number" && isFinite(x); };
+        if (item.ideal != null && !((idealOk(item.ideal) || (Array.isArray(item.ideal) && item.ideal.length === 2 && item.ideal.every(idealOk))) &&
+          solids.length === 1 && !rest.length)) throw fail("logK", "ideal");
         if (solids.length === 1 && !rest.length) {
           // Löslichkeit eines Feststoffs. d: was beim Lösen von 1 mol an gelösten Teilchen entsteht (+) oder verbraucht wird (−);
           // f rechnet den Umsatz der Auflösung in den der eingetragenen Schreibweise um.
@@ -726,6 +731,14 @@
   [5, 10, 20, 25].forEach(function (ml) { registerPart("pipette" + ml, { kind: "test", probe: "pipette", ml: ml, label: "pipette" }); });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
   registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
+  // Messkolben: Kugel mit langem, engem Hals; der Eichstrich (mark, mL) sitzt am Hals, darüber ist noch etwas Platz. Nicht erhitzen
+  registerPart("volflask", {
+    kind: "vessel", size: 100, noHeat: true,
+    sizes: {
+      100: { cap: 110, mark: 100, d: 6.0, Cv: 45, loss: 0.13, heat: 0.2 },
+      250: { cap: 275, mark: 250, d: 8.2, Cv: 80, loss: 0.2, heat: 0.26 }
+    }
+  });
   // Liebigkühler: führt den Dampf aus dem Gefäß "in" in das Gefäß "to" und kühlt ihn dabei auf Raumtemperatur
   registerPart("condenser", { kind: "tool", duct: true, condenser: true });
   // Gasableitungsrohr mit Stopfen: verschließt das Gefäß und leitet, was dort an Gas entsteht, in ein zweites
@@ -1484,6 +1497,16 @@
     return true;
   }
 
+  // Messkolben bis zum Eichstrich mit Wasser auffüllen. Die Volumina addieren sich (Wasser und Eigenvolumen der gelösten Stoffe),
+  // deshalb fehlt genau Marke minus Füllung minus dem, was gerade noch zufließt
+  function toMark(lab, vesselId) {
+    var v = vessel(lab, vesselId), mark = v ? spec(v).mark : null, ml;
+    if (!mark) return false;
+    ml = mark - filled(v) * 1000;
+    lab.flows.forEach(function (f) { if (f.to === vesselId) ml -= f.left; });
+    return ml > 1e-6 ? add(lab, vesselId, "H2O", { ml: ml }) : false;
+  }
+
   // Umgießen: nur die Flüssigkeit mit allem Gelösten, Feststoffe bleiben zurück
   function pourable(lab, id) {    // was sich aus einem Gefäß noch ausgießen lässt, in mL: ohne das, was schon unterwegs ist
     var v = vessel(lab, id), ml = v ? filled(v) * 1000 : 0;
@@ -1897,7 +1920,7 @@
       return basis.map(function (b) { return row < 0 ? (b === i ? 1 : 0) : -rows[row].c[b]; });
     });
     return (systems[key] = {
-      ids: ids, eqs: eqs, rows: rows, pivot: pivot, basis: basis, a: a,
+      ids: ids, eqs: eqs, rows: rows, pivot: pivot, basis: basis, a: a, real: !!real,
       hydrogen: ids.map(function (id) { return parse(id).atoms.H || 0; }),
       // plain: dieses Grundteilchen steckt in keinem Teilchen mit negativem Anteil; ist nichts davon da, fehlt alles, was es enthält
       plain: basis.map(function (q, b) { return a.every(function (row) { return row[b] >= 0; }); }),
@@ -2263,7 +2286,8 @@
       return sum;
     });
     var rhs = sys.solids.map(function (s) {
-      var h = heatOf(s.eq), sum = at(s.eq.logK * s.eq.f, h == null ? null : h * s.eq.f);
+      var own = sys.real || s.eq.ideal == null ? null : [].concat(s.eq.ideal), h = own && own.length > 1 ? own[1] : heatOf(s.eq);
+      var sum = at((own ? own[0] : s.eq.logK) * s.eq.f, h == null ? null : h * s.eq.f);
       for (var ion in s.eq.d) sum -= s.eq.d[ion] * logB[ids.indexOf(ion)];
       return sum;
     });
@@ -4570,7 +4594,7 @@
       loose += l.n * down * L.db.species[l.id].M / 0.4;        // mL, locker geschüttet mit 0,4 g/mL
     });
     return {
-      id: v.id, type: v.type, cap: spec(v).cap, ml: filled(v) * 1000, T: v.T,
+      id: v.id, type: v.type, cap: spec(v).cap, mark: spec(v).mark || null, ml: filled(v) * 1000, T: v.T,
       // oil: die Ölschicht (mL, oben oder unten, Farbe, ihr Hauptstoff), sonst null; ml oben ist alles zusammen
       oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,
@@ -5051,6 +5075,7 @@
   L.heatCapacity = heatCapacity;
   L.free = free;
   L.add = add;
+  L.toMark = toMark;
   L.pour = pour;
   L.pourable = pourable;
   L.empty = empty;

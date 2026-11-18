@@ -23,6 +23,12 @@ const beaker = (contains, more) => lab([{ type: "beaker", id: "b", contains }], 
 const look = (l, id) => L.view(l, L.vessel(l, id || "b"));
 const amount = (l, species, id) => L.vessel(l, id || "b").n[species] || 0;
 
+// Konstante und Lösungsenthalpie eines Löslichkeitsgleichgewichts, wie der Löser sie nimmt: im idealen Modell ideal, wo eingetragen
+const constantOf = (e, real) => {
+  const own = real || e.ideal == null ? null : [].concat(e.ideal);
+  return [own ? own[0] : e.logK, own && own.length > 1 ? own[1] : L.heatOf(e.text)];
+};
+
 // Masse und Ladung aller Stoffe, die in einem Labor stecken oder daraus entwichen sind
 const totals = (l) => {
   let mass = 0, charge = 0;
@@ -2266,7 +2272,7 @@ const stress = (model, seeds) => {
         const ions = Object.entries(e.d), here = ions.every(([id]) => v.n[id] > 0);
         // mit Aktivitäten; im idealen Modell ist jeder Koeffizient 1
         const logQ = here ? ions.reduce((sum, [id, nu]) => sum + nu * Math.log10(v.n[id] / vol * L.gamma(l, v.id, id)), 0) : -Infinity;
-        const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
+        const [k0, h] = constantOf(e, v.real), logK = k0 * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
         if (!elements(e.solid).some((el) => feeding.includes(el))) assert.ok(logQ - logK < 0.01, `${e.solid} in ${v.id} ist um 10^${(logQ - logK).toFixed(2)} übersättigt (Folge ${seed})`);
         // (ein Stück mit eigenem Geschwindigkeitsgesetz darf liegen bleiben, wenn es sich unmerklich langsam löst: Marmor in Wasser)
         if (v.n[e.solid] > 0 && !e.rate) assert.ok(logQ - logK > -0.01, `${e.solid} in ${v.id} bleibt liegen, obwohl die Lösung es lösen müsste (Folge ${seed})`);
@@ -2484,10 +2490,10 @@ test("Eindampfen: Flüchtiges entweicht, was kein Salz bildet, bleibt als Rücks
   assert.equal(acid.failed || 0, 0);
 
   // Kaliumnitrat hat keinen Feststoff in den Daten: es bleibt als Rückstand aus Ionen
-  const salt = heated({ type: "testtube", contains: [{ reagent: "KNO3 1M", ml: 5 }] });
+  const salt = heated({ type: "testtube", contains: [{ reagent: "KBr 1M", ml: 5 }] });
   const events = collect(salt, 300);
   assert.equal(amount(salt, "H2O(l)"), 0);
-  near(amount(salt, "K+(aq)"), 0.005, 1e-6, "das Kaliumnitrat bleibt im Glas");
+  near(amount(salt, "K+(aq)"), 0.005, 1e-6, "das Kaliumbromid bleibt im Glas");
   assert.ok(look(salt).residue > 0.009, "als Rückstand");
   assert.ok(keys(events).includes("dry"));
   assert.equal(salt.failed || 0, 0);
@@ -3453,7 +3459,7 @@ test("Zeichnung: Dampf, Rückstand, Feuer, Scherben und der Span an der Öffnung
   assert.match(hot, /cl-steam/);
   assert.match(hot, /cl-bubble/);
   clean(hot, "siedendes Wasser");
-  const dry = heated({ type: "testtube", contains: [{ reagent: "KNO3 1M", ml: 2 }] });
+  const dry = heated({ type: "testtube", contains: [{ reagent: "KBr 1M", ml: 2 }] });
   L.step(dry, 200);
   assert.match(L.parts.testtube.draw(look(dry), ctx()), /cl-crust/, "Rückstand am Glas");
   const mg = burning("Mg ribbon", 0.104);
@@ -3739,7 +3745,7 @@ const settled = (l, id) => {
   for (const e of L.db.equilibria.filter((x) => x.solid)) {
     const ions = Object.entries(e.d), here = ions.every(([sp]) => v.n[sp] > 0);
     const logQ = here ? ions.reduce((sum, [sp, nu]) => sum + nu * Math.log10(v.n[sp] / vol * L.gamma(l, v.id, sp)), 0) : -Infinity;
-    const h = L.heatOf(e.text), logK = e.logK * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
+    const [k0, h] = constantOf(e, v.real), logK = k0 * e.f - (h == null ? 0 : h * e.f * 1000 / (8.314462618 * Math.LN10) * (1 / T - 1 / 298.15));
     if (logQ - logK > 0.01) off.push(`${e.solid} übersättigt um 10^${(logQ - logK).toFixed(2)}`);
     if (v.n[e.solid] > 0 && logQ - logK < -0.01) off.push(`${e.solid} bleibt liegen`);
   }
@@ -3850,7 +3856,7 @@ test("Verbrennung: das Gefäß wird nicht heißer als die Flamme, auch mit viel 
 });
 
 test("Ein Tropfen auf einen Rückstand: zu wenig Flüssigkeit löst ihn nicht, und die Rechnung scheitert nicht", () => {
-  const l = heated({ type: "dish", contains: [{ reagent: "KNO3 1M", ml: 20 }] }), seen = [];
+  const l = heated({ type: "dish", contains: [{ reagent: "KBr 1M", ml: 20 }] }), seen = [];
   const t = until(l, () => keys(seen).includes("dry"), 900, seen);
   // die Wärme zum Verdampfen wird bis zum letzten Rest aufgebracht: 1,1 mol Wasser brauchen 45 kJ, die Flamme gibt höchstens 203 W
   assert.ok(t > 250 && t < 600, `trocken nach ${t} s`);
@@ -3864,7 +3870,7 @@ test("Ein Tropfen auf einen Rückstand: zu wenig Flüssigkeit löst ihn nicht, u
   assert.equal(L.atRest(l), true);
   L.add(l, "b", "H2O", { ml: 20 });
   L.step(l, 30);
-  near(look(l).pH, 7.0, 0.05, "mit genug Wasser wieder Kaliumnitrat-Lösung (der Tropfen Phenolphthalein säuert kaum)");
+  near(look(l).pH, 7.0, 0.05, "mit genug Wasser wieder Kaliumbromid-Lösung (der Tropfen Phenolphthalein säuert kaum)");
   assert.equal(look(l).residue, 0);
   assert.equal(l.failed || 0, 0);
 });
@@ -7201,7 +7207,7 @@ test("Durchsicht, Meilenstein 5: kleinere Befunde im Rechenkern", () => {
   assert.ok(L.spectrum(paste, "b").every((p) => p[1] === 0));
   assert.equal(L.particles(paste, "b").paste, true);
   // eingedampft: ein Rückstand
-  const dry = heated({ type: "dish", contains: [{ reagent: "KNO3 1M", ml: 3 }] });
+  const dry = heated({ type: "dish", contains: [{ reagent: "KBr 1M", ml: 3 }] });
   L.step(dry, 400);
   assert.equal(L.particles(dry, "b").wet, false);
   assert.equal(L.particles(dry, "b").residue, true);
@@ -10589,6 +10595,91 @@ test("Stickstoff: Ammoniumchlorid und Natriumnitrit geben im heißen Wasserbad S
   const cold = make(false);
   L.step(cold, 120);
   assert.ok(airOf(cold, "a", "N2(g)") < 0.05, "bei Raumtemperatur kaum");
+});
+
+// ---------------------------------------------------------------- Löslichkeit sehr gut löslicher Salze
+
+test("Löslichkeit: das ideale Modell trifft mit ideal die gemessenen Werte bei 25 °C; das reale rechnet mit logK", () => {
+  // gesättigt: 0,8 mol in 20 mL Wasser, eine halbe Stunde gerührt; gelöst in mol je kg Wasser
+  const dissolved = (reagent, solid, model) => {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }], { room: 25, model }), n0 = 0.8;
+    L.add(l, "b", reagent, { g: n0 * L.species(solid).M });
+    L.step(l, 1800);
+    const v = L.vessel(l, "b");
+    assert.ok(v.n[solid] > 0, `${solid}: Bodensatz bleibt`);
+    return (n0 - v.n[solid]) / (v.n["H2O(l)"] * 0.018015);
+  };
+  for (const [reagent, solid, want] of [["KCl salt", "KCl(s)", 4.81], ["NaHCO3 powder", "NaHCO3(s)", 1.224], ["KMnO4 crystals", "KMnO4(s)", 0.481], ["CH3COONa salt", "CH3COONa(s)", 6.14]])
+    near(dissolved(reagent, solid, "ideal"), want, 0.03 * want, `${solid} im idealen Modell`);
+  near(dissolved("KCl salt", "KCl(s)", "real"), 4.5, 0.2, "Kaliumchlorid im realen Modell, mit der Datenbankkonstante");
+  assert.throws(() => L.register({ equilibria: [{ eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.6, ideal: "x" }] }), (e) => e.code === "data", "ideal ist eine Zahl");
+});
+
+// ---------------------------------------------------------------- Phosphorsäure, Fluorid, starke Säuren, Indikatoren, Kaliumnitrat, Messkolben
+
+const phOf = (contains, model) => { const l = lab([{ type: "beaker", id: "b", contains }], { room: 25, model }); L.step(l, 30); return look(l).pH; };
+
+test("Phosphorsäure: pH-Werte, Phosphatpuffer und zwei Sprünge bei der Titration mit Natronlauge", () => {
+  near(phOf([{ reagent: "H3PO4 0.1M", ml: 50 }]), 1.62, 0.05, "Phosphorsäure 0,1 mol/L");
+  near(phOf([{ reagent: "NaH2PO4 0.1M", ml: 25 }, { reagent: "Na2HPO4 0.1M", ml: 25 }], "real"), 6.86, 0.05, "Phosphatpuffer, reales Modell");
+  near(phOf([{ reagent: "Na3PO4 0.1M", ml: 50 }]), 12.6, 0.15, "Trinatriumphosphat");
+  const l = lab([{ type: "beaker", id: "b", ml: 250, contains: [{ reagent: "H3PO4 0.1M", ml: 20 }] }], { room: 25 }), at = {};
+  for (let ml = 0; ml <= 40; ml += 1) { if (ml) { L.add(l, "b", "NaOH 0.1M", { ml: 1 }); L.step(l, 15); } at[ml] = look(l).pH; }
+  near(at[10], 2.2, 0.3, "halb bis zum ersten Äquivalenzpunkt");
+  near(at[30], 7.2, 0.2, "halb bis zum zweiten: pKs2");
+  assert.ok(at[21] - at[19] > 1.5 && at[41 - 1] - at[38] > 1, `zwei Sprünge: ${at[19].toFixed(1)}→${at[21].toFixed(1)}, ${at[38].toFixed(1)}→${at[40].toFixed(1)}`);
+});
+
+test("Fluorid, Phosphat und starke Säuren: Flusssäure schwach, Calciumfluorid weiß, Silberphosphat gelb; Perchlor-, Bromwasserstoff- und Iodwasserstoffsäure stark", () => {
+  near(phOf([{ reagent: "HF 0.1M", ml: 50 }]), 2.1, 0.1, "Flusssäure");
+  for (const acid of ["HClO4", "HBr", "HI"]) near(phOf([{ reagent: acid + " 0.1M", ml: 50 }]), 1.0, 0.02, acid);
+  const fall = (salt, by) => { const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: salt, ml: 20 }] }]), seen = []; L.add(l, "b", by, { ml: 5 }); L.step(l, 30, (e) => seen.push(e)); return seen.find((e) => e.key === "solid"); };
+  assert.equal(fall("CaCl2 0.1M", "NaF 0.1M").color, "white", "Calciumfluorid");
+  assert.equal(fall("Na2HPO4 0.1M", "AgNO3 0.1M").color, "yellow", "Silberphosphat");
+});
+
+test("Indikatoren: Bromkresolgrün gelb im Sauren, blau ab pH 5,4; Phenolrot gelb unter 6,8, pink im Basischen", () => {
+  const colour = (indicator, solution) => { const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: solution, ml: 50 }] }], { room: 25 }); L.add(l, "b", indicator, { drops: 5 }); L.step(l, 10); return look(l).color.name; };
+  assert.deepEqual(["HCl 0.001M", "NaHCO3 0.1M"].map((x) => colour("BCG", x)), ["yellow", "blue"]);
+  assert.deepEqual(["CH3COOH 0.01M", "NaOH 0.01M"].map((x) => colour("phenol red", x)), ["yellow", "pink"]);
+});
+
+test("Kaliumnitrat: im idealen Modell die gemessene Löslichkeitskurve, 31,6 g bei 20 °C und 110 g bei 60 °C je 100 g Wasser", () => {
+  const grams = (T) => {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }, { type: "bath", under: "b", temp: T }], { room: 20 });
+    L.add(l, "b", "KNO3 salt", { g: 40 });
+    L.step(l, 2400);
+    const v = L.vessel(l, "b");
+    return (40 / 101.1 - v.n["KNO3(s)"]) * 101.1 / (v.n["H2O(l)"] * 0.018015) / 10;
+  };
+  near(grams(20), 31.6, 2, "20 °C");
+  near(grams(60), 110, 6, "60 °C");
+});
+
+test("Messkolben: bis zur Marke genau; 4 g Natriumhydroxid im 100-mL-Kolben ergeben 1 mol/L", () => {
+  const l = lab([{ type: "volflask", id: "m" }], { room: 20 });
+  L.add(l, "m", "NaOH pellets", { g: 4 });
+  L.add(l, "m", "H2O", { ml: 60 });
+  L.step(l, 60);
+  assert.equal(L.toMark(l, "m"), true);
+  assert.equal(L.toMark(l, "m"), false, "was schon zufließt, zählt mit");
+  L.step(l, 60);
+  near(look(l, "m").ml, 100, 1e-6, "Volumen");
+  near(amount(l, "Na+(aq)", "m") / 0.1, 1.0, 0.002, "Konzentration");
+  assert.equal(look(l, "m").mark, 100);
+  assert.match(L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 }), /class="cl-mark"/, "Eichstrich");
+  const big = lab([{ type: "volflask", id: "m", ml: 250 }]);
+  assert.equal(look(big, "m").mark, 250, "auch mit 250 mL");
+  L.add(big, "m", "H2O", { ml: 260 });
+  L.step(big, 60);
+  assert.equal(L.toMark(big, "m"), false, "über die Marke gefüllt: nichts zuzugeben");
+  assert.equal(L.tool(big, L.place(big, { type: "burner", under: "m" })).in, null, "ein Messkolben wird nicht erhitzt");
+  assert.throws(() => L.normalize({ bench: [{ type: "volflask", id: "m" }, { type: "burner", under: "m" }] }), (e) => e.code === "place");
+});
+
+test("Pyridin: schwache Base, 0,1 mol/L hat pH 9,1", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  near(phOf([{ reagent: "pyridine", ml: 5 }, { reagent: "H2O", ml: 45 }]), 9.11, 0.05);
 });
 
 // ---------------------------------------------------------------- Landolt-Reaktion
