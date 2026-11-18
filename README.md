@@ -98,7 +98,7 @@ Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
 Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
 
-> **Stand:** Version 0.1.0, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, über vierzig Lösungen, fünf Indikatoren (mit Rotkohlsaft), Stärke, Iodlösung und vierzehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator (Ioduhren, Chamäleon), Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben, Reaktionen und Gleichgewichte im Gasraum (NO₂ und N₂O₄), Schaum, gelöster Luftsauerstoff beim Schütteln (Blaue Flasche), Leuchten durch Chemolumineszenz und unter der UV-Lampe (mit dem Knopf „Licht aus“) und die Zählrate über natürlich radioaktivem Kalium. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation, den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, dem Alkoholtest, Blauer Flasche und Ampel und Luminol, Fluorescein und Chinin, ein Paket mit den Alkalimetallen und ein Paket mit Ionen: Vanadium und seine Oxidationsstufen, Nickel und die Ionen und Sulfide des vollständigen Trennungsgangs. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
+> **Stand:** Version 0.1.0, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, über vierzig Lösungen, fünf Indikatoren (mit Rotkohlsaft), Stärke, Iodlösung und siebzehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator (Ioduhren, Chamäleon), Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben, Feststoffe, die beim Erhitzen Gas abgeben, Methan und Stickstoff, Reaktionen und Gleichgewichte im Gasraum (NO₂ und N₂O₄), Schaum, gelöster Luftsauerstoff beim Schütteln (Blaue Flasche), Leuchten durch Chemolumineszenz und unter der UV-Lampe (mit dem Knopf „Licht aus“) und die Zählrate über natürlich radioaktivem Kalium. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation, den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, dem Alkoholtest, Blauer Flasche und Ampel und Luminol, Fluorescein und Chinin, ein Paket mit den Alkalimetallen und ein Paket mit Ionen: Vanadium und seine Oxidationsstufen, Nickel und die Ionen und Sulfide des vollständigen Trennungsgangs. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -395,6 +395,49 @@ Der Span zeigt, was gerade im Gasraum über der Lösung steht. Wasserstoff ist l
   {"type":"beaker","id":"kohlenstoffdioxid","ml":50,"contains":[{"reagent":"HCl 1M","ml":20}]}
  ],
  "shelf":["Mg ribbon","MnO2","marble","Na2CO3 1M","NaHCO3 1M","Na2SO3 1M","splint","glowsplint"],
+ "show":{"charts":false}}
+```
+
+## Gase aus Feststoffen und Stickstoff
+
+Manche Feststoffe geben beim Erhitzen ein Gas ab. Die beiden linken Reagenzgläser stehen über dem Brenner; nach etwa einer Minute ist es so weit:
+
+- **Kaliumpermanganat** zerfällt in Kaliummanganat, Braunstein und **Sauerstoff**. Halte den Glimmspan an die Öffnung: Er flammt auf.
+- **Natron** (Natriumhydrogencarbonat) zerfällt in Soda, Wasserdampf und **Kohlenstoffdioxid**. Das Gas strömt durch das Rohr ins Kalkwasser, und das trübt sich. So geht Backpulver im Ofen auf.
+- **Stickstoff** (rechts): Ammoniumchlorid und Natriumnitrit reagieren in der Wärme zu Stickstoff und Wasser. Im Wasserbad bei 80 °C füllt das Gas in einer Minute das Glas. Der brennende Span erlischt darin, und das Kalkwasser bliebe klar: Stickstoff ist unsichtbar, geruchlos und reagiert kaum. Er macht vier Fünftel der Luft aus.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"permanganat","contains":[{"reagent":"KMnO4 crystals","g":1}]},
+  {"type":"burner","under":"permanganat","flame":2},
+  {"type":"testtube","id":"natron","contains":[{"reagent":"NaHCO3 powder","g":1}]},
+  {"type":"burner","under":"natron","flame":2},
+  {"type":"tube","in":"natron","to":"kalkwasser"},
+  {"type":"testtube","id":"kalkwasser","contains":[{"reagent":"limewater","ml":10}]},
+  {"type":"testtube","id":"stickstoff","contains":[{"reagent":"NH4Cl 1M","ml":5},{"reagent":"NaNO2 1M","ml":5}]},
+  {"type":"bath","under":"stickstoff","temp":80}
+ ],
+ "shelf":["KMnO4 crystals","NaHCO3 powder","NH4Cl 1M","NaNO2 1M","limewater","splint","glowsplint","testtube","burner","bath"],
+ "show":{"charts":false}}
+```
+
+## Methan
+
+Methan ist der Hauptbestandteil von Erdgas. Im Labor entsteht es, wenn man Natriumacetat mit Natriumhydroxid erhitzt (in der Schule mit Natronkalk): Aus dem Acetat wird Methan, zurück bleibt Soda.
+
+- Nach ein bis zwei Minuten strömt Methan durch das Rohr ins zweite Reagenzglas und verdrängt dort die Luft. Halte dann den brennenden Span an die Öffnung: Reines Methan brennt ruhig ab.
+- Ist erst wenig Methan im Glas, zwischen etwa 4 und 17 Prozent, knallt das Gemisch mit Luft. Darum entzündet man Gas nie, bevor die Luft ganz verdrängt ist.
+- Methan ist leichter als Luft und entweicht aus dem offenen Glas nach oben. Prüfe also bald.
+- Ohne Rohr zündet das Methan an der Öffnung, sobald es die Brennerflamme erreicht: erst eine Verpuffung, dann brennt es ruhig weiter.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"acetat","contains":[{"reagent":"CH3COONa salt","g":1},{"reagent":"NaOH pellets","g":1}]},
+  {"type":"burner","under":"acetat","flame":2},
+  {"type":"tube","in":"acetat","to":"auffangen"},
+  {"type":"testtube","id":"auffangen"}
+ ],
+ "shelf":["CH3COONa salt","NaOH pellets","splint","glowsplint","testtube","burner","tube"],
  "show":{"charts":false}}
 ```
 
@@ -1851,7 +1894,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
 | `NaCl`, `KCl`, `KBr`, `KI` | Natriumchlorid, Kaliumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
-| `Na2SO4`, `CH3COONa`, `NH4Cl`, `KSCN` | Natriumsulfat, Natriumacetat, Ammoniumchlorid, Kaliumthiocyanat | `ml` |
+| `Na2SO4`, `CH3COONa`, `NH4Cl`, `KSCN`, `NaNO2` | Natriumsulfat, Natriumacetat, Ammoniumchlorid, Kaliumthiocyanat, Natriumnitrit | `ml` |
 | `AgNO3`, `BaCl2`, `CuSO4`, `FeCl3` | Silbernitrat, Bariumchlorid, Kupfersulfat, Eisen(III)-chlorid | `ml` |
 | `Na2CO3`, `NaHCO3` | Natriumcarbonat (Soda), Natriumhydrogencarbonat (Natron) | `ml` |
 | `CaCl2`, `SrCl2`, `LiCl` | Calciumchlorid, Strontiumchlorid, Lithiumchlorid | `ml` |
@@ -1871,6 +1914,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `Fe wool`, `Cu sheet` | Eisenwolle, Kupferblech in Streifen | `g` |
 | `NH4NO3 salt`, `NaOH pellets`, `CaCl2 anhydrous` | Ammoniumnitrat, Natriumhydroxid-Plätzchen, wasserfreies Calciumchlorid; lösen sich in Wasser mit Lösungswärme | `g` |
 | `KCl salt` | Kaliumchlorid (Diätsalz), natürlich schwach radioaktiv (Geigerzähler) | `g` |
+| `KMnO4 crystals`, `NaHCO3 powder`, `CH3COONa salt` | Kaliumpermanganat, Natron und Natriumacetat; geben trocken erhitzt Sauerstoff, Kohlenstoffdioxid und, mit Natriumhydroxid, Methan ab | `g` |
 
 ## Eigene Stoffe und Reaktionen
 
@@ -1956,7 +2000,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `logK` | Nur mit `rate.fast`: Die Reaktion läuft bis zu diesem Gleichgewicht (mit Konzentrationen in mol/L; Feststoffe, Wasser und Gase zählen 1) und nicht weiter. Der Wert gilt bei jeder Temperatur. Ohne die Angabe läuft sie vollständig ab. Die Rückreaktion wird nicht gerechnet. |
 | `light` | Wellenlänge in nm, in der diese Reaktion leuchtet (Chemolumineszenz, Luminol: `425`); je schneller sie läuft, desto heller, ab etwa 2·10⁻⁵ mol/(L s) kräftig |
 | `mirror` | `true`: Was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit gerade steht (Silberspiegel der Tollens-Probe). Er trübt nicht, liegt nicht am Boden und bleibt beim Umgießen im Gefäß; ab 0,5 µmol je cm² benetzter Wand ist er dicht. |
-| `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
+| `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet; die Flamme unter einem Gefäß nur, wenn es offen ist (nicht durch Stopfen oder Gasableitungsrohr). Eingetragen sind Wasserstoff und Methan (`[0.044, 0.17]`). |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
 
 **Vorratsflaschen** (`reagents`): eine Lösung (`solution`: Teilchen und ihre Konzentration in mol/L; mit `"molar":true` gilt der Eintrag für 1 mol/L und die Konzentration steht im Namen), eine reine Flüssigkeit (`liquid`) oder ein Feststoff (`solid` mit `area`, der Oberfläche in cm² je Gramm). `"drops":true` gibt den Stoff tropfenweise zu; `group` nennt das Fach im Regal (`acid`, `salt`, `other`, `indicator`, `solid`). Für Feststoffe außerdem: `shape` (0 für ein Band, dessen Oberfläche beim Auflösen gleich bleibt; Vorgabe sind Körner), `tau` (Zeit in s, in der sich ein Stück löst, wenn ein Löslichkeitsgleichgewicht es verlangt und dieses kein eigenes Geschwindigkeitsgesetz hat; Vorgabe 15), `form: "powder"` (als Pulver gezeichnet) und `piece` (Menge je Stück mit Namen der Einheit, wie beim Magnesiumband in cm). `start` ist die Menge, die beim Greifen eingestellt ist, in der Einheit des Stoffs, etwa `"start": 1` für ein einzelnes Stück. Sie muss eine der Stufen sein (mL: 1, 2, 5, 10, 20, 50, 100; Tropfen: 1, 2, 3, 5, 10; g: 0,1, 0,2, 0,5, 1, 2, 5; Stück: 1, 2, 5, 10, 20), sonst gilt die dritte.

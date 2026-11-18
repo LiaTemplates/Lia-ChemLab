@@ -3699,7 +3699,8 @@
     if (pipe) pipe.flow = 0;
     for (id in v.air) sum += v.air[id];
     if (!(sum > 0)) return;
-    if (toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; })) {
+    // durch einen Stopfen oder ein Rohr kommt das Gas nicht an die Flamme darunter
+    if (!closed && toolAt(lab, v, function (def, t) { return def.under && t.flame > 0; })) {
       steady = v.flag.torch != null && lab.t - v.flag.torch < 3;
       hit = explode(lab, v, steady);
       if (hit) {

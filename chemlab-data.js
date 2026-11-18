@@ -87,6 +87,8 @@
       "Br-(aq)": { name: name("bromide ion"), Hf: -121.41, S: 82.55, D: 2.09, src: CODATA + DW },
       "IO3-(aq)": { name: name("iodate ion"), Hf: -221.3, D: 1.078, src: LLNL + "IO3-, Enthalpy of formation -52.9 kcal/mol" + DW },
       "I-(aq)": { name: name("iodide ion"), Hf: -56.78, S: 106.45, D: 2.045, src: CODATA + DL },
+      "NO2-(aq)": { name: name("nitrite ion"), Hf: -104.6, S: 123.0, src: NBS },
+      "HNO2(aq)": { name: name("nitrous acid"), Hf: -119.2, S: 135.6, src: NBS },
       "NO3-(aq)": { name: name("nitrate ion"), Hf: -206.85, S: 146.70, D: 1.9, src: CODATA + DW },
       "SO4^2-(aq)": { name: name("sulfate ion"), Hf: -909.34, S: 18.50, D: 1.07, src: CODATA + DW },
       // Vm: partielles Molvolumen (H+ = 0). So nimmt gelöste konzentrierte Schwefelsäure, die als Hydrogensulfat vorliegt, Raum ein,
@@ -227,6 +229,8 @@
       "H2(g)": { name: name("hydrogen"), Hf: 0, S: 130.680, cp: 28.8, src: CODATA + TABLE },
       "O2(g)": { name: name("oxygen"), Hf: 0, S: 205.152, cp: 29.4, src: CODATA + GAS },
       "CO2(g)": { name: name("carbon dioxide"), Hf: -393.51, S: 213.785, cp: 37.1, src: CODATA + GAS },
+      "N2(g)": { name: name("nitrogen"), Hf: 0, S: 191.609, cp: 29.1, src: CODATA + GAS },
+      "CH4(g)": { name: name("methane"), Hf: -74.87, S: 186.25, cp: 35.7, src: JANAF },
       // smell: das Gas riecht stechend
       "NH3(g)": { name: name("ammonia"), Hf: -45.94, S: 192.77, cp: 35.1, smell: true, src: CODATA + GAS },
       "HCl(g)": { name: name("hydrogen chloride"), Hf: -92.31, S: 186.902, cp: 29.1, smell: true, src: CODATA + GAS },
@@ -274,6 +278,11 @@
       "CaCl2(s)": { name: name("calcium chloride, anhydrous"), Hf: -795.8, S: 104.6, color: WHITE, flame: "#ff6a2a", src: NBS + "; " + LOOK + GLOW },
       "NaCl(s)": { name: name("sodium chloride"), Hf: -411.12, color: WHITE, flame: "#ffd21f", shine: 30,
         src: "llnl.dat (USGS): Halite, Enthalpy of formation -98.26 kcal/mol; " + LOOK + GLOW },
+      "KMnO4(s)": { name: name("potassium permanganate"), Hf: -837.2, S: 171.71, color: "#3b1450", flame: "#b08cff", src: NBS + "; " + LOOK + " (dark violet crystals)" + GLOW },
+      "K2MnO4(s)": { name: name("potassium manganate"), Hf: -1184.07, color: "#1f3d2a", flame: "#b08cff", src: NBS + "; " + LOOK + " (dark green)" + GLOW },
+      "NaHCO3(s)": { name: name("sodium hydrogen carbonate"), Hf: -947.26, color: WHITE, flame: "#ffd21f", src: LLNL + "Nahcolite, Enthalpy of formation -226.4 kcal/mol; " + LOOK + GLOW },
+      "Na2CO3(s)": { name: name("sodium carbonate"), Hf: -1130.68, color: WHITE, flame: "#ffd21f", src: LLNL + "Na2CO3, Enthalpy of formation -1130.68 kJ/mol; " + LOOK + GLOW },
+      "CH3COONa(s)": { name: name("sodium acetate"), Hf: -708.81, color: WHITE, flame: "#ffd21f", src: NBS + "; " + LOOK + GLOW },
       "KCl(s)": { name: name("potassium chloride"), Hf: -436.68, color: WHITE, flame: "#b08cff", shine: 30,
         src: LLNL + "Sylvite, Enthalpy of formation -104.37 kcal/mol; " + LOOK + GLOW },
       "CuSO4*5H2O(s)": { name: name("copper sulfate pentahydrate"), Hf: null, color: "#2f6fd0", flame: "#3ddc84", src: LOOK + GLOW },
@@ -451,6 +460,12 @@
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
       { eq: "KCl(s) <=> K+(aq) + Cl-(aq)", logK: 0.8459, src: LLNL + "Sylvite, KCl = Cl- + K+, log_k 0.8459" },
+      { eq: "NaHCO3(s) <=> Na+(aq) + HCO3-(aq)", logK: -0.1118, src: LLNL + "Nahcolite, NaHCO3 = HCO3- + Na+, log_k -0.1118" },
+      { eq: "Na2CO3(s) <=> 2 Na+(aq) + CO3^2-(aq)", logK: 0.853, src: LLNL + "Na2CO3 + H+ = HCO3- + 2 Na+, log_k 11.1822; converted with CO3-2 + H+ = HCO3-, log_k 10.329" },
+      { eq: "KMnO4(s) <=> K+(aq) + MnO4-(aq)", logK: -1.25, src: "calculated from the Gibbs energies of formation (" + NBS + "): KMnO4(s) -737.6, K+ -283.27, MnO4- -447.2 kJ/mol" },
+      { eq: "K2MnO4(s) <=> 2 K+(aq) + MnO4^2-(aq)", logK: -2.45, src: "textbook value, from the Gibbs energies of formation: K2MnO4(s) -1081.2, MnO4^2- -500.7 kJ/mol" },
+      { eq: "CH3COONa(s) <=> Na+(aq) + CH3COO-(aq)", logK: 2.35, src: "textbook value: solubility about 123 g in 100 g water at 20 °C (15 mol/kg), as if ideal" },
+      { eq: "HNO2(aq) <=> H+(aq) + NO2-(aq)", logK: -3.2206, src: LLNL + "NO2- + H+ = HNO2, log_k 3.2206" },
       // aus den Bildungsenthalpien und Entropien dieser Tabelle; die Lösungswärme folgt ebenso daraus (+25,45, −44,75, −81,36 kJ/mol)
       { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
       { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
@@ -674,10 +689,33 @@
         eq: "CuSO4*5H2O(s) -> CuSO4(s) + 5 H2O(g)", dH: 299, rate: { k: 8e-16, Ea: 125, surface: "CuSO4*5H2O(s)", dry: true },
         src: "estimated: dehydrated at 250 °C in about 20 s. Reaction enthalpy: textbook value about 299 kJ/mol"
       },
+      // Feststoffe, die beim Erhitzen Gas abgeben (dry: nur ohne Flüssigkeit)
+      {
+        eq: "2 KMnO4(s) -> K2MnO4(s) + MnO2(s) + O2(g)", rate: { k: 2e-16, Ea: 130, surface: "KMnO4(s)", dry: true },
+        src: "estimated: decomposes from about 200 °C (textbook value), in a test tube over the burner within a minute"
+      },
+      {
+        eq: "2 NaHCO3(s) -> Na2CO3(s) + CO2(g) + H2O(g)", rate: { k: 2e-12, Ea: 100, surface: "NaHCO3(s)", dry: true },
+        src: "estimated: decomposes from about 100 °C, quickly above 150 °C (textbook value)"
+      },
+      {
+        // Methan im Schulversuch: Natriumacetat mit Natronkalk erhitzt; hier mit Natriumhydroxid
+        eq: "CH3COONa(s) + NaOH(s) -> CH4(g) + Na2CO3(s)", rate: { k: 3e-11, Ea: 60, surface: "CH3COONa(s)", dry: true },
+        src: "estimated: in a test tube over the burner a steady stream of methane for about a minute, starting after one to two minutes"
+      },
+      {
+        // Stickstoff aus Ammoniumnitrit: in warmer Lösung gleichmäßig, die Lösung erwärmt sich dabei selbst
+        eq: "NH4+(aq) + NO2-(aq) -> N2(g) + 2 H2O(l)", rate: { k: 8e-5, Ea: 80, order: { "NH4+(aq)": 1, "NO2-(aq)": 1 } },
+        src: "estimated: barely at room temperature; in a water bath at 80 °C the test tube fills with nitrogen within a minute"
+      },
       // spark: Zündgrenzen als Anteil am Gasraum. Diese Reaktion läuft nur, wenn eine Flamme sie zündet.
       {
         eq: "2 H2(g) + O2(g) -> 2 H2O(g)", spark: [0.04, 0.75],
         src: "textbook value: hydrogen is ignitable in air between 4 and 75 percent by volume"
+      },
+      {
+        eq: "CH4(g) + 2 O2(g) -> CO2(g) + 2 H2O(g)", spark: [0.044, 0.17],
+        src: "textbook value: methane is ignitable in air between 4.4 and 17 percent by volume"
       }
     ],
 
@@ -726,6 +764,7 @@
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
       // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
       "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 2.05, "OCl-(aq)": 1, "Cl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
+      "NaNO2": { name: name("sodium nitrite solution"), solution: { "Na+(aq)": 1, "NO2-(aq)": 1 }, molar: true, group: "salt" },
       "KCl": { name: name("potassium chloride solution"), solution: { "K+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "salt" },
       "KNO3": { name: name("potassium nitrate solution"), solution: { "K+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "salt" },
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
@@ -768,6 +807,9 @@
       "Zn powder": { name: name("zinc powder"), solid: "Zn(s)", area: 300, form: "powder", group: "solid" },
       "Fe wool": { name: name("iron wool"), solid: "Fe(s)", area: 60, form: "powder", group: "solid" },
       "Cu sheet": { name: name("copper sheet (strip)"), solid: "Cu(s)", area: 20, shape: 0, group: "solid" },
+      "KMnO4 crystals": { name: name("potassium permanganate (crystals)"), solid: "KMnO4(s)", area: 20, group: "solid" },
+      "NaHCO3 powder": { name: name("sodium hydrogen carbonate (baking soda)"), solid: "NaHCO3(s)", area: 60, form: "powder", group: "solid" },
+      "CH3COONa salt": { name: name("sodium acetate (salt)"), solid: "CH3COONa(s)", area: 40, form: "powder", group: "solid" },
       "KCl salt": { name: name("potassium chloride (salt)"), solid: "KCl(s)", area: 40, form: "powder", group: "solid" },
       "NH4NO3 salt": { name: name("ammonium nitrate (salt)"), solid: "NH4NO3(s)", area: 40, form: "powder", group: "solid" },
       "NaOH pellets": { name: name("sodium hydroxide pellets"), solid: "NaOH(s)", area: 8, group: "solid" },
@@ -843,6 +885,10 @@
     "K2Cr2O7": { cmr: [1, 0.1], ate: 90.5, inh: 0.05, stot: [[1], [3, 5]], corr: [5, 1, 3, 1], resp: 1, sens: 1, aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 024-002-00-6 (SCL STOT SE 3); ATE oral of the supplier (Morphisto SDS), inhalation: conversion value of Acute Tox. 2" },
     "KCr(SO4)2": { fixed: [], src: "chromium potassium sulfate dodecahydrate: not classified (supplier SDS, e.g. Carl Roth)" },
     "CoCl2": { cmr: [1, 0.01], ate: 500, resp: 1, sens: 1, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 027-004-00-5 (SCL Carc. 0.01 %, M = 10)" },
+    "NaNO2": { ate: 180, irrit: 10, aq: { acute: 1 }, src: "CLP Annex VI 007-010-00-4: Ox. Sol. 3, Acute Tox. 3 (oral LD50 rat 180 mg/kg), Eye Irrit. 2, Aquatic Acute 1" },
+    "KMnO4 crystals": { fixed: ["GHS03", "GHS07", "GHS08", "GHS09"], signal: "danger", src: "CLP Annex VI 025-002-00-9: Ox. Sol. 2, Acute Tox. 4, Repr. 2, Aquatic Acute 1, Aquatic Chronic 1" },
+    "NaHCO3 powder": { fixed: [], src: "sodium hydrogen carbonate: not classified" },
+    "CH3COONa salt": { fixed: [], src: "sodium acetate: not classified" },
     "KMnO4": { cmr: [2, 3], ate: 1090, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 025-002-00-9; M factors and ATE of the suppliers" },
     "KIO3": { ate: 531, irrit: 10, src: "potassium iodate, not harmonised: self-classification of the suppliers (Acute Tox. 4, LD50 oral mouse 531 mg/kg; Skin Irrit. 2; Ox. Sol. 2 only as solid)" },
     "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },
