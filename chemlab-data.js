@@ -41,6 +41,7 @@
   var NONE = "no enthalpy of formation in CODATA";
   var LOOK = "colour of the solid from its usual appearance";
   var BAND = "; absorption band estimated from the usual colour of the solution";
+  var CABBAGE = "red cabbage: the anthocyanin simplified as cyanidin 3-glucoside in four forms; pKa values and absorption bands estimated from the usual colour chart of red cabbage juice";
   var DYE = "indicator: pKa from usual lab course data; absorption bands estimated";
   var STEP = "; reaction enthalpy estimated: -22.5 kJ/mol per ammonia, as for the steps with two and three ammonia from llnl.dat";
   var MINTEQ = "minteq.v4.dat (USGS): ";
@@ -48,6 +49,7 @@
   var WHITE = "#f5f5f2";
   var GLOW = "; flame colour estimated from the usual appearance";
   var GAS = "; heat capacity: usual table value";
+  var JANAF = "NIST-JANAF Thermochemical Tables (Chase 1998), as given in the NIST Chemistry WebBook: enthalpy of formation, entropy and heat capacity at 25 °C";
   var BURN = "estimated: ignition temperature and burning time from the usual course of the school experiment";
   var DW = "; diffusion coefficient: phreeqc.dat (USGS), -dw";
   var DL = "; diffusion coefficient: textbook value";
@@ -83,6 +85,7 @@
       "K+(aq)": { name: name("potassium ion"), Hf: -252.14, S: 101.20, D: 1.96, flame: "#b08cff", src: CODATA + DW + GLOW },
       "Cl-(aq)": { name: name("chloride ion"), Hf: -167.080, S: 56.60, D: 2.033, src: CODATA + DW },
       "Br-(aq)": { name: name("bromide ion"), Hf: -121.41, S: 82.55, D: 2.09, src: CODATA + DW },
+      "IO3-(aq)": { name: name("iodate ion"), Hf: -221.3, D: 1.078, src: LLNL + "IO3-, Enthalpy of formation -52.9 kcal/mol" + DW },
       "I-(aq)": { name: name("iodide ion"), Hf: -56.78, S: 106.45, D: 2.045, src: CODATA + DL },
       "NO3-(aq)": { name: name("nitrate ion"), Hf: -206.85, S: 146.70, D: 1.9, src: CODATA + DW },
       "SO4^2-(aq)": { name: name("sulfate ion"), Hf: -909.34, S: 18.50, D: 1.07, src: CODATA + DW },
@@ -100,6 +103,9 @@
       "CO3^2-(aq)": { name: name("carbonate ion"), Hf: -675.23, S: -50.0, D: 0.955, src: CODATA + DW },
       "HCO3-(aq)": { name: name("hydrogen carbonate ion"), Hf: -689.93, S: 98.4, D: 1.18, src: CODATA + DW },
       "CO2(aq)": { name: name("carbon dioxide, dissolved"), Hf: -413.26, S: 119.36, src: CODATA },
+      "O2(aq)": { name: name("oxygen, dissolved"), Hf: -11.7, S: 110.9, src: NBS },
+      // Spülmittel: das Tensid vereinfacht als Dodecylsulfat; foam: es hält aufsteigendes Gas als Schaum fest
+      "C12H25SO4-(aq)": { name: name("dodecyl sulfate ion (detergent)"), symbol: "DS⁻", Hf: null, foam: true, src: NONE + "; the surfactant of washing-up liquid, simplified as dodecyl sulfate" },
       "H2O2(aq)": { name: name("hydrogen peroxide"), Hf: -191.17, src: "textbook value: enthalpy of formation in solution -191.17 kJ/mol" },
       "Mg^2+(aq)": { name: name("magnesium ion"), Hf: -467.0, S: -137, D: 0.705, src: CODATA + DW },
       // bands: [Wellenlänge des Maximums in nm, Halbwertsbreite in nm, molarer Absorptionskoeffizient in L/(mol cm)]
@@ -172,10 +178,18 @@
         src: LLNL + "Cr2O7-2, Enthalpy of formation -356.2 kcal/mol; absorption bands estimated from usual table values (350 nm and shoulder around 450 nm)" },
       "Co^2+(aq)": { name: name("cobalt(II) ion"), Hf: -58.16, D: 0.732, bands: [[510, 85, 4.8]],
         src: LLNL + "Co+2, Enthalpy of formation -13.9 kcal/mol" + DL + "; absorption band estimated from usual table values (510 nm, 4.8 L/(mol cm))" },
+      // Chrom(III): in Lösung grün, wie meist im Schulversuch (mit Sulfat oder Chlorid; das violette Hexaaqua-Ion bleibt außen vor)
+      "Cr^3+(aq)": { name: name("chromium(III) ion"), Hf: null, bands: [[595, 100, 16], [420, 80, 18]],
+        src: NONE + "; absorption bands estimated from the usual colour of chromium(III) solutions in school (green)" },
+      "CrOH^2+(aq)": { name: name("chromium(III) hydroxide ion"), Hf: null, bands: [[595, 100, 16], [420, 80, 18]], src: NONE + BAND + " (as for the chromium(III) ion)" },
+      "Cr(OH)4-(aq)": { name: name("tetrahydroxidochromate(III) ion"), Hf: null, bands: [[600, 100, 20], [440, 80, 25]],
+        src: NONE + "; absorption bands estimated from the usual colour of chromite solution (green)" },
       "CoCl4^2-(aq)": { name: name("tetrachlorocobaltate(II) ion"), Hf: null, bands: [[690, 70, 600], [625, 70, 350]],
         src: NONE + "; absorption bands estimated from usual table values (maxima around 690 and 625 nm, about 600 L/(mol cm))" },
       "MnO4-(aq)": { name: name("permanganate ion"), Hf: -541.41, D: 1.632, bands: [[526, 70, 2400]],
         src: LLNL + "MnO4-, Enthalpy of formation -129.4 kcal/mol" + DL + "; absorption band estimated from usual table values (around 525 nm, about 2400 L/(mol cm))" },
+      "MnO4^2-(aq)": { name: name("manganate ion"), Hf: -652.70, bands: [[606, 90, 1710], [439, 70, 1380]],
+        src: LLNL + "MnO4-2, Enthalpy of formation -156 kcal/mol; absorption bands: usual table values (606 nm, 1710 L/(mol cm); 439 nm, 1380 L/(mol cm)), widths estimated" },
       "Mn^2+(aq)": { name: name("manganese(II) ion"), Hf: -220.60, D: 0.688, src: LLNL + "Mn+2, Enthalpy of formation -52.724 kcal/mol" + DW },
       // Kristallviolett: das farbige Kation und das farblose Carbinol, das mit Lauge daraus entsteht
       "C25H30N3+(aq)": { name: name("crystal violet (cation)"), symbol: "CV", Hf: null, bands: [[590, 80, 87000]],
@@ -219,6 +233,11 @@
       "SO2(g)": { name: name("sulfur dioxide"), Hf: -296.81, S: 248.223, cp: 39.9, smell: true, src: CODATA + GAS },
       "CH3COOH(g)": { name: name("acetic acid vapour"), Hf: null, cp: 63.4, smell: true, src: NONE + GAS },
       "H2O2(g)": { name: name("hydrogen peroxide vapour"), Hf: null, cp: 43.1, src: NONE + GAS },
+      // Stickstoffoxide: Stickstoffmonoxid ist farblos und wird an der Luft zu braunem Stickstoffdioxid; das steht mit dem farblosen Dimer im Gleichgewicht
+      "NO(g)": { name: name("nitrogen monoxide"), Hf: 90.29, S: 210.76, cp: 29.86, src: JANAF },
+      "NO2(g)": { name: name("nitrogen dioxide"), Hf: 33.10, S: 240.04, cp: 36.97, smell: true, bands: [[400, 150, 160], [490, 110, 70]],
+        src: JANAF + "; absorption: broad band around 400 nm, cross section about 6·10⁻¹⁹ cm² (textbook value), reaching into the green; widths and the second band estimated" },
+      "N2O4(g)": { name: name("dinitrogen tetroxide"), Hf: 9.08, S: 304.38, cp: 77.26, src: JANAF + "; colourless" },
       "Cl2(g)": { name: name("chlorine"), Hf: 0, S: 223.081, cp: 33.9, smell: true, src: CODATA + GAS },
       // Chlor in Wasser: gelöst, als hypochlorige Säure und als Hypochlorit-Ion; die beiden letzten bleichen Farbstoffe
       "Cl2(aq)": { name: name("chlorine, dissolved"), Hf: -23.4, S: 121, bands: [[325, 70, 70]], src: NBS + "; absorption band estimated (chlorine water is pale yellow-green)" },
@@ -248,13 +267,15 @@
       // colloid: entsteht er in einer Lösung, ist er so fein verteilt, dass er in der Schwebe bleibt und sich nicht absetzt
       "S(s)": { name: name("sulfur"), Hf: 0, S: 32.054, color: "#e8d44a", colloid: true, src: CODATA + "; " + LOOK },
       "C(s)": { name: name("carbon (charcoal, graphite)"), Hf: 0, S: 5.74, color: "#2a2a2a", src: CODATA + " (graphite); " + LOOK },
-      "MnO2(s)": { name: name("manganese dioxide"), Hf: null, color: "#2b2622", src: LOOK },
+      "MnO2(s)": { name: name("manganese dioxide"), Hf: null, color: "#4a3020", colloid: true, src: LOOK + " (black-brown powder); formed in a solution it stays as a brown colloid" },
       // Salze für die Lösungswärme
       "NH4NO3(s)": { name: name("ammonium nitrate"), Hf: -365.56, S: 151.08, color: WHITE, src: NBS + "; " + LOOK },
       "NaOH(s)": { name: name("sodium hydroxide"), Hf: -425.609, S: 64.455, color: WHITE, flame: "#ffd21f", shine: 30, src: NBS + "; " + LOOK + GLOW },
       "CaCl2(s)": { name: name("calcium chloride, anhydrous"), Hf: -795.8, S: 104.6, color: WHITE, flame: "#ff6a2a", src: NBS + "; " + LOOK + GLOW },
       "NaCl(s)": { name: name("sodium chloride"), Hf: -411.12, color: WHITE, flame: "#ffd21f", shine: 30,
         src: "llnl.dat (USGS): Halite, Enthalpy of formation -98.26 kcal/mol; " + LOOK + GLOW },
+      "KCl(s)": { name: name("potassium chloride"), Hf: -436.68, color: WHITE, flame: "#b08cff", shine: 30,
+        src: LLNL + "Sylvite, Enthalpy of formation -104.37 kcal/mol; " + LOOK + GLOW },
       "CuSO4*5H2O(s)": { name: name("copper sulfate pentahydrate"), Hf: null, color: "#2f6fd0", flame: "#3ddc84", src: LOOK + GLOW },
       "CuSO4(s)": { name: name("copper sulfate, anhydrous"), Hf: null, color: "#eceeea", flame: "#3ddc84", src: LOOK + GLOW },
       "CaCO3(s)": { name: name("calcium carbonate"), Hf: null, color: WHITE, flame: "#ff6a2a", src: LOOK + GLOW },
@@ -280,10 +301,18 @@
       // settle: Zeitkonstante in s, mit der sich der Niederschlag absetzt; flockige Hydroxide brauchen länger
       "Cu(OH)2(s)": { name: name("copper(II) hydroxide"), Hf: null, color: "#86bfe8", settle: 60, src: LOOK },
       "Fe(OH)3(s)": { name: name("iron(III) hydroxide"), Hf: null, color: "#8a4a22", settle: 60, src: LOOK },
+      "Co(OH)2(s)": { name: name("cobalt(II) hydroxide"), Hf: null, color: "#c27a8c", settle: 60, src: LOOK + " (rose; fresh it is blue, then turns rose)" },
+      "Cr(OH)3(s)": { name: name("chromium(III) hydroxide"), Hf: null, color: "#7d9a78", settle: 60, src: LOOK + " (grey-green)" },
       "Mg(OH)2(s)": { name: name("magnesium hydroxide"), Hf: null, color: WHITE, settle: 60, src: LOOK },
 
       // ---------------------------------------------------------------- Indikatoren
       // symbol: Kurzzeichen statt der langen Formel; Hf unbekannt, der Umschlag rechnet ohne Wärme.
+      // Rotkohl: Anthocyan (vereinfacht als Cyanidin-3-glucosid) in vier Formen; in starker Lauge öffnet sich der Ring langsam zum gelben Chalkon
+      "C21H21O11+(aq)": { name: name("red cabbage dye (red form)"), symbol: "HRk⁺", Hf: null, bands: [[525, 90, 30000], [440, 60, 6000]], src: CABBAGE },
+      "C21H20O11(aq)": { name: name("red cabbage dye (violet form)"), symbol: "Rk", Hf: null, bands: [[575, 100, 24000]], src: CABBAGE },
+      "C21H19O11-(aq)": { name: name("red cabbage dye (blue form)"), symbol: "Rk⁻", Hf: null, bands: [[600, 100, 26000]], src: CABBAGE },
+      "C21H18O11^2-(aq)": { name: name("red cabbage dye (green form)"), symbol: "Rk²⁻", Hf: null, bands: [[615, 90, 22000], [420, 70, 20000]], src: CABBAGE },
+      "C21H20O12^2-(aq)": { name: name("red cabbage dye (yellow, decomposed)"), symbol: "Rk-OH²⁻", Hf: null, bands: [[425, 100, 24000]], src: CABBAGE },
       "C27H28Br2O5S(aq)": { name: name("bromothymol blue (yellow form)"), symbol: "HBtb", Hf: null, bands: [[432, 110, 20000]], src: DYE },
       "C27H27Br2O5S-(aq)": { name: name("bromothymol blue (blue form)"), symbol: "Btb", Hf: null, bands: [[617, 70, 36000], [575, 60, 12000]], src: DYE },
       // vereinfacht: ein Proton statt zweier. Die rosa Form ist in Wirklichkeit das zweifach geladene Anion.
@@ -367,6 +396,10 @@
       { eq: "Cl2(aq) + H2O(l) <=> HOCl(aq) + H+(aq) + Cl-(aq)", logK: -3.29, src: "hydrolysis constant 5.1e-4 at 25 °C: Wang and Margerum, Inorg. Chem. 33 (1994) 1123" },
       { eq: "HOCl(aq) <=> H+(aq) + OCl-(aq)", logK: -7.53, src: "pKa 7.53 at 25 °C: Morris, J. Phys. Chem. 70 (1966) 3798" },
       { eq: "SO2(g) <=> SO2(aq)", logK: 0.17, src: LLNL + "SO2(g), SO2 = SO2, log_k 0.17" },
+      // Luft (21 % Sauerstoff) über Wasser: 0,27 mmol/L bei 25 °C; aufgenommen wird er an der Oberfläche und beim Schütteln (Blaue Flasche)
+      { eq: "O2(g) <=> O2(aq)", logK: -2.8983, src: LLNL + "O2(g), O2 = O2, log_k -2.8983; the temperature dependence follows from the enthalpies of formation (-11.7 kJ/mol; LLNL: -12.13)" },
+      // im Gasraum, mit Partialdrücken in bar: kalt fast nur farbloses N2O4, warm mehr braunes NO2
+      { eq: "2 NO2(g) <=> N2O4(g)", logK: 0.829, src: "from the Gibbs energies of formation (NIST-JANAF): ΔG = 97.79 − 2 · 51.26 kJ/mol; K = 6.7 per bar at 25 °C; the temperature dependence follows from the enthalpies of formation (−57 kJ/mol)" },
       { eq: "NH3(g) <=> NH3(aq)", logK: 1.7966, dH: -35.23, src: LLNL + "NH3(g), NH3 = NH3, log_k 1.7966, delta_H -35.2251 kJ/mol" },
       { eq: "HCl(g) <=> H+(aq) + Cl-(aq)", logK: 6.3055, src: LLNL + "HCl(g), HCl = Cl- + H+, log_k 6.3055" },
       { eq: "CH3COOH(g) <=> CH3COOH(aq)", logK: 3.6, dH: -52, src: "textbook value: Henry constant about 4·10³ mol/(L bar) at 25 °C, enthalpy of solution about -52 kJ/mol" },
@@ -400,6 +433,14 @@
       { eq: "PbSO4(s) <=> Pb^2+(aq) + SO4^2-(aq)", logK: -7.79, src: MINTEQ + "Anglesite, PbSO4 = Pb+2 + SO4-2, log_k -7.79" },
       { eq: "BaSO4(s) <=> Ba^2+(aq) + SO4^2-(aq)", logK: -9.98, dH: 23, src: MINTEQ + "Barite, BaSO4 = Ba+2 + SO4-2, log_k -9.98, delta_h 23 kJ" },
       { eq: "Cu(OH)2(s) <=> Cu^2+(aq) + 2 OH-(aq)", logK: -19.326, dH: 55.2, src: MINTEQ + "Cu(OH)2 + 2 H+ = Cu+2 + 2 H2O, log_k 8.674, delta_h -56.42 kJ; converted with the ion product of water" },
+      { eq: "Co(OH)2(s) <=> Co^2+(aq) + 2 OH-(aq)", logK: -14.906, src: MINTEQ + "Co(OH)2 + 2 H+ = Co+2 + 2 H2O, log_k 13.094; converted with the ion product of water" },
+      { eq: "Cr^3+(aq) + H2O(l) <=> CrOH^2+(aq) + H+(aq)", logK: -4, src: LLNL + "H2O + Cr+3 = CrOH+2 + H+, log_k -4" },
+      { eq: "Cr(OH)3(s) <=> Cr^3+(aq) + 3 OH-(aq)", logK: -30.2,
+        src: "adjusted: textbook solubility product 6.3·10⁻³¹ (CRC Handbook), so that chrome alum solutions stay clear as in the lab; " +
+          MINTEQ + "Cr(OH)3(am) with Cr(OH)2+ + 2 H+ = Cr+3 + 2 H2O gives -33.181, with which the hydrolysis from llnl.dat would precipitate it from 0.3 mol/L" },
+      { eq: "Cr^3+(aq) + 4 H2O(l) <=> Cr(OH)4-(aq) + 4 H+(aq)", logK: -26.2,
+        src: "adjusted: fresh chromium(III) hydroxide dissolves in excess sodium hydroxide solution as in the school experiment (Cr(OH)3 + OH- = Cr(OH)4-, log K -0.4, with the solubility product above). " +
+          MINTEQ + "Cr(OH)2+ + 2 H2O = Cr(OH)4- + 2 H+, log_k -17.8192, and Cr(OH)2+ + 2 H+ = Cr+3 + 2 H2O, log_k 9.5688, give -27.388" },
       { eq: "Fe(OH)3(s) <=> Fe^3+(aq) + 3 OH-(aq)", logK: -37.109, src: "phreeqc.dat (USGS): Fe(OH)3(a), freshly precipitated, Fe(OH)3 + 3 H+ = Fe+3 + 3 H2O, log_k 4.891; converted with the ion product of water" },
       { eq: "Mg(OH)2(s) <=> Mg^2+(aq) + 2 OH-(aq)", logK: -11.156, dH: -2.4, src: MINTEQ + "Brucite, Mg(OH)2 + 2 H+ = Mg+2 + 2 H2O, log_k 16.844, delta_h -113.996 kJ; converted with the ion product of water" },
 
@@ -409,6 +450,7 @@
       { eq: "I2(s) + I-(aq) <=> I3-(aq)", logK: -0.0806, dH: 5.44, src: LLNL + "I2 + H2O = 0.5 O2 + 2 H+ + 2 I-, log_k -24.8084, delta_H 165.967 kJ/mol, and 3 I- + 2 H+ + 0.5 O2 = I3- + H2O, log_k 24.7278, delta_H -160.528 kJ/mol; added together" },
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
+      { eq: "KCl(s) <=> K+(aq) + Cl-(aq)", logK: 0.8459, src: LLNL + "Sylvite, KCl = Cl- + K+, log_k 0.8459" },
       // aus den Bildungsenthalpien und Entropien dieser Tabelle; die Lösungswärme folgt ebenso daraus (+25,45, −44,75, −81,36 kJ/mol)
       { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
       { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
@@ -432,6 +474,9 @@
 
       // ---------------------------------------------------------------- Indikatoren
       { eq: "C27H28Br2O5S(aq) <=> H+(aq) + C27H27Br2O5S-(aq)", logK: -7.1, src: DYE },
+      { eq: "C21H21O11+(aq) <=> H+(aq) + C21H20O11(aq)", logK: -4.0, src: CABBAGE },
+      { eq: "C21H20O11(aq) <=> H+(aq) + C21H19O11-(aq)", logK: -6.8, src: CABBAGE },
+      { eq: "C21H19O11-(aq) <=> H+(aq) + C21H18O11^2-(aq)", logK: -9.6, src: CABBAGE },
       { eq: "C20H14O4(aq) <=> H+(aq) + C20H13O4-(aq)", logK: -9.4, src: DYE },
       { eq: "C14H15N3O3S(aq) <=> H+(aq) + C14H14N3O3S-(aq)", logK: -3.46, src: DYE },
       { eq: "C27H30O5S(aq) <=> H+(aq) + C27H29O5S-(aq)", logK: -1.65, src: DYE },
@@ -507,6 +552,23 @@
         eq: "2 MnO4-(aq) + 5 H2O2(aq) + 6 H+(aq) -> 2 Mn^2+(aq) + 5 O2(g) + 8 H2O(l)", rate: { fast: true },
         src: "textbook value: permanganate oxidises hydrogen peroxide in acidic solution instantly to oxygen"
       },
+      // Chamäleon: Zucker reduziert Permanganat in Lauge erst zu grünem Manganat, dann zu braunem Braunstein.
+      // Vereinfacht bis zum Carbonat oxidiert; der Zucker liegt im Versuch weit im Überschuss vor
+      {
+        eq: "C12H22O11(aq) + 48 MnO4-(aq) + 72 OH-(aq) -> 48 MnO4^2-(aq) + 12 CO3^2-(aq) + 47 H2O(l)",
+        rate: { k: 0.003, Ea: 60, order: { "C12H22O11(aq)": 1, "MnO4-(aq)": 1, "OH-(aq)": 1 } },
+        src: "estimated from the usual school experiment (chameleon): with sugar in sodium hydroxide solution 1 mol/L violet turns green within about a minute"
+      },
+      {
+        eq: "C12H22O11(aq) + 24 MnO4^2-(aq) + H2O(l) -> 24 MnO2(s) + 12 CO3^2-(aq) + 24 OH-(aq)",
+        rate: { k: 0.002, Ea: 60, order: { "C12H22O11(aq)": 1, "MnO4^2-(aq)": 1 } },
+        src: "estimated from the usual school experiment (chameleon): the green solution turns brown over some minutes"
+      },
+      {
+        eq: "3 MnO4^2-(aq) + 4 H+(aq) -> 2 MnO4-(aq) + MnO2(s) + 2 H2O(l)", rate: { fast: true }, logK: 57.3,
+        src: "textbook: manganate keeps only in strongly alkaline solution and otherwise disproportionates. logK from the standard potentials " +
+          "MnO4^2-/MnO2 2.26 V and MnO4-/MnO4^2- 0.564 V (CRC Handbook of Chemistry and Physics, Electrochemical Series): 2 · (2.26 − 0.564) / 0.05916"
+      },
       {
         eq: "2 Cu^2+(aq) + 5 I-(aq) -> 2 CuI(s) + I3-(aq)", rate: { fast: true }, logK: 11.17,
         src: "textbook value: copper(II) oxidises iodide practically completely because copper(I) iodide precipitates (basis of the iodometric " +
@@ -517,6 +579,32 @@
         eq: "2 Fe^3+(aq) + 3 I-(aq) -> 2 Fe^2+(aq) + I3-(aq)", rate: { fast: true }, logK: 7.77,
         src: "textbook value: iron(III) oxidises iodide to iodine, practically completely with excess iodide. logK from phreeqc.dat (USGS): " +
           "Fe+2 = Fe+3 + e-, log_k -13.02, and the potential of triiodide/iodide (0.5405 V): 2 · 13.02 − 18.27"
+      },
+      {
+        // Rotkohl in starker Lauge: Der Ring öffnet sich zum gelben Chalkon, das nicht mehr zurückkehrt. k in L/(mol s)
+        eq: "C21H18O11^2-(aq) + H2O(l) -> C21H20O12^2-(aq)",
+        rate: { k: 0.1, Ea: 60, order: { "C21H18O11^2-(aq)": 1, "OH-(aq)": 1 } },
+        src: CABBAGE + "; rate estimated: in sodium hydroxide solution 0.1 mol/L the green turns yellow within a few minutes, at pH 11 it stays green for hours"
+      },
+      // Kupfer in Salpetersäure: in verdünnter Säure entsteht farbloses Stickstoffmonoxid, in konzentrierter braunes Stickstoffdioxid.
+      // Der erste Weg wächst mit der dritten, der zweite mit der sechsten Potenz der Konzentration (empirisch); ab etwa 6 mol/L überwiegt der zweite.
+      // In neutraler Nitratlösung (Silbernitrat) geschieht nichts.
+      // k in mol/(s cm²) je (mol/L) hoch Ordnung
+      {
+        eq: "3 Cu(s) + 8 H+(aq) + 2 NO3-(aq) -> 3 Cu^2+(aq) + 2 NO(g) + 4 H2O(l)",
+        rate: { k: 1e-8, Ea: 45, surface: "Cu(s)", order: { "H+(aq)": 2, "NO3-(aq)": 1 } },
+        src: "estimated from the usual school experiment: copper sheet in nitric acid 3 mol/L bubbles steadily, the colourless gas turns brown at the mouth"
+      },
+      {
+        eq: "Cu(s) + 4 H+(aq) + 2 NO3-(aq) -> Cu^2+(aq) + 2 NO2(g) + 2 H2O(l)",
+        rate: { k: 4.6e-11, Ea: 45, surface: "Cu(s)", order: { "H+(aq)": 3, "NO3-(aq)": 3 } },
+        src: "estimated from the usual school experiment: copper in concentrated nitric acid reacts violently with brown fumes"
+      },
+      {
+        // Stickstoffmonoxid und Luftsauerstoff im Gasraum: dritte Ordnung. k in L²/(mol² s)
+        eq: "2 NO(g) + O2(g) -> 2 NO2(g)",
+        rate: { k: 7.2e3, order: { "NO(g)": 2, "O2(g)": 1 } },
+        src: "textbook value: rate constant about 2·10⁻³⁸ cm⁶/(molecule² s) at 25 °C, nearly independent of temperature"
       },
       {
         // Kristallviolett verblasst in Lauge: aus dem farbigen Kation wird das farblose Carbinol. k in L/(mol s)
@@ -531,6 +619,22 @@
         rate: { k: 4e-3, Ea: 52, order: { "S2O8^2-(aq)": 1, "I-(aq)": 1 } },
         src: "estimated from usual lab course data: first order in both substances, at the salt contents usual there about 4·10⁻³ L/(mol s) at 25 °C, " +
           "activation energy about 52 kJ/mol"
+      },
+      // Landolt-Reaktion: Iodat oxidiert Hydrogensulfit langsam; das Iodid daraus gibt mit Iodat Iod, das das Sulfit sofort wieder verbraucht.
+      // Erst wenn das Sulfit aufgebraucht ist, bleibt Iod übrig und färbt die Stärke blau
+      {
+        eq: "IO3-(aq) + 3 HSO3-(aq) -> I-(aq) + 3 SO4^2-(aq) + 3 H+(aq)",
+        rate: { k: 10, Ea: 50, order: { "IO3-(aq)": 1, "HSO3-(aq)": 1, "H+(aq)": 1 } },
+        src: "estimated from the usual school experiment (Landolt reaction): first order in iodate, hydrogen sulfite and H+"
+      },
+      {
+        eq: "IO3-(aq) + 8 I-(aq) + 6 H+(aq) -> 3 I3-(aq) + 3 H2O(l)",
+        rate: { k: 1e8, Ea: 40, order: { "IO3-(aq)": 1, "I-(aq)": 2, "H+(aq)": 2 } },
+        src: "Dushman reaction: rate law after Dushman (1904), second order in iodide and in H+; constant estimated so that the school experiment works"
+      },
+      {
+        eq: "I3-(aq) + HSO3-(aq) + H2O(l) -> 3 I-(aq) + SO4^2-(aq) + 3 H+(aq)", rate: { fast: true },
+        src: "textbook: iodine oxidises hydrogen sulfite instantly (basis of iodometry)"
       },
       {
         // fast: läuft sofort ab. Solange Thiosulfat da ist, fängt es das Iod ab; erst danach färbt Iod die Stärke blau.
@@ -581,6 +685,7 @@
     reagents: {
       "H2O": { name: name("distilled water"), liquid: "H2O(l)", group: "water" },
 
+      "HNO3": { name: name("nitric acid"), solution: { "H+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "acid" },
       "HCl": { name: name("hydrochloric acid"), solution: { "H+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "acid" },
       "H2SO4": { name: name("sulfuric acid"), solution: { "H+(aq)": 1, "HSO4-(aq)": 1 }, molar: true, group: "acid" },
       "H2SO4 conc": { name: name("sulfuric acid, concentrated"), liquid: "H2SO4(l)", group: "acid" },
@@ -614,20 +719,25 @@
       "K2CrO4": { name: name("potassium chromate solution"), solution: { "K+(aq)": 2, "CrO4^2-(aq)": 1 }, molar: true, group: "salt" },
       "K2Cr2O7": { name: name("potassium dichromate solution"), solution: { "K+(aq)": 2, "Cr2O7^2-(aq)": 1 }, molar: true, group: "salt" },
       "CoCl2": { name: name("cobalt(II) chloride solution"), solution: { "Co^2+(aq)": 1, "Cl-(aq)": 2 }, molar: true, group: "salt" },
+      "KCr(SO4)2": { name: name("chrome alum solution"), solution: { "K+(aq)": 1, "Cr^3+(aq)": 1, "SO4^2-(aq)": 2 }, molar: true, group: "salt" },
       "KMnO4": { name: name("potassium permanganate solution"), solution: { "K+(aq)": 1, "MnO4-(aq)": 1 }, molar: true, group: "salt" },
       "K2S2O8": { name: name("potassium peroxodisulfate solution"), solution: { "K+(aq)": 2, "S2O8^2-(aq)": 1 }, molar: true, group: "salt" },
+      "KIO3": { name: name("potassium iodate solution"), solution: { "K+(aq)": 1, "IO3-(aq)": 1 }, molar: true, group: "salt" },
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
       // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
       "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 2.05, "OCl-(aq)": 1, "Cl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
+      "KCl": { name: name("potassium chloride solution"), solution: { "K+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "salt" },
       "KNO3": { name: name("potassium nitrate solution"), solution: { "K+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "salt" },
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
       // Kristallviolett-Lösung mit 25 µmol/L (10 mg/L), wie für die Fotometrie üblich
       "crystal violet": { name: name("crystal violet solution (25 µmol/L)"), solution: { "C25H30N3+(aq)": 2.5e-5, "Cl-(aq)": 2.5e-5 }, group: "other" },
+      "detergent": { name: name("washing-up liquid"), solution: { "C12H25SO4-(aq)": 0.5, "Na+(aq)": 0.5 }, group: "other" },
       "sugar": { name: name("sugar solution"), solution: { "C12H22O11(aq)": 1 }, molar: true, group: "other" },
 
       // Indikatorlösungen: Bromthymolblau 0,04 %, Phenolphthalein und Methylorange 0,1 %.
       // Der Universalindikator ist eine Mischung aus vier Farbstoffen nach Art der Rezeptur von Yamada, wie dort
       // mit Natronlauge auf Grün eingestellt; die Mengen sind geschätzt, so dass die bekannte Farbfolge entsteht.
+      "red cabbage": { name: name("red cabbage juice"), solution: { "C21H20O11(aq)": 0.003 }, drops: true, group: "indicator" },
       "BTB": { name: name("bromothymol blue"), solution: { "C27H28Br2O5S(aq)": 6.4e-4 }, drops: true, group: "indicator" },
       "PP": { name: name("phenolphthalein"), solution: { "C20H14O4(aq)": 3.1e-3 }, drops: true, group: "indicator" },
       "MO": { name: name("methyl orange"), solution: { "C14H14N3O3S-(aq)": 3.1e-3, "Na+(aq)": 3.1e-3 }, drops: true, group: "indicator" },
@@ -658,6 +768,7 @@
       "Zn powder": { name: name("zinc powder"), solid: "Zn(s)", area: 300, form: "powder", group: "solid" },
       "Fe wool": { name: name("iron wool"), solid: "Fe(s)", area: 60, form: "powder", group: "solid" },
       "Cu sheet": { name: name("copper sheet (strip)"), solid: "Cu(s)", area: 20, shape: 0, group: "solid" },
+      "KCl salt": { name: name("potassium chloride (salt)"), solid: "KCl(s)", area: 40, form: "powder", group: "solid" },
       "NH4NO3 salt": { name: name("ammonium nitrate (salt)"), solid: "NH4NO3(s)", area: 40, form: "powder", group: "solid" },
       "NaOH pellets": { name: name("sodium hydroxide pellets"), solid: "NaOH(s)", area: 8, group: "solid" },
       "CaCl2 anhydrous": { name: name("calcium chloride, anhydrous (granules)"), solid: "CaCl2(s)", area: 20, group: "solid" }
@@ -687,7 +798,8 @@
   // (vereinfacht; die wirklichen Produkte sind vielfältig). Geschwindigkeit geschätzt: in Sekunden bei einigen mmol/L.
   // shortcut: feste Liste der Farbstoffe im Kern; ein Indikator aus einem Paket wird nicht gebleicht. Erweitern, wenn ein Paket einen braucht.
   var DYES = ["C27H28Br2O5S(aq)", "C27H27Br2O5S-(aq)", "C20H14O4(aq)", "C20H13O4-(aq)", "C14H15N3O3S(aq)", "C14H14N3O3S-(aq)",
-    "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)"];
+    "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)",
+    "C21H21O11+(aq)", "C21H20O11(aq)", "C21H19O11-(aq)", "C21H18O11^2-(aq)", "C21H20O12^2-(aq)"];
   DYES.forEach(function (dye) {
     var o = /O(\d*)(?=[A-Z^+\-(]|$)/.exec(dye), done = o ? dye.replace(o[0], "O" + ((+o[1] || 1) + 1)) : dye.replace(/((?:\^\d+)?[+-]?\(aq\))$/, "O$1");
     L.core.species[done] = { name: name("bleached dye (colourless)"), symbol: L.core.species[dye].symbol + "O", Hf: null, src: "simplified product of bleaching; colourless" };
@@ -703,6 +815,7 @@
   // Entwürfe (Kaliumbromid und Lithiumchlorid als fortpflanzungsgefährdend, 24. Anpassung) und Angaben einzelner Lieferanten.
   // Fertiglösungen (Indikatoren) tragen das Etikett der üblichen Schulprodukte, auch wo das Labor nur ihren Farbstoff rechnet.
   var GHS_DATA = {
+    "HNO3": { corr: [5, 1, 3, 1], high: [[65, "GHS03", true]], vm: 30, src: "CLP Annex VI 007-004-00-1 (SCL Skin Corr. 1A from 20 %, 1B from 5 %; Ox. Liq. 3 from 65 %)" },
     "HCl": { corr: [25, 10, 25, 10], stot: [3, 10], met: 0.3, vm: 20, src: "CLP Annex VI 017-002-01-X (SCL); H290 from 0.1 mol/L as suppliers label it (ITW, Neofroxx)" },
     "H2SO4": { corr: [15, 5, 15, 5], met: 0.5, src: "CLP Annex VI 016-020-00-8 (SCL); H290 as suppliers label it" },
     "H2SO4 conc": { corr: [15, 5, 15, 5], src: "CLP Annex VI 016-020-00-8" },
@@ -728,13 +841,17 @@
     "FeSO4": { ate: 500, irrit: 10, src: "CLP Annex VI 026-003-00-7" },
     "K2CrO4": { cmr: [1, 0.1], irrit: 10, stot: [3], sens: 0.5, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 024-006-00-8 (SCL Skin Sens.); M factor of the suppliers (Merck)" },
     "K2Cr2O7": { cmr: [1, 0.1], ate: 90.5, inh: 0.05, stot: [[1], [3, 5]], corr: [5, 1, 3, 1], resp: 1, sens: 1, aq: { acute: 1, chronic: [1, 1] }, src: "CLP Annex VI 024-002-00-6 (SCL STOT SE 3); ATE oral of the supplier (Morphisto SDS), inhalation: conversion value of Acute Tox. 2" },
+    "KCr(SO4)2": { fixed: [], src: "chromium potassium sulfate dodecahydrate: not classified (supplier SDS, e.g. Carl Roth)" },
     "CoCl2": { cmr: [1, 0.01], ate: 500, resp: 1, sens: 1, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 027-004-00-5 (SCL Carc. 0.01 %, M = 10)" },
     "KMnO4": { cmr: [2, 3], ate: 1090, aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 025-002-00-9; M factors and ATE of the suppliers" },
+    "KIO3": { ate: 531, irrit: 10, src: "potassium iodate, not harmonised: self-classification of the suppliers (Acute Tox. 4, LD50 oral mouse 531 mg/kg; Skin Irrit. 2; Ox. Sol. 2 only as solid)" },
     "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },
     "NaOCl": { corr: [5, 1, 3, 1], aq: { acute: 10, chronic: [1, 1] }, per: { species: "OCl-(aq)", M: 74.44 }, src: "CLP Annex VI 017-011-00-1 (M = 10 acute, 1 chronic)" },
+    "detergent": { fixed: ["GHS07"], signal: "warning", src: "household washing-up liquid as usually labelled (Eye Irrit. 2, H319)" },
     "H2O2": { corr: [50, 35, 8, 5], ate: 1026, inh: 1.5, stot: [3, 35], high: [[50, "GHS03", true]], vm: 22,
       src: "CLP Annex VI 008-003-00-9 (SCL, Ox. Liq. from 50 %); ATE oral of the supplier (Neofroxx SDS), inhalation: conversion value of Acute Tox. 4" },
     "crystal violet": { cmr: [2, 1], ate: 500, corr: [null, null, 3, 1], aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 612-204-00-2; M factor of the supplier (Neofroxx SDS)" },
+    "red cabbage": { fixed: [], src: "juice of red cabbage: not classified" },
     "BTB": { fixed: ["GHS02"], signal: "warning", src: "school product: 0.04 % in aqueous ethanol (H226)" },
     "PP": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: 0.1 % in ethanol (H225, H319); carcinogenic only from 1 % (SCL)" },
     "UI": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: in ethanol (H225, H319)" },

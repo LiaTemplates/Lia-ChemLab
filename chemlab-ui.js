@@ -118,7 +118,7 @@
     if (st.flow3d == null) st.flow3d = Math.max(0, FLOWS3D.indexOf(show.flow3d));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
+    var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0, tickAt = 0;      // tickAt: bis zu dieser Zeit hat der Geigerzähler getickt      // heard: so viele Zeilen des Protokolls sind schon verklungen
     if (sound) sound.mute(st.mute);
 
     // Oben eine schmale Leiste: das Regal zum Aufklappen, 3D und ein Menü für das Seltene.
@@ -127,6 +127,7 @@
       '<div class="cl-task" hidden><p class="cl-task-text"></p><ul class="cl-goals"></ul><p class="cl-done" role="status" aria-live="polite"></p></div>' +
       '<div class="cl-top"><button type="button" class="cl-btn cl-barbtn" data-act="bar" aria-pressed="false">' + SHELF_ICON + "<span>" + esc(T("shelf")) + "</span></button>" +
       '<span class="cl-fill"></span><div class="cl-side">' +
+      '<button type="button" class="cl-btn" data-act="dark" aria-pressed="false">' + esc(T("dark")) + "</button>" +
       (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false">' + esc(T("view")) + "</button>" : "") +
       '<details class="cl-more"><summary class="cl-btn cl-round" title="' + esc(T("menu")) + '" aria-label="' + esc(T("menu")) + '">' + MORE_ICON + "</summary>" +
       '<div class="cl-menu">' +
@@ -160,6 +161,14 @@
     ui.more = el.querySelector(".cl-more");
     ui.sound = sound ? el.querySelector(".cl-sound") : null;
     ui.view = L.stage3d ? el.querySelector('[data-act="view"]') : null;
+    ui.dark = el.querySelector('[data-act="dark"]');
+    if (st.dark == null) st.dark = show.dark;          // Raumlicht aus: nur was leuchtet, bleibt hell
+    function syncDark() {
+      el.setAttribute("data-dark", st.dark ? "true" : "false");
+      ui.dark.setAttribute("aria-pressed", st.dark ? "true" : "false");
+      if (three && three.dark) three.dark(st.dark);
+    }
+    syncDark();
     ui.events = ui.log.querySelector(".cl-events");
     ui.copyLog = ui.log.querySelector('[data-act="copyLog"]');
     ui.goals = ui.task.querySelector(".cl-goals");
@@ -907,7 +916,7 @@
           if (def.electrode && host) { w = def.terminal(place); ends[item.id] = [{ x: item.x + w.x, y: bench - (item.lift || 0) + w.y }]; }
           else if (def.circuit) ends[item.id] = def.terminals.map(function (p) { return { x: item.x + p.x, y: bench + p.y }; });
           content = def.flames ? T("aria.flame", { state: T("flame." + r.flame) }) : def.spin ? T("spin." + (r.spin ? 1 : 0))
-            : def.bridge || def.duct || def.reflux ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
+            : def.bridge || def.duct || def.reflux || def.uv ? "" : def.circuit === "load" || show.numbers ? shownValue(r) : "";
           if (def.electrode && r.pole) content += (content ? ", " : "") + T("pole." + r.pole);
           if (def.electrode && r.coat.length && !veiled(r.in)) content += (content ? ", " : "") + T("coat") + ": " + r.coat.map(function (c) { return L.nameOf(L.species(c.id), lang); }).join(", ");
           aria = label[item.id] + (def.bridge || def.duct ? (host && L.vessel(lab, r.to) ? " " + T("aria.between", { vessel: label[host.id], to: label[r.to] }) : "")
@@ -1625,6 +1634,11 @@
       var run = st.run, n = run.frames[run.cursor].n;
       if (!sound) return;
       sound.set(st.play > 0 ? L.fx.levels(run.lab) : {});
+      // Geigerzähler: jeder Impuls der eben verstrichenen Zeit ein Klick, im Takt der Uhr (nach einem Sprung keiner)
+      if (st.play > 0 && run.time > tickAt && run.time - tickAt < 1 + 0.2 * st.speed) run.lab.tools.forEach(function (t) {
+        if (L.parts[t.type].sense === "cpm") L.ticks(run.lab, t.id, tickAt, run.time).slice(0, 200).forEach(function (at) { sound.tick((at - tickAt) / st.speed); });
+      });
+      tickAt = run.time;
       if (n > heard && st.play > 0) run.log.slice(heard, n).forEach(function (event) {
         if (event.key === "pop" || (event.key === "splint" && (event.result === "pop" || event.result === "burn"))) sound.shot("pop", event.level);
         else if (event.key === "splint") sound.shot(event.result === "out" ? "hiss" : event.result === "relight" || event.result === "flare" ? "whoosh" : "", 0);
@@ -1774,6 +1788,7 @@
     function show3d(stage) {
       if (three && three !== stage) three.stop();
       three = stage;
+      if (stage && stage.dark) stage.dark(!!st.dark);
       ui.three.hidden = !stage;
       ui.stage.setAttribute("data-view", stage ? "3d" : "2d");
       shape = null;                 // neu einteilen: die Bühne baut ihre Geräte auf
@@ -1796,6 +1811,7 @@
       else if (act === "drop") { setHand(null); status(""); }
       else if (act === "close") select(null);
       else if (act === "bar") { st.bar = !st.bar; syncBar(); }
+      else if (act === "dark") { st.dark = !st.dark; syncDark(); }
       else if (act === "group") { st.group = parseInt(id, 10) || 0; syncShelf(); }
       else if (act === "card") {                               // Reiter der Karte: nur umschalten, die Karte bleibt stehen
         st.tab = id;

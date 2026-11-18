@@ -1,6 +1,6 @@
 # Offene Punkte
 
-Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig und in master (lokal, nicht gepusht).
+Stand: 18.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig und in master (lokal, nicht gepusht). Dazu zehn Stoff- und Effektpakete vom 18.11. (Stoffliste: ~/.claude/plans/2026-11-18-stoffliste.md).
 
 ## Größere Schritte
 
@@ -15,7 +15,7 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - Papierstreifen im Becherglas, Laufmittelfront steigt mit der Zeit, Flecken wandern nach ihrem Rf-Wert.
   - Daten je Farbstoff (etwa Filzstiftfarben, die sich auftrennen), Zeichnung in 2D und 3D.
 - [ ] **Korrosion** (groß, riskant)
-  - Gelöster Luftsauerstoff mit Austausch zur Luft, seine Reduktion an Metallen, Rost, langsame Geschwindigkeiten.
+  - Gelöster Luftsauerstoff mit Austausch zur Luft gibt es seit 18.11. (`aerate`), aber nur, wo eine Reaktion ihn verbraucht. Offen: seine Reduktion an Metallen, Rost, langsame Geschwindigkeiten.
   - Gewinn: Das Volta-Element zeigt 0,9 V statt 0,5 V.
   - Preis: Jeder Versuch mit Metall in Wasser ändert sich ein wenig; viele Tests müssen neu kalibriert werden.
 - [ ] **Zweite flüssige Phase** (Plan: ~/.claude/plans/2026-11-17-zweite-fluessige-phase.md, Branch `zweite-phase`)
@@ -32,6 +32,10 @@ Stand: 17.11.2026. Die 13 Erweiterungen aus der Recherche vom 16.11. sind fertig
   - Offen aus 3a: Ethylacetat als Schicht (braucht eine Regel für Mitlöser wie Ethanol).
   - Schichten mit eigener Zusammensetzung, Verteilung zwischen den Phasen, Ausschütteln, nur die obere Schicht abgießen, Zeichnung der Schichten.
   - Dann schwimmen Hexan und Hexen obenauf; Iod in Hexan (violett), Brom ausschütteln.
+
+- [x] **Stoffe und Effekte** (18.11.2026): Vanadium und Chamäleon, Kobalt, Nickel und Chrom mit Alkoholtest, Landolt, Rotkohl, Elefantenzahnpasta (Schaum), Kupfer und Salpetersäure (Gasraum, NO₂ ⇌ N₂O₄), vollständiger Trennungsgang mit Sulfiden (Paket `ionen.json`), Blaue Flasche und Ampel (gelöster Sauerstoff), Luminol und UV-Lampe (Leuchten, „Licht aus“), Geigerzähler an Kaliumchlorid (mit Ticken).
+  - Offen: Quecksilber-Paket, Feststoffgemische erhitzen (Eisen und Schwefel, Thermit), Übersättigung (Wärmekissen), Briggs-Rauscher und Belousov-Zhabotinsky (Oszillatoren), chemischer Garten, Uran- und Thoriumquellen für den Geigerzähler, Abstand und Abschirmung beim Zählen, eigene 3D-Formen für UV-Lampe und Geigerzähler.
+  - Grenzen: keine Übersättigung (beim Trennungsgang fällt etwa ein Fünftel des Magnesiums mit Ammoniumcarbonat), Säuren bis 12 mol/L, Luftsauerstoff auch im verschlossenen Gefäß unbegrenzt, gelöster Sauerstoff nur dort, wo eine Reaktion ihn verbraucht (keine blaue Schicht oben in der Blauen Flasche).
 
 ## Kleinere Punkte
 

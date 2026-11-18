@@ -1,5 +1,5 @@
 {
-  "about": "Organik: Ethanol, Eisessig und Ethylacetat – Veresterung und Destillation; Nachweise mit Fehling, Tollens und Bromwasser; Glycerin und Zuckersirup als zähe Flüssigkeiten",
+  "about": "Organik: Ethanol, Eisessig und Ethylacetat – Veresterung und Destillation; Nachweise mit Fehling, Tollens und Bromwasser; Blaue Flasche und Ampel mit Glucose; Luminol, Fluorescein und Chinin zum Leuchten; Glycerin und Zuckersirup als zähe Flüssigkeiten",
   "species": {
     "C2H5OH(aq)": {
       "name": { "de": "Ethanol", "en": "ethanol" }, "Hf": null,
@@ -31,6 +31,54 @@
       "name": {"de": "Gluconat-Ion", "en": "gluconate ion"}, "Hf": null,
       "src": "Produkt der Oxidation von Glucose"
     },
+    "C16H18N3S+(aq)": {
+      "name": {"de": "Methylenblau", "en": "methylene blue"}, "Hf": null, "bands": [[664, 50, 95000], [612, 45, 35000]],
+      "src": "Kation des Methylenblaus; Absorptionsmaximum 664 nm mit 95 000 L/(mol cm) und Schulter bei 612 nm (S. Prahl, Oregon Medical Laser Center, Methylene blue spectrum); Halbwertsbreiten geschätzt"
+    },
+    "C16H19N3S(aq)": {
+      "name": {"de": "Leukomethylenblau (farblos)", "en": "leucomethylene blue (colourless)"}, "Hf": null,
+      "src": "reduzierte, farblose Form des Methylenblaus"
+    },
+    "C16H8N2O8S2^2-(aq)": {
+      "name": {"de": "Indigocarmin (oxidiert, in Lauge grün)", "en": "indigo carmine (oxidised, green in alkali)"}, "Hf": null, "bands": [[615, 80, 20000], [420, 60, 15000]],
+      "src": "Anion des Indigocarmins; in alkalischer Lösung grün (Ampelversuch). Banden geschätzt, so dass die Farben des Schulversuchs stimmen"
+    },
+    "C16H9N2O8S2^2-(aq)": {
+      "name": {"de": "Indigocarmin (halb reduziert, rot)", "en": "indigo carmine (half reduced, red)"}, "Hf": null, "bands": [[510, 110, 20000]],
+      "src": "Zwischenstufe nach Aufnahme eines Elektrons, rot (Ampelversuch); vereinfacht mit einem Wasserstoffatom mehr. Bande geschätzt"
+    },
+    "C16H10N2O8S2^2-(aq)": {
+      "name": {"de": "Indigocarmin (reduziert, gelb)", "en": "indigo carmine (reduced, yellow)"}, "Hf": null, "bands": [[420, 60, 12000]],
+      "src": "Leukoform, gelb (Ampelversuch). Bande geschätzt"
+    },
+    "C8H7N3O2(aq)": {
+      "name": {"de": "Luminol", "en": "luminol"}, "Hf": null,
+      "src": "5-Amino-2,3-dihydrophthalazin-1,4-dion, farblos"
+    },
+    "C8H5NO4^2-(aq)": {
+      "name": {"de": "3-Aminophthalat-Ion", "en": "3-aminophthalate ion"}, "Hf": null,
+      "src": "Produkt der Oxidation von Luminol; entsteht im angeregten Zustand und leuchtet blau (425 nm)"
+    },
+    "N2(aq)": {
+      "name": {"de": "Stickstoff, gelöst", "en": "nitrogen, dissolved"}, "Hf": null,
+      "src": "aus Luminol; vereinfacht bleibt er gelöst und perlt nicht aus"
+    },
+    "Fe(CN)6^3-(aq)": {
+      "name": {"de": "Hexacyanoferrat(III)-Ion", "en": "hexacyanoferrate(III) ion"}, "Hf": null, "bands": [[420, 70, 1010]],
+      "src": "gelb; Absorptionsmaximum 420 nm mit 1010 L/(mol cm) (Lehrbuchwert, Bande sonst geschätzt)"
+    },
+    "C20H10O5^2-(aq)": {
+      "name": {"de": "Fluorescein (Dianion, fluoresziert)", "en": "fluorescein (dianion, fluorescent)"}, "Hf": null, "bands": [[490, 40, 76900]], "fluor": 515,
+      "src": "Absorptionsmaximum 490 nm mit 76 900 L/(mol cm), Fluoreszenz bei 515 nm (Sjöback, Nygren und Kubista, Spectrochimica Acta A 51, L7, 1995); Halbwertsbreite geschätzt"
+    },
+    "C20H11O5-(aq)": {
+      "name": {"de": "Fluorescein (Monoanion)", "en": "fluorescein (monoanion)"}, "Hf": null, "bands": [[460, 60, 29000]],
+      "src": "Monoanion, schwächer gefärbt und vereinfacht ohne Fluoreszenz (Sjöback u. a. 1995: Quantenausbeute 0,37 statt 0,93); Bande geschätzt"
+    },
+    "C20H24N2O2(aq)": {
+      "name": {"de": "Chinin", "en": "quinine"}, "Hf": null, "fluor": 450,
+      "src": "farblos, unter UV-Licht blau fluoreszierend (Emissionsmaximum um 450 nm, Lehrbuchwert); vereinfacht unabhängig vom pH-Wert"
+    },
     "C4H4O6^2-(aq)": {
       "name": {"de": "Tartrat-Ion", "en": "tartrate ion"}, "Hf": null,
       "src": "Anion der Weinsäure, aus Kaliumnatriumtartrat (Seignettesalz) in Fehling II"
@@ -61,6 +109,7 @@
     }
   },
   "equilibria": [
+    { "eq": "C20H11O5-(aq) <=> H+(aq) + C20H10O5^2-(aq)", "logK": -6.43, "src": "pKa 6,43 (Sjöback, Nygren und Kubista, Spectrochimica Acta A 51, L7, 1995)" },
     { "eq": "Cu^2+(aq) + 2 C4H4O6^2-(aq) <=> Cu(C4H4O6)2^2-(aq)", "logK": 21, "src": "Stabilitätskonstante geschätzt, so dass der Schulversuch gelingt: groß genug, dass in Fehling-Lösung (Natronlauge 1,25 mol/L) kein Kupferhydroxid ausfällt. Die wahre Konstante gilt für den Komplex mit deprotonierten Hydroxygruppen und ist pH-abhängig" }
   ],
   "reactions": [
@@ -98,6 +147,47 @@
       "eq": "C6H12(aq) + Br2(aq) -> C6H12Br2(aq)",
       "rate": {"k": 100, "order": {"C6H12(aq)": 1, "Br2(aq)": 1}},
       "src": "Addition von Brom an die Doppelbindung: so schnell, dass sich Bromwasser sofort entfärbt (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "Cr2O7^2-(aq) + 3 C2H5OH(aq) + 8 H+(aq) -> 2 Cr^3+(aq) + 3 CH3CHO(aq) + 7 H2O(l)",
+      "rate": {"k": 0.1, "Ea": 60, "order": {"Cr2O7^2-(aq)": 1, "C2H5OH(aq)": 1, "H+(aq)": 1}},
+      "src": "Alkoholtest wie im alten Prüfröhrchen: angesäuertes Dichromat wird mit Ethanol in etwa einer Minute von orange grün (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "C16H18N3S+(aq) + C6H12O6(aq) + 2 OH-(aq) -> C16H19N3S(aq) + C6H11O7-(aq) + H2O(l)",
+      "rate": {"k": 25, "Ea": 55, "order": {"C16H18N3S+(aq)": 1, "C6H12O6(aq)": 1, "OH-(aq)": 1}},
+      "src": "Blaue Flasche: Glucose reduziert Methylenblau in Lauge zur farblosen Leukoform; Geschwindigkeit erster Ordnung in Farbstoff, Glucose und Hydroxid (Engerer und Cook, J. Chem. Educ. 76, 1519, 1999); k und Ea geschätzt, so dass der Schulversuch gelingt: nach dem Schütteln etwa eine Minute blau"
+    },
+    {
+      "eq": "2 C16H19N3S(aq) + O2(aq) -> 2 C16H18N3S+(aq) + 2 OH-(aq)",
+      "rate": {"fast": true},
+      "src": "Blaue Flasche: gelöster Sauerstoff oxidiert die Leukoform sofort zurück zu Methylenblau (vereinfacht: in Wirklichkeit in Bruchteilen einer Sekunde)"
+    },
+    {
+      "eq": "2 C16H8N2O8S2^2-(aq) + C6H12O6(aq) + OH-(aq) -> 2 C16H9N2O8S2^2-(aq) + C6H11O7-(aq)",
+      "rate": {"k": 25, "Ea": 55, "order": {"C16H8N2O8S2^2-(aq)": 1, "C6H12O6(aq)": 1, "OH-(aq)": 1}},
+      "src": "Ampel: Glucose reduziert grünes Indigocarmin zur roten Zwischenstufe (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "2 C16H9N2O8S2^2-(aq) + C6H12O6(aq) + OH-(aq) -> 2 C16H10N2O8S2^2-(aq) + C6H11O7-(aq)",
+      "rate": {"k": 1.2, "Ea": 55, "order": {"C16H9N2O8S2^2-(aq)": 1, "C6H12O6(aq)": 1, "OH-(aq)": 1}},
+      "src": "Ampel: und weiter zur gelben Leukoform, langsamer (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "4 C16H10N2O8S2^2-(aq) + O2(aq) -> 4 C16H9N2O8S2^2-(aq) + 2 H2O(l)",
+      "rate": {"k": 50000, "order": {"C16H10N2O8S2^2-(aq)": 1, "O2(aq)": 1}},
+      "src": "Ampel: gelöster Sauerstoff oxidiert gelb zu rot (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "4 C16H9N2O8S2^2-(aq) + O2(aq) -> 4 C16H8N2O8S2^2-(aq) + 2 H2O(l)",
+      "rate": {"k": 50000, "order": {"C16H9N2O8S2^2-(aq)": 1, "O2(aq)": 1}},
+      "src": "Ampel: und rot zu grün (geschätzt, so dass der Schulversuch gelingt)"
+    },
+    {
+      "eq": "C8H7N3O2(aq) + 2 H2O2(aq) + 2 OH-(aq) -> C8H5NO4^2-(aq) + N2(aq) + 4 H2O(l)",
+      "rate": {"k": 100, "order": {"C8H7N3O2(aq)": 1, "H2O2(aq)": 1, "Fe(CN)6^3-(aq)": 1}},
+      "light": 425,
+      "src": "Chemolumineszenz von Luminol in Lauge mit Wasserstoffperoxid, Hexacyanoferrat(III) als Katalysator; light: es leuchtet blau bei 425 nm (Lehrbuchwert). Geschwindigkeit geschätzt, so dass der Schulversuch gelingt: etwa eine halbe Minute hell, dann verblassend"
     }
   ],
   "reagents": {
@@ -110,6 +200,12 @@
     "Fehling II": {"ghs": {"fixed": ["GHS05"], "signal": "danger", "src": "alkalische Seignettesalz-Lösung mit Natronlauge 2,5 mol/L: Skin Corr. 1A wie die üblichen Schulprodukte"}, "name": {"de": "Fehling II (alkalische Tartrat-Lösung)", "en": "Fehling's solution II (alkaline tartrate)"}, "solution": {"C4H4O6^2-(aq)": 1.23, "K+(aq)": 1.23, "Na+(aq)": 3.73, "OH-(aq)": 2.5}, "group": "other", "src": "346 g Kaliumnatriumtartrat-Tetrahydrat und 100 g Natriumhydroxid je Liter"},
     "Tollens": {"ghs": {"fixed": ["GHS09"], "signal": "warning", "src": "Silbernitrat 0,85 %: Aquatic Acute 1 mit M-Faktor 1000 (wie Silbernitrat-Lösung im Grundpaket); ätzend erst ab höheren Gehalten, Ammoniak und Natronlauge liegen unter den Grenzen"}, "name": {"de": "Tollens-Reagenz (ammoniakalische Silbernitrat-Lösung)", "en": "Tollens' reagent (ammoniacal silver nitrate)"}, "solution": {"Ag(NH3)2+(aq)": 0.05, "NH3(aq)": 0.2, "Na+(aq)": 0.05, "OH-(aq)": 0.05, "NO3-(aq)": 0.05}, "group": "other", "src": "Silbernitrat 0,05 mol/L, mit Natronlauge gefällt und in Ammoniak gelöst; der Überschuss an Ammoniak hält das Silberoxid in Lösung"},
     "ethanal": {"ghs": {"fixed": ["GHS08"], "signal": "warning", "src": "verdünnte Ethanal-Lösung 4,4 %: Carc. 2 von Ethanal (CLP Annex VI 605-003-00-6) ab 1 %; Eye Irrit. 2 und STOT SE 3 erst ab 10 % (allgemeine Grenzen)"}, "name": {"de": "Ethanal-Lösung (Acetaldehyd, 1 mol/L)", "en": "ethanal solution (acetaldehyde, 1 mol/L)"}, "solution": {"CH3CHO(aq)": 1}, "group": "other"},
+    "methylene blue": {"name": {"de": "Methylenblau-Lösung 0,1 %", "en": "methylene blue solution 0.1 %"}, "solution": {"C16H18N3S+(aq)": 0.0031, "Cl-(aq)": 0.0031}, "drops": true, "group": "other", "src": "1 g Methylenblau (Chlorid, 319,85 g/mol) je Liter; als 0,1-%-Lösung ohne Kennzeichnung (Acute Tox. 4 erst ab 25 %)"},
+    "indigo carmine": {"name": {"de": "Indigocarmin-Lösung 0,1 %", "en": "indigo carmine solution 0.1 %"}, "solution": {"C16H8N2O8S2^2-(aq)": 0.00214, "Na+(aq)": 0.00428}, "drops": true, "group": "other", "src": "1 g Indigocarmin (Dinatriumsalz, 466,35 g/mol) je Liter; ohne Kennzeichnung"},
+    "luminol": {"name": {"de": "Luminol-Lösung (in Natronlauge 0,1 mol/L)", "en": "luminol solution (in sodium hydroxide 0.1 mol/L)"}, "solution": {"C8H7N3O2(aq)": 0.0057, "Na+(aq)": 0.1, "OH-(aq)": 0.1}, "group": "other", "src": "1 g Luminol (177,16 g/mol) je Liter Natronlauge 0,1 mol/L; ohne Kennzeichnung (Natronlauge unter 0,5 %)"},
+    "K3Fe(CN)6 0.05M": {"name": {"de": "Kaliumhexacyanoferrat(III)-Lösung 0,05 mol/L", "en": "potassium hexacyanoferrate(III) solution 0.05 mol/L"}, "solution": {"Fe(CN)6^3-(aq)": 0.05, "K+(aq)": 0.15}, "group": "other", "src": "rotes Blutlaugensalz; ohne Kennzeichnung (EUH032: setzt mit Säure sehr giftiges Gas frei – nicht ansäuern)"},
+    "fluorescein": {"name": {"de": "Fluorescein-Lösung 0,1 %", "en": "fluorescein solution 0.1 %"}, "solution": {"C20H10O5^2-(aq)": 0.00266, "Na+(aq)": 0.00532}, "drops": true, "group": "other", "src": "1 g Fluorescein-Natrium (Uranin, 376,27 g/mol) je Liter; ohne Kennzeichnung"},
+    "tonic water": {"name": {"de": "Tonic Water", "en": "tonic water"}, "solution": {"C20H24N2O2(aq)": 0.000247}, "group": "other", "src": "80 mg Chinin je Liter (324,4 g/mol); erlaubt sind in der EU bis 100 mg/L"},
     "glucose": {"name": {"de": "Glucose-Lösung 5 %", "en": "glucose solution 5 %"}, "solution": {"C6H12O6(aq)": 0.28}, "group": "other"},
     "glycerol": {"name": {"de": "Glycerin 99,5 %", "en": "glycerol 99.5 %"}, "solution": {"C3H8O3(aq)": 13.54}, "group": "other", "src": "99,5 % Glycerin (Massenanteil), ideal gemischt aus den Dichten 1,261 und 0,998 g/cm³"},
     "sugar syrup": {"name": {"de": "Zuckersirup (Saccharose 60 %)", "en": "sugar syrup (sucrose 60 %)"}, "solution": {"C12H22O11(aq)": 2.255}, "group": "other", "src": "771,9 g Saccharose je Liter (60 % bei der Dichte 1,2865 g/cm³)"},

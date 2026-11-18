@@ -1,5 +1,5 @@
 // Prüfungen für ChemLab. Aufruf: node --test check.mjs
-import test from "node:test";
+import nodeTest from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import vm from "node:vm";
@@ -8,6 +8,11 @@ import "./chemlab-engine.js";
 import "./chemlab-data.js";
 
 const L = globalThis.LiaChemLab;
+
+// Aufteilen auf mehrere Prozesse (tools/check-parallel.mjs): SHARD=i/n führt nur jede n-te Prüfung aus, beginnend mit der i-ten
+const [shard, shards] = (process.env.SHARD || "1/1").split("/").map(Number);
+let tests = 0;
+const test = (...args) => (tests++ % shards === shard - 1 ? nodeTest(...args) : undefined);
 const here = new URL(".", import.meta.url);
 
 const near = (actual, expected, tolerance, label) =>
@@ -110,8 +115,8 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
     () => L.register({ species: { "Zz(s)": {} } }),
     (e) => e.code === "data" && /Zz/.test(e.detail));
   assert.throws(
-    () => L.register({ reactions: [{ eq: "Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)", rate: { k: 1 } }] }),
-    (e) => e.code === "data" && /Ni/.test(e.detail), "unbekannte Stoffe");
+    () => L.register({ reactions: [{ eq: "Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)", rate: { k: 1 } }] }),
+    (e) => e.code === "data" && /Ru/.test(e.detail), "unbekannte Stoffe");
   assert.throws(
     () => L.register({ equilibria: [{ eq: "H2O(l) <=> H+(aq) + 2 OH-(aq)", logK: -14 }] }),
     (e) => e.code === "data", "nicht ausgeglichen");
@@ -122,17 +127,17 @@ test("Daten: ein Paket mit Fehlern wird abgelehnt und nennt sie", () => {
 test("Daten: ein eigener Stoff mit Reaktion lässt sich nachtragen", () => {
   L.register({
     species: {
-      "Ni(s)": { name: { de: "Nickel" }, Hf: 0, src: "Test" },
-      "Ni^2+(aq)": { name: { de: "Nickel(II)-Ion" }, Hf: -54.0, src: "Test" }
+      "Ru(s)": { name: { de: "Ruthenium (Beispiel)" }, Hf: 0, src: "Test" },
+      "Ru^2+(aq)": { name: { de: "Ruthenium-Ion (Beispiel)" }, Hf: -54.0, src: "Test" }
     },
-    reactions: [{ eq: "Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)", rate: { k: 1e-6, surface: "Ni(s)", order: { "H+(aq)": 1 } }, src: "Test" }],
-    reagents: { "Ni filings": { name: { de: "Nickelspäne" }, solid: "Ni(s)", area: 5 } }
+    reactions: [{ eq: "Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)", rate: { k: 1e-6, surface: "Ru(s)", order: { "H+(aq)": 1 } }, src: "Test" }],
+    reagents: { "Ru filings": { name: { de: "Rutheniumspäne (Beispiel)" }, solid: "Ru(s)", area: 5 } }
   });
   const l = beaker([{ reagent: "HCl 1M", ml: 20 }]);
-  L.add(l, "b", "Ni filings", { g: 0.5 });
+  L.add(l, "b", "Ru filings", { g: 0.5 });
   L.step(l, 60);
-  assert.ok(amount(l, "Ni^2+(aq)") > 0, "Nickel geht in Lösung");
-  near(L.enthalpy("Ni(s) + 2 H+(aq) -> Ni^2+(aq) + H2(g)"), -54.0, 0.01);
+  assert.ok(amount(l, "Ru^2+(aq)") > 0, "Ruthenium geht in Lösung");
+  near(L.enthalpy("Ru(s) + 2 H+(aq) -> Ru^2+(aq) + H2(g)"), -54.0, 0.01);
 });
 
 test("Daten: Konzentration steht im Namen der Vorratsflasche", () => {
@@ -1355,8 +1360,8 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
   const files = fs.readdirSync(here).filter((name) => !name.startsWith(".")).sort();
   assert.deepEqual(files, ["3d", "LICENSE", "README.md", "assets", "check.mjs", "chemlab-3d.js", "chemlab-data.js", "chemlab-engine.js", "chemlab-fx.js", "chemlab-parts.js", "chemlab-ui.js", "chemlab.css", "lang", "packs", "todo.md", "tools", "vendor"]);
-  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "organic.json"], "Erweiterungspakete");
-  assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["import.mjs"], "Werkzeuge");
+  assert.deepEqual(fs.readdirSync(new URL("packs/", here)).sort(), ["alkali.json", "ionen.json", "organic.json"], "Erweiterungspakete");
+  assert.deepEqual(fs.readdirSync(new URL("tools/", here)).sort(), ["check-parallel.mjs", "import.mjs"], "Werkzeuge");
   // was die 3D-Ansicht nachlädt, liegt im Ordner
   const loads = [...fs.readFileSync(new URL("chemlab-3d.js", here), "utf8").matchAll(/"((?:3d|vendor)\/[\w./-]+\.js)"/g)].map((m) => m[1]);
   assert.ok(loads.length >= 5, loads.join(", "));
@@ -5640,19 +5645,19 @@ test("Ruhe: ein Metall, das sich unterhalb der Sichtbarkeit löst, hält die Uhr
 test("Ruhe: ein Niederschlag, der unmerklich langsam nachwächst, hält die Uhr nicht am Laufen", () => {
   L.register({
     species: {
-      "CdO(s)": { name: { de: "Cadmiumoxid" }, Hf: null, color: "#3a4a3a", src: "Test" },
-      "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" },
-      "Cd(OH)2(s)": { name: { de: "Cadmiumhydroxid" }, Hf: null, color: "#d98aa0", src: "Test" }
+      "RhO(s)": { name: { de: "Rhodiumoxid (Beispiel)" }, Hf: null, color: "#3a4a3a", src: "Test" },
+      "Rh^2+(aq)": { name: { de: "Rhodium-Ion (Beispiel)" }, Hf: null, src: "Test" },
+      "Rh(OH)2(s)": { name: { de: "Rhodiumhydroxid (Beispiel)" }, Hf: null, color: "#d98aa0", src: "Test" }
     },
-    equilibria: [{ eq: "Cd(OH)2(s) <=> Cd^2+(aq) + 2 OH-(aq)", logK: -15, src: "Test" }],
-    reactions: [{ eq: "CdO(s) + H2O(l) -> Cd^2+(aq) + 2 OH-(aq)", rate: { k: 1e-11, surface: "CdO(s)" }, src: "Test" }],
-    reagents: { "CdO": { name: { de: "Cadmiumoxid" }, solid: "CdO(s)", area: 10 } }
+    equilibria: [{ eq: "Rh(OH)2(s) <=> Rh^2+(aq) + 2 OH-(aq)", logK: -15, src: "Test" }],
+    reactions: [{ eq: "RhO(s) + H2O(l) -> Rh^2+(aq) + 2 OH-(aq)", rate: { k: 1e-11, surface: "RhO(s)" }, src: "Test" }],
+    reagents: { "RhO": { name: { de: "Rhodiumoxid (Beispiel)" }, solid: "RhO(s)", area: 10 } }
   });
-  const l = tubeOf([{ reagent: "NaOH 0.01M", ml: 10 }, { reagent: "CdO", g: 3 }]);
+  const l = tubeOf([{ reagent: "NaOH 0.01M", ml: 10 }, { reagent: "RhO", g: 3 }]);
   L.step(l, 60);
-  const first = solid(l, "Cd(OH)2(s)");
+  const first = solid(l, "Rh(OH)2(s)");
   L.step(l, 60);
-  const grown = solid(l, "Cd(OH)2(s)") - first;
+  const grown = solid(l, "Rh(OH)2(s)") - first;
   assert.ok(grown > 6e-9 && grown < 6e-8, `in einer Minute wachsen ${grown} mol Niederschlag nach: unter 1 nmol/s`);
   assert.ok(L.atRest(l), "das sieht niemand: die Uhr steht");
 });
@@ -7114,15 +7119,15 @@ test("Auflösung nach Gesetz: zwei Feststoffe im selben Glas folgen jeder seinem
     for (const [k, share] of [[5e-9, 0], [5.11e-6, 0.1]]) {
       L.db = before;
       L.register({
-        species: { "CdCO3(s)": { name: { de: "Cadmiumcarbonat" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Cd^2+(aq)": { name: { de: "Cadmium-Ion" }, Hf: null, src: "Test" } },
-        equilibria: [{ eq: "CdCO3(s) <=> Cd^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
-        reagents: { "cadmium carbonate": { name: { de: "Cadmiumcarbonat" }, solid: "CdCO3(s)", area: 6 } }
+        species: { "RhCO3(s)": { name: { de: "Rhodiumcarbonat (Beispiel)" }, Hf: null, color: "#e8c8c0", src: "Probe" }, "Rh^2+(aq)": { name: { de: "Rhodium-Ion (Beispiel)" }, Hf: null, src: "Test" } },
+        equilibria: [{ eq: "RhCO3(s) <=> Rh^2+(aq) + CO3^2-(aq)", logK: -10.5, rate: { k, Ea: 20, order: { "H+(aq)": 1 } }, src: "Probe" }],
+        reagents: { "rhodium carbonate": { name: { de: "Rhodiumcarbonat (Beispiel)" }, solid: "RhCO3(s)", area: 6 } }
       });
       const l = lime("HCl 1M", "marble", 1);
-      L.add(l, "b", "cadmium carbonate", { g: 1 });
+      L.add(l, "b", "rhodium carbonate", { g: 1 });
       L.step(l, 10);
       near(calcium(l), calcium(alone), 0.03 * calcium(alone), `Marmor neben einem Stück mit k = ${k}`);
-      near(dissolved(l, "Cd"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
+      near(dissolved(l, "Rh"), share * calcium(alone), 0.02 * calcium(alone), "das andere Stück nach seinem Gesetz (gleiche Oberfläche, ein Zehntel der Konstante)");
       assert.equal(L.atRest(l), false);
       assert.equal(l.failed || 0, 0);
     }
@@ -8825,17 +8830,17 @@ test("@ChemLab.pack: ein Paket wird geladen; Flächen warten, solange es lädt",
 });
 
 test("packs: eine Fläche lädt ihre Pakete selbst, bevor sie den Aufbau liest", async () => {
-  const url = "https://example.org/packs/bismuth.json", saved = globalThis.fetch;
-  const bismuth = { species: { "Bi(s)": { name: { de: "Bismut", en: "bismuth" }, Hf: 0, S: 56.74, src: "Test" } },
-    reagents: { "Bi granules": { name: { de: "Bismut (Körner)", en: "bismuth granules" }, solid: "Bi(s)", area: 6 } } };
-  globalThis.fetch = fakeFetch({ [url]: bismuth });
+  const url = "https://example.org/packs/tungsten.json", saved = globalThis.fetch;
+  const tungsten = { species: { "W(s)": { name: { de: "Wolfram (Beispiel)", en: "tungsten (example)" }, Hf: 0, S: 32.6, src: "Test" } },
+    reagents: { "W granules": { name: { de: "Wolfram (Körner)", en: "tungsten granules" }, solid: "W(s)", area: 6 } } };
+  globalThis.fetch = fakeFetch({ [url]: tungsten });
   try {
-    const source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "Bi granules", g: 1 }] }] };
+    const source = { packs: [url], bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "W granules", g: 1 }] }] };
     const el = mount(source);
     assert.match(el.innerHTML, /Pakete werden geladen/);
     await settleAll();
     assert.doesNotMatch(el.innerHTML, /role="alert"/);
-    assert.ok(L.vessel(state(el).run.lab, "b").n["Bi(s)"] > 0, "der Aufbau steht, mit dem Stoff aus dem Paket");
+    assert.ok(L.vessel(state(el).run.lab, "b").n["W(s)"] > 0, "der Aufbau steht, mit dem Stoff aus dem Paket");
     assert.deepEqual(state(el).config.packs, [url]);
     const missing = mount({ packs: ["https://example.org/nichts.json"] });
     await settleAll();
@@ -10261,4 +10266,587 @@ test("Speichern: die Fläche lädt den eigenen Versuch wieder und zeigt fremde z
   } finally {
     delete globalThis.LIA;
   }
+});
+
+// ---------------------------------------------------------------- Farben der Oxidationsstufen (Paket ionen.json, Chamäleon im Kern)
+
+const ionen = () => JSON.parse(fs.readFileSync(new URL("packs/ionen.json", here), "utf8"));
+const colors = (seen) => seen.filter((e) => e.key === "color").map((e) => e.name).filter((name, i, all) => name !== all[i - 1]);
+
+test("Vanadium: Zinkpulver färbt die gelbe Lösung nacheinander grün, blau, grün und violett", () => {
+  L.register(ionen());
+  const l = beaker([{ reagent: "NH4VO3 acidic", ml: 50 }]), seen = [];
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(look(l).color.name, "yellow", "Vanadium(V) ist gelb");
+  L.add(l, "b", "Zn powder", { g: 2 });
+  const before = totals(l);
+  until(l, () => amount(l, "V^2+(aq)") > 0.9 * 2.5e-3, 900, seen);
+  const order = colors(seen), at = (name, from) => order.indexOf(name, from);
+  const green = at("green"), blue = at("blue", green), green2 = at("green", blue), violet = at("violet", green2);
+  assert.ok(green >= 0 && blue > green && green2 > blue && violet > green2, order.join(" → "));
+  assert.ok(amount(l, "V^2+(aq)") > 0.9 * 2.5e-3, "am Ende Vanadium(II)");
+  const after = totals(l);
+  near(after.charge, before.charge, 1e-9, "Ladung");
+  near(after.mass, before.mass, 1e-6, "Masse");
+});
+
+test("Chamäleon: Zucker in Natronlauge macht Permanganat erst blau und grün, dann trüb von Braunstein; ohne Lauge bleibt es violett", () => {
+  const start = (base) => {
+    const l = beaker([{ reagent: base, ml: 40 }, { reagent: "sugar 1M", ml: 10 }]), seen = [];
+    L.add(l, "b", "KMnO4 0.01M", { ml: 2 });
+    return { l, seen };
+  };
+  const { l, seen } = start("NaOH 1M");
+  until(l, () => false, 240, seen);
+  const order = colors(seen);
+  assert.ok(order.indexOf("blue") >= 0 && order.indexOf("green") > order.indexOf("blue"), order.join(" → "));
+  until(l, () => false, 600, seen);
+  assert.ok(amount(l, "MnO2(s)") > 0.9 * 2e-5, "das Mangan ist zu Braunstein geworden");
+  assert.ok(L.vessel(l, "b").lumps.some((p) => p.id === "MnO2(s)" && p.settled === 0), "der Braunstein bleibt in der Schwebe");
+  const water = start("H2O");
+  until(water.l, () => false, 240, water.seen);
+  assert.equal(look(water.l).color.name, "pink", "ohne Lauge bleibt das Permanganat");
+  assert.ok(amount(water.l, "MnO4^2-(aq)") < 1e-9, "kein Manganat");
+});
+
+test("Chamäleon: grünes Manganat wird mit Säure wieder violett, Braunstein fällt dabei", () => {
+  const l = beaker([{ reagent: "NaOH 1M", ml: 40 }, { reagent: "sugar 1M", ml: 10 }]);
+  L.add(l, "b", "KMnO4 0.01M", { ml: 2 });
+  L.step(l, 150);
+  const manganate = amount(l, "MnO4^2-(aq)"), permanganate = amount(l, "MnO4-(aq)");
+  assert.ok(manganate > 5e-6, "grün: Manganat ist da");
+  L.add(l, "b", "H2SO4 1M", { ml: 30 });
+  L.step(l, 1);
+  assert.ok(amount(l, "MnO4^2-(aq)") < 0.01 * manganate, "Manganat zerfällt in Säure");
+  near(amount(l, "MnO4-(aq)") - permanganate, 2 / 3 * manganate, 0.1 * manganate, "zwei Drittel werden wieder Permanganat");
+});
+
+test("Nickel: grün; wenig Ammoniak fällt grünes Hydroxid, viel Ammoniak löst es blau; Diacetyldioxim fällt rot, aber nicht in Säure", () => {
+  L.register(ionen());
+  const l = tubeOf([{ reagent: "NiSO4 0.1M", ml: 10 }]);
+  L.step(l, 1);
+  assert.equal(look(l).color.name, "green", "Nickel(II) ist grün");
+  L.add(l, "b", "NH3 2M", { ml: 1 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(OH)2(s)") > 5e-4, "grüner Niederschlag");
+  L.add(l, "b", "NH3 2M", { ml: 5 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(NH3)6^2+(aq)") > 5e-4, "der Ammin-Komplex löst den Niederschlag");
+  assert.equal(look(l).color.name, "blue");
+  L.add(l, "b", "dimethylglyoxime", { drops: 5 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Ni(C4H7N2O2)2(s)") > 0, "roter Niederschlag mit Diacetyldioxim");
+  const acid = tubeOf([{ reagent: "NiSO4 0.1M", ml: 5 }, { reagent: "H2SO4 1M", ml: 5 }]);
+  L.add(acid, "b", "dimethylglyoxime", { drops: 5 });
+  L.step(acid, 5);
+  assert.equal(amount(acid, "Ni(C4H7N2O2)2(s)"), 0, "in starker Säure fällt nichts");
+  // Zink verdrängt Nickel; die Nickel-Elektrode gibt es als Gerät
+  const zinc = tubeOf([{ reagent: "NiSO4 0.1M", ml: 10 }]);
+  L.add(zinc, "b", "Zn granules", { g: 1 });
+  L.step(zinc, 100);
+  assert.ok(amount(zinc, "Ni(s)") > 1e-5, "Nickel scheidet sich auf dem Zink ab");
+  assert.equal(L.parts["electrode-Ni"].electrode, "Ni(s)");
+});
+
+test("Chrom(III) und Kobalt: Chromalaun ist sauer; Lauge fällt graugrünes Hydroxid, im Überschuss löst es sich grün; Kobalthydroxid fällt rosa", () => {
+  const l = tubeOf([{ reagent: "KCr(SO4)2 0.1M", ml: 5 }]);
+  L.step(l, 1);
+  near(look(l).pH, 3.2, 0.3, "pH der Chromalaun-Lösung");
+  assert.equal(look(l).color.name, "green");
+  L.add(l, "b", "NaOH 1M", { ml: 1 });
+  L.step(l, 3);
+  assert.ok(amount(l, "Cr(OH)3(s)") > 2e-4, "Chrom(III)-hydroxid fällt");
+  L.add(l, "b", "NaOH 1M", { ml: 6 });
+  L.step(l, 5);
+  assert.ok(amount(l, "Cr(OH)4-(aq)") > 0.9 * 5e-4, "im Überschuss gelöst");
+  assert.equal(look(l).color.name, "green");
+  const co = tubeOf([{ reagent: "CoCl2 0.1M", ml: 5 }]);
+  L.add(co, "b", "NaOH 1M", { ml: 1 });
+  L.step(co, 3);
+  assert.ok(amount(co, "Co(OH)2(s)") > 0.9 * 5e-4, "Kobalthydroxid fällt");
+  assert.equal(L.species("Co(OH)2(s)").color, "#c27a8c");
+});
+
+test("Alkoholtest: angesäuertes Dichromat wird mit Ethanol in etwa einer halben Minute grün; ohne Ethanol bleibt es orange", () => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const start = () => tubeOf([{ reagent: "K2Cr2O7 0.1M", ml: 2 }, { reagent: "H2SO4 1M", ml: 3 }]);
+  const l = start(), seen = [];
+  L.add(l, "b", "ethanol", { ml: 1 });
+  const t = until(l, () => look(l).color.name === "green", 120, seen);
+  assert.ok(t >= 10 && t <= 60, `grün nach ${t} s`);
+  assert.ok(amount(l, "CH3CHO(aq)") > 0, "Ethanol wird zu Ethanal");
+  const blank = start();
+  L.add(blank, "b", "H2O", { ml: 1 });
+  L.step(blank, 60);
+  assert.equal(look(blank).color.name, "orange");
+});
+
+// ---------------------------------------------------------------- Blaue Flasche und Ampel
+
+// Glucose und Natronlauge im Erlenmeyerkolben, dazu ein Farbstoff in Tropfen
+const bottle = (dye, drops, room) => {
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+  const l = lab([{ type: "flask", id: "b", contains: [{ reagent: "glucose", ml: 40 }, { reagent: "NaOH 1M", ml: 5 }] }], { room: room == null ? 25 : room });
+  L.add(l, "b", dye, { drops });
+  L.step(l, 60);
+  return l;
+};
+
+test("Blaue Flasche: geschüttelt blau, nach knapp einer Minute farblos, und wieder; warm schneller; Sauerstoff aus der Luft", () => {
+  const l = bottle("methylene blue", 5), before = totals(l);
+  assert.equal(look(l).color.name, "colorless", "ruhig stehend farblos");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "blue", "geschüttelt blau");
+  near(amount(l, "O2(aq)") / 0.045, 2.6e-4, 0.5e-4, "fast mit Luft gesättigt (Henry)");
+  const t = until(l, () => look(l).color.name === "colorless", 300);
+  assert.ok(t >= 20 && t <= 90, `farblos nach ${t} s`);
+  L.step(l, 120);
+  assert.equal(look(l).color.name, "colorless", "bleibt farblos");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "blue", "wieder blau");
+  near(totals(l).mass, before.mass, 1e-9, "Masse mit dem Sauerstoff aus der Luft");
+  const warm = bottle("methylene blue", 5, 35);
+  L.shake(warm, "b", "shake");
+  L.step(warm, 10);
+  assert.ok(until(warm, () => look(warm).color.name === "colorless", 300) < t, "warm schneller");
+  const plain = lab([{ type: "flask", id: "b", contains: [{ reagent: "H2O", ml: 40 }] }]);
+  L.shake(plain, "b", "shake");
+  L.step(plain, 10);
+  assert.equal(amount(plain, "O2(aq)"), 0, "reines Wasser rechnet ohne gelösten Sauerstoff");
+});
+
+test("Ampel: Indigocarmin geschüttelt grün, dann rot, dann gelb", () => {
+  const l = bottle("indigo carmine", 10), seen = [];
+  assert.equal(look(l).color.name, "yellow", "ruhig stehend gelb");
+  L.shake(l, "b", "shake");
+  L.step(l, 10);
+  assert.equal(look(l).color.name, "green", "geschüttelt grün");
+  until(l, () => { seen.push(look(l).color.name); return seen.at(-1) === "yellow"; }, 300);
+  const red = seen.indexOf("red"), yellow = seen.indexOf("yellow");
+  assert.ok(seen.lastIndexOf("green") >= 15, `grün für ${seen.lastIndexOf("green")} s`);
+  assert.ok(red > 0 && yellow > red + 5, `rot, dann gelb: ${[...new Set(seen)].join(", ")}`);
+});
+
+test("Schaum: ein geleertes Gefäß hat keinen Schaum mehr und meldet keinen", () => {
+  const l = lab([{ type: "cylinder", ml: 100, id: "b", contains: [{ reagent: "H2O2 9.8M", ml: 20 }, { reagent: "detergent", ml: 5 }] }], { room: 20 }), seen = [];
+  L.add(l, "b", "KI 2M", { ml: 5 });
+  L.step(l, 15);
+  assert.ok(look(l).foam > 10, "es schäumt");
+  L.empty(l, "b");
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(look(l).foam, 0);
+  assert.ok(!seen.some((e) => e.key === "foam" || e.key === "foamOver"), seen.map((e) => e.key).join());
+});
+
+// ---------------------------------------------------------------- Leuchten: Luminol und UV-Lampe
+
+const organicPack = () => L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+
+test("Luminol: mit Hexacyanoferrat(III) leuchtet es blau, erst hell, nach zwei Minuten kaum noch; ohne Katalysator nichts", () => {
+  organicPack();
+  const start = () => lab([{ type: "beaker", id: "b", contains: [{ reagent: "luminol", ml: 50 }, { reagent: "H2O2 1M", ml: 5 }] }], { room: 25 });
+  const l = start(), seen = [];
+  L.add(l, "b", "K3Fe(CN)6 0.05M", { ml: 5 });
+  L.step(l, 5, (e) => seen.push(e));
+  const before = totals(l);
+  assert.ok(look(l).shine && look(l).shine.level > 0.9, "hell");
+  assert.equal(seen.find((e) => e.key === "shine").name, "blue", "blau");
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(!look(l).shine || look(l).shine.level < 0.3, "verblasst");
+  assert.ok(amount(l, "C8H5NO4^2-(aq)") > 0, "Luminol wird zu Aminophthalat");
+  near(totals(l).mass, before.mass, 1e-9, "Masse");
+  const blank = start();
+  L.add(blank, "b", "H2O", { ml: 5 });
+  L.step(blank, 10);
+  assert.equal(look(blank).shine, null, "ohne Katalysator kein Licht");
+});
+
+test("UV-Lampe: Fluorescein leuchtet grün, Chinin blau, nur unter der Lampe; Säure löscht das Fluorescein", () => {
+  organicPack();
+  const l = lab([{ type: "beaker", id: "f", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "fluorescein", drops: 5 }] },
+    { type: "beaker", id: "q", contains: [{ reagent: "tonic water", ml: 50 }] }, { type: "uvlamp", in: "f" }], { room: 25 }), seen = [];
+  L.step(l, 1, (e) => seen.push(e));
+  assert.ok(look(l, "f").shine.level > 0.3, "Fluorescein leuchtet");
+  assert.equal(seen.find((e) => e.key === "shine" && e.vessel === "f").name, "green");
+  assert.equal(look(l, "q").shine, null, "Chinin ohne Lampe dunkel");
+  L.place(l, { type: "uvlamp", in: "q" });
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(seen.find((e) => e.key === "shine" && e.vessel === "q").name, "blue", "Chinin unter der Lampe blau");
+  L.add(l, "f", "HCl 1M", { ml: 1 });
+  L.step(l, 2, (e) => seen.push(e));
+  assert.ok(!look(l, "f").shine || look(l, "f").shine.level < 0.03, "angesäuert erlischt das Fluorescein");
+  assert.ok(seen.some((e) => e.key === "shineEnd" && e.vessel === "f"));
+});
+
+test("Dunkler Raum: show.dark beginnt dunkel, der Knopf schaltet das Licht; was leuchtet, ist gezeichnet", () => {
+  organicPack();
+  const el = mount(JSON.stringify({ bench: [{ type: "beaker", id: "f", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "fluorescein", drops: 5 }] }, { type: "uvlamp", in: "f" }], show: { dark: true } }));
+  frames(1);
+  assert.equal(el.attributes["data-dark"], "true");
+  assert.match(item(el, "f").innerHTML, /class="cl-glowing"/);
+  assert.doesNotMatch(item(el, "f").innerHTML, /class="cl-shine[^"]*" d=/, "nicht mit dem Glanzstreif des Glases verwechselt");
+  assert.match(item(el, "uvlamp1").innerHTML, /cl-uvbeam/);
+  press(el, "dark");
+  assert.equal(el.attributes["data-dark"], "false");
+  assert.equal(part(el, '[data-act="dark"]').attributes["aria-pressed"], "false");
+});
+
+// ---------------------------------------------------------------- Geigerzähler
+
+test("Geigerzähler: über Wasser nur der Nulleffekt, über 50 g Kaliumchlorid viermal so viel; die Anzeige streut nach Poisson", () => {
+  const l = lab([{ type: "beaker", id: "w", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "geiger", in: "w" }, { type: "beaker", id: "k" }, { type: "geiger", in: "k" }], { room: 25 });
+  L.add(l, "k", "KCl salt", { g: 50 });
+  const water = [], salt = [];
+  for (let i = 0; i < 90; i++) { L.step(l, 10); water.push(L.reading(l, "geiger1").value); salt.push(L.reading(l, "geiger2").value); }
+  const mean = (x) => x.reduce((a, b) => a + b, 0) / x.length, sd = (x) => Math.sqrt(mean(x.map((y) => (y - mean(x)) ** 2)));
+  near(mean(water), 25, 4, "Nulleffekt");
+  near(mean(salt), 25 + 50 * 39.098 / 74.551 * 31.7 * 0.0015 * 60, 10, "Kaliumchlorid: 31,7 Bq je Gramm Kalium");
+  near(sd(salt), Math.sqrt(100 / 6) * 6, 8, "Streuung wie bei Poisson");
+  assert.ok(salt.every((x) => x % 6 === 0), "gezählt in 10 s, hochgerechnet auf die Minute");
+  assert.match(L.parts.geiger.draw({ type: "geiger", value: 96, unit: "cpm" }, { numbers: true, lang: "de", no: 1 }), /96 Imp\.\/min/);
+  // die Impulse: in jeder Torzeit so viele, wie die Anzeige danach zeigt, gleichverteilt
+  const all = L.ticks(l, "geiger2", 0, 900);
+  assert.ok(all.every((t, i) => i === 0 || t >= all[i - 1]), "aufsteigend");
+  near(all.length / 15, mean(salt), 12, "so viele Klicks, wie gezählt");
+  const back = lab([{ type: "beaker", id: "k" }, { type: "geiger", in: "k" }]);
+  L.add(back, "k", "KCl salt", { g: 50 });
+  L.step(back, 5);
+  assert.equal(L.reading(back, "geiger1").value, null, "vor der ersten vollen Torzeit zeigt er nichts");
+  for (let g = 0; g < 6; g++) {
+    L.step(back, 10);
+    assert.equal(L.reading(back, "geiger1").value, 6 * L.ticks(back, "geiger1", g * 10, g * 10 + 10).length, "die Anzeige zählt, was in der Torzeit davor tickte");
+  }
+});
+
+test("Geigerzähler: tickt hörbar, ein Klick je Impuls; stumm nicht", () => {
+  const { made, Fake } = audio();
+  globalThis.AudioContext = Fake;
+  try {
+    const el = mount(JSON.stringify({ bench: [{ type: "beaker", id: "k", contains: [{ reagent: "KCl salt", g: 50 }] }, { type: "geiger", in: "k" }] }));
+    press(el, "play");
+    if (!state(el).play) press(el, "play");                    // in Ruhe: zweimal, dann läuft die Uhr
+    const before = made.sources;
+    frames(20);
+    const run = state(el).run;
+    assert.ok(run.time > 15, "die Uhr läuft");
+    const clicks = made.sources - before;
+    assert.ok(clicks > 10, `${clicks} Klicks`);
+    near(clicks, L.ticks(run.lab, "geiger1", 0, run.time).length, 2, "ein Klick je Impuls");
+    press(el, "sound");
+    const muted = made.sources;
+    frames(10);
+    assert.equal(made.sources, muted, "stumm geschaltet tickt er nicht");
+  } finally { delete globalThis.AudioContext; }
+});
+
+// ---------------------------------------------------------------- Landolt-Reaktion
+
+// Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag
+const landolt = (iodate, room) => {
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "KIO3 " + (iodate || 0.02) + "M", ml: 50 }, { reagent: "H2SO4 1M", ml: 5 }, { reagent: "starch", ml: 2 }] }], { room: room == null ? 25 : room }), seen = [];
+  L.add(l, "b", "Na2SO3 0.01M", { ml: 50 });
+  const t = until(l, () => seen.some((e) => e.key === "color"), 600, seen);
+  return { l, seen, t };
+};
+
+test("Landolt: die Lösung bleibt farblos, solange Sulfit da ist, und wird dann schlagartig blauschwarz", () => {
+  const { l, seen, t } = landolt();
+  assert.ok(t >= 10 && t <= 30, `Umschlag nach ${t} s`);
+  assert.ok(["blue", "black"].includes(seen.find((e) => e.key === "color").name));
+  L.step(l, 2);
+  assert.ok(amount(l, "HSO3-(aq)") + amount(l, "SO2(aq)") + amount(l, "SO3^2-(aq)") < 1e-8, "das Sulfit ist verbraucht");
+  assert.ok(amount(l, "C108H180O90I3-(aq)") > 0, "Iod sitzt in der Stärke");
+  const half = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "KIO3 0.02M", ml: 50 }, { reagent: "H2SO4 1M", ml: 5 }, { reagent: "starch", ml: 2 }] }], { room: 25 });
+  const before = totals(half);
+  L.add(half, "b", "Na2SO3 0.01M", { ml: 50 });
+  L.step(half, Math.floor(t / 2));
+  assert.equal(look(half).color.name, "colorless", "auf halbem Weg noch farblos");
+  L.step(half, 60);
+  const after = totals(half), added = 0.05 * 0.01 * (2 * 22.99 + 32.06 + 3 * 15.999) + 0.05 * 55.508 * 18.015;
+  near(after.charge, before.charge, 1e-12, "Ladung");
+  assert.ok(Math.abs(after.mass - before.mass - added) < 0.01 * added, "Masse: nur das Zugegebene kam dazu");
+});
+
+test("Landolt: halb so viel Iodat, doppelte Zeit; 10 K wärmer, kürzere Zeit", () => {
+  const base = landolt().t, dilute = landolt(0.01).t, warm = landolt(0.02, 35).t;
+  near(dilute / base, 2, 0.3, `halbes Iodat: ${dilute} s statt ${base} s`);
+  assert.ok(warm < 0.8 * base, `10 K wärmer: ${warm} s statt ${base} s`);
+});
+
+// ---------------------------------------------------------------- Rotkohl
+
+test("Rotkohl: rot in Säure, violett in Wasser, blau in Natron, grün in Soda; in Natronlauge wird er langsam gelb und bleibt es", () => {
+  const color = (reagent, wait) => {
+    const l = tubeOf([{ reagent, ml: 5 }, { reagent: "red cabbage", drops: 10 }]);
+    L.step(l, wait || 2);
+    return { l, name: look(l).color.name };
+  };
+  assert.equal(color("HCl 0.1M").name, "red", "pH 1");
+  assert.equal(color("H2O").name, "violet", "pH 5,5");
+  assert.equal(color("NaHCO3 0.1M").name, "blue", "pH 8,3");
+  assert.equal(color("Na2CO3 0.1M").name, "green", "pH 11,6");
+  assert.equal(color("NaOH 0.1M").name, "green", "pH 13 am Anfang");
+  assert.equal(color("NaOH 0.1M", 300).name, "yellow", "nach fünf Minuten gelb");
+  const old = color("NaOH 0.1M", 600);
+  L.add(old.l, "b", "HCl 1M", { ml: 2 });
+  L.step(old.l, 5);
+  assert.ok(look(old.l).pH < 2, "jetzt sauer");
+  assert.equal(look(old.l).color.name, "yellow", "das Gelb bleibt, auch in Säure");
+  const bleach = color("NaHCO3 0.1M");
+  L.add(bleach.l, "b", "NaOCl", { ml: 2 });
+  L.step(bleach.l, 30);
+  const dye = ["C21H21O11+(aq)", "C21H20O11(aq)", "C21H19O11-(aq)", "C21H18O11^2-(aq)"].reduce((sum, id) => sum + amount(bleach.l, id), 0);
+  assert.ok(dye < 0.05 * 10 * L.DROP / 1000 * 3e-3, "Bleichlauge zerstört den Farbstoff");
+});
+
+// ---------------------------------------------------------------- Schaum
+
+test("Elefantenzahnpasta: Wasserstoffperoxid mit Spülmittel und Kaliumiodid schäumt über den Rand; ohne Spülmittel kein Schaum; der Schaum zerfällt", () => {
+  const start = (soap) => {
+    const l = lab([{ type: "cylinder", ml: 100, id: "b", contains: [{ reagent: "H2O2 9.8M", ml: 20 }].concat(soap ? [{ reagent: "detergent", ml: 5 }] : []) }], { room: 20 });
+    const before = totals(l), seen = [];
+    L.add(l, "b", "KI 2M", { ml: 5 });
+    return { l, before, seen };
+  };
+  const { l, seen } = start(true);
+  const t = until(l, () => seen.some((e) => e.key === "foamOver"), 120, seen);
+  assert.ok(t < 60, `über den Rand nach ${t} s`);
+  assert.ok(seen.findIndex((e) => e.key === "foam") < seen.findIndex((e) => e.key === "foamOver"), "erst Schaum, dann über den Rand");
+  assert.equal(L.say(seen.find((e) => e.key === "foamOver"), { lang: "de", names: { b: "Messzylinder 1" } }), "Messzylinder 1: Der Schaum quillt über den Rand.");
+  let peak = 0;
+  for (let i = 0; i < 60; i++) { L.step(l, 1); peak = Math.max(peak, look(l).foam); }
+  assert.ok(peak > 500, `Schaum: ${peak} mL`);
+  L.step(l, 300);
+  assert.ok(look(l).foam < 0.1 * peak, "der Schaum zerfällt");
+  const plain = start(false);
+  L.step(plain.l, 60, (e) => plain.seen.push(e));
+  assert.ok(!plain.seen.some((e) => e.key === "foam"), "ohne Spülmittel kein Schaum");
+  assert.equal(look(plain.l).foam, 0);
+  assert.ok(gasOf(plain.l, "O2(g)") > 0.05, "der Sauerstoff entweicht trotzdem");
+  const after = totals(plain.l), added = 0.005 * 2 * (39.098 + 126.904) + 0.005 * 55.508 * 18.015;
+  assert.ok(Math.abs(after.mass - plain.before.mass - added) < 0.01 * added + 0.05, "Masse: nur das Zugegebene kam dazu");
+});
+
+// ---------------------------------------------------------------- Stickstoffoxide: Gase, die im Gasraum reagieren und ihn färben
+
+// Stickstoff in den Gasen (im Gasraum und entwichen), in mol
+const nitrogenGas = (l) => ["NO(g)", "NO2(g)", "N2O4(g)"].reduce((sum, id) => sum + gasOf(l, id) * (id === "N2O4(g)" ? 2 : 1), 0);
+
+test("Kupfer und Salpetersäure: verdünnt entsteht Stickstoffmonoxid, das an der Luft braun wird; konzentriert gleich Stickstoffdioxid", () => {
+  const run = (acid, s, g) => {
+    const l = tubeOf([{ reagent: acid, ml: 5 }], { room: 20 }), before = totals(l), seen = [];
+    L.add(l, "b", "Cu sheet", { g });
+    const cu = amount(l, "Cu(s)");
+    L.step(l, s, (e) => seen.push(e));
+    return { l, seen, before, g, used: cu - amount(l, "Cu(s)") };
+  };
+  const dilute = run("HNO3 3M", 120, 0.5), strong = run("HNO3 12M", 30, 0.2);
+  assert.ok(dilute.used > 1e-4 && strong.used > 1e-3, "Kupfer löst sich, in konzentrierter Säure viel schneller");
+  near(nitrogenGas(dilute.l) / dilute.used, 2 / 3, 0.15, "verdünnt: 3 Cu geben 2 NO");
+  assert.ok(nitrogenGas(strong.l) / strong.used > 1.5, "konzentriert: 1 Cu gibt 2 NO2");
+  assert.ok(gasOf(dilute.l, "NO2(g)") > 0, "das Stickstoffmonoxid wird an der Luft zu Stickstoffdioxid");
+  assert.ok(look(strong.l).fog && ["orange", "brown", "red", "yellow"].includes(look(strong.l).fog.name), "brauner Gasraum");
+  assert.ok(strong.seen.some((e) => e.key === "smell" && e.species === "NO2(g)"), "es riecht stechend");
+  assert.equal(look(strong.l).color.name, "blue", "die Lösung wird blau vom Kupfer");
+  for (const r of [dilute, strong]) {
+    const after = totals(r.l);
+    near(after.charge, r.before.charge, 1e-9, "Ladung");
+    near(after.mass, r.before.mass + r.g, 1e-6, "Masse: nur das Kupfer kam dazu");
+  }
+});
+
+test("Gasraum: Stickstoffdioxid steht mit farblosem N2O4 im Gleichgewicht – kalt blass, warm braun", () => {
+  const flask = (temp) => {
+    const l = lab([{ type: "flask", id: "b", contains: [{ reagent: "H2O", ml: 10 }] }, { type: "stopper", in: "b" }, { type: "bath", under: "b", temp }], { room: 20 });
+    L.step(l, 60);
+    L.vessel(l, "b").air["NO2(g)"] = 3e-4;
+    L.step(l, 2);
+    return l;
+  };
+  const share = (l) => gasOf(l, "NO2(g)") / (gasOf(l, "NO2(g)") + 2 * gasOf(l, "N2O4(g)"));
+  const cold = flask(0), warm = flask(80);
+  assert.ok(share(cold) < 0.5 * share(warm), `kalt ${share(cold)}, warm ${share(warm)}`);
+  const dark = (l) => Math.min(...look(l).fog.rgb);
+  assert.ok(dark(warm) < dark(cold), "warm ist der Gasraum dunkler");
+  // bei 25 °C: K = p(N2O4) / p(NO2)² ≈ 6,7 je bar
+  const room = flask(25), v = L.vessel(room, "b"), Vh = (L.view(room, v).cap - L.view(room, v).ml) / 1000, RT = 0.08314 * (v.T + 273.15);
+  near(Math.log10((v.air["N2O4(g)"] * RT / Vh) / (v.air["NO2(g)"] * RT / Vh) ** 2), 0.829, 0.05, "lg K bei 25 °C");
+});
+
+// ---------------------------------------------------------------- Trennungsgang (Paket ionen.json)
+
+// Becherglas mit je 2 mL der Lösungen (0,2 mmol jedes Ions), dazu Zugaben; zurück: das Labor und was ausgefallen ist (mol)
+const precipitate = (reagents, extra, adds, wait) => {
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: reagents.map((reagent) => ({ reagent, ml: 2 })).concat(extra || []) }], { room: 25 }), seen = [];
+  for (const [r, a] of adds) L.add(l, "b", r, a);
+  L.step(l, wait || 120, (e) => seen.push(e));
+  const out = {};
+  L.vessel(l, "b").lumps.forEach((x) => { if (x.made) out[x.id] = (out[x.id] || 0) + x.n; });
+  return { l, out, seen };
+};
+
+test("Trennungsgang: die Gruppen fallen in der Reihenfolge des Lehrbuchs", () => {
+  L.register(ionen());
+  const full = 2e-4;
+  // Salzsäuregruppe
+  let g = precipitate(["AgNO3 0.1M", "Pb(NO3)2 0.1M", "CuSO4 0.1M", "ZnSO4 0.1M"], null, [["HCl 2M", { ml: 5 }]]);
+  assert.ok(g.out["AgCl(s)"] > 0.99 * full && g.out["PbCl2(s)"] > 0.9 * full, "Silber und Blei fallen als Chloride");
+  assert.ok(!g.out["CuCl(s)"] && !g.out["ZnS(s)"], "Kupfer und Zink bleiben gelöst");
+  // Schwefelwasserstoffgruppe in salzsaurer Lösung
+  g = precipitate(["Pb(NO3)2 0.1M", "CuSO4 0.1M", "Bi(NO3)3 0.1M", "CdSO4 0.1M", "SnCl2 0.1M", "SbCl3 0.1M", "ZnSO4 0.1M", "NiSO4 0.1M", "CoCl2 0.1M", "FeSO4 0.1M", "MnCl2 0.1M", "AlCl3 0.1M"],
+    [{ reagent: "HCl 2M", ml: 5 }], [["H2S water", { ml: 30 }]]);
+  for (const [id, n] of [["CuS(s)", full], ["PbS(s)", full], ["CdS(s)", full], ["SnS(s)", full], ["Bi2S3(s)", full / 2], ["Sb2S3(s)", full / 2]]) assert.ok(g.out[id] > 0.95 * n, id);
+  for (const id of ["ZnS(s)", "NiS(s)", "CoS(s)", "FeS(s)", "MnS(s)", "Al(OH)3(s)"]) assert.ok(!(g.out[id] > 0.01 * full), id + " bleibt gelöst");
+  const smell = g.seen.find((e) => e.key === "smell" && e.species === "H2S(g)");
+  assert.ok(smell, "es riecht nach Schwefelwasserstoff");
+  assert.equal(L.say(smell, { lang: "de", names: { b: "Becherglas 1" } }), "Becherglas 1: Es riecht nach faulen Eiern: Schwefelwasserstoff.");
+  // Ammoniumsulfidgruppe
+  g = precipitate(["ZnSO4 0.1M", "NiSO4 0.1M", "CoCl2 0.1M", "FeSO4 0.1M", "MnCl2 0.1M", "AlCl3 0.1M", "KCr(SO4)2 0.1M", "MgCl2 0.1M"],
+    [{ reagent: "NH4Cl 1M", ml: 5 }], [["NH3 2M", { ml: 5 }], ["(NH4)2S", { ml: 5 }]]);
+  for (const id of ["ZnS(s)", "NiS(s)", "CoS(s)", "FeS(s)", "MnS(s)", "Cr(OH)3(s)"]) assert.ok(g.out[id] > 0.95 * full, id);
+  assert.ok(g.out["Al(OH)3(s)"] > 0.5 * full, "Aluminiumhydroxid");
+  assert.ok(!g.out["Mg(OH)2(s)"], "Magnesium bleibt gelöst");
+  // Nickel- und Cobaltsulfid lösen sich in kalter verdünnter Salzsäure nicht, die übrigen Sulfide schon
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "NiS(s)") > 0.9 * full && amount(g.l, "CoS(s)") > 0.9 * full, "NiS und CoS bleiben zurück");
+  for (const id of ["ZnS(s)", "FeS(s)", "MnS(s)"]) assert.ok(amount(g.l, id) < 0.05 * full, id + " löst sich");
+  // Ammoniumcarbonatgruppe; Magnesium bleibt in der ammoniumreichen Lösung größtenteils gelöst
+  g = precipitate(["BaCl2 0.1M", "SrCl2 0.1M", "CaCl2 0.1M", "MgCl2 0.1M"], [{ reagent: "NH4Cl 2M", ml: 10 }], [["(NH4)2CO3", { ml: 2 }]]);
+  for (const id of ["BaCO3(s)", "SrCO3(s)", "CaCO3(s)"]) assert.ok(g.out[id] > 0.95 * full, id);
+  assert.ok(!(g.out["MgCO3*3H2O(s)"] > 0.3 * full), "Magnesium fällt kaum");
+});
+
+test("Trennungsgang: Bleichlorid löst sich in heißem Wasser", () => {
+  L.register(ionen());
+  const l = lab([{ type: "beaker", ml: 100, id: "b", contains: [{ reagent: "Pb(NO3)2 0.1M", ml: 4 }, { reagent: "HCl 2M", ml: 1 }, { reagent: "H2O", ml: 15 }] }, { type: "bath", id: "wb", under: "b", temp: 20 }], { room: 20 });
+  L.step(l, 60);
+  const cold = amount(l, "PbCl2(s)");
+  L.tool(l, "wb").temp = 95;
+  L.step(l, 300);
+  assert.ok(cold > 1e-4, "kalt fällt Bleichlorid");
+  assert.ok(amount(l, "PbCl2(s)") < 0.3 * cold, "heiß löst es sich");
+});
+
+// ---------------------------------------------------------------- Trennungsgang: Untertrennungen und Nachweise
+
+// Niederschlag absetzen lassen, Lösung bis auf 1 mL abgießen, mit Wasser waschen und wieder abgießen (Dekantieren)
+const decant = (l, from, to) => {
+  for (let k = 0; k < 2; k++) {
+    L.step(l, 200);
+    assert.ok(L.pour(l, from, to, L.view(l, L.vessel(l, from)).ml - 1), "abgießen");
+    L.step(l, 30);
+    if (!k) L.add(l, from, "H2O", { ml: 30 });
+  }
+};
+const full = 2e-4;
+
+test("Trennungsgang, Kupfergruppe: die gewaschenen Sulfide lösen sich in heißer Salpetersäure, kalt kaum", () => {
+  L.register(ionen());
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: ["CuSO4 0.1M", "Pb(NO3)2 0.1M", "Bi(NO3)3 0.1M", "CdSO4 0.1M"].map((reagent) => ({ reagent, ml: 2 })).concat([{ reagent: "HCl 2M", ml: 5 }]) },
+    { type: "beaker", ml: 600, id: "w" }, { type: "bath", id: "wb", under: "b", temp: 25 }], { room: 25 });
+  L.add(l, "b", "H2S water", { ml: 30 });
+  decant(l, "b", "w");
+  assert.ok(amount(l, "H2S(aq)") < 1e-5, "gewaschen: kaum noch Schwefelwasserstoff");
+  L.add(l, "b", "HNO3 3M", { ml: 10 });
+  L.step(l, 120);
+  assert.ok(amount(l, "CuS(s)") > 0.9 * full, "kalt löst sich in zwei Minuten kaum etwas");
+  L.tool(l, "wb").temp = 90;
+  L.step(l, 180);
+  for (const id of ["CuS(s)", "PbS(s)", "Bi2S3(s)", "CdS(s)"]) assert.ok(amount(l, id) < 0.05 * full, id + " hat sich gelöst");
+  assert.ok(amount(l, "S(s)") > 2 * full, "Schwefel bleibt zurück");
+  assert.ok(gasOf(l, "NO(g)") + gasOf(l, "NO2(g)") > 0, "Stickstoffoxide entweichen");
+});
+
+test("Trennungsgang, Nachweise der Kupfergruppe: Blei als Sulfat und Chromat, Bismut mit Stannit schwarz, Cadmium gelb nach dem Zementieren des Kupfers", () => {
+  L.register(ionen());
+  let g = precipitate(["Pb(NO3)2 0.1M"], null, [["H2SO4 1M", { ml: 2 }]], 30);
+  assert.ok(g.out["PbSO4(s)"] > 0.9 * full, "weißes Bleisulfat");
+  g = precipitate(["Pb(NO3)2 0.1M"], null, [["K2CrO4 0.1M", { ml: 3 }]], 30);
+  assert.ok(g.out["PbCrO4(s)"] > 0.99 * full, "gelbes Bleichromat");
+  g = precipitate(["Bi(NO3)3 0.1M"], null, [["NH3 2M", { ml: 5 }]], 10);
+  assert.ok(g.out["Bi(OH)3(s)"] > 0.99 * full, "weißes Bismuthydroxid mit Ammoniak");
+  L.add(g.l, "b", "SnCl2 0.1M", { ml: 4 });
+  L.add(g.l, "b", "NaOH 2M", { ml: 5 });
+  L.step(g.l, 5);
+  assert.ok(amount(g.l, "Bi(s)") > 0.95 * full, "Stannit reduziert zu schwarzem Bismut");
+  assert.equal(L.species("Bi(s)").color, "#141414");
+  // Kupfer und Cadmium: Eisenpulver scheidet das Kupfer ab, Schwefelwasserstoff fällt dann nur Cadmium, gelb
+  const l = lab([{ type: "beaker", ml: 250, id: "b", contains: [{ reagent: "CuSO4 0.1M", ml: 2 }, { reagent: "CdSO4 0.1M", ml: 2 }, { reagent: "H2SO4 1M", ml: 1 }] }], { room: 25 });
+  L.add(l, "b", "Fe powder", { g: 0.5 });
+  L.step(l, 300);
+  assert.ok(amount(l, "Cu^2+(aq)") + amount(l, "CuSO4(aq)") < 1e-6, "das Kupfer ist abgeschieden");
+  assert.ok(amount(l, "Cd^2+(aq)") > 0.9 * full, "Cadmium bleibt gelöst");
+  L.add(l, "b", "H2S water", { ml: 20 });
+  L.step(l, 30);
+  assert.ok(amount(l, "CdS(s)") > 0.9 * full && !(amount(l, "CuS(s)") > 1e-6), "nur gelbes Cadmiumsulfid");
+});
+
+test("Trennungsgang, Zinngruppe: gelbes Ammoniumpolysulfid löst Zinn- und Antimonsulfid, nicht Kupfersulfid; Säure fällt sie wieder", () => {
+  L.register(ionen());
+  const g = precipitate(["SnCl2 0.1M", "SbCl3 0.1M", "CuSO4 0.1M"], null, [["H2S water", { ml: 20 }]], 60);
+  L.add(g.l, "b", "NaOH 2M", { ml: 5 });
+  L.add(g.l, "b", "(NH4)2Sx", { ml: 10 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "SnS(s)") < 0.02 * full && amount(g.l, "Sb2S3(s)") < 0.01 * full, "Zinn und Antimon gelöst");
+  assert.ok(amount(g.l, "CuS(s)") > 0.99 * full, "Kupfersulfid bleibt");
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "SnS2(s)") > 0.95 * full, "gelbes Zinn(IV)-sulfid");
+  assert.ok(amount(g.l, "Sb2S3(s)") > 0.95 * full / 2, "orangefarbenes Antimonsulfid");
+  assert.ok(!(amount(g.l, "S2^2-(aq)") > 1e-9), "das Polysulfid zerfällt in der Säure");
+});
+
+test("Trennungsgang, Nickel und Cobalt: der schwarze Rest löst sich mit Wasserstoffperoxid; Nickel rot mit Diacetyldioxim, Cobalt blau mit Thiocyanat", () => {
+  L.register(ionen());
+  const g = precipitate(["NiSO4 0.1M", "CoCl2 0.1M"], [{ reagent: "NH4Cl 1M", ml: 5 }, { reagent: "NH3 2M", ml: 5 }], [["(NH4)2S", { ml: 5 }]], 60);
+  assert.ok(g.out["NiS(s)"] > 0.95 * full && g.out["CoS(s)"] > 0.95 * full, "beide als schwarze Sulfide");
+  L.add(g.l, "b", "HCl 2M", { ml: 30 });
+  L.step(g.l, 30);
+  assert.ok(amount(g.l, "NiS(s)") > 0.95 * full && amount(g.l, "CoS(s)") > 0.95 * full, "in Salzsäure bleiben sie");
+  L.add(g.l, "b", "H2O2 1M", { ml: 5 });
+  L.step(g.l, 60);
+  assert.ok(amount(g.l, "NiS(s)") < 0.02 * full && amount(g.l, "CoS(s)") < 0.02 * full, "mit Wasserstoffperoxid gelöst");
+  const ni = precipitate(["NiSO4 0.1M"], null, [["NH3 2M", { ml: 5 }], ["dimethylglyoxime", { drops: 20 }]], 5);
+  assert.ok(ni.out["Ni(C4H7N2O2)2(s)"] > 0, "rot mit Diacetyldioxim");
+  const co = lab([{ type: "testtube", id: "b", contains: [{ reagent: "CoCl2 0.1M", ml: 1 }] }], { room: 25 });
+  L.add(co, "b", "KSCN 2M", { ml: 5 });
+  L.step(co, 3);
+  assert.equal(look(co).color.name, "blue", "blau mit Thiocyanat");
+});
+
+test("Trennungsgang, Eisen, Mangan, Chrom, Aluminium, Zink: Natronlauge mit Wasserstoffperoxid trennt; jedes Ion für sich nachgewiesen", () => {
+  L.register(ionen());
+  const g = precipitate(["FeCl3 0.1M", "MnCl2 0.1M", "KCr(SO4)2 0.1M", "AlCl3 0.1M", "ZnSO4 0.1M"], null, [["NaOH 2M", { ml: 10 }], ["H2O2 1M", { ml: 5 }]], 180);
+  assert.ok(g.out["Fe(OH)3(s)"] > 0.99 * full && g.out["MnO2(s)"] > 0.99 * full, "Eisenhydroxid und Braunstein fallen");
+  assert.ok(amount(g.l, "CrO4^2-(aq)") > 0.85 * full, "Chrom als gelbes Chromat gelöst");
+  assert.ok(amount(g.l, "Al(OH)4-(aq)") > 0.95 * full, "Aluminium als Aluminat gelöst");
+  assert.ok(amount(g.l, "Zn(OH)4^2-(aq)") + amount(g.l, "Zn(OH)3-(aq)") > 0.9 * full, "Zink als Zinkat gelöst");
+  assert.equal(look(g.l).color.name, "yellow");
+  // Mangan: mit Bleidioxid in konzentrierter Salpetersäure heiß violett, kalt nicht
+  const crum = (temp) => {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "MnCl2 0.1M", ml: 0.5 }, { reagent: "HNO3 12M", ml: 5 }] }, { type: "bath", under: "b", temp }], { room: 25 });
+    L.add(l, "b", "PbO2 powder", { g: 0.5 });
+    L.step(l, 60);
+    return amount(l, "MnO4-(aq)");
+  };
+  assert.ok(crum(95) > 0.7 * 5e-5, "heiß: Permanganat");
+  assert.ok(crum(25) < 0.05 * 5e-5, "kalt: nichts");
+  // Aluminium: Ammoniumchlorid fällt aus dem Aluminat das Hydroxid
+  const al = precipitate(["AlCl3 0.1M"], [{ reagent: "NaOH 2M", ml: 2 }], [["NH4Cl 2M", { ml: 5 }]], 30);
+  assert.ok(al.out["Al(OH)3(s)"] > 0.9 * full, "weißes Aluminiumhydroxid");
+  // Chrom: Bariumchlorid fällt gelbes Bariumchromat
+  const cr = precipitate(["K2CrO4 0.1M"], null, [["BaCl2 0.1M", { ml: 3 }]], 30);
+  assert.ok(cr.out["BaCrO4(s)"] > 0.99 * full, "gelbes Bariumchromat");
+  // Zink: aus dem Zinkat fällt Ammoniumsulfid weißes Zinksulfid
+  const zn = precipitate(["ZnSO4 0.1M"], [{ reagent: "NaOH 2M", ml: 3 }], [["(NH4)2S", { ml: 2 }]], 30);
+  assert.ok(zn.out["ZnS(s)"] > 0.99 * full, "weißes Zinksulfid");
+});
+
+test("Trennungsgang, Calcium: Ammoniumoxalat fällt weißes Calciumoxalat, auch in essigsaurer Lösung", () => {
+  L.register(ionen());
+  const g = precipitate(["CaCl2 0.1M"], [{ reagent: "CH3COOH 1M", ml: 2 }], [["(NH4)2C2O4", { ml: 5 }]], 30);
+  assert.ok(g.out["CaC2O4(s)"] > 0.99 * full, "Calciumoxalat");
 });

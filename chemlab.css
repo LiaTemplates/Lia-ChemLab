@@ -416,3 +416,14 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 
 .lia-chemlab .cl-error,
 .cl-error { color: #b00020; border: 1px solid currentColor; border-radius: 0.4em; padding: 0.5em 0.8em; }
+/* Schaum über der Flüssigkeit und über dem Rand: weiß mit feinem Umriss, Bläschen als Ringe */
+.lia-chemlab .cl-froth { stroke: #aeb6bf; stroke-width: 0.7; }
+.lia-chemlab .cl-froth-bubble { fill: none; stroke: #aeb6bf; stroke-width: 0.6; }
+
+/* Leuchten der Lösung (Luminol, UV-Lampe) und der dunkle Raum: alles außer dem Leuchten tritt zurück */
+.lia-chemlab .cl-halo { filter: blur(6px); }
+.lia-chemlab .cl-uvlamp { fill: #2b2f3a; stroke: #15171d; stroke-width: 1; }
+.lia-chemlab .cl-uvglass { fill: #8d5bff; }
+.lia-chemlab .cl-uvbeam { fill: #8d5bff; fill-opacity: 0.14; }
+.lia-chemlab[data-dark="true"] .cl-wall, .lia-chemlab[data-dark="true"] .cl-bench { fill: #07080d; }
+.lia-chemlab[data-dark="true"] .cl-item > :not(.cl-glowing):not(.cl-glow):not(.cl-hit) { opacity: 0.22; }

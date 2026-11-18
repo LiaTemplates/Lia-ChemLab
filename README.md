@@ -98,7 +98,7 @@ Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
 Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
 
-> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
+> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, über vierzig Lösungen, fünf Indikatoren (mit Rotkohlsaft), Stärke, Iodlösung und vierzehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator (Ioduhren, Chamäleon), Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben, Reaktionen und Gleichgewichte im Gasraum (NO₂ und N₂O₄), Schaum, gelöster Luftsauerstoff beim Schütteln (Blaue Flasche), Leuchten durch Chemolumineszenz und unter der UV-Lampe (mit dem Knopf „Licht aus“) und die Zählrate über natürlich radioaktivem Kalium. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation, den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, dem Alkoholtest, Blauer Flasche und Ampel und Luminol, Fluorescein und Chinin, ein Paket mit den Alkalimetallen und ein Paket mit Ionen: Vanadium und seine Oxidationsstufen, Nickel und die Ionen und Sulfide des vollständigen Trennungsgangs. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -225,6 +225,32 @@ Ein **Puffer** hält den pH-Wert fest. Links stehen Essigsäure und Natriumaceta
  ],
  "shelf":["HCl 0.1M","NaOH 0.1M","NH4Cl 0.1M","NH3 0.1M"],
  "show":{"charts":["pH"]}}
+```
+
+## Rotkohl als Indikator
+
+Der Farbstoff aus Rotkohl (ein Anthocyan) ist ein Indikator aus der Küche, mit mehr Farben als jeder Laborindikator. Gib in jedes Glas ein paar Tropfen Rotkohlsaft:
+
+| Glas | Lösung | pH | Farbe |
+|---|---|---|---|
+| 1 | Salzsäure | 1 | rot |
+| 2 | Wasser | gut 5 | violett |
+| 3 | Natron | 8 | blau |
+| 4 | Soda | 11,5 | grün |
+| 5 | Natronlauge | 13 | grün, dann gelb |
+
+In der starken Lauge öffnet sich das Farbstoffmolekül langsam, und es entsteht ein gelber Stoff. Das geht nicht mehr zurück: Säure macht die gelbe Lösung nicht wieder rot. Bleichlauge zerstört den Farbstoff ganz.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"g1","contains":[{"reagent":"HCl 0.1M","ml":5}]},
+  {"type":"testtube","id":"g2","contains":[{"reagent":"H2O","ml":5}]},
+  {"type":"testtube","id":"g3","contains":[{"reagent":"NaHCO3 0.1M","ml":5}]},
+  {"type":"testtube","id":"g4","contains":[{"reagent":"Na2CO3 0.1M","ml":5}]},
+  {"type":"testtube","id":"g5","contains":[{"reagent":"NaOH 0.1M","ml":5}]}
+ ],
+ "shelf":["red cabbage","HCl 1M","NaOH 1M","NaOCl","testtube"],
+ "show":{"charts":false}}
 ```
 
 ## Fällungen und Ionennachweise
@@ -632,6 +658,30 @@ Das Magnesiastäbchen wählen und ein Reagenzglas antippen: Das Stäbchen wird i
  "show":{"charts":false,"equations":false}}
 ```
 
+## Kupfer und Salpetersäure
+
+Kupfer ist ein edles Metall: Salzsäure greift es nicht an. Salpetersäure aber löst es, denn sie oxidiert selbst. Gib in jedes Reagenzglas ein Stück Kupferblech:
+
+- In **verdünnter** Salpetersäure (Glas 1) entsteht langsam farbloses Stickstoffmonoxid. Am Glas wird es braun: Mit dem Sauerstoff der Luft wird daraus Stickstoffdioxid. Im Wasserbad geht es schneller.
+- In **konzentrierter** Salpetersäure (Glas 2) braust es heftig, und gleich steigen braune Dämpfe auf, die stechend riechen. Die Lösung wird blau vom Kupfer.
+
+Stickstoffdioxid steht mit seinem farblosen Dimer N₂O₄ im Gleichgewicht: 2 NO₂ ⇌ N₂O₄. Die beiden verschlossenen Kolben enthalten je ein Schnipsel Kupfer in konzentrierter Salpetersäure. Im Eisbad (links) bleibt der Gasraum blass, denn in der Kälte überwiegt N₂O₄. Im warmen Wasserbad bei 50 °C (rechts) wird er braun. Heißer sollte es nicht sein: Luft, Wasserdampf und Gas drückten den Stopfen heraus. Stell die beiden Bäder um, und die Farben tauschen.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"verd","contains":[{"reagent":"HNO3 3M","ml":5}]},
+  {"type":"testtube","id":"konz","contains":[{"reagent":"HNO3 12M","ml":5}]},
+  {"type":"flask","id":"kalt","contains":[{"reagent":"HNO3 12M","ml":5},{"reagent":"Cu sheet","g":0.03}]},
+  {"type":"stopper","in":"kalt"},
+  {"type":"bath","under":"kalt","temp":0},
+  {"type":"flask","id":"heiss","contains":[{"reagent":"HNO3 12M","ml":5},{"reagent":"Cu sheet","g":0.03}]},
+  {"type":"stopper","in":"heiss"},
+  {"type":"bath","under":"heiss","temp":50}
+ ],
+ "shelf":["Cu sheet","HNO3 3M","HNO3 12M","HCl 2M","testtube","bath"],
+ "show":{"charts":false}}
+```
+
 ## Metalle und Salzlösungen
 
 Ein unedles Metall verdrängt ein edleres aus dessen Lösung. Zinkpulver in die Kupfersulfat-Lösung geben: Kupfer scheidet sich ab, die Lösung verliert ihre Farbe und wird warm. Kupferblech in Silbernitrat-Lösung überzieht sich mit Silber, und die Lösung färbt sich nach und nach blassblau. Kupfer in Zinksulfat-Lösung: nichts. In Salzsäure entwickelt Zink Wasserstoff, Kupfer nicht.
@@ -858,6 +908,22 @@ Wasserstoffperoxid zerfällt von selbst nicht merklich. Eine Spatelspitze Brauns
  "show":{"charts":["n","V","T"]}}
 ```
 
+## Elefantenzahnpasta
+
+Ein Schauversuch, der in Schulen nur mit Schutzscheibe und als Lehrerversuch erlaubt ist: Im Messzylinder ist 30-prozentiges Wasserstoffperoxid mit einem Schuss Spülmittel. Gib die Kaliumiodid-Lösung dazu. Das Iodid zersetzt das Peroxid zu Wasser und Sauerstoff, und die Reaktion wird dabei so heiß, dass sie sich selbst beschleunigt. Nach einer halben Minute schießt eine Schaumsäule aus dem Zylinder: Das Spülmittel hält den Sauerstoff in Bläschen fest. Die Mischung kocht dabei, und der Schaum zerfällt danach langsam.
+
+Ohne Spülmittel (rechts) entsteht genauso viel Sauerstoff, er perlt aber einfach aus.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"cylinder","ml":100,"id":"links","contains":[{"reagent":"H2O2 9.8M","ml":20},{"reagent":"detergent","ml":5}]},
+  {"type":"cylinder","ml":100,"id":"rechts","contains":[{"reagent":"H2O2 9.8M","ml":20}]},
+  {"type":"thermometer","in":"links"}
+ ],
+ "shelf":["KI 2M","detergent","H2O2 9.8M","glowsplint","cylinder"],
+ "show":{"charts":["T"]}}
+```
+
 ## Ioduhr
 
 Im Glas stehen Kaliumiodid, etwas Natriumthiosulfat und 1 mL Stärkelösung (20 Tropfen). 20 mL Peroxodisulfat-Lösung dazugeben: Es entsteht langsam Iod, aber das Thiosulfat fängt es sofort wieder ab. Erst wenn das Thiosulfat verbraucht ist, bleibt Iod übrig und färbt die Stärke schlagartig blau, nach knapp einer Minute. Mit der verdünnten Lösung dauert es doppelt so lang, mit mehr Thiosulfat auch, im warmen Wasserbad geht es schneller.
@@ -872,6 +938,40 @@ Stärke und Iodlösung stehen auch im Regal. Ein Reagenzglas mit 10 mL Wasser, 2
  ],
  "shelf":["K2S2O8 0.1M","K2S2O8 0.05M","Na2S2O3 0.005M","KI 0.2M","starch","Lugol","H2O","bath","thermometer","beaker","testtube"],
  "show":{"charts":["n","T"]}}
+```
+
+## Landolt-Reaktion
+
+Die zweite klassische Ioduhr, benannt nach Hans Landolt (1886). Im Becherglas: Kaliumiodat-Lösung, etwas Schwefelsäure und Stärke. Gieße die Natriumsulfit-Lösung dazu und miss die Zeit: Lange bleibt alles farblos, dann wird die Lösung auf einen Schlag blauschwarz.
+
+Iodat oxidiert das Hydrogensulfit langsam zu Sulfat und wird dabei selbst zu Iodid. Das Iodid gibt mit noch vorhandenem Iodat Iod, doch solange Sulfit da ist, wird dieses Iod sofort wieder zu Iodid. Erst wenn das Sulfit aufgebraucht ist, bleibt Iod übrig und färbt die Stärke. Mit halb so viel Iodat dauert es doppelt so lange, in warmer Lösung geht es schneller.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"id":"uhr","contains":[{"reagent":"KIO3 0.02M","ml":50},{"reagent":"H2SO4 1M","ml":5},{"reagent":"starch","ml":2}]}
+ ],
+ "shelf":["Na2SO3 0.01M","KIO3 0.02M","KIO3 0.01M","H2SO4 1M","starch","H2O","beaker","bath"],
+ "show":{"charts":false}}
+```
+
+## Radioaktivität: Kaliumchlorid
+
+Kalium ist von Natur aus radioaktiv: 0,0117 % davon sind das Isotop Kalium-40, mit einer Halbwertszeit von 1,25 Milliarden Jahren. Ein Gramm Kalium hat deshalb 31,7 Becquerel, das heißt 31,7 Zerfälle in jeder Sekunde. Kaliumchlorid gibt es als Diätsalz im Supermarkt.
+
+- Links steht der Geigerzähler über einem Glas Wasser. Auch ohne Probe zählt er etwa 25 Impulse je Minute: der **Nulleffekt** aus Höhenstrahlung und Umgebung.
+- Rechts zählt er über 50 g Kaliumchlorid etwa viermal so viel.
+- Drück zweimal auf ▶: Die Uhr läuft dann zehn Minuten, auch wenn sonst nichts geschieht. Mit Ton (Menü ⋯) tickt jeder Zähler bei jedem Impuls, unregelmäßig, denn Zerfälle kommen zufällig. Die Anzeige zeigt, was in den letzten 10 s gezählt wurde, auf die Minute hochgerechnet. Schreib einige Werte auf und bilde den Mittelwert. Je länger du zählst, desto genauer wird er.
+- Gib Kaliumchlorid-Lösung in ein drittes Glas und stell einen Zähler dazu: Die Zählrate hängt nur davon ab, wie viel Kalium darunter ist, nicht davon, ob es gelöst ist.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"geiger","in":"wasser"},
+  {"type":"beaker","id":"salz","contains":[{"reagent":"KCl salt","g":50}]},
+  {"type":"geiger","in":"salz"}
+ ],
+ "shelf":["KCl salt","KCl 2M","NaCl 1M","H2O","beaker","geiger"],
+ "show":{"charts":false}}
 ```
 
 ## Fotometer: Farbe messen
@@ -1241,7 +1341,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, und das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin), dem Leuchten von Luminol, Fluorescein und Chinin und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1350,6 +1450,47 @@ Drei Reagenzgläser mit den klassischen Nachweisen. Gib in jedes 1 mL einer Prob
  "show":{"charts":false}}
 ```
 
+## Blaue Flasche und Ampel
+
+@[ChemLab.pack](packs/organic.json)
+
+In beiden Kolben sind Glucose-Lösung und Natronlauge, links mit ein paar Tropfen Methylenblau, rechts mit Indigocarmin. Frisch angesetzt ist links alles blau und rechts grün.
+
+- **Warten** (▶): Die Glucose reduziert den Farbstoff. Links wird es in Sekunden farblos, rechts über Rot gelb.
+- **Schütteln** (Kolben antippen, unter **Inhalt**): Die Lösung nimmt Sauerstoff aus der Luft im Kolben auf, und der oxidiert den Farbstoff zurück. Links wird es wieder blau, rechts grün.
+- Die Glucose reduziert den Farbstoff weiter, doch solange gelöster Sauerstoff da ist, wird er sofort neu oxidiert. Erst wenn der Sauerstoff verbraucht ist, nach knapp einer Minute, verschwindet das Blau. Die Ampel springt von Grün über Rot nach Gelb, denn Indigocarmin wird in zwei Schritten reduziert.
+- Das lässt sich viele Male wiederholen, bis die Glucose verbraucht ist. Im warmen Wasserbad ist die Farbe schneller wieder weg.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"flask","id":"blau","contains":[{"reagent":"glucose","ml":40},{"reagent":"NaOH 1M","ml":5},{"reagent":"methylene blue","drops":5}]},
+  {"type":"flask","id":"ampel","contains":[{"reagent":"glucose","ml":40},{"reagent":"NaOH 1M","ml":5},{"reagent":"indigo carmine","drops":10}]}
+ ],
+ "shelf":["glucose","NaOH 1M","methylene blue","indigo carmine","flask","bath","stopper"],
+ "show":{"charts":false}}
+```
+
+## Leuchten: Luminol und UV-Lampe
+
+@[ChemLab.pack](packs/organic.json)
+
+Mach das Licht aus (**Licht aus**, oben rechts).
+
+- **Luminol** (links): In Natronlauge mit etwas Wasserstoffperoxid passiert nichts. Gib die gelbe Kaliumhexacyanoferrat(III)-Lösung dazu: Die Lösung leuchtet blau, eine halbe Minute hell, dann verblasst sie. Das Eisen beschleunigt die Oxidation des Luminols, und das entstehende Aminophthalat gibt seine Energie als Licht ab (Chemolumineszenz). So weist die Spurensicherung Blut nach: Das Eisen im Hämoglobin wirkt wie hier das Hexacyanoferrat.
+- **Fluorescein** (Mitte) leuchtet unter der UV-Lampe grün, **Tonic Water** (rechts) blau, denn darin ist Chinin. Stell die Lampe ins rechte Glas, um es zu sehen. Ohne Lampe leuchtet nichts.
+- Gib zum Fluorescein etwas Salzsäure: Das Leuchten erlischt. Nur das Dianion des Fluoresceins fluoresziert, und in Säure nimmt es ein Proton auf.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"luminol","contains":[{"reagent":"luminol","ml":50},{"reagent":"H2O2 1M","ml":5}]},
+  {"type":"beaker","id":"fluorescein","contains":[{"reagent":"H2O","ml":50},{"reagent":"fluorescein","drops":5}]},
+  {"type":"uvlamp","in":"fluorescein"},
+  {"type":"beaker","id":"tonic","contains":[{"reagent":"tonic water","ml":50}]}
+ ],
+ "shelf":["K3Fe(CN)6 0.05M","luminol","H2O2 1M","fluorescein","tonic water","HCl 1M","uvlamp","beaker"],
+ "show":{"charts":false,"dark":true}}
+```
+
 ## Zähe Flüssigkeiten
 
 @[ChemLab.pack](packs/organic.json)
@@ -1436,6 +1577,104 @@ Im Scheidetrichter liegt Hexan auf Lugol-Lösung. So trennt man die Schichten na
   {"type":"separator","id":"trichter","over":"unten","contains":[{"reagent":"H2O","ml":40},{"reagent":"Lugol","drops":60},{"reagent":"hexane","ml":20}]}
  ],
  "shelf":["Lugol","hexane","H2O","beaker","separator"],
+ "show":{"charts":false}}
+```
+
+## Farben der Oxidationsstufen
+
+@[ChemLab.pack](packs/ionen.json)
+
+Viele Übergangsmetalle zeigen ihre Oxidationsstufe an der Farbe. Zwei klassische Versuche, beide mit Stoffen, die viele Schulen nicht mehr in der Sammlung haben:
+
+- **Vanadium-Regenbogen** (links): Die gelbe Lösung enthält Vanadium(V). Gib 2 g Zinkpulver dazu. Zink reduziert das Vanadium Stufe für Stufe: über Grün (Gelb und Blau gemischt) zum blauen Vanadium(IV), dann zum grünen Vanadium(III) und schließlich zum violetten Vanadium(II). Das dauert einige Minuten; benachbarte Stufen gleichen sich in der Lösung sofort aus, darum zeigt sich jede Farbe für sich.
+- **Chamäleon** (rechts): Natronlauge mit Zuckerlösung. Gib 2 mL Kaliumpermanganat-Lösung dazu. Der Zucker reduziert das violette Permanganat (Mangan(VII)) zum grünen Manganat (Mangan(VI)), auf dem Weg dorthin sieht die Mischung blau aus. Danach wird das Manganat zu Braunstein (Mangan(IV)), der fein verteilt in der Schwebe bleibt. Ohne Lauge geschieht nichts. Und gibst du zur grünen Lösung Säure, wird sie wieder violett: Manganat hält sich nur in Lauge.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"v","contains":[{"reagent":"NH4VO3 acidic","ml":50}]},
+  {"type":"beaker","id":"mn","contains":[{"reagent":"NaOH 1M","ml":40},{"reagent":"sugar 1M","ml":10}]}
+ ],
+ "shelf":["Zn powder","KMnO4 0.01M","H2SO4 1M","NH4VO3 acidic","NaOH 1M","sugar 1M","beaker"],
+ "show":{"charts":false}}
+```
+
+## Farben der Übergangsmetalle
+
+@[ChemLab.pack](packs/ionen.json)
+
+@[ChemLab.pack](packs/organic.json)
+
+Nickel-, Kobalt- und Chromsalze sind in vielen Schulen nicht mehr erlaubt, weil sie Krebs erzeugen können. Hier geht es gefahrlos:
+
+- **Nickel** (Glas 1, grün): Tropfe Ammoniak-Lösung dazu. Zuerst fällt grünes Nickelhydroxid, mit mehr Ammoniak löst es sich zum blauen Ammin-Komplex. Diacetyldioxim fällt dann leuchtend rotes Nickel-Diacetyldioxim, den klassischen Nachweis für Nickel. In stark saurer Lösung bleibt er aus.
+- **Chrom(III)** (Glas 2, Chromalaun, grün): Natronlauge fällt graugrünes Chrom(III)-hydroxid, im Überschuss löst es sich wieder grün. Chrom(III)-hydroxid ist amphoter: Es löst sich in Säure und in Lauge.
+- **Kobalt** (Glas 3, rosa): Natronlauge fällt rosa Kobalt(II)-hydroxid.
+- **Alkoholtest** (Glas 4, angesäuertes Dichromat, orange): Gib 1 mL Ethanol dazu. In einer halben Minute wird die Lösung grün: Das Dichromat oxidiert den Alkohol zu Ethanal und wird dabei selbst zu Chrom(III). So funktionierte das alte Prüfröhrchen der Polizei.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"ni","contains":[{"reagent":"NiSO4 0.1M","ml":5}]},
+  {"type":"testtube","id":"cr","contains":[{"reagent":"KCr(SO4)2 0.1M","ml":5}]},
+  {"type":"testtube","id":"co","contains":[{"reagent":"CoCl2 0.1M","ml":5}]},
+  {"type":"testtube","id":"alk","contains":[{"reagent":"K2Cr2O7 0.1M","ml":2},{"reagent":"H2SO4 1M","ml":3}]}
+ ],
+ "shelf":["NH3 2M","NaOH 1M","dimethylglyoxime","ethanol","H2SO4 1M","testtube","beaker","electrode-Ni","electrode-Cu","supply","Ni granules"],
+ "show":{"charts":false}}
+```
+
+## Trennungsgang: die Gruppen
+
+@[ChemLab.pack](packs/ionen.json)
+
+Im Kationentrennungsgang fällt man die Metall-Ionen einer unbekannten Lösung gruppenweise aus, eine Gruppe nach der anderen. Hier steht jede Gruppe in ihrem eigenen Becherglas, schon mit den Ionen, die zu ihr gehören:
+
+1. **Salzsäuregruppe**: Gib Salzsäure (2 mol/L) dazu. Silberchlorid und Bleichlorid fallen weiß aus. Bleichlorid löst sich in heißem Wasser wieder.
+2. **Schwefelwasserstoffgruppe**: In salzsaurer Lösung fällt Schwefelwasserstoffwasser nur die schwerst­löslichen Sulfide: Kupfer, Blei und Bismut dunkel, Cadmium gelb, Antimon orange, Zinn braun. Zink, Nickel, Cobalt, Eisen und Mangan bleiben gelöst. Es riecht nach faulen Eiern.
+3. **Ammoniumsulfidgruppe**: In ammoniakalischer Lösung fällt Ammoniumsulfid die übrigen Sulfide (Zink weiß, Mangan rosa, Eisen, Nickel und Cobalt schwarz), dazu Aluminium- und Chromhydroxid. Gib danach verdünnte Salzsäure dazu: Alles löst sich wieder, nur Nickel- und Cobaltsulfid bleiben schwarz zurück.
+4. **Ammoniumcarbonatgruppe**: Ammoniumcarbonat fällt Barium, Strontium und Calcium als Carbonate. Magnesium bleibt in der ammoniumreichen Lösung gelöst und gehört mit Natrium, Kalium und Ammonium zur löslichen Gruppe.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"g1","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"Pb(NO3)2 0.1M","ml":2},{"reagent":"CuSO4 0.1M","ml":2}]},
+  {"type":"beaker","id":"g2","ml":250,"contains":[{"reagent":"CuSO4 0.1M","ml":2},{"reagent":"Bi(NO3)3 0.1M","ml":2},{"reagent":"CdSO4 0.1M","ml":2},{"reagent":"SbCl3 0.1M","ml":2},{"reagent":"SnCl2 0.1M","ml":2},{"reagent":"ZnSO4 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"HCl 2M","ml":5}]},
+  {"type":"beaker","id":"g3","ml":250,"contains":[{"reagent":"ZnSO4 0.1M","ml":2},{"reagent":"MnCl2 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"CoCl2 0.1M","ml":2},{"reagent":"AlCl3 0.1M","ml":2},{"reagent":"KCr(SO4)2 0.1M","ml":2},{"reagent":"NH4Cl 1M","ml":5},{"reagent":"NH3 2M","ml":5}]},
+  {"type":"beaker","id":"g4","contains":[{"reagent":"BaCl2 0.1M","ml":2},{"reagent":"SrCl2 0.1M","ml":2},{"reagent":"CaCl2 0.1M","ml":2},{"reagent":"MgCl2 0.1M","ml":2},{"reagent":"NH4Cl 2M","ml":10}]}
+ ],
+ "shelf":["HCl 2M","H2S water","(NH4)2S","(NH4)2CO3","NH3 2M","NH4Cl 1M","beaker","bath","centrifuge"],
+ "show":{"charts":false}}
+```
+
+## Trennungsgang: unbekannte Probe
+
+@[ChemLab.pack](packs/ionen.json)
+
+In der Probe X sind drei Kationen. Welche, wird beim Laden gezogen. Bestimme sie mit dem Trennungsgang: Fälle Gruppe für Gruppe, lass den Niederschlag absetzen (oder zentrifugiere ihn), gieße die Lösung in ein frisches Becherglas ab und wasche den Niederschlag mit etwas Wasser. Dann prüfe jeden Niederschlag mit seinen Nachweisen.
+
+| Gruppe | Fällen mit | Untertrennung und Nachweise |
+|---|---|---|
+| Salzsäure | Salzsäure 2 mol/L | Bleichlorid löst sich in heißem Wasser, mit Kaliumchromat gelbes Bleichromat; Silberchlorid löst sich in Ammoniak und fällt mit Salpetersäure wieder |
+| Schwefelwasserstoff | Schwefelwasserstoffwasser in salzsaurer Lösung | gelbes Ammoniumpolysulfid löst Zinn und Antimon (mit Säure wieder gelb und orange); den Rest in heißer Salpetersäure lösen: Blei mit Schwefelsäure weiß, Bismut mit Ammoniak weiß und mit Stannit schwarz, Kupfer mit Ammoniak tiefblau, Cadmium nach Eisenpulver mit Schwefelwasserstoff gelb |
+| Ammoniumsulfid | Ammoniumchlorid, Ammoniak, Ammoniumsulfid | in verdünnter Salzsäure bleiben Nickel- und Cobaltsulfid; mit etwas Wasserstoffperoxid lösen: Nickel rot mit Diacetyldioxim, Cobalt blau mit Thiocyanat. Die Lösung mit Natronlauge und Wasserstoffperoxid: Eisen (mit Thiocyanat rot) und Mangan (mit Bleidioxid in heißer Salpetersäure violett) fallen; Chromat gelb (mit Bariumchlorid), Aluminium (mit Ammoniumchlorid weiß), Zink (mit Ammoniumsulfid weiß) bleiben gelöst |
+| Ammoniumcarbonat | Ammoniumcarbonat | Barium mit Kaliumchromat gelb, Strontium mit Schwefelsäure weiß, Calcium mit Ammoniumoxalat weiß; dazu die Flammenfärbung |
+| lösliche Gruppe | – | Magnesium mit Natronlauge weiß; Natrium und Kalium in der Flamme |
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"id":"probe","unknown":"X","oneOf":[
+    {"name":"Silber, Kupfer, Nickel","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"CuSO4 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2}]},
+    {"name":"Blei, Bismut, Kalium","contains":[{"reagent":"Pb(NO3)2 0.1M","ml":2},{"reagent":"Bi(NO3)3 0.1M","ml":2},{"reagent":"KNO3 0.1M","ml":2}]},
+    {"name":"Cadmium, Cobalt, Magnesium","contains":[{"reagent":"CdSO4 0.1M","ml":2},{"reagent":"CoCl2 0.1M","ml":2},{"reagent":"MgCl2 0.1M","ml":2}]},
+    {"name":"Kupfer, Eisen, Barium","contains":[{"reagent":"CuCl2 0.1M","ml":2},{"reagent":"FeCl3 0.1M","ml":2},{"reagent":"BaCl2 0.1M","ml":2}]},
+    {"name":"Zinn, Mangan, Calcium","contains":[{"reagent":"SnCl2 0.1M","ml":2},{"reagent":"MnCl2 0.1M","ml":2},{"reagent":"CaCl2 0.1M","ml":2}]},
+    {"name":"Silber, Nickel, Zink","contains":[{"reagent":"AgNO3 0.1M","ml":2},{"reagent":"NiSO4 0.1M","ml":2},{"reagent":"ZnSO4 0.1M","ml":2}]}]},
+  {"type":"beaker","ml":250,"id":"a"},
+  {"type":"beaker","ml":250,"id":"b"},
+  {"type":"beaker","ml":250,"id":"c"},
+  {"type":"testtube","id":"t1"},
+  {"type":"testtube","id":"t2"}
+ ],
+ "shelf":["HCl 2M","H2S water","NH4Cl 1M","NH3 2M","(NH4)2S","(NH4)2Sx","(NH4)2CO3","HNO3 3M","HNO3 12M","H2SO4 1M","NaOH 2M","H2O2 1M","K2CrO4 0.1M","KSCN 2M","BaCl2 0.1M","dimethylglyoxime","(NH4)2C2O4","SnCl2 0.1M","Fe powder","PbO2 powder","H2O","rod","beaker","testtube","bath","centrifuge"],
+ "task":{"text":"Bestimme die drei Kationen in Probe X.","goals":[{"identify":"X"}]},
  "show":{"charts":false}}
 ```
 
@@ -1544,7 +1783,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `g` – bei einer Elektrode ihre Masse in g, falls sie von der Vorgabe abweichen soll.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
-- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur mit fester Farbskala, `"diff"` Unterschiede zum Mittelwert, `"mix"` Schlieren (Dichte dessen, was zugegossen wurde), `"vortex"` Wirbel, `"pressure"` Druck. `flow3d` wählt, wie die Strömung in 3D erscheint: `"cut"` als Schnittebene (Vorgabe) oder `"particles"` als Teilchen im ganzen Glas. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
+- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur mit fester Farbskala, `"diff"` Unterschiede zum Mittelwert, `"mix"` Schlieren (Dichte dessen, was zugegossen wurde), `"vortex"` Wirbel, `"pressure"` Druck. `flow3d` wählt, wie die Strömung in 3D erscheint: `"cut"` als Schnittebene (Vorgabe) oder `"particles"` als Teilchen im ganzen Glas. `dark: true` beginnt mit ausgeschaltetem Raumlicht; dann tritt alles zurück außer dem, was leuchtet (der Knopf **Licht aus** schaltet um). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell. `volumes: false` blendet die Milliliter unter den Gefäßen und das Abgegebene der Bürette aus (auch in der Messwerttabelle).
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
@@ -1578,6 +1817,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `stopper` | Gummistopfen: verschließt das Gefäß `in` ganz. Steigt der Druck darin über 1,5 bar, fliegt er heraus und liegt dann frei auf dem Tisch | `in` |
 | `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
+| `uvlamp` | UV-Handlampe (365 nm) über dem Gefäß: Stoffe mit `fluor` leuchten | `in` |
+| `geiger` | Geigerzähler über dem Gefäß: zeigt die Impulse der letzten 10 s je Minute, mit Nulleffekt (25 Imp./min) und Zählstatistik, und tickt bei jedem Impuls; radioaktiv ist hier nur Kalium (31,7 Bq/g) | `in` |
 | `conductometer` | Leitfähigkeitsmessgerät, zeigt mS/cm oder µS/cm | `in` |
 | `electrode-C`, `electrode-Pt` | Elektrode aus Graphit (5 g) oder Platin (10 g); sie lösen sich nicht auf. Elektroden stehen nur in Bechergläsern | `in`, `g` |
 | `electrode-Cu`, `electrode-Zn`, `electrode-Fe`, `electrode-Ag`, `electrode-Pb` | Elektrode aus Kupfer, Zink, Eisen, Silber oder Blei, 10 g | `in`, `g` |
@@ -1598,29 +1839,29 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
 | `disposed` | richtig entsorgt: mindestens einmal und jedes Mal in den passenden Behälter; mit `in` nur dieses Gefäß | `{"disposed":true,"in":"b"}` |
 | `identify` | die unbekannte Probe mit diesem Namen (`unknown`, mit `oneOf`) ist richtig benannt; im Feld der Probe wählt man „Das ist: …“, die letzte Wahl zählt | `{"identify":"A"}` |
-| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (ein Belag scheidet sich an einer Elektrode ab: ein Metall, Silberchlorid, Bleisulfat oder Bleidioxid), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
+| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (ein Belag scheidet sich an einer Elektrode ab: ein Metall, Silberchlorid, Bleisulfat oder Bleidioxid), `lamp`, `broken`, `shine` (die Lösung leuchtet); bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
 Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum Beispiel `HCl 0.1M` oder `AgNO3 0.05M`. Ohne Zahl sind es 1 mol/L.
 
 | `reagent` | Stoff | Menge |
 |---|---|---|
 | `H2O` | destilliertes Wasser | `ml` |
-| `HCl`, `H2SO4`, `CH3COOH` | Salzsäure, Schwefelsäure, Essigsäure | `ml` |
+| `HCl`, `H2SO4`, `HNO3`, `CH3COOH` | Salzsäure, Schwefelsäure, Salpetersäure (bis 12 mol/L), Essigsäure | `ml` |
 | `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻ und setzt dabei etwa 73 kJ/mol frei; je Mol braucht sie dafür drei Mol Wasser, so dass sich mit wenig Wasser nur ein Teil löst | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
-| `NaCl`, `KBr`, `KI` | Natriumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
+| `NaCl`, `KCl`, `KBr`, `KI` | Natriumchlorid, Kaliumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
 | `Na2SO4`, `CH3COONa`, `NH4Cl`, `KSCN` | Natriumsulfat, Natriumacetat, Ammoniumchlorid, Kaliumthiocyanat | `ml` |
 | `AgNO3`, `BaCl2`, `CuSO4`, `FeCl3` | Silbernitrat, Bariumchlorid, Kupfersulfat, Eisen(III)-chlorid | `ml` |
 | `Na2CO3`, `NaHCO3` | Natriumcarbonat (Soda), Natriumhydrogencarbonat (Natron) | `ml` |
 | `CaCl2`, `SrCl2`, `LiCl` | Calciumchlorid, Strontiumchlorid, Lithiumchlorid | `ml` |
 | `ZnSO4`, `ZnI2`, `CuCl2`, `FeSO4`, `KNO3` | Zinksulfat, Zinkiodid, Kupferchlorid, Eisen(II)-sulfat, Kaliumnitrat | `ml` |
-| `Na2S2O3`, `Na2SO3`, `K2S2O8` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat | `ml` |
+| `Na2S2O3`, `Na2SO3`, `K2S2O8`, `KIO3` | Natriumthiosulfat, Natriumsulfit, Kaliumperoxodisulfat, Kaliumiodat | `ml` |
 | `NaOCl` | Natriumhypochlorit-Lösung (Bleichlauge) mit gleich viel Kochsalz und etwas Natronlauge | `ml` |
-| `K2CrO4`, `K2Cr2O7`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
+| `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
-| `H2O2`, `sugar` | Wasserstoffperoxid, Zuckerlösung | `ml` |
-| `BTB`, `PP`, `MO`, `UI` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator | `drops` |
+| `H2O2`, `sugar`, `detergent` | Wasserstoffperoxid, Zuckerlösung, Spülmittel | `ml` |
+| `BTB`, `PP`, `MO`, `UI`, `red cabbage` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator, Rotkohlsaft | `drops` |
 | `starch`, `Lugol` | Stärkelösung 1 %, Iod-Kaliumiodid-Lösung mit 0,01 mol/L Iod | `drops` |
 | `Mg ribbon` | Magnesiumband; 1 cm wiegt 0,0104 g | `g` |
 | `marble`, `marble powder` | Marmor (Calciumcarbonat) als Körner und als Pulver mit der zehnfachen Oberfläche | `g` |
@@ -1629,6 +1870,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `Zn granules`, `Zn powder` | Zink als Granalien und als Pulver | `g` |
 | `Fe wool`, `Cu sheet` | Eisenwolle, Kupferblech in Streifen | `g` |
 | `NH4NO3 salt`, `NaOH pellets`, `CaCl2 anhydrous` | Ammoniumnitrat, Natriumhydroxid-Plätzchen, wasserfreies Calciumchlorid; lösen sich in Wasser mit Lösungswärme | `g` |
+| `KCl salt` | Kaliumchlorid (Diätsalz), natürlich schwach radioaktiv (Geigerzähler) | `g` |
 
 ## Eigene Stoffe und Reaktionen
 
@@ -1673,6 +1915,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es. `"fruity"`: riecht fruchtig; bei einem flüchtigen gelösten Stoff zählt sein Dampfdruck über der Lösung |
 | `solvent` | `true`: ein organisches Lösungsmittel, das nach seinem Volumen (`Vm`) zu den organischen Abfällen zählt, auch wenn es im Modell nicht verdampft (Hexan, Aceton). Ein flüchtiger Stoff mit `Tb` zählt ohnehin |
 | `colloid` | `true`: entsteht der Feststoff in einer Lösung, bleibt er fein verteilt in der Schwebe und setzt sich nicht ab (Schwefel aus Thiosulfat) |
+| `foam` | `true`: ein gelöstes Tensid (Spülmittel). Steigt in seiner Lösung Gas auf, bleibt es als Schaum über der Flüssigkeit hängen, ab etwa 2 mmol/L Tensid fast ganz; der Schaum zerfällt mit einer Zeitkonstante von 40 s und quillt über den Rand, wenn er nicht ins Gefäß passt. Das Gas zählt dabei schon zur Luft |
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |
@@ -1683,6 +1926,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
 | `symbol` | Kurzzeichen für große Moleküle, zum Beispiel `"HInd"` für einen Indikator; ersetzt die Formel in der Anzeige |
+| `fluor` | Wellenlänge in nm, in der ein gelöster Stoff unter der UV-Lampe leuchtet (Fluorescein: `515`). Das Leuchten wächst mit der Konzentration und ist ab etwa 2·10⁻⁵ mol/L kräftig; zum Roten hin fällt die Bande flacher ab als zum Blauen |
 | `bands` | Farbe eines gelösten Teilchens als Absorptionsbanden: je Bande Wellenlänge des Maximums in nm, Halbwertsbreite in nm, molarer Absorptionskoeffizient in L/(mol cm) |
 | `src` | Quelle der Werte – Pflicht im Grundpaket |
 
@@ -1691,6 +1935,8 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 Steht in der Gleichung ein Feststoff, ist es ein **Löslichkeitsgleichgewicht**: `{"eq":"AgCl(s) <=> Ag+(aq) + Cl-(aq)","logK":-9.75}`. Mehr braucht es für eine Fällung nicht. Der Feststoff fällt aus, sobald die Lösung übersättigt ist, und löst sich, wenn etwas anderes seine Ionen bindet. Mit `rate` (`k` in mol/(s cm²) je (mol/L) hoch Ordnung, `Ea`, `order`) folgt die Auflösung eines Stücks aus dem Regal einem Geschwindigkeitsgesetz: Wohin es geht, sagt weiter das Gleichgewicht, wie schnell, die Oberfläche und die Lösung. So ist Marmor eingetragen, mit `"order":{"H+(aq)":1}`.
 
 Steht in der Gleichung ein Gas, ist es die **Löslichkeit eines Gases**: `{"eq":"CO2(g) <=> CO2(aq)","logK":-1.468}`; `logK` ist die gelöste Konzentration in mol/L bei 1 bar. Ist mehr gelöst, perlt das Gas aus; beim Sieden geht es mit dem Dampf fort, beim Eindampfen entweicht es ganz.
+
+Stehen in einer Gleichung **nur Gase**, gilt sie im **Gasraum** über der Flüssigkeit: als Gleichgewicht mit `logK` für die Partialdrücke in bar, `{"eq":"2 NO2(g) <=> N2O4(g)","logK":0.829}`, oder als Reaktion mit Geschwindigkeit, deren Ordnung den Gasen gilt, mit ihren Konzentrationen im Gasraum in mol/L: `{"eq":"2 NO(g) + O2(g) -> 2 NO2(g)","rate":{"k":7200,"order":{"NO(g)":2,"O2(g)":1}}}`. Sauerstoff kommt dabei aus der Luft dazu. Ein Gas mit `bands` färbt den Gasraum, je nachdem, wie viel davon darin steht (Stickstoffdioxid braun).
 
 **Redoxpaare** (`couples`): die oxidierte Form mit ihren Elektronen und die reduzierte Form, dazu das Standardpotential `E0` in V: `{"eq":"Cu^2+(aq) + 2 e- <=> Cu(s)","E0":0.3386}`. Ein Metall kann mehrere Paare haben, wenn es auf verschiedenen Wegen in dieselbe Oxidationsstufe übergeht: Zink zu Zink-Ionen oder in Lauge zu Zinkat, Silber zu Silber-Ionen oder mit Chlorid zu Silberchlorid, das dann als Belag auf der Elektrode sitzt. Solche Paare gelten als ein System; ihre Potentiale müssen zueinander passen (umgerechnet mit der Konstante des Komplexes oder dem Löslichkeitsprodukt). Aus den Redoxpaaren leitet der Baustein her, was an einem Metallstück und an einer Elektrode geschieht: welches Metall welches verdrängt, was sich bei der Elektrolyse abscheidet, welche Spannung eine Zelle liefert. `over` ist die Überspannung in V bei 1 mA/cm², mit der der Vorgang an einer Oberfläche in Gang kommt: eine Zahl für jede Oberfläche oder je Material, zum Beispiel `{"default":0.6,"Pt(s)":0.09,"Zn(s)":0.36}` für Wasserstoff. Ohne `over` läuft der Vorgang ungehemmt. Eine eingetragene Reaktion (`reactions`) mit derselben Gleichung geht der hergeleiteten vor.
 
@@ -1708,6 +1954,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `rate.fast` | `true`: läuft in Lösung sofort ab, bis einer der Ausgangsstoffe verbraucht ist, zum Beispiel Iod mit Thiosulfat. Braucht kein `k`. |
 | `rate.needs` | Nur mit `rate.fast`: Stoffe, die da sein müssen, ohne verbraucht zu werden, mit der Menge je Formelumsatz, etwa `{"H2O(l)":3}`: Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt. Was schon umgesetzt ist, hat seinen Anteil gebunden; gezählt wird es an den Produkten der Gleichung (dem kleinsten Anteil) oder, mit `rate.bound`, an der Summe der dort genannten Teilchen, etwa `["HSO4-(aq)","SO4^2-(aq)"]`. Ein Stoff in `needs` darf nicht in der Gleichung stehen. |
 | `logK` | Nur mit `rate.fast`: Die Reaktion läuft bis zu diesem Gleichgewicht (mit Konzentrationen in mol/L; Feststoffe, Wasser und Gase zählen 1) und nicht weiter. Der Wert gilt bei jeder Temperatur. Ohne die Angabe läuft sie vollständig ab. Die Rückreaktion wird nicht gerechnet. |
+| `light` | Wellenlänge in nm, in der diese Reaktion leuchtet (Chemolumineszenz, Luminol: `425`); je schneller sie läuft, desto heller, ab etwa 2·10⁻⁵ mol/(L s) kräftig |
 | `mirror` | `true`: Was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit gerade steht (Silberspiegel der Tollens-Probe). Er trübt nicht, liegt nicht am Boden und bleibt beim Umgießen im Gefäß; ab 0,5 µmol je cm² benetzter Wand ist er dicht. |
 | `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
@@ -1859,6 +2106,9 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 **Grenzen:**
 
+- Übersättigung gibt es nicht: Was ausfallen kann, fällt aus. Darum fällt Magnesiumcarbonat mit Ammoniumcarbonat teilweise aus (mit viel Ammoniumchlorid etwa ein Fünftel), während es im Labor übersättigt gelöst bleibt. Nickel- und Cobaltsulfid fallen dagegen mit Absicht als langsame Reaktion, damit sie in salzsaurer Lösung ausbleiben und sich danach in verdünnter Salzsäure nicht wieder lösen, wie im Trennungsgang.
+- Salzsäure und Salpetersäure rechnen bis 12 mol/L; konzentrierte Salpetersäure (65 %, 14 mol/L) steht deshalb als 12 mol/L im Regal. Welcher Weg beim Lösen von Kupfer überwiegt (NO oder NO2), folgt einem geschätzten Geschwindigkeitsgesetz, nicht dem Gleichgewicht der Stickstoffoxide in der Lösung.
+- Luftsauerstoff steht im Gasraum auch eines verschlossenen Gefäßes unbegrenzt bereit.
 - Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.
 - Ein gespeicherter Versuch beginnt nach dem Laden bei seinem letzten Stand: Zurückspulen geht nur bis dorthin, nicht bis zum Anfang des Versuchs.
 - In der Vorgabe rechnen Lösungen ideal, mit Konzentrationen statt Aktivitäten. Schon ab etwa 0,01 mol/L weichen pH-Werte von Puffern und Löslichkeiten dann von Messwerten ab, und Niederschläge lösen sich in Komplexbildnern etwas schwerer als im Labor.
@@ -1870,7 +2120,9 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Beide Modelle rechnen mit mol/L, wo Tabellen mol/kg Wasser meinen. Bis 1 mol/L macht das wenige Prozent aus; gesättigte Kochsalzlösung hat hier 6,2 mol/L (im realen Modell 6,3) statt 5,4 mol/L.
 - Redoxreaktionen laufen an Metallen und Elektroden ab. Zwischen gelösten Teilchen laufen nur die eigens eingetragenen: Peroxodisulfat mit Iodid, Iod mit Thiosulfat, Permanganat mit Eisen(II) und mit Wasserstoffperoxid, Kupfer(II) und Eisen(III) mit Iodid. Andere bleiben ohne Wirkung, etwa Permanganat mit Oxalsäure oder mit Iodid und Dichromat mit Eisen(II). Auch Metalle reduzieren Permanganat nicht, weil dafür kein Redoxpaar eingetragen ist.
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
-- Gelöster Luftsauerstoff wird nicht gerechnet. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
+- Gelöster Luftsauerstoff wird nur gerechnet, wo eine Reaktion ihn verbraucht (Blaue Flasche, Ampel): Die Lösung nimmt ihn an der Oberfläche langsam auf, beim Schütteln in Sekunden; die blaue Schicht oben an der Oberfläche eines ruhig stehenden Kolbens fehlt, denn jede Schicht gilt als durchmischt. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
+- Leuchten (Luminol, UV-Lampe) zeigt nur Farbe und Helligkeit, keine Lichtmenge; die Banden der Emission sind geschätzt. Die UV-Lampe beleuchtet nur das Gefäß, in dem sie steht, und gibt kein sichtbares Licht ab, das Farben verändert. Chinin fluoresziert vereinfacht bei jedem pH-Wert, Luminol braucht Hexacyanoferrat(III) als Katalysator (Blut, Kupfer oder Bleichlauge wirken hier nicht). In 3D ist die UV-Lampe ein Platzhalter.
+- Der Geigerzähler kennt als Strahler nur natürliches Kalium. Wie viel er von den Zerfällen darunter erfasst (0,15 %), ist geschätzt und hängt nicht von Menge, Form oder Abstand der Probe ab; Abschirmung und Abstandsgesetz fehlen. Die Totzeit des Zählrohrs fehlt; sie spielt erst bei Tausenden Impulsen je Sekunde eine Rolle.
 - Chlor löst sich nach dem Henry-Gesetz und bildet mit Wasser hypochlorige Säure; gelöstes Chlor, hypochlorige Säure und das Hypochlorit-Ion bleichen die Indikatorfarbstoffe und Kristallviolett zu einem farblosen Stoff, der vereinfacht ein Sauerstoffatom mehr trägt. Die Geschwindigkeit des Bleichens ist geschätzt. Andere Farbstoffe (Iod-Stärke, Metallkomplexe) bleicht es nicht, und Chlor oxidiert Iodid oder Bromid hier nicht.
 - Ein Belag auf einer Elektrode hemmt den Strom nicht, außer Bleisulfat und Bleidioxid. Das Silberchlorid, mit dem sich eine Silber-Elektrode am Pluspol in Kochsalzlösung überzieht, wächst deshalb beliebig weiter; im Labor wird die Schicht dicht, und der Strom geht zurück. Die Bleibeläge decken die Platte dagegen ab einer festen Dicke ganz ab (geschätzt 1 µm), bezogen auf die eingetauchte Fläche: Wer nachfüllt, legt wieder Blei frei. Ein Bleiakku fasst deshalb immer gleich viel; dass er mit jedem Laden mehr fasst (Formieren), fehlt. Ganz entladen zeigt er ohne Last etwa 1 V statt knapp 2 V, weil das Blei unter dem dichten Bleisulfat im Modell kein festes Potential mehr hat.
 - Zink löst sich in Natronlauge nur langsam und nur als Pulver sichtbar, in der Wärme deutlich schneller. Wie schnell genau, ist geschätzt.
@@ -1912,7 +2164,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Die Geschwindigkeiten (Magnesium in Säure, Zerfall von Wasserstoffperoxid an Braunstein, Thiosulfat in Säure, Entwässern) sind an die übliche Dauer des Schulversuchs angepasst, nicht gemessen. Solche Werte sind in den Daten als „estimated“ (geschätzt) gekennzeichnet.
 - Die Simulation ersetzt keine Sicherheitsunterweisung. Was hier gefahrlos geht, braucht im Labor Schutzbrille und Aufsicht.
 
-Geprüft wird der Baustein mit `node --test check.mjs`.
+Geprüft wird der Baustein mit `node --test check.mjs`. Schneller geht es mit `node tools/check-parallel.mjs`: Er verteilt die Prüfungen auf alle Kerne (mit 16 Kernen gut eine Minute statt sechseinhalb) und nennt am Ende, was fehlschlug.
 
 ## Lizenz
 

@@ -549,7 +549,7 @@
   // Klang über Web Audio, ohne Tondateien. Der Browser erlaubt Ton erst nach einer Bedienung: wake() bei jedem Klick.
   // Ohne Web Audio: null.
   fx.sound = function (global) {
-    var AC = global.AudioContext || global.webkitAudioContext, ctx = null, master = null, limit = null, noise = null, voices = {}, muted = false;
+    var AC = global.AudioContext || global.webkitAudioContext, ctx = null, master = null, limit = null, noise = null, voices = {}, muted = false, click = null;
     if (!AC) return null;
 
     function source() {
@@ -630,6 +630,24 @@
         } else if (name === "hiss") burst("highpass", 3000, 0.12, 0.5);
         else if (name === "whoosh") burst("bandpass", 600, 0.3, 0.7, 0.5);
         else if (name === "crash") { burst("highpass", 5000, 0.5, 0.6); burst("bandpass", 2500, 0.4, 0.35, 3); }
+      },
+      // Klick eines Geigerzählers, delay Sekunden von jetzt an: ein scharfer Anschlag und das kurze Nachklingen des kleinen
+      // Lautsprechers um 3 kHz, zusammen etwa 5 ms
+      tick: function (delay) {
+        var src, data, sr, i;
+        if (!ctx || muted) return;
+        if (!click) {
+          sr = ctx.sampleRate;
+          click = ctx.createBuffer(1, Math.round(sr * 0.006), sr);
+          data = click.getChannelData(0);
+          for (i = 0; i < data.length; i++) {
+            data[i] = 0.5 * Math.exp(-i / (sr * 0.0003)) * (Math.random() * 2 - 1) + 0.45 * Math.exp(-i / (sr * 0.0012)) * Math.sin(2 * Math.PI * 2900 * i / sr);
+          }
+        }
+        src = ctx.createBufferSource();
+        src.buffer = click;
+        src.connect(master);
+        src.start(ctx.currentTime + Math.max(0, delay || 0));
       },
       mute: function (flag) {
         var name;

@@ -287,7 +287,9 @@
           throw fail("species", id + " Tb/Hvap");
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
-        if (data.smell != null && data.smell !== true && data.smell !== "fruity") throw fail("species", id + " smell");
+        if (data.smell != null && data.smell !== true && data.smell !== "fruity" && data.smell !== "rotten") throw fail("species", id + " smell");
+        // fluor: Wellenlänge in nm, in der der gelöste Stoff unter der UV-Lampe leuchtet
+        if (data.fluor != null && !(phase === "aq" && typeof data.fluor === "number" && data.fluor >= 380 && data.fluor <= 730)) throw fail("species", id + " fluor");
         // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
         if (data.oil != null && !(phase === "aq" && data.Vm > 0 && data.oil && typeof data.oil.sol === "number" && data.oil.sol >= 0)) throw fail("species", id + " oil");
         // kd: Verteilung c(Ölschicht)/c(Wasser) eines gelösten Stoffs; oilBands: seine Banden, wenn er im Öl gelöst ist
@@ -344,6 +346,8 @@
           ids.forEach(function (id) { if (id !== WATER && id !== rest[0]) entry.d[id] = eq.nu[id] * entry.f; });
           if (Object.keys(entry.d).every(function (id) { return entry.d[id] > 0; })) entry.gas = rest[0];
         }
+        // nur Gase: ein Gleichgewicht im Gasraum (2 NO2 ⇌ N2O4); logK mit Partialdrücken in bar
+        if (ids.every(function (id) { return next.species[id].phase === "g"; })) entry.air = true;
         if (item.rate && !entry.rate) throw fail("rate");          // ein Geschwindigkeitsgesetz gibt es nur für die Auflösung eines Feststoffs
         put(next.equilibria, entry.key, entry, item, eq.text);
       });
@@ -361,11 +365,15 @@
         [fire.color, fire.smoke].forEach(function (color) {
           if (color != null && !/^#[0-9a-f]{6}$/i.test(color)) throw fail("color", String(color));
         });
+        // air: eine Reaktion nur aus Gasen läuft im Gasraum (2 NO + O2 → 2 NO2); ihre Ordnung gilt den Gasen
+        var air = !item.spark && rate.ignite == null && !rate.fast && Object.keys(eq.nu).every(function (id) { return next.species[id].phase === "g"; });
         Object.keys(rate.order || {}).forEach(function (id) {       // die Ordnung gilt gelösten Teilchen und ist eine Zahl
           known(id);
-          if ((next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
+          if ((air ? next.species[id].phase !== "g" : next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
         });
         if (rate.surface) known(rate.surface);
+        // light: Wellenlänge in nm, in der die Reaktion leuchtet (Chemolumineszenz, Luminol)
+        if (item.light != null && !(typeof item.light === "number" && item.light >= 380 && item.light <= 730)) throw fail("rate", "light");
         // mirror: was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas (Silberspiegel der Tollens-Probe)
         if (item.mirror != null && (item.mirror !== true || !Object.keys(eq.nu).some(function (id) { return eq.nu[id] > 0 && next.species[id].phase === "s"; }))) throw fail("rate", "mirror");
         // needs: was da sein muss, ohne verbraucht zu werden (nur bei sofortigen Reaktionen)
@@ -382,7 +390,7 @@
         }).sort();
         var key = keyOf(eq) + (cats.length ? " [" + cats.join(", ") + "]" : "");
         put(next.reactions, key, Object.assign({}, item, eq, {
-          key: key, catalysts: cats,
+          key: key, catalysts: cats, air: air,
           // ignite: Zündtemperatur in °C, danach brennt es von selbst weiter; dry: läuft nur ohne Flüssigkeit
           rate: {
             k: +rate.k || 0, Ea: +rate.Ea || 0, order: Object.assign({}, rate.order), surface: rate.surface || null,
@@ -756,6 +764,10 @@
   registerPart("centrifuge", { kind: "tool", under: true, spin: 20, fits: "testtube" });
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
+  // Geigerzähler mit Endfensterzählrohr über dem Gefäß: Impulse je Minute, in Torzeiten von 10 s gezählt
+  registerPart("geiger", { kind: "tool", sense: "cpm", unit: "cpm", lag: 0 });
+  // UV-Handlampe (365 nm), von oben auf das Gefäß gerichtet: Stoffe mit fluor leuchten
+  registerPart("uvlamp", { kind: "tool", uv: 365 });
   registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3], spread: [0.005, 0.01, 0.002, 0] });
   // test: liegt nicht auf dem Tisch, sondern wird an ein Gefäß gehalten
   registerPart("splint", { kind: "test", probe: "flame" });        // brennender Holzspan
@@ -764,7 +776,7 @@
   registerPart("paper", { kind: "test", probe: "paper" });         // feuchtes Universalindikatorpapier für den Gasraum
   // Elektroden: electrode: Material, g: Masse in g. Angezeigt und aufgezeichnet wird ihre Masse.
   // hold: an Platin und Graphit haftet ein Teil des Gases, das an ihnen entsteht (siehe FILM)
-  ["C", "Pt", "Cu", "Zn", "Fe", "Ag", "Pb"].forEach(function (el) {
+  ["C", "Pt", "Cu", "Zn", "Fe", "Ag", "Pb", "Ni"].forEach(function (el) {
     registerPart("electrode-" + el, { kind: "tool", electrode: el + "(s)", g: el === "C" ? 5 : 10, unit: "g", lag: 0, fine: 1e-7, hold: el === "C" || el === "Pt" });
   });
   // circuit: Glied eines Stromkreises. Der Stromkreis gehört zu dem Gefäß, an dem das Gerät steht, und führt über dessen zwei Elektroden.
@@ -793,7 +805,7 @@
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
   var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g", p: "bar" };
-  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken", "shine"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
   function readTask(raw, bench) {
@@ -1037,6 +1049,7 @@
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
         flow: ["temp", "diff", "mix", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
         flow3d: show.flow3d === "particles" ? "particles" : "cut",       // wie sie in 3D erscheint
+        dark: show.dark === true,                                  // das Raumlicht ist von Anfang an aus
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
@@ -1196,6 +1209,7 @@
     var v = vessel(lab, vesselId);
     if (!v || v.broken || !(filled(v) > 0) || !BEADS[how]) return false;
     if (oilVolume(v) > 0 && volume(v) > 0) v.drop = { share: 1, r: BEADS[how], until: lab.t + AGITATE };
+    v.shook = lab.t + AGITATE;                                 // es nimmt dabei Luft auf (aerate)
     v.dirty = true;
     return true;
   }
@@ -1519,7 +1533,7 @@
     if (!v) return false;
     lab.flows = lab.flows.filter(function (f) { return f.to !== vesselId && f.from !== vesselId; });
     v.n = {}; v.org = {}; v.drop = null; v.out = {}; v.lumps = []; v.ext = {}; v.rate = {}; v.gas = 0; v.T = lab.room; v.tap = 0;
-    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null;
+    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null; v.foam = 0; v.shook = 0;
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
@@ -1791,6 +1805,9 @@
   var SEEN = 5e-5;                // mol/L: ab so viel ist ein Niederschlag als Trübung zu sehen
   var HAZE = 0.003;               // mol/L: so viel Schwebendes nimmt der Flüssigkeit 63 % ihrer Durchsicht
   var OPAQUE = 0.9;               // ab dieser Deckkraft sieht man nicht mehr hindurch
+  var FOAM_C = 0.002;             // mol/L Tensid (foam), ab dem fast alles aufsteigende Gas im Schaum hängen bleibt
+  var FOAM_T = 40;                // s: in dieser Zeit zerfällt Schaum auf ein Drittel (1/e)
+  var AERATE = { still: 1e-4, shake: 0.3 };    // Sauerstoff aus der Luft: k_L in cm/s an der ruhigen Oberfläche, k_L·a in 1/s beim Schütteln (geschätzt)
 
   // Reaktionswärme in kJ/mol: nach Hess aus den Bildungsenthalpien; fehlt eine davon, gilt die Angabe dH am Eintrag.
   function heatOf(r) {
@@ -2001,7 +2018,7 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, found, k, round, worst, at, value, melt, out;
+    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, before = null, tried = null, found, k, round, worst, at, value, melt, out, order, t;
     // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
@@ -2039,7 +2056,7 @@
     function join(q) {
       var alpha = depends(q), gone = -1, least = Infinity, i;
       used[q] = true;
-      if (!alpha) { active.push(q); return; }
+      if (!alpha) { before = active.slice(); active.push(q); return; }
       for (i = 0; i < active.length; i++) {
         if (alpha[i] > 1e-9 && state.s[i] / alpha[i] < least) { least = state.s[i] / alpha[i]; gone = i; }
       }
@@ -2050,10 +2067,30 @@
       if (!found && saved) {
         // Der zuletzt Aufgenommene müsste sich lösen, lässt sich aber nicht sättigen: Das verlangte Konzentrationen, die es nicht
         // gibt, oder seine Zusammensetzung hängt von den anderen ab. Dann löst er sich ganz.
+        tried = active;
         active = saved;
         found = attempt();
       }
-      saved = null;
+      if (!found && before) {
+        // Der zuletzt Aufgenommene verdrängt einen der anderen, ohne dass ihre Zusammensetzungen voneinander abhängen: Ein
+        // Niederschlag wandelt sich ganz in einen viel schwerer löslichen um (Silberchromat in Silbersulfid). Versucht wird,
+        // frühere wegzulassen; sie lösen sich dann ganz.
+        // Erst einer, dann zwei zugleich (Silberoxid wandelt Zink- und Bismutsulfid in Silbersulfid um), die kleinsten zuerst.
+        order = before.map(function (q, i) { return { q: [q], s: state ? state.s[i] : 0 }; }).sort(function (a, b) { return a.s - b.s; });
+        order.slice(0, 4).forEach(function (a, i, small) { small.slice(i + 1).forEach(function (b) { order.push({ q: a.q.concat(b.q), s: 1e6 + a.s + b.s }); }); });      // Paare nur aus den vier kleinsten
+        // gilt nur, wenn danach keiner eine negative Menge hätte; sonst der erste, der sich überhaupt rechnen ließ
+        var joined = (tried || active).slice(before.length), first = null, keep = null;      // mit dem Neuzugang, auch wenn er sich lösen sollte
+        for (t = 0; t < order.length; t++) {
+          active = before.filter(function (q) { return order[t].q.indexOf(q) < 0; }).concat(joined);
+          found = attempt();
+          if (!found) continue;
+          if (found.s.every(function (x) { return x >= -1e-15; })) { keep = null; break; }
+          if (!first) { first = found; keep = active.slice(); }
+          found = null;
+        }
+        if (!found && first) { found = first; active = keep; }
+      }
+      saved = null; before = null;
       if (!found) return null;
       state = found;
       worst = -1e-15; at = -1;                                  // wer aufgebraucht ist, scheidet aus
@@ -2068,7 +2105,7 @@
       }
       // Ein Feststoff, der sich lösen müsste, kommt versuchsweise dazu: Meist löst er sich nur zum Teil, und die Lösung ist dann
       // mit ihm gesättigt.
-      if (at >= 0 && melt) { used[at] = true; saved = active.slice(); active.push(at); continue; }
+      if (at >= 0 && melt) { used[at] = true; saved = active.slice(); before = active.slice(); active.push(at); continue; }
       if (at >= 0) { join(at); continue; }
       out = cur.map(function (amount, q) { return used[q] ? 0 : amount; });
       active.forEach(function (q, index) { out[q] = Math.max(0, state.s[index]); });
@@ -2564,7 +2601,7 @@
     var wet = volume(v) > 0, vol = thick(v, volume(v)) ? 0 : volume(v), liquid = solution(v);
     if (liquid && metalsIn(v).some(function (id) { return corrode(lab, v, liquid, lumpFace(v, id), null, true) > REST; })) return true;
     return L.db.reactions.some(function (r) {
-      if (r.spark || !(limit(v, r) > 0) || (r.rate.dry && wet)) return false;
+      if (r.spark || r.air || !(limit(v, r) > 0) || (r.rate.dry && wet)) return false;
       if (r.rate.ignite != null && (wet || closed || !(v.lit[r.key] || v.T >= r.rate.ignite))) return false;
       // Eine sofortige Reaktion zählt, wenn sie in einem Rechenschritt merklich etwas umsetzt. Fehlt ihr ein Ausgangsstoff bis auf
       // Spuren, die ein Gleichgewicht nachliefert (H+ in neutraler Lösung), läuft sie unmerklich weiter und hält die Uhr nicht an.
@@ -2576,7 +2613,7 @@
   function kinetics(v, emit, closed) {
     var wet = volume(v) > 0, vol = thick(v, volume(v)) ? 0 : volume(v), list = [], fast = [];      // in einem Brei zählt keine Konzentration
     L.db.reactions.forEach(function (r) {
-      var can = !r.spark && !(r.rate.dry && wet) && (r.rate.fast ? wet : limit(v, r) > 0);
+      var can = !r.spark && !r.air && !(r.rate.dry && wet) && (r.rate.fast ? wet : limit(v, r) > 0);
       if (r.rate.ignite != null) {
         // Verbrennung: beginnt bei der Zündtemperatur und hält sich dann selbst in Gang; unter Wasser und ohne Luft brennt nichts
         if (can && !wet && !closed && (v.lit[r.key] || v.T >= r.rate.ignite)) {
@@ -3297,7 +3334,7 @@
   }
 
   function notice(lab, v, gases, emit, dissolved, bathed) {
-    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, spec, th;
+    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, tone, th, size = spec(v).cap, glow;
     // gemeldet wird Gas, sobald es die Uhr am Laufen hält (REST); dann zeigt die Fläche auch Blasen. Ein einzelner Rechenschritt mit
     // Gas zählt nicht: gemeldet wird, was eine Fünftelsekunde anhält.
     f.fizz = v.gas > 2 * REST ? (f.fizz || 0) + 1 : 0;
@@ -3320,14 +3357,22 @@
     haze = volume(v) > 0 ? 1 - Math.exp(-haze / volume(v) / HAZE) : 0;
     if (!f.opaque && haze >= OPAQUE) { f.opaque = true; if (emit) emit({ key: "opaque", vessel: v.id }); }
     else if (f.opaque && haze < OPAQUE - 0.2) f.opaque = false;
+    // Schaum: gemeldet, sobald er steht, und wenn er über den Rand quillt
+    if (!f.foam && v.foam > 1) { f.foam = true; if (emit) emit({ key: "foam", vessel: v.id }); }
+    else if (f.foam && !(v.foam > 0.2)) f.foam = false;
+    if (!f.foamOver && v.foam > 1 && filled(v) * 1000 + v.foam > size) { f.foamOver = true; if (emit) emit({ key: "foamOver", vessel: v.id }); }
+    else if (f.foamOver && !(filled(v) * 1000 + v.foam > 0.9 * size)) f.foamOver = false;
+    glow = shineOf(lab, v);                                    // die Lösung leuchtet: einmal, wenn es beginnt, und wenn es vergeht
+    if (!f.shine && glow && glow.level > 0.1) { f.shine = true; if (emit) emit({ key: "shine", vessel: v.id, name: colorName(glow.rgb).name }); }
+    else if (f.shine && !(glow && glow.level > 0.03)) { f.shine = false; if (emit) emit({ key: "shineEnd", vessel: v.id }); }
 
     name = volume(v) > 0 && !thick(v, volume(v)) ? colorOf(v) : { name: f.color };      // ohne Flüssigkeit gibt es keine Farbe der Lösung zu melden
     // Ändert sich die Extinktion merklich, ist die Lösung in Bewegung, auch wenn dabei kaum Stoff umgesetzt wird (ein Farbstoff
     // verblasst) oder die Farbe so satt ist, dass der Bildschirm den Unterschied nicht zeigt. Die erste Flüssigkeit im Glas zählt nicht.
     if (name.rgb) {
-      spec = shades(v);
-      if (!f.seen) f.seen = spec;
-      else if (spec.some(function (value, index) { return Math.abs(value - f.seen[index]) > DRIFT; })) { f.seen = spec; f.tinted = lab.t; }
+      tone = shades(v);
+      if (!f.seen) f.seen = tone;
+      else if (tone.some(function (value, index) { return Math.abs(value - f.seen[index]) > DRIFT; })) { f.seen = tone; f.tinted = lab.t; }
     } else f.seen = null;
     if (name.name === f.color) f.count = 0;
     else if (name.name === f.next) {
@@ -3350,6 +3395,40 @@
   }
 
   // ------------------------------------------------------------------ Gase, Sieden, Feuer
+
+  // Tensid in mol/L: gelöste Stoffe mit foam
+  function soap(v, vol) {
+    var sum = 0, id;
+    for (id in v.n) if (L.db.species[id].foam) sum += v.n[id];
+    return sum / vol;
+  }
+
+  // Gelöster Sauerstoff (Blaue Flasche): Die Lösung nimmt Sauerstoff aus dem Gasraum auf oder gibt ihn ab, bis sie nach Henry
+  // gesättigt ist, an der ruhigen Oberfläche in einer Stunde, beim Schütteln in Sekunden. Gerechnet nur, wo schon O2(aq) ist oder
+  // eine Reaktion es mit dem verbrauchen kann, was in der Lösung ist; sonst bliebe jede Lösung voll gelöster Luft.
+  // shortcut: aus der Luft ohne Vorrat (auch verschlossen), nur Sauerstoff; Stickstoff und Kohlenstoffdioxid aus der Luft fehlen
+  function aerate(lab, v, vol) {
+    var e = L.db.equilibria.filter(function (q) { return q.gas === "O2(g)"; })[0], cap, sum = 0, oxygen, h, sat, k, x, id;
+    if (!e || !(vol > 0)) return;
+    if (!(v.n["O2(aq)"] > 0) && !L.db.reactions.some(function (r) {
+      if (!(r.nu["O2(aq)"] < 0)) return false;
+      for (var key in r.nu) if (r.nu[key] < 0 && key !== "O2(aq)" && key !== WATER && !(v.n[key] > 0)) return false;
+      return true;
+    })) return;
+    cap = headroom(lab, v);
+    for (id in v.air) sum += v.air[id];
+    oxygen = cap > 0 ? AIR["O2(g)"] * Math.max(0, 1 - sum / cap) + (v.air["O2(g)"] || 0) / cap : AIR["O2(g)"];
+    h = heatOf(e);
+    sat = Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * oxygen * P_AIR;
+    k = v.shook > lab.t ? AERATE.shake : AERATE.still * Math.PI * Math.pow(spec(v).d || 5, 2) / 4 / (vol * 1000);
+    x = (sat - (v.n["O2(aq)"] || 0) / vol) * vol * (1 - Math.exp(-k * DT));
+    if (Math.abs(x) < 1e-15) return;
+    v.n["O2(aq)"] = (v.n["O2(aq)"] || 0) + x;
+    if (x > 0) v.taken["O2(g)"] = (v.taken["O2(g)"] || 0) + x;
+    else v.out["O2(g)"] = (v.out["O2(g)"] || 0) - x;
+    if (!(v.n["O2(aq)"] > 1e-300)) delete v.n["O2(aq)"];
+    tally(v, e, x * e.f);
+  }
 
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
 
@@ -3647,14 +3726,62 @@
     if (pipe) pipe.flow = flow / DT;
   }
 
+  // Im Gasraum: Reaktionen nur aus Gasen, mit Konzentrationen in mol/L des Gasraums (Sauerstoff kommt aus der Luft dazu), und
+  // Gleichgewichte nur aus Gasen, mit Partialdrücken in bar. Beides bei der Temperatur des Inhalts.
+  // shortcut: Luftsauerstoff steht auch im verschlossenen Gefäß unbegrenzt bereit; mit v.seal rechnen, wenn ein Versuch das braucht
+  function airborne(lab, v) {
+    var Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000), T = v.T + KELVIN, RL = R / 100, any = false, id;
+    for (id in v.air) if (v.air[id] > 0) any = true;
+    if (!any) return;
+    function conc(id) { return (v.air[id] || 0) / Vh + (AIR[id] ? AIR[id] * P_AIR / (RL * T) : 0); }
+    function move(r, x) {
+      for (var id in r.nu) {
+        var delta = r.nu[id] * x;
+        if (delta < 0 && AIR[id] && !((v.air[id] || 0) >= -delta)) v.taken[id] = (v.taken[id] || 0) - delta;
+        else if ((v.air[id] = (v.air[id] || 0) + delta) <= 1e-15) delete v.air[id];
+      }
+    }
+    L.db.reactions.forEach(function (r) {
+      var rate = r.rate, k, x, most = Infinity;
+      if (!r.air) return;
+      k = rate.k * Math.exp(-rate.Ea * 1000 / R * (1 / T - 1 / (T_REF + KELVIN))) * Vh;
+      for (id in rate.order) k *= Math.pow(conc(id), rate.order[id]);
+      r.left.forEach(function (t) { if (!AIR[t.id]) most = Math.min(most, (v.air[t.id] || 0) / t.n); });
+      x = Math.min(k * DT, most);
+      if (!(x > 1e-15)) return;
+      move(r, x);
+      tally(v, r, x);
+    });
+    L.db.equilibria.forEach(function (e) {
+      var h, logK, lo = -Infinity, hi = Infinity, i, mid;
+      if (!e.air) return;
+      if (!Object.keys(e.nu).some(function (id) { return v.air[id] > 0; })) return;
+      h = heatOf(e);
+      logK = shift(e.logK, h, T);
+      for (id in e.nu) {                                         // Umsatz, bei dem keine Menge negativ wird
+        if (e.nu[id] < 0) hi = Math.min(hi, (v.air[id] || 0) / -e.nu[id]);
+        else lo = Math.max(lo, -(v.air[id] || 0) / e.nu[id]);
+      }
+      if (!(hi > lo)) return;
+      function over(x) {                                         // läge der Quotient der Partialdrücke nach dem Umsatz x über K?
+        var sum = -logK;
+        for (var id in e.nu) sum += e.nu[id] * Math.log10(Math.max(1e-30, ((v.air[id] || 0) + e.nu[id] * x) * RL * T / Vh));
+        return sum > 0;
+      }
+      for (i = 0; i < 60; i++) { mid = (lo + hi) / 2; if (over(mid)) hi = mid; else lo = mid; }
+      if (Math.abs(lo) > 1e-15) { move(e, lo); tally(v, e, lo); }
+    });
+  }
+
   // Gas aus einem Rohr kommt ins Gefäß v. Steht Flüssigkeit darin, perlt es hindurch: Was ein Lösungsgleichgewicht hat (CO₂, NH₃, HCl),
   // geht in Lösung, und was zu viel ist, perlt wie sonst wieder aus; anderes steigt durch. Ein leeres Gefäß fängt das Gas auf.
   // Wie viel eine Blase des Gases mit dem Lösungsgleichgewicht e auf ihrem Weg durch die Flüssigkeit in v abgibt (siehe bubbleInto)
   function bubbleShare(v, e) {
-    var h = heatOf(e);
+    var h = heatOf(e), part;
     if (Object.keys(e.d).length !== 1) return 1;
-    return 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
+    part = 1 - Math.exp(-Math.pow(10, shift(e.logK * e.f, h == null ? null : h * e.f, v.T + KELVIN)) * R / 100 * (v.T + KELVIN) *
       (1 + LYE * (v.n["OH-(aq)"] || 0) / volume(v)));
+    return part < 0.1 ? 0 : part;                              // schwer Lösliches (Sauerstoff) perlt ganz durch; gelöst wird es nur an der Oberfläche (aerate)
   }
 
   function bubbleInto(lab, v, id, x) {
@@ -3846,6 +3973,7 @@
     vol = volume(v);
     dissolved = above(v, vol);
     dissolved.forEach(function (g) { if (g.p > P_AIR * OVER) fizz(v, g, vol); });
+    aerate(lab, v, vol);
 
     v.q += warmth(lab, v).q * DT;                              // die Flamme heizt
     if (v.q) v.T += v.q / heatCapacity(v);
@@ -3858,6 +3986,7 @@
       var eq = L.db.equilibria.filter(function (q) { return q.gas === id; })[0], x, key;
       if (!eq || !(v.n[id] > 0)) continue;
       x = Math.min(v.n[id], v.egas[id]) * bubbleShare(v, eq);
+      if (!(x > 0)) continue;
       v.n[id] -= x;
       v.eg -= x;                                               // was sich gelöst hat, perlt nicht mehr an der Elektrode
       for (key in eq.d) v.n[key] = (v.n[key] || 0) + eq.d[key] * x;
@@ -3887,7 +4016,11 @@
       } else if (meter.hold == null && room.ml >= L.parts[meter.type].cap) { meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
     }
     v.gas = (vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0) + (v.pipe || 0);      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
+    // Schaum: Ein Tensid in der Flüssigkeit hält das aufsteigende Gas als Schaum fest, der langsam zerfällt. Nur zum Ansehen,
+    // das Gas zählt schon zur Luft. foam: Schaum in mL
+    v.foam = (v.foam || 0) * Math.exp(-DT / FOAM_T) + (gas > 0 && vol > 0 ? gas * molar(lab) * 1000 * Math.min(1, soap(v, vol) / FOAM_C) : 0);
     v.pipe = 0;
+    airborne(lab, v);
     vent(lab, v, emit, gas);
     if (v.broken) return;
     pressure(lab, v, emit);
@@ -4094,6 +4227,7 @@
     if (kind === "V") return syringe(lab, t, v).ml;           // aufgefangenes Gas samt Luft in mL
     if (kind === "p") return v && !v.broken && v.p != null ? v.p : P_AIR;
     if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
+    if (kind === "cpm") return geiger(lab, t, v);
     vol = v ? volume(v) : 0;
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
@@ -4107,6 +4241,46 @@
     for (i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
     h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
     return (h >>> 0) / 4294967295 * 2 - 1;
+  }
+
+  // Radioaktivität natürlicher Elemente in Bq je mol: Kalium durch K-40 (Anteil 0,0117 %, Halbwertszeit 1,248·10⁹ a) 31,7 Bq/g
+  // (Lehrbuchwert, aus Häufigkeit und Halbwertszeit nach NUBASE2020)
+  var RADIO = { K: 1239 };
+  var NULL_RATE = 25;             // Imp./min: Nulleffekt eines Zählrohrs (Höhenstrahlung, Umgebung), üblich 20 bis 30
+  var YIELD = 0.0015;             // Impulse je Zerfall in der Probe darunter: Raumwinkel, Selbstabsorption, Fenster (geschätzt)
+  var GATE = 10;                  // s: Torzeit
+  // Impulse des Zählers t in der Torzeit gate über dem Gefäß v, mit der Zählstatistik (Poisson): fest für Gerät und Torzeit
+  function counted(t, v, gate) {
+    var bq = 0, id, el, lambda, u, k = 0, p, F;
+    if (v && !v.broken) for (id in v.n) for (el in RADIO) bq += v.n[id] * (L.db.species[id].atoms[el] || 0) * RADIO[el];
+    lambda = (NULL_RATE + bq * YIELD * 60) / 60 * GATE;
+    u = Math.min(1 - 1e-12, Math.max(1e-12, (jitter("geiger" + gate, t.id, "n") + 1) / 2));
+    if (lambda > 500) k = Math.max(0, Math.round(lambda + Math.sqrt(lambda) * Math.SQRT2 * inverf(2 * u - 1)));
+    else for (p = Math.exp(-lambda), F = p; u > F && k < 10 * lambda + 50; ) { k++; p *= lambda / k; F += p; }
+    return k;
+  }
+  // Anzeige wie am echten Gerät: die Impulse der letzten abgeschlossenen Torzeit, auf die Minute hochgerechnet; davor nichts
+  function geiger(lab, t, v) {
+    var gate = Math.floor(lab.t / GATE + 1e-9) - 1;
+    return gate < 0 ? null : counted(t, v, gate) * 60 / GATE;
+  }
+  // Wann der Zähler toolId zwischen from und to (s) tickt: In jeder Torzeit liegen so viele Impulse, wie sie zählt, gleichverteilt
+  // und unabhängig – so verteilt ein Poisson-Prozess seine Ereignisse. Zurück: die Zeitpunkte, aufsteigend
+  function ticks(lab, toolId, from, to) {
+    var t = tool(lab, toolId), out = [], g, k, i, at;
+    if (!t || L.parts[t.type].sense !== "cpm") return out;
+    for (g = Math.max(0, Math.floor(from / GATE)); g * GATE < to; g++) {
+      k = counted(t, t.in ? vessel(lab, t.in) : null, g);
+      for (i = 0; i < k; i++) {
+        at = (g + (jitter("tick" + g, t.id, i) + 1) / 2) * GATE;
+        if (at >= from && at < to) out.push(at);
+      }
+    }
+    return out.sort(function (a, b) { return a - b; });
+  }
+  function inverf(x) {            // Umkehrung der Fehlerfunktion (Winitzki), genau genug für die Streuung großer Zählraten
+    var a = 0.147, l = Math.log(1 - x * x), b = 2 / (Math.PI * a) + l / 2;
+    return (x < 0 ? -1 : 1) * Math.sqrt(Math.sqrt(b * b - l / a) - b);
   }
 
   function scattered(lab, t) { return lab.scatter != null && !!L.parts[t.type].spread; }
@@ -4234,6 +4408,16 @@
     });
   }
 
+  // Farbe einer Emissionsbande mit dem Maximum bei nm, so hell wie möglich: zum Roten hin fällt sie doppelt so flach ab wie zum Blauen
+  // (Halbwertsbreite etwa 70 nm, wie bei gelösten Farbstoffen; geschätzt)
+  function bandRgb(nm) {
+    var sum = [0, 0, 0], rgb, top, i, k, g;
+    for (i = 0; i < WAVES.length; i++) { g = Math.exp(-0.5 * Math.pow((WAVES[i] - nm) / (WAVES[i] < nm ? 20 : 40), 2)); for (k = 0; k < 3; k++) sum[k] += g * CMF[i][k]; }
+    rgb = linear(sum).map(function (value) { return Math.max(0, value); });
+    top = Math.max(rgb[0], rgb[1], rgb[2]) || 1;
+    return rgb.map(function (value) { var u = value / top; return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * Math.pow(u, 1 / 2.4) - 0.055)); });
+  }
+
   function fromHex(hex) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || "");
     return m ? [1, 2, 3].map(function (i) {
@@ -4324,6 +4508,26 @@
     return 1 - Math.exp(-1.5 * v.drop.share * oil / Va / v.drop.r * spec(v).d / 100);
   }
 
+  // Farbe des Gasraums aus den Banden seiner Gase, über die Weite des Gefäßes
+  function fogOf(lab, v) {
+    var Vh = Math.max(1e-6, (spec(v).cap - filled(v) * 1000) / 1000), conc = {}, any = false, id;
+    for (id in v.air) if (L.db.species[id].bands && v.air[id] > 0) { conc[id] = v.air[id] / Vh; any = true; }
+    return any ? tint(conc, spec(v).d) : null;
+  }
+
+  // Leuchten der Lösung: Reaktionen mit light (je nach Umsatz) und, unter der UV-Lampe, Stoffe mit fluor (je nach Konzentration).
+  // Zurück: { rgb, level 0 bis 1 } oder null
+  var LIGHT = 2e-5;               // mol/(L s): bei so viel Umsatz leuchtet die Lösung zu 63 % (geschätzt)
+  var FLUOR = 2e-5;               // mol/L: bei so viel fluoreszierendem Stoff ebenso (geschätzt)
+  function shineOf(lab, v) {
+    var vol = volume(v), sum = 0, rgb = [0, 0, 0], parts = [], id;
+    if (!(vol > 0) || v.broken) return null;
+    L.db.reactions.forEach(function (r) { if (r.light && v.rate[r.key] > 0) parts.push([r.light, v.rate[r.key] / vol / LIGHT]); });
+    if (toolAt(lab, v, function (def) { return def.uv; })) for (id in v.n) if (L.db.species[id].fluor) parts.push([L.db.species[id].fluor, v.n[id] / vol / FLUOR]);
+    parts.forEach(function (p) { var c = bandRgb(p[0]), k; sum += p[1]; for (k = 0; k < 3; k++) rgb[k] += c[k] * p[1]; });
+    return sum > 0.01 ? { rgb: rgb.map(function (c) { return Math.round(c / sum); }), level: 1 - Math.exp(-sum) } : null;
+  }
+
   function colorOf(v) {
     var vol = volume(v), conc = {}, id;
     if (vol > 0) for (id in v.n) if (L.db.species[id].phase === "aq") conc[id] = v.n[id] / vol;
@@ -4378,6 +4582,9 @@
       pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
+      // foam: Schaum über der Flüssigkeit in mL; fog: Farbe des Gasraums (farbige Gase wie NO2), sonst null
+      // shine: die Lösung leuchtet (Luminol, unter der UV-Lampe), sonst null
+      foam: v.foam || 0, fog: fogOf(lab, v), shine: shineOf(lab, v),
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
       // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet), Zähigkeit und Dichte
@@ -4872,6 +5079,7 @@
   L.FARADAY = FARADAY;
   L.step = step;
   L.atRest = atRest;
+  L.ticks = ticks;
   L.tint = tint;
   L.sample = sample;
   L.view = view;

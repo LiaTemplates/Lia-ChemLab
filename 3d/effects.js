@@ -99,6 +99,12 @@
     var base = surface.geometry.attributes.position.array.slice();
     var ground = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
     var crust = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xf2f0ea, 0.9));
+    // Schaum über der Flüssigkeit, und was über den Rand quillt, als Haube
+    var froth = new THREE.Mesh(new THREE.BufferGeometry(), fx.matte(0xffffff, 0.95));
+    var heap = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), froth.material);
+    // farbiges Gas im Gasraum (NO2): ein durchscheinender Körper vom Spiegel bis zum Rand
+    var fog = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false }));
+    fog.renderOrder = 1;
     // ein Spiegel am Glas (Silberspiegel): eine Metallhaut knapp innerhalb der Wand
     var mirror = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshStandardMaterial({ color: 0xd0d4d8, metalness: 1, roughness: 0.12, transparent: true, side: THREE.DoubleSide }));
     mirror.renderOrder = 1;
@@ -124,7 +130,7 @@
       new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
     drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
-    group.add(body, upper, beads, cut, swarm, surface, ground, crust, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
+    group.add(body, upper, beads, cut, swarm, surface, ground, crust, froth, heap, fog, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -222,7 +228,8 @@
       group: group,
       // shape.id: Name der Form, damit eine neue Form (anderes Gefäß) neu gebaut wird; tall: schmales Glas
       // shine: Höhe, bis zu der ein Spiegel am Glas reicht (null: keiner); split: Höhe der Grenze zwischen zwei Schichten (null: keine)
-      update: function (w, shape, level, ctx, tall, shine, split) {
+      // froth: Höhe, bis zu der Schaum steht (null: keiner)
+      update: function (w, shape, level, ctx, tall, shine, split, froth3) {
         var wet = w.ml > 0.005, r = shape.inner(level), t = ctx.still ? 0 : ctx.t, cloud = w.cloud && w.cloud.alpha > 0.02 ? w.cloud.alpha : 0;
         var rate = Math.max(w.gas || 0, w.steam || 0), boil = w.steam > 0 ? Math.min(1, 0.3 + w.steam / 0.008) : 0, layer, n, k, p, a, d, size, y, top, domes, q;
         var two = wet && w.oil && split != null && split > shape.floor + 0.01 && split < level - 0.01;
@@ -244,6 +251,9 @@
           liquid.roughness = 0.04 + 0.4 * cloud;
           // dünn gerechnet: bei der vollen Dicke des Glases verschiebt die Brechung, was in der Flüssigkeit steht (Elektroden, Fühler), aus dem Bild
           liquid.thickness = Math.min(0.4, 0.5 * r);
+          // die Lösung leuchtet (Luminol, UV-Lampe): selbstleuchtend in ihrer Farbe
+          if (w.shine) liquid.emissive.copy(fx.color(w.shine.rgb)).multiplyScalar(1.5 * w.shine.level);
+          else liquid.emissive.setRGB(0, 0, 0);
           // Öl: die Farbe aus 2D, in der Tiefe nur halb so kräftig (sonst wird goldgelbes Öl im breiten Glas braun)
           if (w.oil) { oil.color.copy(fx.color(w.oil.color.rgb)); oil.attenuationColor.copy(oil.color).lerp(new THREE.Color(0xffffff), 0.5); oil.thickness = liquid.thickness; }
         }
@@ -350,6 +360,23 @@
           fill(mirror, shape, shape.floor, shine, "mirror");
           mirror.material.color.copy(fx.color(w.mirror.rgb));
           mirror.material.opacity = Math.min(0.97, w.mirror.share);
+        }
+        froth.visible = wet && froth3 != null && froth3 > level + 0.02;
+        heap.visible = froth.visible && w.ml + w.foam > w.cap;
+        if (froth.visible) {
+          fill(froth, shape, level, Math.min(froth3, shape.rim), "froth");
+          froth.material.color.copy(fx.color(w.color.rgb)).lerp(new THREE.Color(0xffffff), 0.75);
+          if (heap.visible) {
+            var dome = Math.min(4, 0.4 + 0.8 * Math.log(1 + (w.ml + w.foam - w.cap) / 10)), wide = shape.inner(shape.rim) * 1.15;
+            heap.scale.set(wide, dome, wide);
+            heap.position.set(0, shape.rim, 0);
+          }
+        }
+        fog.visible = !!w.fog && Math.min.apply(null, w.fog.rgb) < 247;
+        if (fog.visible) {
+          fill(fog, shape, wet ? Math.max(level, froth.visible ? Math.min(froth3, shape.rim) : level) : shape.floor, shape.rim, "fog");
+          fog.material.color.copy(fx.color(w.fog.rgb));
+          fog.material.opacity = Math.min(0.85, (255 - Math.min.apply(null, w.fog.rgb)) / 255);
         }
         crust.visible = w.residue > 1e-7;
         if (crust.visible) fill(crust, shape, shape.floor, shape.floor + Math.min(14, 2.5 + 30 * Math.sqrt(w.residue)) / 16, "crust");

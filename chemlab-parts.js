@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -52,7 +52,7 @@
       "part.conductometer": "conductivity meter", "part.supply": "power supply", "part.ammeter": "ammeter",
       "part.voltmeter": "voltmeter", "part.lamp": "lamp", "part.bridge": "salt bridge",
       "part.electrode-C": "graphite electrode", "part.electrode-Pt": "platinum electrode", "part.electrode-Cu": "copper electrode",
-      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode", "part.electrode-Pb": "lead electrode",
+      "part.electrode-Zn": "zinc electrode", "part.electrode-Fe": "iron electrode", "part.electrode-Ag": "silver electrode", "part.electrode-Pb": "lead electrode", "part.electrode-Ni": "nickel electrode",
       "group.water": "", "group.acid": "Acids and bases", "group.salt": "Salt solutions", "group.indicator": "Indicators",
       "group.solid": "Solids", "group.gear": "Equipment", "group.other": "Other solutions", "group.electric": "Electricity",
       "hint.electrode": "Now tap the beaker it should dip into.",
@@ -88,7 +88,7 @@
       "say.boil": "{vessel}: The liquid boils.", "say.boilEnd": "{vessel}: The boiling stops.",
       "say.dry": "{vessel}: The liquid has evaporated, a solid residue remains.",
       "say.dryNone": "{vessel}: The liquid has evaporated completely.",
-      "say.smell": "{vessel}: There is a pungent smell of {name}.", "say.smellFruity": "{vessel}: There is a fruity smell of {name}.",
+      "say.smell": "{vessel}: There is a pungent smell of {name}.", "say.smellFruity": "{vessel}: There is a fruity smell of {name}.", "say.smellRotten": "{vessel}: It smells of rotten eggs: {name}.",
       "say.ignite": "{vessel}: {name} catches fire.", "say.fireEnd": "{vessel}: The fire has gone out.",
       "say.splint": "{splint} held to {vessel}: {result}.",
       "splint.pop1": "a soft pop (hydrogen test positive)", "splint.pop2": "a squeaky pop (hydrogen test positive)",
@@ -157,7 +157,7 @@
       "say.tap": "{vessel}: tap set to “{state}”", "say.tapOff": "{vessel}: tap closed",
       "say.tapFull": "{vessel}: The vessel below is full, the tap closes.",
       "say.solid": "{vessel}: A {color} precipitate forms.", "say.dissolved": "{vessel}: The precipitate dissolves.",
-      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
+      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.", "say.foam": "{vessel}: Foam forms.", "say.foamOver": "{vessel}: The foam swells over the rim.", "say.shine": "{vessel}: The solution glows {color}.", "say.shineEnd": "{vessel}: The glow fades.",
       "say.crystals": "{vessel}: {color} crystals separate out.",
       "say.dissolvedOne": "{vessel}: The {color} precipitate dissolves.",
       "the.white": "white", "the.yellow": "yellow", "the.orange": "orange", "the.red": "red",
@@ -208,12 +208,12 @@
       "goal.min": "at least", "goal.max": "at most", "goal.from": "from", "goal.to": "to", "goal.in": "in {name}",
       "goal.has": "{name} is present", "goal.identify": "identify {name}", "sample": "sample {name}",
       "unknown.contents": "The contents are unknown.", "identify": "This is:", "identify.pick": "– choose –",
-      "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
+      "hidden.smell": "{vessel}: It smells pungent.", "hidden.fruity": "{vessel}: It smells fruity.", "hidden.rotten": "{vessel}: It smells of rotten eggs.", "hidden.haze": "{vessel}: The liquid turns finely cloudy.",
       "hidden.ignite": "{vessel}: Something catches fire.", "hidden.gone": "{vessel}: A substance is used up.", "hidden.plated": "{vessel}: A deposit forms.", "goal.gone": "{name}: no longer present",
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
-      "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
+      "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.shine": "The solution glows", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
       "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "seen.paperWhite": "Indicator paper is bleached", "part.paper": "indicator paper",
       "say.paper": "{vessel}: The moist indicator paper turns {color}.", "say.paperWhite": "{vessel}: The moist indicator paper is bleached.",
       "part.stopper": "rubber stopper", "part.manometer": "manometer", "measure.p": "Pressure", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
@@ -343,6 +343,7 @@
     if (def.bath) return num(r.temp, 0, lang) + " °C";
     // Extinktion: im Deutschen E, im Englischen A (absorbance); am Ende der Skala „> 3“
     if (r.unit === "E") return text("unit.E", lang) + (v == null ? " –" : r.over ? " > " + trim(def.range[1], lang) : " " + num(v, 3, lang));
+    if (r.unit === "cpm") return (v == null ? "–" : num(v, 0, lang)) + " " + text("unit.cpm", lang);
     if (v == null) return "– " + r.unit;
     if (r.unit === "A") return v < 0.9995 ? num(v * 1000, 1, lang) + " mA" : num(v, 2, lang) + " A";
     if (r.unit === "V") return num(v, 2, lang) + " V";
@@ -366,7 +367,7 @@
     var veiled = event.hidden || !!(ctx.hidden && ctx.hidden[event.vessel]);
     if (veiled) switch (event.key) {
       case "plated": case "gone": case "ignite": return text("hidden." + event.key, lang, vars);
-      case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : "hidden.smell", lang, vars);
+      case "smell": return text(L.species(event.species).smell === "fruity" ? "hidden.fruity" : L.species(event.species).smell === "rotten" ? "hidden.rotten" : "hidden.smell", lang, vars);
       case "solid": if (event.colloid) return text("hidden.haze", lang, vars); if (event.mirror) return text("hidden.mirror", lang, vars);
     }
     switch (event.key) {
@@ -432,6 +433,7 @@
       case "smell":
         vars.name = nameOf(L.species(event.species), lang);
         if (L.species(event.species).smell === "fruity") return text("say.smellFruity", lang, vars);
+        if (L.species(event.species).smell === "rotten") return text("say.smellRotten", lang, vars);
         break;
       case "ignite": vars.name = nameOf(L.species(event.species), lang); break;
       case "splint":
@@ -441,6 +443,7 @@
         vars.result = text("splint." + event.result + (event.result === "pop" ? event.level : ""), lang);
         break;
       case "pop": return text("say.pop" + (event.level || 0), lang, vars);
+      case "shine": vars.color = text("color." + event.name, lang); break;
       case "flameTest":
         if (!event.name) return text("say.flameNone", lang, vars);
         vars.color = text("color." + event.name, lang);
@@ -563,10 +566,42 @@
       ? '<text class="cl-label" x="0" y="' + y + '" text-anchor="middle">' + num(w.ml, w.ml < 99.95 ? 1 : 0, ctx.lang) + " mL</text>" : "";
   }
 
+  // Schaum über der Flüssigkeit, in einem blassen Ton ihrer Farbe; was nicht ins Gefäß passt, quillt oben heraus und läuft außen herab
+  function froth(w, ctx, shape) {
+    var part = L.parts[w.type], level = shape.level || (part.surface && function (ml) { return part.surface(Object.assign({}, w, { ml: ml })); });
+    var rgb = w.color.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.75); }), fill = css(rgb), out = "", over, top, k, x, y, r, h;
+    if (!level) return "";
+    top = Math.max(shape.rim, level(Math.min(w.cap, w.ml + w.foam)));
+    out += '<path class="cl-froth" d="' + shape.fill(top) + '" fill="' + fill + '"/>';
+    for (k = 0; k < 14; k++) {                                // Bläschen im Schaum
+      y = top + (shape.top - top) * pseudo(17, k);
+      if (shape.top - top < 3) break;
+      out += '<circle class="cl-froth-bubble" cx="' + f(shape.x0 + (shape.x1 - shape.x0) * pseudo(19, k)) + '" cy="' + f(y) + '" r="' + f(1 + 1.5 * pseudo(23, k)) + '"/>';
+    }
+    over = w.ml + w.foam - w.cap;
+    if (over > 0) {                                           // über den Rand: eine Haube und Zungen, die außen herablaufen
+      h = Math.min(60, 6 + 12 * Math.log(1 + over / 10));
+      for (k = 0; k < 9; k++) {
+        x = shape.x0 - 4 + (shape.x1 - shape.x0 + 8) * k / 8; r = 5 + 4 * pseudo(29, k) + h * 0.25;
+        out += '<circle class="cl-froth" cx="' + f(x) + '" cy="' + f(shape.rim - h * 0.45 * (1 - Math.abs(k - 4) / 5)) + '" r="' + f(r) + '" fill="' + fill + '"/>';
+      }
+      [shape.x0 - 6, shape.x1 + 6].forEach(function (side, i) {
+        var run = Math.min(shape.bottom - shape.rim, h * 2.5 + 10 * pseudo(31, i));
+        out += '<rect class="cl-froth" x="' + f(side - 4) + '" y="' + f(shape.rim - 2) + '" width="8" height="' + f(run) + '" rx="4" fill="' + fill + '"/>';
+      });
+    }
+    return out;
+  }
+
   // Inhalt eines Gefäßes: Flüssigkeit, Feststoff, Blasen, Zulauf. shape: { path, x0, x1, top, bottom, rim, tall }
   function contents(w, ctx, shape) {
     var out = "", clip = "cl-" + ctx.uid + "-" + w.id + "-clip", box = { x0: shape.x0, x1: shape.x1, top: shape.top, bottom: shape.bottom };
-    var layer;
+    var layer, dim;
+    // farbiges Gas (NO2) im Gasraum: vom Rand bis zur Flüssigkeit, so deckend, wie es dunkel ist
+    if (w.fog && shape.fill && !w.broken) {
+      dim = Math.min(0.85, (255 - Math.min.apply(null, w.fog.rgb)) / 255);
+      if (dim > 0.03) out += '<path class="cl-fog" d="' + shape.fill(shape.rim) + '" fill="' + css(w.fog.rgb) + '" fill-opacity="' + dim.toFixed(2) + '"/>';
+    }
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
         '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';
@@ -585,6 +620,12 @@
         // etwas abgedunkelt, damit auch ein weißer Niederschlag vor der hellen Wand als milchige Trübung zu sehen ist
         out += '<path class="cl-cloud" d="' + shape.path + '" fill="' + css(shade(w.cloud.rgb, 0.93)) + '" fill-opacity="' + (w.cloud.alpha * 0.92).toFixed(2) + '"/>';
       }
+      // die Lösung leuchtet (Luminol, unter der UV-Lampe): in ihrer Farbe, mit einem Schein ums Glas; bleibt im dunklen Raum hell
+      if (w.shine) {
+        out += '<ellipse class="cl-glowing cl-halo" cx="' + f((shape.x0 + shape.x1) / 2) + '" cy="' + f((shape.top + shape.bottom) / 2) + '" rx="' + f((shape.x1 - shape.x0) / 2 + 10) +
+          '" ry="' + f((shape.bottom - shape.top) / 2 + 10) + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.4 * w.shine.level).toFixed(2) + '"/>' +
+          '<path class="cl-glowing" d="' + shape.path + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.15 + 0.8 * w.shine.level).toFixed(2) + '"/>';
+      }
       if (w.sediment && w.sediment.ml > 0.002) {
         layer = Math.min((shape.bottom - shape.top) * 0.45, 3 + 9 * Math.sqrt(w.sediment.ml) * (shape.tall ? 1 : 0.5));
         out += '<rect class="cl-sediment" clip-path="url(#' + esc(clip) + ')" x="' + f(shape.x0 - 2) + '" y="' + f(shape.bottom - layer) +
@@ -602,6 +643,7 @@
       out += '<path class="cl-crust" d="' + shape.fill(shape.bottom - layer) + '"/>';
     }
     out += solids(w, box, shape.tall, ctx, w.ml > 0.005 ? shape.top : null);
+    if (w.foam > 0.3 && w.ml > 0.005) out += froth(w, ctx, shape);
     // ein Spiegel am Glas (Silberspiegel): bis zur Höhe, bei der er entstand, je dichter, desto deckender; mit einem Lichtstreif
     if (w.mirror && w.mirror.share > 0.02 && L.parts[w.type] && L.parts[w.type].surface) {
       layer = Math.min(shape.bottom - 2, L.parts[w.type].surface(Object.assign({}, w, { ml: w.mirror.ml })));
@@ -968,6 +1010,20 @@
     }
   });
 
+  // ------------------------------------------------------------------ UV-Lampe
+
+  // Handlampe über dem Gefäß, ihr violettes Licht fällt hinein; place wie beim Thermometer, ohne Gefäß liegt sie auf dem Tisch
+  L.registerPart("uvlamp", {
+    width: function () { return 48; },
+    bounds: function () { return { x0: -20, x1: 20, top: -22 }; },
+    draw: function (w, ctx, place) {
+      if (!place) return '<rect class="cl-uvlamp" x="-18" y="-16" width="36" height="12" rx="3"/><rect class="cl-uvglass" x="-14" y="-6" width="28" height="3"/>' + badge(0, 14, ctx.no);
+      var x = place.x, y = place.top - 8;
+      return '<path class="cl-glowing cl-uvbeam" d="M' + f(x - 12) + "," + f(y + 10) + "L" + f(x + 12) + "," + f(y + 10) + "L" + f(x + 22) + "," + f(place.bottom) + "L" + f(x - 22) + "," + f(place.bottom) + 'Z"/>' +
+        '<rect class="cl-uvlamp" x="' + f(x - 18) + '" y="' + f(y - 4) + '" width="36" height="12" rx="3"/><rect class="cl-glowing cl-uvglass" x="' + f(x - 14) + '" y="' + f(y + 6) + '" width="28" height="3"/>';
+    }
+  });
+
   // ------------------------------------------------------------------ Thermometer
 
   // place: { x, bottom, top } im Gefäß; ohne Gefäß steht es in einem Halter
@@ -1020,6 +1076,17 @@
     bounds: function () { return { x0: -14, x1: 44, top: -138 }; },
     draw: function (w, ctx, place) {
       return gauge(ctx, place, "pH" + (w.value == null ? " –" : ctx.numbers ? " " + num(w.value, 2, ctx.lang) : ""), 50);
+    }
+  });
+
+  // Geigerzähler: das Zählrohr über der Probe, daneben die Anzeige in Impulsen je Minute
+  L.registerPart("geiger", {
+    width: function () { return 96; },
+    bounds: function () { return { x0: -14, x1: 70, top: -138 }; },
+    draw: function (w, ctx, place) {
+      // das Zählrohr taucht nicht ein: es endet etwa am Rand des Gefäßes
+      var held = place ? Object.assign({}, place, { bottom: place.top + 0.45 * (place.bottom - place.top) }) : place;
+      return gauge(ctx, held, ctx.numbers ? shown(w, ctx.lang) : text("unit.cpm", ctx.lang), 80);
     }
   });
 
