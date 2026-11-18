@@ -11428,6 +11428,7 @@ test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit d
   const svg = L.parts.beaker.draw(L.view(run.lab, L.vessel(run.lab, "b")), { lang: "de", uid: "u", t: 0, still: true, seed: 1 });
   assert.match(svg, /class="cl-field"/);
   assert.match(svg, /⏱ ×300/);
+  assert.doesNotMatch(L.parts.beaker.draw(L.view(run.lab, L.vessel(run.lab, "b")), { lang: "de", uid: "u", t: 0, still: true, seed: 1, flow: "temp" }), /cl-field/, "mit Strömungsansicht nur sie");
   const plain = beaker([{ reagent: "H2O", ml: 50 }]);
   assert.doesNotMatch(L.parts.beaker.draw(look(plain), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }), /cl-field/);
   assert.equal(JSON.parse(L.describe(run, {})).bench[0].spatial, 300, "Aufbau kopieren behält das Feld");

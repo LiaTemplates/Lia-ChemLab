@@ -674,7 +674,8 @@
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
         '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';
-      if (w.field) out += '<g clip-path="url(#' + esc(clip) + ')">' + fieldCells(w.field, box, esc(clip)) + "</g>";
+      // das Feld, außer die Strömungsansicht ist an: dann sie allein (sie trägt das Feld nicht mit, übereinander sähe es nach Mischen aus)
+      if (w.field && !ctx.flow) out += '<g clip-path="url(#' + esc(clip) + ')">' + fieldCells(w.field, box, esc(clip)) + "</g>";
       // zwei Schichten: die obere füllt alles, die untere bis zu ihrer eigenen Höhe, dazwischen die Grenze
       if (w.oil && (shape.level || L.parts[w.type].surface)) {
         layer = w.oil.top ? w.ml - w.oil.ml : w.oil.ml;
