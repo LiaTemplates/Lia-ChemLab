@@ -274,6 +274,8 @@
       "CaCl2(s)": { name: name("calcium chloride, anhydrous"), Hf: -795.8, S: 104.6, color: WHITE, flame: "#ff6a2a", src: NBS + "; " + LOOK + GLOW },
       "NaCl(s)": { name: name("sodium chloride"), Hf: -411.12, color: WHITE, flame: "#ffd21f", shine: 30,
         src: "llnl.dat (USGS): Halite, Enthalpy of formation -98.26 kcal/mol; " + LOOK + GLOW },
+      "KCl(s)": { name: name("potassium chloride"), Hf: -436.68, color: WHITE, flame: "#b08cff", shine: 30,
+        src: LLNL + "Sylvite, Enthalpy of formation -104.37 kcal/mol; " + LOOK + GLOW },
       "CuSO4*5H2O(s)": { name: name("copper sulfate pentahydrate"), Hf: null, color: "#2f6fd0", flame: "#3ddc84", src: LOOK + GLOW },
       "CuSO4(s)": { name: name("copper sulfate, anhydrous"), Hf: null, color: "#eceeea", flame: "#3ddc84", src: LOOK + GLOW },
       "CaCO3(s)": { name: name("calcium carbonate"), Hf: null, color: WHITE, flame: "#ff6a2a", src: LOOK + GLOW },
@@ -448,6 +450,7 @@
       { eq: "I2(s) + I-(aq) <=> I3-(aq)", logK: -0.0806, dH: 5.44, src: LLNL + "I2 + H2O = 0.5 O2 + 2 H+ + 2 I-, log_k -24.8084, delta_H 165.967 kJ/mol, and 3 I- + 2 H+ + 0.5 O2 = I3- + H2O, log_k 24.7278, delta_H -160.528 kJ/mol; added together" },
 
       { eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.5855, src: LLNL + "Halite, NaCl = Cl- + Na+, log_k 1.5855" },
+      { eq: "KCl(s) <=> K+(aq) + Cl-(aq)", logK: 0.8459, src: LLNL + "Sylvite, KCl = Cl- + K+, log_k 0.8459" },
       // aus den Bildungsenthalpien und Entropien dieser Tabelle; die Lösungswärme folgt ebenso daraus (+25,45, −44,75, −81,36 kJ/mol)
       { eq: "NH4NO3(s) <=> NH4+(aq) + NO3-(aq)", logK: 1.119, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
       { eq: "NaOH(s) <=> Na+(aq) + OH-(aq)", logK: 6.956, src: "calculated from the formation enthalpies and entropies of this table (solid: " + NBS + "; ions: CODATA)" },
@@ -723,6 +726,7 @@
       "Na2SO3": { name: name("sodium sulfite solution"), solution: { "Na+(aq)": 2, "SO3^2-(aq)": 1 }, molar: true, group: "salt" },
       // Bleichlauge (Javelwasser, Chlorreiniger): Natriumhypochlorit mit etwas Natronlauge
       "NaOCl": { name: name("sodium hypochlorite solution (bleach)"), solution: { "Na+(aq)": 2.05, "OCl-(aq)": 1, "Cl-(aq)": 1, "OH-(aq)": 0.05 }, molar: true, group: "salt" },
+      "KCl": { name: name("potassium chloride solution"), solution: { "K+(aq)": 1, "Cl-(aq)": 1 }, molar: true, group: "salt" },
       "KNO3": { name: name("potassium nitrate solution"), solution: { "K+(aq)": 1, "NO3-(aq)": 1 }, molar: true, group: "salt" },
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
       // Kristallviolett-Lösung mit 25 µmol/L (10 mg/L), wie für die Fotometrie üblich
@@ -764,6 +768,7 @@
       "Zn powder": { name: name("zinc powder"), solid: "Zn(s)", area: 300, form: "powder", group: "solid" },
       "Fe wool": { name: name("iron wool"), solid: "Fe(s)", area: 60, form: "powder", group: "solid" },
       "Cu sheet": { name: name("copper sheet (strip)"), solid: "Cu(s)", area: 20, shape: 0, group: "solid" },
+      "KCl salt": { name: name("potassium chloride (salt)"), solid: "KCl(s)", area: 40, form: "powder", group: "solid" },
       "NH4NO3 salt": { name: name("ammonium nitrate (salt)"), solid: "NH4NO3(s)", area: 40, form: "powder", group: "solid" },
       "NaOH pellets": { name: name("sodium hydroxide pellets"), solid: "NaOH(s)", area: 8, group: "solid" },
       "CaCl2 anhydrous": { name: name("calcium chloride, anhydrous (granules)"), solid: "CaCl2(s)", area: 20, group: "solid" }

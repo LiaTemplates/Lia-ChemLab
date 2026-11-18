@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "part.uvlamp": "UV lamp", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -348,6 +348,7 @@
     if (r.unit === "V") return num(v, 2, lang) + " V";
     if (r.unit === "mS/cm") return v >= 0.1 ? trim(v, lang) + " mS/cm" : trim(v * 1000, lang) + " µS/cm";
     if (r.unit === "bar") return num(v, 2, lang) + " bar";
+    if (r.unit === "cpm") return num(v, 0, lang) + " " + text("unit.cpm", lang);
     if (def.sense === "V") return num(v, 1, lang) + " mL · " + num(r.p == null ? 1 : r.p, 2, lang) + " bar";      // Kolbenprober mit Manometer
     if (def.scale) return num(Math.abs(v) < 0.005 ? 0 : v, 2, lang) + " g";      // Waage: auf 0,01 g, ohne „−0,00“
     if (r.unit === "g") return num(v, 3, lang) + " g";
@@ -1075,6 +1076,17 @@
     bounds: function () { return { x0: -14, x1: 44, top: -138 }; },
     draw: function (w, ctx, place) {
       return gauge(ctx, place, "pH" + (w.value == null ? " –" : ctx.numbers ? " " + num(w.value, 2, ctx.lang) : ""), 50);
+    }
+  });
+
+  // Geigerzähler: das Zählrohr über der Probe, daneben die Anzeige in Impulsen je Minute
+  L.registerPart("geiger", {
+    width: function () { return 96; },
+    bounds: function () { return { x0: -14, x1: 70, top: -138 }; },
+    draw: function (w, ctx, place) {
+      // das Zählrohr taucht nicht ein: es endet etwa am Rand des Gefäßes
+      var held = place ? Object.assign({}, place, { bottom: place.top + 0.45 * (place.bottom - place.top) }) : place;
+      return gauge(ctx, held, ctx.numbers ? shown(w, ctx.lang) : text("unit.cpm", ctx.lang), 80);
     }
   });
 

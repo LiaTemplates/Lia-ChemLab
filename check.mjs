@@ -10476,6 +10476,21 @@ test("Dunkler Raum: show.dark beginnt dunkel, der Knopf schaltet das Licht; was 
   assert.equal(part(el, '[data-act="dark"]').attributes["aria-pressed"], "false");
 });
 
+// ---------------------------------------------------------------- Geigerzähler
+
+test("Geigerzähler: über Wasser nur der Nulleffekt, über 50 g Kaliumchlorid viermal so viel; die Anzeige streut nach Poisson", () => {
+  const l = lab([{ type: "beaker", id: "w", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "geiger", in: "w" }, { type: "beaker", id: "k" }, { type: "geiger", in: "k" }], { room: 25 });
+  L.add(l, "k", "KCl salt", { g: 50 });
+  const water = [], salt = [];
+  for (let i = 0; i < 90; i++) { L.step(l, 10); water.push(L.reading(l, "geiger1").value); salt.push(L.reading(l, "geiger2").value); }
+  const mean = (x) => x.reduce((a, b) => a + b, 0) / x.length, sd = (x) => Math.sqrt(mean(x.map((y) => (y - mean(x)) ** 2)));
+  near(mean(water), 25, 4, "Nulleffekt");
+  near(mean(salt), 25 + 50 * 39.098 / 74.551 * 31.7 * 0.0015 * 60, 10, "Kaliumchlorid: 31,7 Bq je Gramm Kalium");
+  near(sd(salt), Math.sqrt(100 / 6) * 6, 8, "Streuung wie bei Poisson");
+  assert.ok(salt.every((x) => x % 6 === 0), "gezählt in 10 s, hochgerechnet auf die Minute");
+  assert.match(L.parts.geiger.draw({ type: "geiger", value: 96, unit: "cpm" }, { numbers: true, lang: "de", no: 1 }), /96 Imp\.\/min/);
+});
+
 // ---------------------------------------------------------------- Landolt-Reaktion
 
 // Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag

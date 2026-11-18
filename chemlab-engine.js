@@ -764,6 +764,8 @@
   registerPart("centrifuge", { kind: "tool", under: true, spin: 20, fits: "testtube" });
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
+  // Geigerzähler mit Endfensterzählrohr über dem Gefäß: Impulse je Minute, in Torzeiten von 10 s gezählt
+  registerPart("geiger", { kind: "tool", sense: "cpm", unit: "cpm", lag: 0 });
   // UV-Handlampe (365 nm), von oben auf das Gefäß gerichtet: Stoffe mit fluor leuchten
   registerPart("uvlamp", { kind: "tool", uv: 365 });
   registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3], spread: [0.005, 0.01, 0.002, 0] });
@@ -4224,6 +4226,7 @@
     if (kind === "V") return syringe(lab, t, v).ml;           // aufgefangenes Gas samt Luft in mL
     if (kind === "p") return v && !v.broken && v.p != null ? v.p : P_AIR;
     if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
+    if (kind === "cpm") return geiger(lab, t, v);
     vol = v ? volume(v) : 0;
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
@@ -4237,6 +4240,27 @@
     for (i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
     h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
     return (h >>> 0) / 4294967295 * 2 - 1;
+  }
+
+  // Radioaktivität natürlicher Elemente in Bq je mol: Kalium durch K-40 (Anteil 0,0117 %, Halbwertszeit 1,248·10⁹ a) 31,7 Bq/g
+  // (Lehrbuchwert, aus Häufigkeit und Halbwertszeit nach NUBASE2020)
+  var RADIO = { K: 1239 };
+  var NULL_RATE = 25;             // Imp./min: Nulleffekt eines Zählrohrs (Höhenstrahlung, Umgebung), üblich 20 bis 30
+  var YIELD = 0.0015;             // Impulse je Zerfall in der Probe darunter: Raumwinkel, Selbstabsorption, Fenster (geschätzt)
+  var GATE = 10;                  // s: Torzeit
+  // Zählrate über dem Gefäß in Imp./min, mit der Zählstatistik (Poisson) je Torzeit: fest für Gerät und Torzeit
+  function geiger(lab, t, v) {
+    var bq = 0, gate = Math.floor(lab.t / GATE + 1e-9), id, el, lambda, u, k = 0, p, F;
+    if (v && !v.broken) for (id in v.n) for (el in RADIO) bq += v.n[id] * (L.db.species[id].atoms[el] || 0) * RADIO[el];
+    lambda = (NULL_RATE + bq * YIELD * 60) / 60 * GATE;
+    u = (jitter("geiger" + gate, t.id, "n") + 1) / 2;
+    if (lambda > 500) k = Math.max(0, Math.round(lambda + Math.sqrt(lambda) * Math.SQRT2 * inverf(2 * u - 1)));
+    else for (p = Math.exp(-lambda), F = p; u > F && k < 10 * lambda + 50; ) { k++; p *= lambda / k; F += p; }
+    return k * 60 / GATE;
+  }
+  function inverf(x) {            // Umkehrung der Fehlerfunktion (Winitzki), genau genug für die Streuung großer Zählraten
+    var a = 0.147, l = Math.log(1 - x * x), b = 2 / (Math.PI * a) + l / 2;
+    return (x < 0 ? -1 : 1) * Math.sqrt(Math.sqrt(b * b - l / a) - b);
   }
 
   function scattered(lab, t) { return lab.scatter != null && !!L.parts[t.type].spread; }

@@ -98,7 +98,7 @@ Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
 Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
 
-> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
+> **Stand:** Version 0.0.1, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, rund vierzig Lösungen, vier Indikatoren, Stärke, Iodlösung und dreizehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator und Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation und den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, ein Paket mit den Alkalimetallen. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -954,6 +954,26 @@ Iodat oxidiert das Hydrogensulfit langsam zu Sulfat und wird dabei selbst zu Iod
  "show":{"charts":false}}
 ```
 
+## Radioaktivität: Kaliumchlorid
+
+Kalium ist von Natur aus radioaktiv: 0,0117 % davon sind das Isotop Kalium-40, mit einer Halbwertszeit von 1,25 Milliarden Jahren. Ein Gramm Kalium hat deshalb 31,7 Becquerel, das heißt 31,7 Zerfälle in jeder Sekunde. Kaliumchlorid gibt es als Diätsalz im Supermarkt.
+
+- Links steht der Geigerzähler über einem Glas Wasser. Auch ohne Probe zählt er etwa 25 Impulse je Minute: der **Nulleffekt** aus Höhenstrahlung und Umgebung.
+- Rechts zählt er über 50 g Kaliumchlorid etwa viermal so viel.
+- Die Anzeige springt alle 10 s, denn Zerfälle kommen zufällig. Drück zweimal auf ▶: Die Uhr läuft dann zehn Minuten, auch wenn sonst nichts geschieht. Schreib einige Werte auf und bilde den Mittelwert. Je länger du zählst, desto genauer wird er.
+- Gib Kaliumchlorid-Lösung in ein drittes Glas und stell einen Zähler dazu: Die Zählrate hängt nur davon ab, wie viel Kalium darunter ist, nicht davon, ob es gelöst ist.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"wasser","contains":[{"reagent":"H2O","ml":50}]},
+  {"type":"geiger","in":"wasser"},
+  {"type":"beaker","id":"salz","contains":[{"reagent":"KCl salt","g":50}]},
+  {"type":"geiger","in":"salz"}
+ ],
+ "shelf":["KCl salt","KCl 2M","NaCl 1M","H2O","beaker","geiger"],
+ "show":{"charts":false}}
+```
+
 ## Fotometer: Farbe messen
 
 Das Fotometer schickt Licht einer Wellenlänge durch 1 cm Lösung und zeigt die Extinktion: wie viel davon fehlt. Sie ist der Konzentration proportional (Lambert-Beer). 50 mL Wasser zugeben: Die Extinktion halbiert sich. Das Fotometer antippen und die Wellenlänge verstellen: Das Spektrum zeigt, wo Permanganat am stärksten absorbiert, nämlich im Grünen; deshalb sieht die Lösung rosa bis violett aus.
@@ -1798,6 +1818,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
 | `uvlamp` | UV-Handlampe (365 nm) über dem Gefäß: Stoffe mit `fluor` leuchten | `in` |
+| `geiger` | Geigerzähler über dem Gefäß: Impulse je Minute, in 10 s gezählt, mit Nulleffekt (25 Imp./min) und Zählstatistik; radioaktiv ist hier nur Kalium (31,7 Bq/g) | `in` |
 | `conductometer` | Leitfähigkeitsmessgerät, zeigt mS/cm oder µS/cm | `in` |
 | `electrode-C`, `electrode-Pt` | Elektrode aus Graphit (5 g) oder Platin (10 g); sie lösen sich nicht auf. Elektroden stehen nur in Bechergläsern | `in`, `g` |
 | `electrode-Cu`, `electrode-Zn`, `electrode-Fe`, `electrode-Ag`, `electrode-Pb` | Elektrode aus Kupfer, Zink, Eisen, Silber oder Blei, 10 g | `in`, `g` |
@@ -1829,7 +1850,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻ und setzt dabei etwa 73 kJ/mol frei; je Mol braucht sie dafür drei Mol Wasser, so dass sich mit wenig Wasser nur ein Teil löst | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
-| `NaCl`, `KBr`, `KI` | Natriumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
+| `NaCl`, `KCl`, `KBr`, `KI` | Natriumchlorid, Kaliumchlorid, Kaliumbromid, Kaliumiodid | `ml` |
 | `Na2SO4`, `CH3COONa`, `NH4Cl`, `KSCN` | Natriumsulfat, Natriumacetat, Ammoniumchlorid, Kaliumthiocyanat | `ml` |
 | `AgNO3`, `BaCl2`, `CuSO4`, `FeCl3` | Silbernitrat, Bariumchlorid, Kupfersulfat, Eisen(III)-chlorid | `ml` |
 | `Na2CO3`, `NaHCO3` | Natriumcarbonat (Soda), Natriumhydrogencarbonat (Natron) | `ml` |
@@ -1849,6 +1870,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `Zn granules`, `Zn powder` | Zink als Granalien und als Pulver | `g` |
 | `Fe wool`, `Cu sheet` | Eisenwolle, Kupferblech in Streifen | `g` |
 | `NH4NO3 salt`, `NaOH pellets`, `CaCl2 anhydrous` | Ammoniumnitrat, Natriumhydroxid-Plätzchen, wasserfreies Calciumchlorid; lösen sich in Wasser mit Lösungswärme | `g` |
+| `KCl salt` | Kaliumchlorid (Diätsalz), natürlich schwach radioaktiv (Geigerzähler) | `g` |
 
 ## Eigene Stoffe und Reaktionen
 
@@ -2100,6 +2122,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
 - Gelöster Luftsauerstoff wird nur gerechnet, wo eine Reaktion ihn verbraucht (Blaue Flasche, Ampel): Die Lösung nimmt ihn an der Oberfläche langsam auf, beim Schütteln in Sekunden; die blaue Schicht oben an der Oberfläche eines ruhig stehenden Kolbens fehlt, denn jede Schicht gilt als durchmischt. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
 - Leuchten (Luminol, UV-Lampe) zeigt nur Farbe und Helligkeit, keine Lichtmenge; die Banden der Emission sind geschätzt. Die UV-Lampe beleuchtet nur das Gefäß, in dem sie steht, und gibt kein sichtbares Licht ab, das Farben verändert. Chinin fluoresziert vereinfacht bei jedem pH-Wert, Luminol braucht Hexacyanoferrat(III) als Katalysator (Blut, Kupfer oder Bleichlauge wirken hier nicht). In 3D ist die UV-Lampe ein Platzhalter.
+- Der Geigerzähler kennt als Strahler nur natürliches Kalium. Wie viel er von den Zerfällen darunter erfasst (0,15 %), ist geschätzt und hängt nicht von Menge, Form oder Abstand der Probe ab; Abschirmung und Abstandsgesetz fehlen, und er tickt nicht hörbar.
 - Chlor löst sich nach dem Henry-Gesetz und bildet mit Wasser hypochlorige Säure; gelöstes Chlor, hypochlorige Säure und das Hypochlorit-Ion bleichen die Indikatorfarbstoffe und Kristallviolett zu einem farblosen Stoff, der vereinfacht ein Sauerstoffatom mehr trägt. Die Geschwindigkeit des Bleichens ist geschätzt. Andere Farbstoffe (Iod-Stärke, Metallkomplexe) bleicht es nicht, und Chlor oxidiert Iodid oder Bromid hier nicht.
 - Ein Belag auf einer Elektrode hemmt den Strom nicht, außer Bleisulfat und Bleidioxid. Das Silberchlorid, mit dem sich eine Silber-Elektrode am Pluspol in Kochsalzlösung überzieht, wächst deshalb beliebig weiter; im Labor wird die Schicht dicht, und der Strom geht zurück. Die Bleibeläge decken die Platte dagegen ab einer festen Dicke ganz ab (geschätzt 1 µm), bezogen auf die eingetauchte Fläche: Wer nachfüllt, legt wieder Blei frei. Ein Bleiakku fasst deshalb immer gleich viel; dass er mit jedem Laden mehr fasst (Formieren), fehlt. Ganz entladen zeigt er ohne Last etwa 1 V statt knapp 2 V, weil das Blei unter dem dichten Bleisulfat im Modell kein festes Potential mehr hat.
 - Zink löst sich in Natronlauge nur langsam und nur als Pulver sichtbar, in der Wärme deutlich schneller. Wie schnell genau, ist geschätzt.
