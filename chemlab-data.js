@@ -41,6 +41,7 @@
   var NONE = "no enthalpy of formation in CODATA";
   var LOOK = "colour of the solid from its usual appearance";
   var BAND = "; absorption band estimated from the usual colour of the solution";
+  var CABBAGE = "red cabbage: the anthocyanin simplified as cyanidin 3-glucoside in four forms; pKa values and absorption bands estimated from the usual colour chart of red cabbage juice";
   var DYE = "indicator: pKa from usual lab course data; absorption bands estimated";
   var STEP = "; reaction enthalpy estimated: -22.5 kJ/mol per ammonia, as for the steps with two and three ammonia from llnl.dat";
   var MINTEQ = "minteq.v4.dat (USGS): ";
@@ -295,6 +296,12 @@
 
       // ---------------------------------------------------------------- Indikatoren
       // symbol: Kurzzeichen statt der langen Formel; Hf unbekannt, der Umschlag rechnet ohne Wärme.
+      // Rotkohl: Anthocyan (vereinfacht als Cyanidin-3-glucosid) in vier Formen; in starker Lauge öffnet sich der Ring langsam zum gelben Chalkon
+      "C21H21O11+(aq)": { name: name("red cabbage dye (red form)"), symbol: "HRk⁺", Hf: null, bands: [[525, 90, 30000], [440, 60, 6000]], src: CABBAGE },
+      "C21H20O11(aq)": { name: name("red cabbage dye (violet form)"), symbol: "Rk", Hf: null, bands: [[575, 100, 24000]], src: CABBAGE },
+      "C21H19O11-(aq)": { name: name("red cabbage dye (blue form)"), symbol: "Rk⁻", Hf: null, bands: [[600, 100, 26000]], src: CABBAGE },
+      "C21H18O11^2-(aq)": { name: name("red cabbage dye (green form)"), symbol: "Rk²⁻", Hf: null, bands: [[615, 90, 22000], [420, 70, 20000]], src: CABBAGE },
+      "C21H20O12^2-(aq)": { name: name("red cabbage dye (yellow, decomposed)"), symbol: "Rk-OH²⁻", Hf: null, bands: [[425, 100, 24000]], src: CABBAGE },
       "C27H28Br2O5S(aq)": { name: name("bromothymol blue (yellow form)"), symbol: "HBtb", Hf: null, bands: [[432, 110, 20000]], src: DYE },
       "C27H27Br2O5S-(aq)": { name: name("bromothymol blue (blue form)"), symbol: "Btb", Hf: null, bands: [[617, 70, 36000], [575, 60, 12000]], src: DYE },
       // vereinfacht: ein Proton statt zweier. Die rosa Form ist in Wirklichkeit das zweifach geladene Anion.
@@ -451,6 +458,9 @@
 
       // ---------------------------------------------------------------- Indikatoren
       { eq: "C27H28Br2O5S(aq) <=> H+(aq) + C27H27Br2O5S-(aq)", logK: -7.1, src: DYE },
+      { eq: "C21H21O11+(aq) <=> H+(aq) + C21H20O11(aq)", logK: -4.0, src: CABBAGE },
+      { eq: "C21H20O11(aq) <=> H+(aq) + C21H19O11-(aq)", logK: -6.8, src: CABBAGE },
+      { eq: "C21H19O11-(aq) <=> H+(aq) + C21H18O11^2-(aq)", logK: -9.6, src: CABBAGE },
       { eq: "C20H14O4(aq) <=> H+(aq) + C20H13O4-(aq)", logK: -9.4, src: DYE },
       { eq: "C14H15N3O3S(aq) <=> H+(aq) + C14H14N3O3S-(aq)", logK: -3.46, src: DYE },
       { eq: "C27H30O5S(aq) <=> H+(aq) + C27H29O5S-(aq)", logK: -1.65, src: DYE },
@@ -553,6 +563,12 @@
         eq: "2 Fe^3+(aq) + 3 I-(aq) -> 2 Fe^2+(aq) + I3-(aq)", rate: { fast: true }, logK: 7.77,
         src: "textbook value: iron(III) oxidises iodide to iodine, practically completely with excess iodide. logK from phreeqc.dat (USGS): " +
           "Fe+2 = Fe+3 + e-, log_k -13.02, and the potential of triiodide/iodide (0.5405 V): 2 · 13.02 − 18.27"
+      },
+      {
+        // Rotkohl in starker Lauge: Der Ring öffnet sich zum gelben Chalkon, das nicht mehr zurückkehrt. k in L/(mol s)
+        eq: "C21H18O11^2-(aq) + H2O(l) -> C21H20O12^2-(aq)",
+        rate: { k: 0.1, Ea: 60, order: { "C21H18O11^2-(aq)": 1, "OH-(aq)": 1 } },
+        src: CABBAGE + "; rate estimated: in sodium hydroxide solution 0.1 mol/L the green turns yellow within a few minutes, at pH 11 it stays green for hours"
       },
       {
         // Kristallviolett verblasst in Lauge: aus dem farbigen Kation wird das farblose Carbinol. k in L/(mol s)
@@ -682,6 +698,7 @@
       // Indikatorlösungen: Bromthymolblau 0,04 %, Phenolphthalein und Methylorange 0,1 %.
       // Der Universalindikator ist eine Mischung aus vier Farbstoffen nach Art der Rezeptur von Yamada, wie dort
       // mit Natronlauge auf Grün eingestellt; die Mengen sind geschätzt, so dass die bekannte Farbfolge entsteht.
+      "red cabbage": { name: name("red cabbage juice"), solution: { "C21H20O11(aq)": 0.003 }, drops: true, group: "indicator" },
       "BTB": { name: name("bromothymol blue"), solution: { "C27H28Br2O5S(aq)": 6.4e-4 }, drops: true, group: "indicator" },
       "PP": { name: name("phenolphthalein"), solution: { "C20H14O4(aq)": 3.1e-3 }, drops: true, group: "indicator" },
       "MO": { name: name("methyl orange"), solution: { "C14H14N3O3S-(aq)": 3.1e-3, "Na+(aq)": 3.1e-3 }, drops: true, group: "indicator" },
@@ -741,7 +758,8 @@
   // (vereinfacht; die wirklichen Produkte sind vielfältig). Geschwindigkeit geschätzt: in Sekunden bei einigen mmol/L.
   // shortcut: feste Liste der Farbstoffe im Kern; ein Indikator aus einem Paket wird nicht gebleicht. Erweitern, wenn ein Paket einen braucht.
   var DYES = ["C27H28Br2O5S(aq)", "C27H27Br2O5S-(aq)", "C20H14O4(aq)", "C20H13O4-(aq)", "C14H15N3O3S(aq)", "C14H14N3O3S-(aq)",
-    "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)"];
+    "C27H30O5S(aq)", "C27H29O5S-(aq)", "C27H28O5S^2-(aq)", "C15H15N3O2(aq)", "C15H14N3O2-(aq)", "C25H30N3+(aq)",
+    "C21H21O11+(aq)", "C21H20O11(aq)", "C21H19O11-(aq)", "C21H18O11^2-(aq)", "C21H20O12^2-(aq)"];
   DYES.forEach(function (dye) {
     var o = /O(\d*)(?=[A-Z^+\-(]|$)/.exec(dye), done = o ? dye.replace(o[0], "O" + ((+o[1] || 1) + 1)) : dye.replace(/((?:\^\d+)?[+-]?\(aq\))$/, "O$1");
     L.core.species[done] = { name: name("bleached dye (colourless)"), symbol: L.core.species[dye].symbol + "O", Hf: null, src: "simplified product of bleaching; colourless" };
@@ -791,6 +809,7 @@
     "H2O2": { corr: [50, 35, 8, 5], ate: 1026, inh: 1.5, stot: [3, 35], high: [[50, "GHS03", true]], vm: 22,
       src: "CLP Annex VI 008-003-00-9 (SCL, Ox. Liq. from 50 %); ATE oral of the supplier (Neofroxx SDS), inhalation: conversion value of Acute Tox. 4" },
     "crystal violet": { cmr: [2, 1], ate: 500, corr: [null, null, 3, 1], aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 612-204-00-2; M factor of the supplier (Neofroxx SDS)" },
+    "red cabbage": { fixed: [], src: "juice of red cabbage: not classified" },
     "BTB": { fixed: ["GHS02"], signal: "warning", src: "school product: 0.04 % in aqueous ethanol (H226)" },
     "PP": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: 0.1 % in ethanol (H225, H319); carcinogenic only from 1 % (SCL)" },
     "UI": { fixed: ["GHS02", "GHS07"], signal: "danger", src: "school product: in ethanol (H225, H319)" },

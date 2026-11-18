@@ -10409,3 +10409,29 @@ test("Landolt: halb so viel Iodat, doppelte Zeit; 10 K wärmer, kürzere Zeit", 
   near(dilute / base, 2, 0.3, `halbes Iodat: ${dilute} s statt ${base} s`);
   assert.ok(warm < 0.8 * base, `10 K wärmer: ${warm} s statt ${base} s`);
 });
+
+// ---------------------------------------------------------------- Rotkohl
+
+test("Rotkohl: rot in Säure, violett in Wasser, blau in Natron, grün in Soda; in Natronlauge wird er langsam gelb und bleibt es", () => {
+  const color = (reagent, wait) => {
+    const l = tubeOf([{ reagent, ml: 5 }, { reagent: "red cabbage", drops: 10 }]);
+    L.step(l, wait || 2);
+    return { l, name: look(l).color.name };
+  };
+  assert.equal(color("HCl 0.1M").name, "red", "pH 1");
+  assert.equal(color("H2O").name, "violet", "pH 5,5");
+  assert.equal(color("NaHCO3 0.1M").name, "blue", "pH 8,3");
+  assert.equal(color("Na2CO3 0.1M").name, "green", "pH 11,6");
+  assert.equal(color("NaOH 0.1M").name, "green", "pH 13 am Anfang");
+  assert.equal(color("NaOH 0.1M", 300).name, "yellow", "nach fünf Minuten gelb");
+  const old = color("NaOH 0.1M", 600);
+  L.add(old.l, "b", "HCl 1M", { ml: 2 });
+  L.step(old.l, 5);
+  assert.ok(look(old.l).pH < 2, "jetzt sauer");
+  assert.equal(look(old.l).color.name, "yellow", "das Gelb bleibt, auch in Säure");
+  const bleach = color("NaHCO3 0.1M");
+  L.add(bleach.l, "b", "NaOCl", { ml: 2 });
+  L.step(bleach.l, 30);
+  const dye = ["C21H21O11+(aq)", "C21H20O11(aq)", "C21H19O11-(aq)", "C21H18O11^2-(aq)"].reduce((sum, id) => sum + amount(bleach.l, id), 0);
+  assert.ok(dye < 0.05 * 10 * L.DROP / 1000 * 3e-3, "Bleichlauge zerstört den Farbstoff");
+});

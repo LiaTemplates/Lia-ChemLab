@@ -227,6 +227,32 @@ Ein **Puffer** hält den pH-Wert fest. Links stehen Essigsäure und Natriumaceta
  "show":{"charts":["pH"]}}
 ```
 
+## Rotkohl als Indikator
+
+Der Farbstoff aus Rotkohl (ein Anthocyan) ist ein Indikator aus der Küche, mit mehr Farben als jeder Laborindikator. Gib in jedes Glas ein paar Tropfen Rotkohlsaft:
+
+| Glas | Lösung | pH | Farbe |
+|---|---|---|---|
+| 1 | Salzsäure | 1 | rot |
+| 2 | Wasser | gut 5 | violett |
+| 3 | Natron | 8 | blau |
+| 4 | Soda | 11,5 | grün |
+| 5 | Natronlauge | 13 | grün, dann gelb |
+
+In der starken Lauge öffnet sich das Farbstoffmolekül langsam, und es entsteht ein gelber Stoff. Das geht nicht mehr zurück: Säure macht die gelbe Lösung nicht wieder rot. Bleichlauge zerstört den Farbstoff ganz.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"testtube","id":"g1","contains":[{"reagent":"HCl 0.1M","ml":5}]},
+  {"type":"testtube","id":"g2","contains":[{"reagent":"H2O","ml":5}]},
+  {"type":"testtube","id":"g3","contains":[{"reagent":"NaHCO3 0.1M","ml":5}]},
+  {"type":"testtube","id":"g4","contains":[{"reagent":"Na2CO3 0.1M","ml":5}]},
+  {"type":"testtube","id":"g5","contains":[{"reagent":"NaOH 0.1M","ml":5}]}
+ ],
+ "shelf":["red cabbage","HCl 1M","NaOH 1M","NaOCl","testtube"],
+ "show":{"charts":false}}
+```
+
 ## Fällungen und Ionennachweise
 
 **Halogenide mit Silbernitrat:** In den Gläsern liegen Chlorid, Bromid und Iodid vor. Silbernitrat-Lösung zugeben: Es fällt weißes Silberchlorid, gelbliches Silberbromid, gelbes Silberiodid. Der Niederschlag trübt erst die ganze Lösung und setzt sich dann ab.
@@ -1676,7 +1702,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
 | `H2O2`, `sugar` | Wasserstoffperoxid, Zuckerlösung | `ml` |
-| `BTB`, `PP`, `MO`, `UI` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator | `drops` |
+| `BTB`, `PP`, `MO`, `UI`, `red cabbage` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator, Rotkohlsaft | `drops` |
 | `starch`, `Lugol` | Stärkelösung 1 %, Iod-Kaliumiodid-Lösung mit 0,01 mol/L Iod | `drops` |
 | `Mg ribbon` | Magnesiumband; 1 cm wiegt 0,0104 g | `g` |
 | `marble`, `marble powder` | Marmor (Calciumcarbonat) als Körner und als Pulver mit der zehnfachen Oberfläche | `g` |
