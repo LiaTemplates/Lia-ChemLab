@@ -712,6 +712,21 @@
       250: { cap: 250, d: 8.5, Cv: 70, loss: 0.22, heat: 0.24 }
     }
   });
+  // Stehkolben (Enghals, flacher Boden, ISO 1773): wie der Rundkolben, ohne Ansatzrohr, steht von selbst
+  registerPart("flatflask", {
+    kind: "vessel", size: 250,
+    sizes: {
+      100: { cap: 100, d: 6.4, Cv: 40, loss: 0.13, heat: 0.20 },
+      250: { cap: 250, d: 8.5, Cv: 75, loss: 0.22, heat: 0.26 }
+    }
+  });
+  // Saugflasche (Filtrierflasche, dickwandig): ein Erlenmeyerkolben mit Ansatz für die Pumpe; nicht erhitzen (noHeat)
+  registerPart("filterflask", { kind: "vessel", cap: 250, d: 8.5, Cv: 140, loss: 0.2, heat: 0.2, noHeat: true });
+  // Porzellantiegel: klein, steht im Tondreieck auf dem Dreifuß (triangle) direkt in der Flamme (heat hoch, geschätzt)
+  registerPart("crucible", { kind: "vessel", cap: 15, d: 3.6, Cv: 20, loss: 0.06, heat: 0.30, triangle: true });
+  // Pneumatische Wanne mit Wasser und einem umgestülpten Standzylinder: Gas, das ein Gasableitungsrohr hineinleitet und das sich nicht
+  // löst, sammelt sich im Zylinder (collect: sein Inhalt in mL) und verdrängt dort das Wasser
+  registerPart("trough", { kind: "vessel", cap: 1500, d: 14, Cv: 400, loss: 0.6, heat: 0.2, noHeat: true, collect: 100 });
   // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
   // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
   registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
@@ -765,6 +780,11 @@
   // Trichter mit Filterpapier: hängt wie die Bürette über einem Gefäß und läuft von selbst ab (drain, mL/s, geschätzt für einen
   // Rundfilter); Feststoffe bleiben im Filter, nur Kolloide laufen mit durch
   registerPart("funnel", { kind: "vessel", dispenser: true, filter: true, cap: 60, d: 4, Cv: 30, loss: 0.08, drain: 0.5 });
+  // Tropftrichter (ISO 4800, Typ 3): hängt wie die Bürette über einem Gefäß und tropft durch den Hahn zu, ohne Skala
+  registerPart("dropfunnel", { kind: "vessel", dispenser: true, cap: 100, d: 4.4, Cv: 50, loss: 0.1 });
+  // Büchnertrichter auf der Saugflasche: wie der Trichter mit Filterpapier, durch den Sog der Pumpe aber viel schneller
+  // (drain geschätzt, das Zehnfache des Rundfilters)
+  registerPart("buchner", { kind: "vessel", dispenser: true, filter: true, cap: 80, d: 7, Cv: 80, loss: 0.1, drain: 5 });
   // lag: Trägheit in s; sense: was es misst
   // range: Anfang und Ende der Skala; darüber zeigt es deren Ende
   // spread: wie weit die Anzeige streut, wenn der Aufbau es will ("scatter"): [fest, fest relativ, Rauschen, Rauschen relativ],
@@ -3465,6 +3485,22 @@
 
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
 
+  // Pneumatische Wanne: das aufsteigende Gas kommt in den umgestülpten Zylinder (v.caught, mol je Stoff), solange er nicht voll ist;
+  // was danach kommt, perlt am Rand vorbei und entweicht. caught(v) ist sein Volumen in mL bei Raumtemperatur und Luftdruck.
+  function caught(lab, v) { var sum = 0, id; for (id in v.caught || {}) sum += v.caught[id]; return sum * molar(lab) * 1000; }
+  function catchGas(lab, v) {
+    var room = L.parts[v.type].collect - caught(lab, v), id, x;
+    if (!(volume(v) > 0)) return;                              // ohne Wasser steht der Zylinder nicht unter Wasser
+    v.caught = v.caught || {};
+    for (id in v.air) {
+      if (room <= 1e-9) break;
+      x = Math.min(v.air[id], room / 1000 / molar(lab));
+      v.caught[id] = (v.caught[id] || 0) + x;
+      room -= x * molar(lab) * 1000;
+      if ((v.air[id] -= x) <= 1e-15) delete v.air[id];
+    }
+  }
+
   // So viel Gas (mol) hat über der Flüssigkeit im Gefäß Platz
   function headroom(lab, v) {
     return Math.max(0, spec(v).cap - filled(v) * 1000) / 1000 / molar(lab);
@@ -3730,6 +3766,7 @@
     var cap = headroom(lab, v), sum = 0, id, part, M, hit, steady, closed = stoppered(lab, v), pipe = toolAt(lab, v, function (def) { return def.pipe; }), into, flow = 0;
     var meter = toolAt(lab, v, function (def) { return def.sense === "V"; }), plug = toolAt(lab, v, function (def) { return def.plug; });
     if (pipe) pipe.flow = 0;
+    if (L.parts[v.type].collect) catchGas(lab, v);
     for (id in v.air) sum += v.air[id];
     if (!(sum > 0)) return;
     // durch einen Stopfen oder ein Rohr kommt das Gas nicht an die Flamme darunter
@@ -3746,6 +3783,11 @@
     } else v.flag.torch = null;
     into = pipe && pipe.to ? vessel(lab, pipe.to) : null;
     if (into && into.broken) into = null;
+    // in der pneumatischen Wanne sammelt sich auch die Luft, die das Gas vor sich her aus dem Gefäß schiebt (zuerst fast nur Luft)
+    if (into && L.parts[into.type].collect && made > 0 && volume(into) > 0) {
+      part = Math.min(made * Math.max(0, 1 - sum / Math.max(sum, cap)), Math.max(0, L.parts[into.type].collect - caught(lab, into)) / 1000 / molar(lab));
+      if (part > 0) { into.caught = into.caught || {}; into.caught.air = (into.caught.air || 0) + part; }
+    }
     for (id in v.air) {
       part = sum > cap && !plug ? v.air[id] * (1 - cap / sum) : 0;      // durch einen Gummistopfen geht nichts hinaus: der Druck steigt
       if (pipe) part = Math.max(part, (made || 0) * v.air[id] / Math.max(sum, cap));
@@ -4612,6 +4654,7 @@
     });
     return {
       id: v.id, type: v.type, cap: spec(v).cap, mark: spec(v).mark || null, ml: filled(v) * 1000, T: v.T,
+      caught: L.parts[v.type].collect ? caught(lab, v) : null,      // Gas im Zylinder der pneumatischen Wanne, mL
       // oil: die Ölschicht (mL, oben oder unten, Farbe, ihr Hauptstoff), sonst null; ml oben ist alles zusammen
       oil: oilLayer(v, lab),
       over: v.over, tap: v.tap, given: v.given,

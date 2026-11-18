@@ -641,6 +641,23 @@
   // Stativ: Platte und Stange hinter der Reihe der Geräte. Die Platte liegt mittig unter der Stange und reicht nach hinten,
   // so steht sie keinem Gefäß im Weg (die Gefäße stehen bei z = 0 und sind bis knapp 5 cm tief); die Klemmen reichen nach vorn.
   fx.STAND = { z: -7, w: 6, h: 0.35, d: 8, back: 3 };
+  // Vollpipette, aufgezogen: von der Spitze (Ursprung) nach oben, Maße wie in 2D (nicht maßstäblich); Flüssigkeit bis zur Ringmarke,
+  // oben der Farbring nach ISO 1769 (L.pipetteRing). rgb: Farbe der Flüssigkeit.
+  fx.pipette = function (ml, rgb) {
+    var g = new THREE.Group(), u = 1 / 16;
+    var pts = [[0.05, 0], [0.12, 3 * u], [0.13, 46 * u], [0.42, 52 * u], [0.42, 74 * u], [0.13, 80 * u], [0.13, 142 * u]];
+    var glass = new THREE.Mesh(fx.lathe(pts, 24), fx.glass()), liquid, ring, mark;
+    glass.renderOrder = 2;
+    liquid = new THREE.Mesh(fx.lathe([[0, 2 * u], [0.08, 4 * u], [0.09, 46 * u], [0.37, 52 * u], [0.37, 74 * u], [0.09, 80 * u], [0.09, 102 * u], [0, 102 * u]], 20),
+      new THREE.MeshStandardMaterial({ color: fx.color(rgb || [222, 238, 250]), roughness: 0.2, transparent: true, opacity: 0.75 }));
+    mark = new THREE.Mesh(new THREE.TorusGeometry(0.135, 0.012, 6, 20).rotateX(Math.PI / 2), fx.matte(0x2a2f36, 0.6));
+    mark.position.y = 102 * u;
+    ring = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 5 * u, 20), fx.matte(new THREE.Color(L.pipetteRing ? L.pipetteRing(ml) : "#8b949e").getHex(), 0.5));
+    ring.position.y = 128 * u;
+    g.add(liquid, glass, mark, ring);
+    return g;
+  };
+
   // Die Platte zeigt vom Gerät weg, in Richtung des Arms: so, wie man ein Stativ auf den Aufbau ausrichtet
   fx.placeFoot = function (foot, rod, z, x, y) {
     var ux = rod - x, uz = z, n = Math.sqrt(ux * ux + uz * uz) || 1;

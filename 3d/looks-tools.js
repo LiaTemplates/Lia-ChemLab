@@ -64,10 +64,10 @@
       var u = group.userData, r = d.data, place = d.place, H = burnerHeight(d, kit), f = FLAMES[r.flame], t = d.ctx.still ? 0 : d.ctx.t, flick;
       u.tube.scale.y = H - 0.9; u.tube.position.y = 0.9 + (H - 0.9) / 2;
       // Dreifuß mit Drahtnetz unter Becherglas und Schale; eine Klemme am Stativ hält das Reagenzglas
-      fx.rebuild(group, "stand", place ? JSON.stringify([place.lift, place.foot, place.clamp]) : "", function (sub) {
+      fx.rebuild(group, "stand", place ? JSON.stringify([place.lift, place.foot, place.clamp, place.triangle]) : "", function (sub) {
         var Y, a, k, ang, net;
         if (!place) return;
-        Y = kit.up(place.lift);
+        Y = kit.up(place.lift) + (place.triangle ? 1 : 0);          // das Tondreieck sitzt 1 cm über dem Boden des Tiegels, der darin hängt
         if (place.clamp) {
           fx.stand(sub, cm(54), fx.STAND.z, 0, Y + cm(150), [{ y: Y + cm(120), x: 0, r: cm(13) }]);
           return;
@@ -77,6 +77,15 @@
         for (k = 0; k < 3; k++) {
           ang = k * Math.PI * 2 / 3 - Math.PI / 2;      // ein Bein hinten, zwei vorn seitlich: keines steht vor dem Brenner
           sub.add(fx.rod(V(a * Math.cos(ang), Y - 0.32, a * Math.sin(ang)), V(a * 1.45 * Math.cos(ang), 0, a * 1.45 * Math.sin(ang)), 0.22, fx.iron()));
+        }
+        if (place.triangle) {                         // Tondreieck: drei Röhrchen aus Ton auf einem Drahtdreieck, der Tiegel hängt darin
+          for (k = 0; k < 3; k++) {
+            ang = k * Math.PI * 2 / 3 + Math.PI / 6;
+            var p1 = V(a * Math.cos(ang), Y - 0.2, a * Math.sin(ang)), p2 = V(a * Math.cos(ang + Math.PI * 2 / 3), Y - 0.2, a * Math.sin(ang + Math.PI * 2 / 3));
+            sub.add(fx.rod(p1, p2, 0.05, fx.iron()));
+            sub.add(fx.rod(p1.clone().lerp(p2, 0.22), p1.clone().lerp(p2, 0.78), 0.2, fx.matte(0xe9e2d2, 0.8)));
+          }
+          return;
         }
         net = new THREE.Mesh(new THREE.PlaneGeometry(2 * a + 1.6, 2 * a + 1.6).rotateX(-Math.PI / 2),
           new THREE.MeshStandardMaterial({ map: gauze(true), alphaTest: 0.5, side: THREE.DoubleSide, metalness: 0.4, roughness: 0.6 }));
@@ -254,7 +263,8 @@
       column.position.y = bottom + 0.5 + column.scale.y / 2;
       u.tag.visible = !!d.ctx.numbers;
       u.tag.userData.write((r.over ? "> " + L.num(r.value, 0, d.ctx.lang) : L.num(r.value, 1, d.ctx.lang)) + " °C");
-      u.tag.position.set(x, top + 0.5, 0);
+      // die Anzeige steht wie in 2D: rechts daneben, wenn das Gefäß sie dorthin legt (tag > 0, etwa im Stehkolben neben dem Tropftrichter)
+      u.tag.position.set(x + (p.tag > 0 ? cm(p.tag + 45) : 0), top + 0.5, 0);
     }
   });
 

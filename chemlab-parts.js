@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "part.erlenmeyer": "Erlenmeyer flask", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "part.erlenmeyer": "Erlenmeyer flask", "part.flatflask": "flat-bottom flask", "part.filterflask": "filter flask", "part.crucible": "porcelain crucible", "part.trough": "pneumatic trough", "part.dropfunnel": "dropping funnel", "part.buchner": "Büchner funnel", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -872,8 +872,14 @@
     surface: erlSurface,
     foot: function (v) { return erlSize(v)[0] - 6; },        // halbe Standfläche, für den Dreifuß
     // Messfühler stecken im engen Hals: das Thermometer links, die Elektrode des pH-Meters rechts davon, die Bürette in der Mitte rechts
-    probe: function (v, type, slot) {
-      var s = erlSize(v), n = s[2], H = s[1];
+    probe: function (v, type, slot) { var s = erlSize(v); return neckProbe(s[2], s[1], type, slot); },
+    mount: function (w) { var s = erlSize(w); return { x: s[2] * 0.45, rim: -s[1], surface: w.ml > 0.005 ? erlSurface(w) : -2, edge: s[0] + 6 }; },
+    draw: function (w, ctx) { return erlDraw(w, ctx); }
+  });
+
+  // Messfühler, Stopfen und Rohre in einem engen Hals der halben Weite n am Rand in der Höhe H: der Stopfen so breit wie der Hals,
+  // das Thermometer links, die Elektrode des pH-Meters rechts davon, die Bürette in der Mitte rechts
+  function neckProbe(n, H, type, slot) {
       if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: -H, w: 2 * n + 2 };
       if (type === "tube") return { x: 0, rim: -H, w: 2 * n + 2, top: -H - PIPE_RISE };
       if (type === "bridge" || type === "condenser") return { x: (slot || 0) * (n - 4), rim: -H };
@@ -881,9 +887,9 @@
       if (type === "conductometer") return { x: -n * 0.3, bottom: -8, top: -H - 76, box: -40 };
       if (type === "photometer") return { x: n * 0.3, bottom: -8, top: -H - 100, box: -68 };
       return type === "phmeter" ? { x: n * 0.1, bottom: -8, top: -H - 44, box: -38 } : { x: -n * 0.5, bottom: -8, top: -H - 70, tag: -62 };
-    },
-    mount: function (w) { var s = erlSize(w); return { x: s[2] * 0.45, rim: -s[1], surface: w.ml > 0.005 ? erlSurface(w) : -2, edge: s[0] + 6 }; },
-    draw: function (w, ctx) {
+  }
+
+  function erlDraw(w, ctx) {
       var s = erlSize(w), a = s[0], H = s[1], n = s[2], shoulder = H - s[3], y = erlSurface(w), marks = "", i, my, mx, outer;
       var fill = function (level) { return erlFill(s, level); };
       if (w.broken) return shards(a, ctx);
@@ -903,6 +909,246 @@
           (a - 8) + ",0Q" + a + ",0 " + a + ",-8L" + n + "," + (-shoulder) + "L" + n + "," + (-H + 2) + "L" + f(n + 2.5) + "," + f(-H - 1.5) + '"/>' +
         '<line class="cl-shine" x1="' + f(-a + 12) + '" y1="-14" x2="' + f(-n - 4) + '" y2="' + f(-shoulder + 10) + '"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+  }
+
+  // ------------------------------------------------------------------ Drehkörper aus einem Profil
+
+  // points: Außenseite [halbe Breite, Höhe über dem Boden] vom Boden bis zum Beginn des Halses (aufsteigende Höhen), neck: halbe Weite
+  // des Halses, base: y des Bodens. Daraus: halbe Breite in jeder Höhe, Füllhöhe aus dem Volumen (innen eine Wand schmaler), Umriss
+  // der Flüssigkeit und der Glaswand. Für Gefäße ohne eigene Formel (Stehkolben, Tiegel).
+  function lathe(points, neck, base) {
+    var vol = [0], top = points[points.length - 1][1], i, a, b;
+    for (i = 1; i < points.length; i++) {
+      a = Math.max(0, points[i - 1][0] - 1); b = Math.max(0, points[i][0] - 1);
+      vol.push(vol[i - 1] + (a * a + a * b + b * b) / 3 * (points[i][1] - points[i - 1][1]));
+    }
+    function half(h) {
+      if (h >= top) return neck;
+      for (i = 1; i < points.length; i++) if (points[i][1] >= h) return points[i - 1][0] + (points[i][0] - points[i - 1][0]) * (h - points[i - 1][1]) / Math.max(1e-9, points[i][1] - points[i - 1][1]);
+      return points[0][0];
+    }
+    function level(share) {                // Höhe (y) des Spiegels, wenn share des Körpers gefüllt ist
+      var want = Math.min(1, share) * vol[vol.length - 1];
+      for (i = 1; i < vol.length; i++) if (vol[i] >= want) return base - (points[i - 1][1] + (points[i][1] - points[i - 1][1]) * (want - vol[i - 1]) / Math.max(1e-9, vol[i] - vol[i - 1]));
+      return base - top;
+    }
+    function body(y, inset) {              // Umriss bis zur Höhe y, inset schmaler
+      var hTop = Math.min(top, base - y), right = [], d = "";
+      points.forEach(function (pt) { if (pt[1] < hTop) right.push([Math.max(0, pt[0] - inset), base - pt[1]]); });
+      right.push([Math.max(0, half(hTop) - inset), base - hTop]);
+      right.forEach(function (pt, k) { d += (k ? "L" : "M") + f(-pt[0]) + "," + f(pt[1]); });
+      for (i = right.length - 1; i >= 0; i--) d += "L" + f(right[i][0]) + "," + f(right[i][1]);
+      return d + "Z";
+    }
+    function fill(y) {                     // Flüssigkeit bis y: der Körper, darüber der Hals
+      var n = neck - 1;
+      return y < base - top ? body(base - top, 1) + "M" + f(-n) + "," + f(base - top + 1) + "L" + f(-n) + "," + f(y) + "L" + f(n) + "," + f(y) + "L" + f(n) + "," + f(base - top + 1) + "Z" : body(y, 1);
+    }
+    function outline(rim) {                // Glaswand vom Rand den Hals hinab, um den Körper und wieder hinauf
+      var d = "M" + f(-neck) + "," + f(rim);
+      for (i = points.length - 1; i >= 0; i--) d += "L" + f(-points[i][0]) + "," + f(base - points[i][1]);
+      for (i = 0; i < points.length; i++) d += "L" + f(points[i][0]) + "," + f(base - points[i][1]);
+      return d + "L" + f(neck) + "," + f(rim);
+    }
+    return { half: half, level: level, body: body, fill: fill, outline: outline, top: top, base: base, neck: neck };
+  }
+  L.lathe2d = lathe;
+
+  // ------------------------------------------------------------------ Stehkolben
+
+  // Enghals-Stehkolben (ISO 1773): Kugel mit flachem Boden, 100 mL Ø 64 mm, 250 mL Ø 85 mm, der Hals etwa 4 und 5 cm lang.
+  // [Radius der Kugel, Höhe, halbe Weite des Halses, Radius des flachen Bodens] in Bildpunkten (16 je cm)
+  var FLAT = { 100: [51, 150, 16, 30], 250: [68, 200, 22, 40] };
+  var flatShapes = {};
+  function flatShape(w) {
+    var s = FLAT[w.size || w.cap] || FLAT[250], key = s.join(), R = s[0], cy, meet, pts = [], i, h;
+    if (flatShapes[key]) return flatShapes[key];
+    cy = Math.sqrt(R * R - s[3] * s[3]); meet = cy + Math.sqrt(R * R - s[2] * s[2]);
+    for (i = 0; i <= 48; i++) { h = meet * i / 48; pts.push([Math.sqrt(Math.max(0, R * R - (h - cy) * (h - cy))), h]); }
+    pts[0][0] = s[3];
+    return (flatShapes[key] = { size: s, shape: lathe(pts, s[2], -1), H: s[1] });
+  }
+  L.registerPart("flatflask", {
+    width: function (v) { return flatShape(v).size[0] * 2 + 40; },
+    bounds: function (v) { var s = flatShape(v).size; return { x0: -s[0] - 8, x1: s[0] + 8, top: -s[1] - 8 }; },
+    surface: function (w) { var F = flatShape(w); return F.shape.level(w.ml / w.cap); },
+    foot: function (v) { return flatShape(v).size[3]; },
+    // Stopfen und Fühler im eigenen Hals, aber gespiegelt: der Tropftrichter hängt links, das Gasableitungsrohr geht in der Mitte
+    // nach rechts weg, das Thermometer steckt rechts mit der Anzeige rechts daneben. So kreuzt das Rohr den Trichter nicht.
+    probe: function (v, type, slot) {
+      var F = flatShape(v), p = neckProbe(F.size[2], F.H, type, slot);
+      if (type === "thermometer") { p.x = -p.x; p.tag = 8; }
+      return p;
+    },
+    mount: function (w) {
+      var F = flatShape(w);
+      return { x: -F.size[2] * 0.45, rim: -F.H, surface: w.ml > 0.005 ? F.shape.level(w.ml / w.cap) : -2, edge: F.size[0] + 6 };
+    },
+    draw: function (w, ctx) {
+      var F = flatShape(w), S = F.shape, y = S.level(w.ml / w.cap), half;
+      if (w.broken) return shards(F.size[0], ctx);
+      half = Math.max(0, S.half(S.base - y) - 1);
+      return contents(w, ctx, { path: S.fill(y), fill: S.fill, x0: -half, x1: half, top: y, bottom: -2, rim: -F.H, tall: true }) +
+        '<path class="cl-glass" d="' + S.outline(-F.H) + '"/>' +
+        '<line class="cl-shine" x1="' + f(-F.size[0] * 0.55) + '" y1="' + f(-F.size[0] * 1.3) + '" x2="' + f(-F.size[0] * 0.7) + '" y2="' + f(-F.size[0] * 0.6) + '"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
+  // ------------------------------------------------------------------ Saugflasche
+
+  // Dickwandiger Erlenmeyerkolben mit Ansatz; der Schlauch führt zur Wasserstrahlpumpe am Hahn. Die Zeichnung ist die des
+  // Erlenmeyerkolbens mit 250 mL, dazu Ansatz, Schlauch und Pumpe; ein Büchnertrichter steckt mittig im Hals.
+  var FILTERFLASK = { size: 250 };
+  function asErl(w) { return Object.assign({}, w, { size: FILTERFLASK.size }); }
+  L.registerPart("filterflask", {
+    width: function () { return ERL[250][0] * 2 + 70; },
+    bounds: function () { var s = ERL[250]; return { x0: -s[0] - 8, x1: s[0] + 30, top: -s[1] - 8 }; },
+    surface: function (w) { return erlSurface(asErl(w)); },
+    probe: function (v, type, slot) { return L.parts.erlenmeyer.probe(asErl(v), type, slot); },
+    mount: function (w) { var m = L.parts.erlenmeyer.mount(asErl(w)); m.x = 0; return m; },
+    draw: function (w, ctx) {
+      var s = ERL[250], n = s[2], H = s[1], arm = -H + s[3] * 0.5, out;
+      if (w.broken) return shards(s[0], ctx);
+      out = L.parts.erlenmeyer.draw(asErl(w), ctx);
+      // Ansatz schräg nach rechts, Schlauch zur Pumpe, die am Wasserhahn hinter dem Tisch hängt (nur angedeutet)
+      return out + '<path class="cl-glass cl-thick" d="M' + n + "," + f(arm - 3) + "L" + (n + 16) + "," + f(arm - 1) + "M" + n + "," + f(arm + 4) + "L" + (n + 16) + "," + f(arm + 6) + '"/>' +
+        '<path class="cl-hose" d="M' + (n + 15) + "," + f(arm + 2.5) + "Q" + (s[0] + 18) + "," + f(arm + 2) + " " + (s[0] + 18) + "," + f(arm + 30) + "L" + (s[0] + 18) + ',-4"/>' +
+        '<rect class="cl-tap" x="' + (s[0] + 12) + '" y="-8" width="12" height="8" rx="1.5"/>';
+    }
+  });
+
+  // ------------------------------------------------------------------ Porzellantiegel
+
+  // Tiegel aus Porzellan, etwa 15 mL: ein Kegelstumpf, im Schnitt gezeichnet wie die Abdampfschale; auf dem Brenner steht er im Tondreieck
+  var CRUC = { bottom: 16, top: 28, h: 46 };
+  var crucShape = lathe([[CRUC.bottom, 0], [CRUC.top, CRUC.h]], CRUC.top, -2);
+  L.registerPart("crucible", {
+    width: function () { return CRUC.top * 2 + 36; },
+    bounds: function () { return { x0: -CRUC.top - 6, x1: CRUC.top + 6, top: -CRUC.h - 8 }; },
+    surface: function (w) { return crucShape.level(w.ml / w.cap); },
+    foot: function () { return CRUC.bottom + 6; },
+    probe: function (v, type) {
+      if (type === "syringe" || type === "stopper" || type === "manometer" || type === "tube") return { x: 0, rim: -CRUC.h - 2, w: CRUC.top * 2 - 6, top: -CRUC.h - 2 - PIPE_RISE };
+      if (type === "phmeter") return { x: 4, bottom: -8, top: -CRUC.h - 44, box: -38 };
+      return { x: -6, bottom: -8, top: -CRUC.h - 70, tag: -62, box: -40 };
+    },
+    mount: function (w) { return { x: 0, rim: -CRUC.h - 2, surface: w.ml > 0.005 ? crucShape.level(w.ml / w.cap) : -4, edge: CRUC.top + 6 }; },
+    draw: function (w, ctx) {
+      var y = crucShape.level(w.ml / w.cap), half = Math.max(0, crucShape.half(crucShape.base - y) - 3), outline;
+      if (w.broken) return shards(CRUC.top, ctx);
+      outline = "M" + (-CRUC.top - 1) + "," + (-CRUC.h - 2) + "L" + (-CRUC.bottom) + ",-2L" + CRUC.bottom + ",-2L" + (CRUC.top + 1) + "," + (-CRUC.h - 2);
+      return contents(w, ctx, { path: crucShape.body(y, 3), fill: function (l) { return crucShape.body(l, 3); }, x0: -half, x1: half, top: y, bottom: -4, rim: -CRUC.h, tall: false }) +
+        '<path class="cl-porcelain" d="' + outline + '"/><path class="cl-porcelain-edge cl-strong" d="' + outline + '"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
+  // ------------------------------------------------------------------ Pneumatische Wanne
+
+  // Glaswanne mit Wasser; rechts steht auf einer Brücke ein umgestülpter Standzylinder (100 mL), voll Wasser. Das Gasableitungsrohr
+  // taucht links von ihm ein; ein gläserner Bogen unter Wasser führt das Gas unter die Öffnung des Zylinders. Das Gas (w.caught)
+  // sammelt sich oben im Zylinder und drückt das Wasser hinunter.
+  var TROUGH = { a: 100, h: 72, cyl: 42, cylA: 15, mouth: -22, cylTop: -178, pipe: -6 };
+  function troughSurface(w) { return -3 - Math.min(1, w.ml / w.cap) * (TROUGH.h - 10); }
+  L.registerPart("trough", {
+    width: function () { return TROUGH.a * 2 + 40; },
+    bounds: function () { return { x0: -TROUGH.a - 6, x1: TROUGH.a + 6, top: TROUGH.cylTop - 8 }; },
+    surface: troughSurface,
+    probe: function (v, type) {
+      if (type === "tube") return { x: TROUGH.pipe, rim: -TROUGH.h, w: 10, top: -TROUGH.h - PIPE_RISE };
+      if (type === "phmeter" || type === "conductometer" || type === "photometer") return { x: -60, bottom: -8, top: -TROUGH.h - 44, box: -38 };
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: -60, rim: -TROUGH.h, w: 20 };
+      return { x: -70, bottom: -8, top: -TROUGH.h - 70, tag: -62 };
+    },
+    mount: function (w) { return { x: -60, rim: -TROUGH.h, surface: w.ml > 0.005 ? troughSurface(w) : -3, edge: TROUGH.a + 6 }; },
+    draw: function (w, ctx) {
+      var A = TROUGH.a, H = TROUGH.h, y = troughSurface(w), cx = TROUGH.cyl, ca = TROUGH.cylA, wet = w.ml > 0.005, gas, out, end;
+      var fill = function (level) { return "M" + (-A + 2) + "," + f(level) + "L" + (-A + 2) + ",-6Q" + (-A + 2) + ",-2 " + (-A + 6) + ",-2L" + (A - 6) + ",-2Q" + (A - 2) + ",-2 " + (A - 2) + ",-6L" + (A - 2) + "," + f(level) + "Z"; };
+      if (w.broken) return shards(A * 0.6, ctx);
+      // wie hoch das Gas im Zylinder steht: sein Volumen auf die Länge des Zylinders umgerechnet (100 mL füllen ihn bis zur Öffnung)
+      gas = Math.min(1, (w.caught || 0) / L.parts.trough.collect) * (TROUGH.mouth - TROUGH.cylTop - 6);
+      end = Math.min(y + 22, -8);                       // so tief taucht das Rohr ein (wie im Code der Fläche)
+      out = contents(w, ctx, { path: fill(y), fill: fill, x0: -A + 2, x1: A - 2, top: y, bottom: -2, rim: -H, tall: false });
+      // Zylinder: innen Wasser bis zum Gas (ohne Wasser in der Wanne läuft er leer), oben das Gas
+      if (wet) out += '<rect class="cl-liquid" x="' + (cx - ca + 1.5) + '" y="' + f(TROUGH.cylTop + 3 + gas) + '" width="' + (2 * ca - 3) + '" height="' + f(TROUGH.mouth - TROUGH.cylTop - 3 - gas) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
+      if (gas > 0.3) out += '<rect class="cl-gasroom" x="' + (cx - ca + 1.5) + '" y="' + (TROUGH.cylTop + 3) + '" width="' + (2 * ca - 3) + '" height="' + f(gas) + '"/>';
+      // Brücke unter dem Zylinder und der Bogen unter Wasser vom Rohr bis unter die Öffnung
+      out += '<rect class="cl-stand" x="' + (cx - ca - 8) + '" y="' + (TROUGH.mouth) + '" width="' + (2 * ca + 16) + '" height="4" rx="1"/>' +
+        '<path class="cl-glass cl-pipe" d="M' + TROUGH.pipe + "," + f(end) + "L" + TROUGH.pipe + ",-12Q" + TROUGH.pipe + ",-8 " + (TROUGH.pipe + 4) + ",-8L" + (cx - 4) + ",-8Q" + cx + ",-8 " + cx + ",-12L" + cx + "," + (TROUGH.mouth - 6) + '"/>' +
+        '<path class="cl-glass" d="M' + (cx - ca) + "," + TROUGH.mouth + "L" + (cx - ca) + "," + (TROUGH.cylTop + 4) + "Q" + (cx - ca) + "," + TROUGH.cylTop + " " + (cx - ca + 4) + "," + TROUGH.cylTop +
+          "L" + (cx + ca - 4) + "," + TROUGH.cylTop + "Q" + (cx + ca) + "," + TROUGH.cylTop + " " + (cx + ca) + "," + (TROUGH.cylTop + 4) + "L" + (cx + ca) + "," + TROUGH.mouth + '"/>' +
+        '<path class="cl-glass" d="M' + (-A - 4) + "," + (-H - 2) + "L" + (-A) + "," + (-H + 2) + "L" + (-A) + ",-6Q" + (-A) + ",0 " + (-A + 6) + ",0L" + (A - 6) + ",0Q" + A + ",0 " + A + ",-6L" + A + "," + (-H + 2) + "L" + (A + 4) + "," + (-H - 2) + '"/>' +
+        '<line class="cl-shine" x1="' + (cx - ca + 5) + '" y1="' + (TROUGH.cylTop + 12) + '" x2="' + (cx - ca + 5) + '" y2="' + (TROUGH.mouth - 10) + '"/>';
+      if (ctx.numbers && (w.caught || 0) > 0.05) out += '<text class="cl-label" x="' + cx + '" y="' + (TROUGH.cylTop - 6) + '" text-anchor="middle">' + num(w.caught, 1, ctx.lang) + " mL</text>";
+      return out + badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
+  // ------------------------------------------------------------------ Tropftrichter
+
+  // Zylindrischer Tropftrichter (ISO 4800, Typ 3), 100 mL, ohne Skala: hängt am Stativ über einem Gefäß, das Rohr reicht in dessen Öffnung
+  var DROP = { a: 15, body: 120, cap: 100 };
+  function dropAt(mount) {
+    var m = mount || { x: 0, rim: -70, surface: -2 }, tip = m.rim + 6, cock = tip - 22, bottom = cock - 12;
+    return { x: m.x, rim: m.rim, tip: tip, cock: cock, bottom: bottom, top: bottom - 10 - DROP.body, surface: m.surface, rod: Math.max(m.x + 40, (m.edge || 0) + 14) };
+  }
+  function dropLevel(g, ml) { return g.bottom - 10 - Math.min(1, ml / DROP.cap) * (DROP.body - 6); }
+  L.registerPart("dropfunnel", {
+    width: function () { return 90; },
+    surface: function (w, mount) { return dropLevel(dropAt(mount), w.ml); },
+    reach: function (mount) { return -dropAt(mount).top + 30; },
+    bounds: function (v, mount) { var g = dropAt(mount); return { x0: g.x - DROP.a - 4, x1: g.x + DROP.a + 4, top: g.top - 22, bottom: g.rim - 2 }; },
+    draw: function (w, ctx, mount) {
+      var g = dropAt(mount), x = g.x, a = DROP.a, y = dropLevel(g, w.ml), open = w.tap > 0, out, armY = g.top + 24;
+      var fill = function (level) { return "M" + (x - 2) + "," + (g.bottom + 1) + "L" + (x - a + 2) + "," + (g.bottom - 10) + "L" + (x - a + 2) + "," + f(level) + "L" + (x + a - 2) + "," + f(level) + "L" + (x + a - 2) + "," + (g.bottom - 10) + "L" + (x + 2) + "," + (g.bottom + 1) + "Z"; };
+      out = '<rect class="cl-stand" x="' + (g.rod - 10) + '" y="-5" width="46" height="5" rx="2"/>' +
+        '<line class="cl-rod" x1="' + g.rod + '" x2="' + g.rod + '" y1="-5" y2="' + (g.top - 10) + '"/>' +
+        '<line class="cl-rod" x1="' + g.rod + '" x2="' + (x + a + 4) + '" y1="' + armY + '" y2="' + armY + '"/>' +
+        '<path class="cl-clamp-jaw" d="M' + (x + a + 4) + "," + (armY - 4.5) + "H" + (x - a - 2) + "V" + (armY + 4.5) + "H" + (x + a + 4) + '"/>' +
+        '<rect class="cl-boss" x="' + (g.rod - 5) + '" y="' + (armY - 5) + '" width="10" height="10" rx="2"/>';
+      if (w.ml > 0.005) out += contents(w, ctx, { path: fill(y), fill: fill, x0: x - a + 2, x1: x + a - 2, top: y, bottom: g.bottom, rim: g.top, tall: true });
+      out += '<path class="cl-glass" d="M' + (x - 2) + "," + g.bottom + "L" + (x - a) + "," + (g.bottom - 11) + "L" + (x - a) + "," + (g.top + 4) + "Q" + (x - a) + "," + g.top + " " + (x - 6) + "," + g.top +
+          "L" + (x - 6) + "," + (g.top - 8) + "M" + (x + 6) + "," + (g.top - 8) + "L" + (x + 6) + "," + g.top + "Q" + (x + a) + "," + g.top + " " + (x + a) + "," + (g.top + 4) + "L" + (x + a) + "," + (g.bottom - 11) + "L" + (x + 2) + "," + g.bottom + '"/>' +
+        '<path class="cl-stopper" d="M' + (x - 6) + "," + (g.top - 18) + "L" + (x + 6) + "," + (g.top - 18) + "L" + (x + 5) + "," + (g.top - 7) + "L" + (x - 5) + "," + (g.top - 7) + 'Z"/>' +
+        '<path class="cl-glass" d="M' + (x - 2) + "," + g.bottom + "L" + (x - 2) + "," + (g.tip - 3) + "L" + x + "," + g.tip + "L" + (x + 2) + "," + (g.tip - 3) + "L" + (x + 2) + "," + g.bottom + '"/>' +
+        cock(x, g.cock, open) + print([DROP.cap + " mL"], x, g.top + 22, ctx, "middle");
+      if (open && w.ml > 0.001 && mount && L.fx) out += w.tap >= 0.3 ? L.fx.stream(x, g.tip, g.surface, ctx.t, ctx.still) : L.fx.drops(x, g.tip, g.surface, ctx.t, ctx.still);
+      return out + (mount ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
+  // ------------------------------------------------------------------ Büchnertrichter
+
+  // Porzellan, mit Lochplatte und Rundfilter darauf; er steckt mit einer Gummimanschette im Hals des Gefäßes darunter (meist der Saugflasche)
+  var BUCH = { a: 30, h: 34, stem: 30, cap: 80 };
+  function buchAt(mount) {
+    var m = mount || { x: 0, rim: -70, surface: -2 }, plate = m.rim - 12;
+    return { x: m.x, rim: m.rim, plate: plate, top: plate - BUCH.h, tip: m.rim + BUCH.stem - 12, surface: m.surface };
+  }
+  function buchLevel(g, ml) { return g.plate - 3 - Math.min(1, ml / BUCH.cap) * (BUCH.h - 6); }
+  L.registerPart("buchner", {
+    width: function () { return 80; },
+    surface: function (w, mount) { return buchLevel(buchAt(mount), w.ml); },
+    reach: function (mount) { return -buchAt(mount).top + 12; },
+    bounds: function (v, mount) { var g = buchAt(mount); return { x0: g.x - BUCH.a - 6, x1: g.x + BUCH.a + 6, top: g.top - 6, bottom: g.rim + 4 }; },
+    draw: function (w, ctx, mount) {
+      var g = buchAt(mount), x = g.x, a = BUCH.a, y = buchLevel(g, w.ml), sed = w.sediment, out = "", outline, cake;
+      var fill = function (level) { return "M" + (x - a + 3) + "," + (g.plate - 2) + "L" + (x - a + 3) + "," + f(level) + "L" + (x + a - 3) + "," + f(level) + "L" + (x + a - 3) + "," + (g.plate - 2) + "Z"; };
+      // Gummimanschette im Hals, darüber das Rohr und die Schale mit Lochplatte
+      out += '<path class="cl-stopper" d="M' + (x - 11) + "," + (g.rim - 6) + "L" + (x + 11) + "," + (g.rim - 6) + "L" + (x + 8) + "," + (g.rim + 8) + "L" + (x - 8) + "," + (g.rim + 8) + 'Z"/>';
+      if (w.ml > 0.005) out += '<path class="cl-liquid" d="' + fill(y) + '" fill="' + liquidColor(w.color.rgb) + '"/>';
+      if (sed && sed.ml > 0.002) {                                  // der Filterkuchen auf dem Papier, in seiner Farbe
+        cake = Math.max(2, Math.min(BUCH.h - 8, sed.ml * 3));
+        out += '<rect class="cl-sediment" x="' + (x - a + 3) + '" y="' + f(g.plate - 2 - cake) + '" width="' + (2 * a - 6) + '" height="' + f(cake) + '" fill="' + css(shade(sed.rgb, 0.88)) + '"/>';
+      }
+      outline = "M" + (x - a - 1) + "," + g.top + "L" + (x - a) + "," + (g.plate + 4) + "Q" + (x - a) + "," + (g.plate + 8) + " " + (x - a + 6) + "," + (g.plate + 8) + "L" + (x - 5) + "," + (g.plate + 8) +
+        "L" + (x - 5) + "," + g.tip + "M" + (x + 5) + "," + g.tip + "L" + (x + 5) + "," + (g.plate + 8) + "L" + (x + a - 6) + "," + (g.plate + 8) + "Q" + (x + a) + "," + (g.plate + 8) + " " + (x + a) + "," + (g.plate + 4) + "L" + (x + a + 1) + "," + g.top;
+      out += '<line class="cl-filter-plate" x1="' + (x - a + 2) + '" x2="' + (x + a - 2) + '" y1="' + g.plate + '" y2="' + g.plate + '"/>' +
+        '<line class="cl-filter" x1="' + (x - a + 3) + '" x2="' + (x + a - 3) + '" y1="' + (g.plate - 1.5) + '" y2="' + (g.plate - 1.5) + '"/>' +
+        '<path class="cl-porcelain" d="' + outline + '"/><path class="cl-porcelain-edge" d="' + outline + '"/>';
+      if (w.ml > 0.001 && mount && !w.blocked && L.fx) out += L.fx.stream(x, g.tip, g.surface, ctx.t, ctx.still);      // der Sog zieht das Filtrat als Strahl
+      return out + (mount ? "" : badge(0, 14, ctx.no));
     }
   });
 
@@ -1015,7 +1261,7 @@
     // Wie ein Gefäß über dem Brenner steht: lift Höhe des Bodens, foot halbe Standfläche; ohne Standfläche hält es eine Klemme
     stand: function (host) {
       var def = L.parts[host.type];
-      return { lift: def.foot ? 104 : 92, foot: def.foot ? def.foot(host) : 0, clamp: !def.foot };
+      return { lift: def.triangle ? 104 - TRIANGLE : def.foot ? 104 : 92, foot: def.foot ? def.foot(host) : 0, clamp: !def.foot, triangle: !!def.triangle };
     },
     draw: function (w, ctx, place) {
       var out = "", a, top;
@@ -1025,10 +1271,16 @@
           '<line class="cl-rod" x1="54" x2="54" y1="-5" y2="' + top + '"/>' +
           '<path class="cl-clamp" d="M54,' + (top + 30) + "L17," + (top + 30) + "M17," + (top + 22) + "L17," + (top + 38) + "M-17," + (top + 22) + "L-17," + (top + 38) + '"/>' +
           '<rect class="cl-boss" x="49" y="' + (top + 25) + '" width="10" height="10" rx="2"/>';          // Doppelmuffe
-      } else if (place) {                                      // Dreifuß mit Drahtnetz
+      } else if (place) {                                      // Dreifuß mit Drahtnetz oder Tondreieck
         a = place.foot + 10;
+        if (place.triangle) place = Object.assign({}, place, { lift: place.lift + TRIANGLE });      // das Dreieck sitzt höher als der Boden des Tiegels
         out += '<path class="cl-tripod" d="M' + -a + "," + -place.lift + "L" + (-a - 8) + ",0M" + a + "," + -place.lift + "L" + (a + 8) + ",0M" + (-a - 2) + "," + -place.lift + "L" + (a + 2) + "," + -place.lift + '"/>' +
-          '<rect class="cl-gauze" x="' + (-a + 2) + '" y="' + (-place.lift - 2.5) + '" width="' + (2 * a - 4) + '" height="2.5"/>';
+          (place.triangle
+            // Tondreieck: Draht mit drei Röhrchen aus Ton; der Tiegel hängt darin, die Flamme trifft ihn direkt
+            ? '<line class="cl-wire" x1="' + (-a - 2) + '" x2="' + (a + 2) + '" y1="' + (-place.lift - 1.5) + '" y2="' + (-place.lift - 1.5) + '"/>' +
+              '<rect class="cl-clay" x="' + (-a + 2) + '" y="' + (-place.lift - 4) + '" width="' + f(a - place.foot + 4) + '" height="5" rx="2"/>' +
+              '<rect class="cl-clay" x="' + f(place.foot - 2) + '" y="' + (-place.lift - 4) + '" width="' + f(a - place.foot + 4) + '" height="5" rx="2"/>'
+            : '<rect class="cl-gauze" x="' + (-a + 2) + '" y="' + (-place.lift - 2.5) + '" width="' + (2 * a - 4) + '" height="2.5"/>');
       }
       out += '<rect class="cl-burner" x="-16" y="-6" width="32" height="6" rx="2"/>' +
         '<rect class="cl-burner" x="-4.5" y="' + NOZZLE + '" width="9" height="' + (-NOZZLE - 6) + '"/>' +
@@ -1041,6 +1293,8 @@
       return out + badge(place ? (place.clamp ? -30 : 30) : 0, 14, ctx.no);      // unter einem Gefäß steht die Nummer neben dessen Nummer
     }
   });
+
+  var TRIANGLE = 16;                    // so weit steckt der Tiegel unter dem Tondreieck
 
   // ------------------------------------------------------------------ Waage
 
@@ -1909,6 +2163,12 @@
         : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
         : id === "jar" ? '<path class="cl-glass" d="M8,3L8,24M20,24L20,3M5,27L8,24L20,24L23,27Z"/>'
         : id === "cylinder" ? '<path class="cl-glass" d="M10,3L10,24M18,24L18,3M6,27L10,24L18,24L22,27Z"/><line class="cl-mark" x1="14" x2="18" y1="9" y2="9"/><line class="cl-mark" x1="14" x2="18" y1="15" y2="15"/>'
+        : id === "flatflask" ? '<path class="cl-glass" d="M12,3L12,9A9,9 0 1 0 16,9L16,3"/>'
+        : id === "filterflask" ? '<path class="cl-glass" d="M11,3L11,10L4,25Q3,27 6,27L22,27Q25,27 24,25L17,10L17,3M17,6L24,8"/>'
+        : id === "crucible" ? '<path class="cl-porcelain-edge" d="M5,9L9,25L19,25L23,9"/>'
+        : id === "trough" ? '<path class="cl-glass" d="M2,14L2,27L26,27L26,14"/><path class="cl-glass" d="M17,22L17,4L23,4L23,22"/>'
+        : id === "dropfunnel" ? '<path class="cl-glass" d="M14,27L14,20M11,20L14,22L17,20M9,18L9,5L19,5L19,18L14,21L9,18"/><rect class="cl-cock" x="10" y="20" width="8" height="3" rx="1"/>'
+        : id === "buchner" ? '<path class="cl-porcelain-edge" d="M4,6L4,16L24,16L24,6M12,16L12,26M16,16L16,26"/><line class="cl-filter-plate" x1="5" x2="23" y1="13" y2="13"/>'
         : id === "erlenmeyer" ? '<path class="cl-glass" d="M11,3L11,10L4,25Q3,27 6,27L22,27Q25,27 24,25L17,10L17,3"/><line class="cl-mark" x1="16" x2="20" y1="19" y2="19"/>'
         // Vollpipette mit dem Farbring ihres Volumens (ISO 1769)
         : L.parts[id] && L.parts[id].probe === "pipette" ? '<path class="cl-glass" d="M14,2L14,9M12,9Q8,14 12,19L14,19L14,27M14,19L16,19Q20,14 16,9Z"/><line class="cl-mark" x1="12" x2="16" y1="6" y2="6"/>' +
@@ -1984,5 +2244,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, flatShape: flatShape, crucible: crucShape, cruc: CRUC, trough: TROUGH, troughSurface: troughSurface, dropAt: dropAt, drop: DROP, buchAt: buchAt, buchner: BUCH, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

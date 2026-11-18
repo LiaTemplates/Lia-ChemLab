@@ -153,6 +153,168 @@
     level: function (w) { return w.ml > 0.005 ? cm(-L.parts.erlenmeyer.surface(w)) : cm(2); }
   }));
 
+  // ------------------------------------------------------------------ Stehkolben, Saugflasche, Tiegel
+
+  // Profile wie in 2D (S.flatShape, S.crucible); y hier in cm über dem Tisch, h in Bildpunkten über dem Boden
+  L.registerLook("flatflask", "lab", vessel({
+    tall: true, thick: 0.06, lip: 0.06,
+    shape: function (d) {
+      var F = S.flatShape(d.data);
+      return { id: "flatflask" + F.size[0], floor: cm(2), rim: cm(F.H), front: cm(F.size[0]), steps: 64,
+        inner: function (y) { var h = y * PX - 1; return h >= F.shape.top ? cm(F.size[2] - 1) : cm(Math.max(F.size[2] - 1, F.shape.half(Math.max(0, h)) - 1)); } };
+    },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.flatflask.surface(w)) : cm(2); }
+  }));
+
+  // die Saugflasche: der Erlenmeyerkolben mit 250 mL, dickwandig, mit Ansatz und Schlauch zum Hahn hinter dem Tisch
+  L.registerLook("filterflask", "lab", vessel({
+    tall: true, thick: 0.1, lip: 0.07,
+    shape: function () { var sh = erlShape({ data: { size: 250 } }); sh.id = "filterflask"; return sh; },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.filterflask.surface(w)) : cm(2); },
+    extra: function (group) {
+      var s = S.erlenmeyer[250], y = cm(s[1] - s[3] * 0.5), n = cm(s[2]);
+      var arm = new THREE.Mesh(new THREE.CylinderGeometry(cm(3.5), cm(3.5), cm(18), 12, 1, true).rotateZ(Math.PI / 2), fx.glass());
+      arm.position.set(n + cm(8), y, 0); arm.renderOrder = 2;
+      var hose = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(n + cm(16), y, 0), new THREE.Vector3(cm(s[0] + 18), y - 0.3, -1),
+        new THREE.Vector3(cm(s[0] + 22), 1, -6), new THREE.Vector3(cm(s[0] + 22), 0.2, -9)]), 30, 0.18, 8), fx.matte(fx.style.hose, 0.6));
+      hose.castShadow = true;
+      group.add(arm, hose);
+    }
+  }));
+
+  // Porzellantiegel: dicke, undurchsichtige Wand wie die Abdampfschale
+  L.registerLook("crucible", "lab", vessel({
+    thick: 0.12, lip: 0.08,
+    material: function () { return new THREE.MeshPhysicalMaterial({ color: 0xf5f3ee, roughness: 0.25, clearcoat: 0.7, clearcoatRoughness: 0.15 }); },
+    shape: function () {
+      var C = S.cruc;
+      return { id: "crucible", floor: cm(4), rim: cm(C.h + 2), front: cm(C.top), steps: 12,
+        inner: function (y) { return cm(Math.max(4, S.crucible.half(Math.min(C.h, Math.max(0, y * PX - 2))) - 3)); } };
+    },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.crucible.surface(w)) : cm(4); }
+  }));
+
+  // ------------------------------------------------------------------ Pneumatische Wanne
+
+  // Glaswanne mit Wasser, darin auf einer Brücke ein umgestülpter Standzylinder; oben in ihm das aufgefangene Gas (w.caught)
+  L.registerLook("trough", "lab", {
+    build: function (kit) {
+      var T = S.trough, group = new THREE.Group(), A = cm(T.a), H = cm(T.h), D = 9, glass = fx.glass(), k;
+      var walls = new THREE.Group();
+      [[0, H / 2, D / 2, 2 * A, H, 0.05], [0, H / 2, -D / 2, 2 * A, H, 0.05], [A, H / 2, 0, 0.05, H, D], [-A, H / 2, 0, 0.05, H, D], [0, 0.03, 0, 2 * A, 0.06, D]].forEach(function (b) {
+        var m = new THREE.Mesh(new THREE.BoxGeometry(b[3], b[4], b[5]), glass); m.position.set(b[0], b[1], b[2]); m.renderOrder = 2; walls.add(m);
+      });
+      var waterMat = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.05, transmission: 0.9, thickness: 2, ior: 1.33, attenuationColor: new THREE.Color(0xdfeefa), attenuationDistance: 12, transparent: true, opacity: 0.85 });
+      var water = new THREE.Mesh(new THREE.BoxGeometry(2 * A - 0.1, 1, D - 0.1), waterMat);
+      var cx = cm(T.cyl), cr = cm(T.cylA), cyl = new THREE.Mesh(new THREE.CylinderGeometry(cr, cr, cm(T.mouth - T.cylTop), 24, 1, true), glass);
+      cyl.position.set(cx, cm(-(T.mouth + T.cylTop) / 2), 0); cyl.renderOrder = 2;
+      var cap = new THREE.Mesh(new THREE.CircleGeometry(cr, 24).rotateX(-Math.PI / 2), glass); cap.position.set(cx, cm(-T.cylTop), 0);
+      var column = new THREE.Mesh(new THREE.CylinderGeometry(cr - 0.03, cr - 0.03, 1, 20), waterMat);
+      var gas = new THREE.Mesh(new THREE.CylinderGeometry(cr - 0.03, cr - 0.03, 1, 20), new THREE.MeshBasicMaterial({ color: 0xeef4f9, transparent: true, opacity: 0.35, depthWrite: false }));
+      var bridge = new THREE.Mesh(new THREE.BoxGeometry(2 * cr + 1, 0.2, 3), fx.matte(0x8b949e, 0.5)); bridge.position.set(cx, cm(-T.mouth) - 0.1, 0);
+      var px = cm(T.pipe), elbow = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(px, cm(34), 0), new THREE.Vector3(px, cm(10), 0),
+        new THREE.Vector3(px + 0.3, cm(6), 0), new THREE.Vector3(cx - 0.3, cm(6), 0), new THREE.Vector3(cx, cm(8), 0), new THREE.Vector3(cx, cm(-T.mouth) + 0.4, 0)]), 30, 0.12, 8, false), glass);
+      var tag = kit.label(0.75), held = kit.label(0.75);
+      group.add(walls, water, cyl, cap, column, gas, bridge, elbow, tag, held);
+      group.userData = { body: walls, water: water, waterMat: waterMat, column: column, gas: gas, tag: tag, held: held };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, w = d.data, T = S.trough, level = cm(-S.troughSurface(w)), cx = cm(T.cyl), top = cm(-T.cylTop) - 0.05, mouth = cm(-T.mouth);
+      var g = Math.min(1, (w.caught || 0) / L.parts.trough.collect) * (top - mouth - 0.1), wet = w.ml > 0.005;
+      u.water.visible = wet;
+      if (wet) { u.water.scale.y = Math.max(0.01, level - 0.06); u.water.position.y = 0.06 + u.water.scale.y / 2; u.waterMat.attenuationColor.copy(fx.color(w.color.rgb)).lerp(new THREE.Color(0xffffff), 0.3); }
+      u.column.visible = wet && top - g - mouth > 0.02;
+      if (u.column.visible) { u.column.scale.y = top - g - mouth; u.column.position.set(cx, mouth + u.column.scale.y / 2, 0); }
+      u.gas.visible = g > 0.02;
+      if (u.gas.visible) { u.gas.scale.y = g; u.gas.position.set(cx, top - g / 2, 0); }
+      u.tag.userData.write(String(d.ctx.no || " ") + (d.ctx.numbers && w.ml > 0.005 ? " · " + L.num(w.ml, 0, d.ctx.lang) + " mL" : ""));
+      u.tag.position.set(0, 0.15 - kit.up(d.lift), 6);
+      u.held.visible = !!d.ctx.numbers && (w.caught || 0) > 0.05;
+      if (u.held.visible) { u.held.userData.write(L.num(w.caught, 1, d.ctx.lang) + " mL"); u.held.position.set(cx, top + 0.4, 0); }
+    }
+  });
+
+  // ------------------------------------------------------------------ Tropftrichter und Büchnertrichter
+
+  L.registerLook("dropfunnel", "lab", {
+    build: function (kit) {
+      var group = new THREE.Group(), tag = kit.label(0.75);
+      var liquid = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transmission: 1, thickness: 0.6, ior: 1.33, attenuationColor: new THREE.Color(0xffffff), attenuationDistance: 2 });
+      var column = new THREE.Mesh(new THREE.CylinderGeometry(cm(S.drop.a - 2), cm(S.drop.a - 2), 1, 24), liquid);
+      var cock = new THREE.Group(), grip = new THREE.Mesh(new THREE.BoxGeometry(cm(4), cm(16), cm(3)), fx.matte(0x2f6fb0, 0.45));
+      cock.add(new THREE.Mesh(new THREE.CylinderGeometry(cm(3.5), cm(3.5), cm(14), 16).rotateZ(Math.PI / 2), fx.glass()), grip,
+        new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(3), cm(3), 12).rotateZ(Math.PI / 2).translate(-cm(8.5), 0, 0), fx.matte(0x8b949e, 0.5)));
+      var flow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
+      group.add(column, cock, flow, tag);
+      group.userData = { column: column, liquid: liquid, cock: cock, grip: grip, flow: flow, tag: tag };
+      return group;
+    },
+    update: function (group, d, kit) {
+      var u = group.userData, w = d.data, g = S.dropAt(d.hang), x = cm(g.x), a = cm(S.drop.a), top = cm(-g.top), bottom = cm(-g.bottom), tip = cm(-g.tip), open = w.tap > 0;
+      var level = cm(-L.parts.dropfunnel.surface(w, d.hang)), floor = -kit.up(d.lift), rod = cm(g.rod);
+      u.body = fx.rebuild(group, "glass", [g.x, g.top, g.rim, g.rod, d.lift].join("|"), function (sub) {
+        var glass = fx.glass(), pts = [[cm(2), bottom], [a, bottom + cm(11)], [a, top - cm(4)], [cm(6), top], [cm(6), top + cm(8)]];
+        var body = new THREE.Mesh(fx.lathe(pts.map(function (p) { return [p[0], p[1]]; }), 32), glass);
+        body.position.x = x; body.renderOrder = 2;
+        var stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(2.2), cm(1.4), bottom - tip, 12, 1, true), glass);
+        stem.position.set(x, (bottom + tip) / 2, 0); stem.renderOrder = 2;
+        var stopper = new THREE.Mesh(new THREE.CylinderGeometry(cm(6), cm(5), cm(11), 16), fx.matte(0x4a4d52, 0.8));
+        stopper.position.set(x, top + cm(12), 0);
+        sub.add(body, stem, stopper);
+        fx.stand(sub, rod, fx.STAND.z, floor, top + cm(14), [{ y: top - cm(24), x: x, r: a }]);
+      });
+      u.column.visible = w.ml > 0.005;
+      if (u.column.visible) {
+        u.column.scale.y = Math.max(0.01, level - bottom - cm(10)); u.column.position.set(x, bottom + cm(10) + u.column.scale.y / 2, 0);
+        u.liquid.color.copy(fx.color(w.color.rgb)); u.liquid.attenuationColor.copy(fx.color(w.color.rgb));
+      }
+      u.cock.position.set(x, cm(-g.cock), 0);
+      u.grip.rotation.set(open ? 0 : Math.PI / 2, 0, 0); u.grip.position.set(cm(10), 0, 0);
+      var y = d.hang ? cm(-g.surface) : 0;
+      u.flow.visible = open && w.ml > 0.001 && !!d.hang;
+      if (u.flow.visible) { u.flow.scale.set(w.tap >= 0.3 ? 0.05 : 0.02, tip - y, w.tap >= 0.3 ? 0.05 : 0.02); u.flow.position.set(x, (tip + y) / 2, 0); }
+      u.tag.userData.write(d.hang ? " " : String(d.ctx.no || " "));
+      u.tag.visible = !d.hang;
+      u.tag.position.set(x, floor + 0.15, 1.6);
+    }
+  });
+
+  L.registerLook("buchner", "lab", {
+    build: function (kit) {
+      var group = new THREE.Group(), B = S.buchner, a = cm(B.a), h = cm(B.h);
+      var porcelain = new THREE.MeshPhysicalMaterial({ color: 0xf5f3ee, roughness: 0.25, clearcoat: 0.7, clearcoatRoughness: 0.15, side: THREE.DoubleSide });
+      var bowl = new THREE.Mesh(fx.lathe([[cm(5), -cm(8)], [a - 0.2, -cm(8)], [a, -cm(6)], [a + 0.05, h], [a - 0.1, h], [a - 0.15, 0], [cm(5), 0]], 40), porcelain);
+      var plate = new THREE.Mesh(new THREE.CylinderGeometry(a - 0.15, a - 0.15, 0.06, 32), fx.matte(0xe9e5dc, 0.7));
+      var paper = new THREE.Mesh(new THREE.CylinderGeometry(a - 0.2, a - 0.2, 0.02, 32), fx.matte(0xfbfbf6, 0.95));
+      paper.position.y = 0.05;
+      var stem = new THREE.Mesh(new THREE.CylinderGeometry(cm(5), cm(4), 1, 16, 1, true), porcelain);
+      var cone = new THREE.Mesh(new THREE.CylinderGeometry(cm(11), cm(8), cm(14), 20), fx.matte(0x9c3d24, 0.8));
+      var liquid = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transmission: 1, thickness: 0.5, ior: 1.33, attenuationColor: new THREE.Color(0xffffff), attenuationDistance: 2 });
+      var fill = new THREE.Mesh(new THREE.CylinderGeometry(a - 0.2, a - 0.2, 1, 32), liquid), cake = new THREE.Mesh(new THREE.CylinderGeometry(a - 0.2, a - 0.2, 1, 32), fx.matte(0x888888, 0.9));
+      var flow = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 1, 8, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xdfeefa, roughness: 0.05, transparent: true, opacity: 0.6, depthWrite: false }));
+      [bowl, cone].forEach(function (o) { o.castShadow = true; });
+      var top = new THREE.Group();
+      top.add(bowl, plate, paper, fill, cake);
+      group.add(top, stem, cone, flow);
+      group.userData = { body: top, top: top, stem: stem, cone: cone, fill: fill, liquid: liquid, cake: cake, paper: paper, flow: flow };
+      return group;
+    },
+    update: function (group, d) {
+      var u = group.userData, w = d.data, g = S.buchAt(d.hang), x = cm(g.x), plate = cm(-g.plate), tip = cm(-g.tip), level = cm(-L.parts.buchner.surface(w, d.hang)), sed = w.sediment, c;
+      u.top.position.set(x, plate, 0);
+      u.stem.scale.y = plate - cm(8) - tip; u.stem.position.set(x, (plate - cm(8) + tip) / 2, 0);
+      u.cone.position.set(x, cm(-g.rim) + cm(1), 0);
+      u.fill.visible = w.ml > 0.005;
+      if (u.fill.visible) { u.fill.scale.y = Math.max(0.01, level - plate - 0.06); u.fill.position.y = 0.06 + u.fill.scale.y / 2; u.liquid.color.copy(fx.color(w.color.rgb)); u.liquid.attenuationColor.copy(fx.color(w.color.rgb)); }
+      u.cake.visible = !!(sed && sed.ml > 0.002);
+      if (u.cake.visible) { c = Math.max(0.12, Math.min(cm(S.buchner.h - 8), cm(sed.ml * 3))); u.cake.scale.y = c; u.cake.position.y = 0.06 + c / 2; u.cake.material.color.copy(fx.color(sed.rgb)); }
+      var y = d.hang ? cm(-g.surface) : 0;
+      u.flow.visible = w.ml > 0.001 && !!d.hang && !w.blocked;
+      if (u.flow.visible) { u.flow.scale.y = tip - y; u.flow.position.set(x, (tip + y) / 2, 0); }
+    }
+  });
+
   // ------------------------------------------------------------------ Kalorimeter
 
   // Styroporbecher mit Deckelring: durchscheinend, damit man den Inhalt noch ahnt. Innen eine dünne Wand (sie trägt den Boden,

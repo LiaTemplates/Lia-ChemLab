@@ -900,7 +900,8 @@
           }
           b = def.bounds(v, hang);
           aria = T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content });
-          if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
+          if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx,
+            held: shownPipette === item.id && def.mount ? { ml: L.parts[st.hand.id].ml, rgb: w.color.rgb, tip: Math.min(-6, def.mount(w).surface + 10) } : null });
           else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang) +
             (shownPipette === item.id && def.mount ? L.pipetteHeld(L.parts[st.hand.id].ml, w, def.mount(w), ctx) : "");
           g.setAttribute("aria-label", aria);

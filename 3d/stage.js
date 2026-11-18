@@ -304,6 +304,14 @@
         e.obj.position.set((d.x - width / 2) / PX, up(d.lift), 0);
         L.fx3d.style = kit.style;
         e.look.update(e.obj, d, kit);
+        // eine aufgezogene Vollpipette steht im Gefäß (held: { ml, rgb, tip in 2D-Bildpunkten }), wie in 2D
+        var held = d.held ? d.held.ml + "|" + d.held.rgb.join(",") : null;
+        if (held !== e.held) {
+          if (e.pipette) { e.obj.remove(e.pipette); dispose(e.pipette); e.pipette = null; }
+          e.held = held;
+          if (d.held) { e.pipette = L.fx3d.pipette(d.held.ml, d.held.rgb); e.obj.add(e.pipette); }
+        }
+        if (e.pipette) e.pipette.position.set(0, -d.held.tip / PX, 0);          // die Gruppe des Gefäßes ist schon gehoben
         e.key.setAttribute("aria-label", d.label);
         e.selected = d.selected;
       },
