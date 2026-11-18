@@ -58,3 +58,4 @@ Erledigt am 17.11.2026: Stand-Zeile der README, Standzylinder (Knallgas-Folie nu
 - [x] Version 0.1.3 veröffentlicht am 18.11.2026: Siedepunkterhöhung (gelöste Teilchen nach Raoult).
 - [x] Version 0.2.0 veröffentlicht am 18.11.2026: Laborlook nach Normen in 2D und 3D (ISO 384, 385, 1042, 4788, 918, 4799 u. a.), neue Geräte (Erlenmeyer, Stehkolben, Tropftrichter, Saugflasche mit Büchnertrichter, Tiegel, pneumatische Wanne), Destillation mit Dampfthermometer, Stative, Zentrifuge, Wasserbad, Manometer; ältere Browser (KaiOS 2.5).
 - [x] Version 0.2.1 veröffentlicht am 18.11.2026: Licht aus ohne helle Fugen und Tischkante; Flamme und Anzeigen leuchten, Schilder und Nummern dunkel mit heller Schrift.
+- [x] Version 0.3.0 veröffentlicht am 18.11.2026: Sieden mit Keimstellen, wachsenden und platzenden Blasen; Glasbruch mit fliegenden Scherben; beides in 2D und 3D.
