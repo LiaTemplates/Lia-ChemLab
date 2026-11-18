@@ -478,4 +478,22 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 .lia-chemlab .cl-uvglass { fill: #8d5bff; }
 .lia-chemlab .cl-uvbeam { fill: #8d5bff; fill-opacity: 0.14; }
 .lia-chemlab[data-dark="true"] .cl-wall, .lia-chemlab[data-dark="true"] .cl-bench { fill: #07080d; }
-.lia-chemlab[data-dark="true"] .cl-item > :not(.cl-glowing):not(.cl-glow):not(.cl-hit) { opacity: 0.22; }
+/* Fugen der Fliesen, Tischkante und Leitungen gehen mit ins Dunkel, sonst stünden helle Linien vor dem schwarzen Raum */
+.lia-chemlab[data-dark="true"] .cl-tile { stroke: none; }
+.lia-chemlab[data-dark="true"] .cl-edge { stroke: #0d1016; }
+.lia-chemlab[data-dark="true"] .cl-wires { opacity: 0.22; }
+/* Im Dunkeln bleibt, was selbst leuchtet: die Flamme, die beleuchteten Anzeigen, ein eingeschaltetes Lämpchen. Schilder, Nummern und
+   Füllmengen braucht man zum Bedienen: dunkel mit gedämpft weißer Schrift, nie heller als eine leuchtende Lösung */
+.lia-chemlab[data-dark="true"] .cl-item > :not(.cl-glowing):not(.cl-glow):not(.cl-hit):not(.cl-flame):not(.cl-flame-core):not(.cl-meter):not(.cl-led):not(.cl-tag):not(.cl-badge):not(.cl-badge-text):not(.cl-label) { opacity: 0.22; }
+.lia-chemlab[data-dark="true"] .cl-led:not(.cl-on) { opacity: 0.22; }
+.lia-chemlab[data-dark="true"] .cl-flame { filter: drop-shadow(0 0 5px rgba(140, 170, 255, 0.55)); }
+.lia-chemlab[data-dark="true"] .cl-flame.cl-luminous { filter: drop-shadow(0 0 6px rgba(255, 190, 70, 0.6)); }
+.lia-chemlab[data-dark="true"] .cl-meter text { filter: drop-shadow(0 0 2px rgba(184, 245, 200, 0.6)); }
+.lia-chemlab[data-dark="true"] .cl-tag rect { fill: #161b22; stroke: #3b4552; }
+.lia-chemlab[data-dark="true"] .cl-tag text { fill: #c9d1da; }
+.lia-chemlab[data-dark="true"] .cl-badge { fill: #12161d; stroke: #4f5966; }
+.lia-chemlab[data-dark="true"] .cl-badge-text { fill: #b9c2cc; }
+.lia-chemlab[data-dark="true"] .cl-label { fill: #8a94a0; }
+/* ohne Raumlicht keine Spiegelung auf dem Glas, und das Schriftfeld leuchtet nicht */
+.lia-chemlab[data-dark="true"] .cl-item .cl-shine { visibility: hidden; }
+.lia-chemlab[data-dark="true"] .cl-label-field { fill: #2a3038; stroke: none; }

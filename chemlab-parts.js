@@ -1338,14 +1338,14 @@
       out = '<g class="cl-centrifuge"><rect class="cl-device" x="' + (-a) + '" y="' + (-ROTOR.h) + '" width="' + 2 * a + '" height="' + ROTOR.h + '" rx="6"/>' +
         '<ellipse class="cl-slot" cx="0" cy="' + (-ROTOR.h + 1) + '" rx="15" ry="2.5"/>' +
         '<g transform="translate(' + (-a + 15) + ",-14) rotate(" + f(turn) + ')"><circle class="cl-knob" r="8"/>' +
-        '<path class="cl-knob-mark" d="M4.3,-2.5A5,5 0 1 1 -1.3,-4.8M-1.3,-4.8L-3.6,-6.4M-1.3,-4.8L-3,-2.6"/></g>' +
-        '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/>';
+        '<path class="cl-knob-mark" d="M4.3,-2.5A5,5 0 1 1 -1.3,-4.8M-1.3,-4.8L-3.6,-6.4M-1.3,-4.8L-3,-2.6"/></g>';
       // Deckel: zu über dem Glas, solange sie läuft; sonst hinten hochgeklappt
       out += w.spin
         ? '<path class="cl-hood" d="M' + (-a + 4) + "," + (-ROTOR.h) + "L" + (-a + 4) + "," + (top + 10) + "Q" + (-a + 4) + "," + top + " " + (-a + 14) + "," + top +
           "L" + (a - 14) + "," + top + "Q" + (a - 4) + "," + top + " " + (a - 4) + "," + (top + 10) + "L" + (a - 4) + "," + (-ROTOR.h) + 'Z"/>'
         : '<path class="cl-hood cl-hood-open" d="M' + (a - 4) + "," + (-ROTOR.h) + "L" + (a + 6) + "," + (-ROTOR.h - 2 * a + 8) + '"/>';
-      return out + "</g>" + badge(place ? a + 14 : 0, 14, ctx.no);
+      // das Lämpchen außerhalb der Gruppe: es leuchtet auch bei „Licht aus“
+      return out + "</g>" + '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/>' + badge(place ? a + 14 : 0, 14, ctx.no);
     }
   });
 

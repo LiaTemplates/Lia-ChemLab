@@ -56,6 +56,7 @@
       var tube = mesh(new THREE.CylinderGeometry(0.55, 0.55, 1, 24), steel);
       body.add(tube);
       var outer = fx.cone(0.75, 0x3d6dff), inner = fx.cone(0.5, 0x8fd8ff), light = new THREE.PointLight(0x6fa0ff, 0, 0, 2);
+      light.userData.own = true;                                  // die Flamme leuchtet auch bei „Licht aus“
       group.add(body, outer, inner, light);
       group.userData = { body: body, tube: tube, outer: outer, inner: inner, light: light, tag: null };
       return group;

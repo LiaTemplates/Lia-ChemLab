@@ -44,10 +44,11 @@
       w = Math.ceil(g.measureText(text).width) + 64;
       canvas.width = w; canvas.height = 128;
       g.font = font;
-      g.fillStyle = "rgba(255,255,255,0.92)";
-      g.strokeStyle = "rgba(40,48,60,0.25)"; g.lineWidth = 3;
+      // bei „Licht aus“ dunkel mit gedämpft weißer Schrift, wie in 2D
+      g.fillStyle = sprite.userData.dark ? "rgba(22,27,34,0.9)" : "rgba(255,255,255,0.92)";
+      g.strokeStyle = sprite.userData.dark ? "rgba(90,104,120,0.6)" : "rgba(40,48,60,0.25)"; g.lineWidth = 3;
       g.beginPath(); g.roundRect(1.5, 1.5, w - 3, 125, 28); g.fill(); g.stroke();
-      g.fillStyle = "#28303c"; g.textBaseline = "middle";
+      g.fillStyle = sprite.userData.dark ? "#c9d1da" : "#28303c"; g.textBaseline = "middle";
       g.fillText(text, 32, 67);
       tex.dispose();                // neue Größe der Leinwand: die Textur neu anlegen lassen
       tex.needsUpdate = true;
@@ -149,7 +150,14 @@
     function dim() {                // shortcut: Faktor 0,04 für Lampen und Umgebung; die Lichtfarbe des Raums bleibt
       var k = darkened ? 0.04 : 1;
       world.traverse(function (o) {
-        if (o.isLight) { if (o.userData.power == null) o.userData.power = o.intensity; o.intensity = o.userData.power * k; }
+        // own: eine eigene Lichtquelle wie die Flamme leuchtet weiter
+        if (o.isLight && !o.userData.own) { if (o.userData.power == null) o.userData.power = o.intensity; o.intensity = o.userData.power * k; }
+        if (o.isSprite && o.userData.write && !!o.userData.dark !== darkened) {      // Schilder neu schreiben
+          o.userData.dark = darkened;
+          var text = o.userData.text;
+          o.userData.text = null;
+          if (text != null) o.userData.write(text);
+        }
         [].concat(o.material || []).forEach(function (m) {
           if (m.envMapIntensity == null) return;
           if (m.userData.env == null) m.userData.env = m.envMapIntensity;

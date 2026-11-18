@@ -25,6 +25,7 @@
   L.registerLook("burner", "kitchen", {
     build: function () {
       var group = new THREE.Group(), body = new THREE.Group(), flames = [], k, light = new THREE.PointLight(0x6fa0ff, 0, 0, 2);
+      light.userData.own = true;                                  // die Flamme leuchtet auch bei „Licht aus“
       for (k = 0; k < N; k++) { flames.push(fx.cone(0.2, 0x3d6dff)); group.add(flames[k]); }
       group.add(body, light);
       group.userData = { body: body, flames: flames, light: light };
