@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "doorsnede",
     "flow3d.particles": "deeltjes",
+    "flow3d.volume": "volume",
     "flow.mix": "schlieren",
     "flow.vortex": "wervelingen",
     "flow.pressure": "druk",

@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "rez",
     "flow3d.particles": "častice",
+    "flow3d.volume": "objem",
     "flow.mix": "šlíry",
     "flow.vortex": "víry",
     "flow.pressure": "tlak",

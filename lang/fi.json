@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "leikkaus",
     "flow3d.particles": "hiukkaset",
+    "flow3d.volume": "tilavuus",
     "flow.mix": "sekoittumisjuovat",
     "flow.vortex": "pyörteet",
     "flow.pressure": "paine",

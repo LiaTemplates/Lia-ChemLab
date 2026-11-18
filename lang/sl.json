@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "prerez",
     "flow3d.particles": "delci",
+    "flow3d.volume": "prostornina",
     "flow.mix": "mešalne proge",
     "flow.vortex": "vrtinci",
     "flow.pressure": "tlak",

@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "переріз",
     "flow3d.particles": "частинки",
+    "flow3d.volume": "об'єм",
     "flow.mix": "свилі",
     "flow.vortex": "вихори",
     "flow.pressure": "тиск",

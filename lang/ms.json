@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "keratan",
     "flow3d.particles": "zarah",
+    "flow3d.volume": "isipadu",
     "flow.mix": "jalur campuran",
     "flow.vortex": "pusaran",
     "flow.pressure": "tekanan",

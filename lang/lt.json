@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "pjūvis",
     "flow3d.particles": "dalelės",
+    "flow3d.volume": "tūris",
     "flow.mix": "maišymosi ruožai",
     "flow.vortex": "sūkuriai",
     "flow.pressure": "slėgis",

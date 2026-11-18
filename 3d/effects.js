@@ -89,6 +89,37 @@
     sheetTex.colorSpace = THREE.SRGBColorSpace;
     cut = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: sheetTex, alphaTest: 0.5, side: THREE.DoubleSide }));
     // oder als Teilchen im ganzen Glas: das 2D-Feld um die Achse gedreht (ein Becherglas ist rund), je Teilchen [Abstand zur Achse 0…1, Winkel, Höhe 0…1]
+    // oder als Volumen: der Schnitt um die Achse gedreht (für das Feld im Becherglas genau das Gerechnete, für die Strömung eine Annahme:
+    // linke und rechte Hälfte gemittelt). Ein Würfel um die Flüssigkeit; je Bildpunkt läuft der Sehstrahl in VOL Schritten hindurch und
+    // sammelt Farbe und Deckkraft von vorn nach hinten. Deckend ist, was farbig ist (1 − kleinster Farbanteil), DENSE je cm; außerhalb
+    // der Flüssigkeit ist der Schnitt durchsichtig
+    var VOL = 48, DENSE = 1.0;
+    var volume = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.ShaderMaterial({
+      uniforms: { map: { value: sheetTex }, toLocal: { value: new THREE.Matrix4() }, toWorld: { value: new THREE.Matrix3() }, dense: { value: DENSE } },
+      vertexShader: "varying vec3 vWorld; void main() { vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }",
+      fragmentShader: [
+        "uniform sampler2D map; uniform mat4 toLocal; uniform mat3 toWorld; uniform float dense; varying vec3 vWorld;",
+        "void main() {",
+        // gezeichnet wird die Rückseite (keine Fläche liegt auf der Flüssigkeitsoberfläche): von dort zurück bis zur Vorderseite, dann nach vorn
+        "  vec3 e = (toLocal * vec4(vWorld, 1.0)).xyz, d = normalize((toLocal * vec4(vWorld - cameraPosition, 0.0)).xyz);",
+        "  vec3 t3 = (-sign(d) * 0.5 - e) / -d; float t = min(min(t3.x, t3.y), t3.z), dt = t / " + VOL + ".0, ds = dt * length(toWorld * d);",
+        "  vec3 p = e - d * t;",
+        "  vec4 acc = vec4(0.0);",
+        "  for (int i = 0; i < " + VOL + "; i++) {",
+        "    vec3 q = p + d * dt * (float(i) + 0.5); float r = length(q.xz) * 2.0, v = q.y + 0.5;",
+        "    if (r > 1.0) continue;",
+        "    vec4 a = texture2D(map, vec2(0.5 + 0.5 * r, v)), b = texture2D(map, vec2(0.5 - 0.5 * r, v));",
+        "    if (a.a < 0.5 || b.a < 0.5) continue;",
+        "    vec3 c = (a.rgb + b.rgb) * 0.5; float k = 1.0 - exp(-dense * (1.0 - min(min(c.r, c.g), c.b)) * ds);",
+        "    acc.rgb += (1.0 - acc.a) * k * c; acc.a += (1.0 - acc.a) * k;",
+        "    if (acc.a > 0.98) break;",
+        "  }",
+        "  if (acc.a < 0.004) discard;",
+        "  gl_FragColor = vec4(acc.rgb / acc.a, acc.a);",
+        "}"].join("\n"),
+      transparent: true, depthWrite: false, side: THREE.BackSide }));
+    volume.visible = false; volume.renderOrder = 2;
+    volume.onBeforeRender = function () { volume.material.uniforms.toLocal.value.copy(volume.matrixWorld).invert(); volume.material.uniforms.toWorld.value.setFromMatrix4(volume.matrixWorld); };
     var SWARM = 400, flock = null, tone = new THREE.Color();
     var swarm = new THREE.Points(new THREE.BufferGeometry(), new THREE.PointsMaterial({ size: 0.6, vertexColors: true, map: puff(), alphaTest: 0.35, sizeAttenuation: true }));
     swarm.geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(3 * SWARM), 3));
@@ -130,7 +161,7 @@
       new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.6, 0.24, 24).rotateX(Math.PI / 2).translate(0, 1.6, 0), fx.matte(fx.style.device, 0.45)));
     drops3.count = 0; flyer.visible = false;
     drops3.frustumCulled = bubbles.frustumCulled = false;          // count wechselt; eine einmal berechnete Hülle wäre leer oder zu klein
-    group.add(body, upper, beads, cut, swarm, surface, ground, crust, froth, heap, fog, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
+    group.add(body, upper, beads, cut, volume, swarm, surface, ground, crust, froth, heap, fog, mirror, solids, bubbles, steam, stream, burn.group, hotFlame, drops3, flyer);
 
     // Drehkörper der Form bis zur Höhe top, nur neu, wenn sich die Höhe merklich ändert
     function fill(mesh, shape, from, top, key) {
@@ -321,7 +352,10 @@
           swarm.geometry.attributes.color.needsUpdate = true;
         }
         cut.visible = shown === "cut";
-        if (cut.visible) {
+        volume.visible = shown === "volume";
+        // als Volumen ist das Feld die Flüssigkeit: ihr Körper und ihre Oberfläche würden es im Tiefenpuffer verdecken
+        if (volume.visible) body.visible = surface.visible = upper.visible = false;
+        if (cut.visible || volume.visible) {
           var wide = 0, g = sheet.getContext("2d"), img, px, py, yy, xx, half, c, o;
           if (cells) {
             for (k = 0; k <= 12; k++) wide = Math.max(wide, shape.inner(shape.floor + (level - shape.floor) * k / 12));
@@ -349,6 +383,8 @@
             sheetTex.needsUpdate = true;
             cut.scale.set(2 * wide, level - shape.floor, 1);
             cut.position.set(0, (level + shape.floor) / 2, 0);
+            volume.scale.set(2 * wide, level - shape.floor, 2 * wide);
+            volume.position.copy(cut.position);
           }
         }
         // die Flüssigkeit selbst wird farblos klar: die Farbe tragen Ebene oder Teilchen, sonst färbte die Schicht davor sie ein zweites Mal

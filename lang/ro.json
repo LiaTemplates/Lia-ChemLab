@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "secțiune",
     "flow3d.particles": "particule",
+    "flow3d.volume": "volum",
     "flow.mix": "striații de amestec",
     "flow.vortex": "vârtejuri",
     "flow.pressure": "presiune",

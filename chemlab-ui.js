@@ -118,7 +118,7 @@
 
     var show = st.config.show;
     var FLOWS = ["", "temp", "diff", "mix", "vortex", "pressure"];      // Ansichten der Strömung im Gefäß, die erste ist aus
-    var FLOWS3D = ["cut", "particles"];                  // wie die Strömung in 3D erscheint: als Schnittebene oder als Teilchen im Glas
+    var FLOWS3D = ["cut", "particles", "volume"];        // wie die Strömung in 3D erscheint: als Schnittebene, als Teilchen oder als Volumen im Glas
     if (st.flow == null) st.flow = Math.max(0, FLOWS.indexOf(show.flow));
     if (st.flow3d == null) st.flow3d = Math.max(0, FLOWS3D.indexOf(show.flow3d));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt

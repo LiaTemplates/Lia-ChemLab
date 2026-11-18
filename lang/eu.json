@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "ebakidura",
     "flow3d.particles": "partikulak",
+    "flow3d.volume": "bolumena",
     "flow.mix": "nahasketa-marrak",
     "flow.vortex": "zurrunbiloak",
     "flow.pressure": "presioa",

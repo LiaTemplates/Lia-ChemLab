@@ -38,7 +38,7 @@
       "restMore": "Press play once more to let it run for another ten minutes anyway.",
       "lens.paste": "Too little liquid for so much solute: a paste the particle view cannot look into.",
       "lens.residue": "No liquid in the vessel; a residue from evaporation lies at the bottom.",
-      "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
+      "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow3d.volume": "volume", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
       "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "part.erlenmeyer": "Erlenmeyer flask", "part.flatflask": "flat-bottom flask", "part.filterflask": "filter flask", "part.crucible": "porcelain crucible", "part.trough": "pneumatic trough", "part.dropfunnel": "dropping funnel", "part.buchner": "Büchner funnel", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",

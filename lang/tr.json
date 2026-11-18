@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "kesit",
     "flow3d.particles": "parçacıklar",
+    "flow3d.volume": "hacim",
     "flow.mix": "karışma çizgileri",
     "flow.vortex": "girdaplar",
     "flow.pressure": "basınç",

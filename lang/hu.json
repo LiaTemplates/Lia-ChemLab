@@ -65,6 +65,7 @@
     "flow3d": "3D",
     "flow3d.cut": "metszet",
     "flow3d.particles": "részecskék",
+    "flow3d.volume": "térfogat",
     "flow.mix": "keveredési csíkok",
     "flow.vortex": "örvények",
     "flow.pressure": "nyomás",
