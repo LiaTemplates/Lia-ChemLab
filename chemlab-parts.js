@@ -1198,6 +1198,9 @@
         // Deckel mit einer Öffnung in der Mitte, durch die Thermometer und Zugaben gehen
         '<rect class="cl-foam" x="' + (-a - t - 3) + '" y="' + (-h - 5) + '" width="' + f(a + t + 3 - LID * a) + '" height="5" rx="1.5"/>' +
         '<rect class="cl-foam" x="' + f(LID * a) + '" y="' + (-h - 5) + '" width="' + f(a + t + 3 - LID * a) + '" height="5" rx="1.5"/>' +
+        // Ringrührer: ein Draht durch die Öffnung im Deckel, unten ein Ring um das Thermometer, oben eine Öse zum Anfassen
+        '<path class="cl-stirrer" d="M' + f(LID * a - 5) + "," + (-h - 26) + "L" + f(LID * a - 5) + ",-9M" + f(-(LID * a - 5)) + ",-9A" + f(LID * a - 5) + ",2.6 0 1 0 " + f(LID * a - 5) + ",-9A" + f(LID * a - 5) + ",2.6 0 1 0 " + f(-(LID * a - 5)) + ',-9"/>' +
+        '<circle class="cl-stirrer" cx="' + f(LID * a - 5) + '" cy="' + (-h - 29) + '" r="3"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
   });
@@ -1317,21 +1320,32 @@
 
   // ------------------------------------------------------------------ Zentrifuge
 
-  var ROTOR = { lift: 22, h: 30 };       // das Reagenzglas steckt oben im Deckel, sein Boden bleibt zu sehen; vorn dreht sich die Scheibe, solange sie läuft
+  var ROTOR = { lift: 22, h: 30 };       // das Reagenzglas steckt oben im Gehäuse, sein Boden bleibt zu sehen; vorn dreht sich die Scheibe, solange sie läuft
 
-  // place: { lift, half } aus stand(), wie bei der Waage; das Glas bleibt ganz zu sehen, damit man den Bodensatz sieht
+  // place: { lift, half, top } aus stand(): top ist der Rand des Glases. Solange sie läuft, ist der durchsichtige Deckel zu (ein Rotor
+  // dreht sich nur bei geschlossenem Deckel, siehe Wikipedia „Laborzentrifuge“, EN 12547); steht sie, ist er hochgeklappt.
+  // Auf der Scheibe ein Drehpfeil, kein Kreuz: ein rotes Kreuz läse man als Erste Hilfe oder Rotes Kreuz.
   L.registerPart("centrifuge", {
     width: function () { return 84; },
     bounds: function (t, place) { var a = place ? place.half : 34; return { x0: -a - 4, x1: a + 24, top: -ROTOR.h - 2 }; },
-    stand: function (host) { var b = L.parts[host.type].bounds(host); return { lift: ROTOR.lift, half: Math.max(34, (b.x1 - b.x0) / 2), clamp: false }; },
+    stand: function (host) {
+      var b = L.parts[host.type].bounds(host);
+      return { lift: ROTOR.lift, half: Math.max(34, (b.x1 - b.x0) / 2), clamp: false, top: b.top - ROTOR.lift };
+    },
     span: function (host) { return 2 * (this.stand(host).half + 24); },
     draw: function (w, ctx, place) {
-      var a = place ? place.half : 34, turn = w.spin ? (ctx.still ? 30 : ((ctx.t || 0) * 300) % 360) : 0;
-      return '<g class="cl-centrifuge"><rect class="cl-device" x="' + (-a) + '" y="' + (-ROTOR.h) + '" width="' + 2 * a + '" height="' + ROTOR.h + '" rx="6"/>' +
-        '<rect class="cl-knob" x="' + (-a + 4) + '" y="' + (-ROTOR.h + 1) + '" width="' + (2 * a - 8) + '" height="5" rx="2"/>' +      // der Deckel
+      var a = place ? place.half : 34, turn = w.spin ? (ctx.still ? 30 : ((ctx.t || 0) * 300) % 360) : 0, top = place && place.top != null ? place.top - 8 : -ROTOR.h - 60, out;
+      out = '<g class="cl-centrifuge"><rect class="cl-device" x="' + (-a) + '" y="' + (-ROTOR.h) + '" width="' + 2 * a + '" height="' + ROTOR.h + '" rx="6"/>' +
         '<ellipse class="cl-slot" cx="0" cy="' + (-ROTOR.h + 1) + '" rx="15" ry="2.5"/>' +
-        '<g transform="translate(' + (-a + 15) + ",-14) rotate(" + f(turn) + ')"><circle class="cl-knob" r="8"/><path class="cl-knob-mark" d="M0,-6L0,6M-6,0L6,0"/></g>' +
-        '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/></g>' + badge(place ? a + 14 : 0, 14, ctx.no);
+        '<g transform="translate(' + (-a + 15) + ",-14) rotate(" + f(turn) + ')"><circle class="cl-knob" r="8"/>' +
+        '<path class="cl-knob-mark" d="M4.3,-2.5A5,5 0 1 1 -1.3,-4.8M-1.3,-4.8L-3.6,-6.4M-1.3,-4.8L-3,-2.6"/></g>' +
+        '<circle class="cl-led' + (w.spin ? " cl-on" : "") + '" cx="' + (a - 10) + '" cy="-20" r="2.5"/>';
+      // Deckel: zu über dem Glas, solange sie läuft; sonst hinten hochgeklappt
+      out += w.spin
+        ? '<path class="cl-hood" d="M' + (-a + 4) + "," + (-ROTOR.h) + "L" + (-a + 4) + "," + (top + 10) + "Q" + (-a + 4) + "," + top + " " + (-a + 14) + "," + top +
+          "L" + (a - 14) + "," + top + "Q" + (a - 4) + "," + top + " " + (a - 4) + "," + (top + 10) + "L" + (a - 4) + "," + (-ROTOR.h) + 'Z"/>'
+        : '<path class="cl-hood cl-hood-open" d="M' + (a - 4) + "," + (-ROTOR.h) + "L" + (a + 6) + "," + (-ROTOR.h - 2 * a + 8) + '"/>';
+      return out + "</g>" + badge(place ? a + 14 : 0, 14, ctx.no);
     }
   });
 
@@ -1351,20 +1365,34 @@
 
   // ------------------------------------------------------------------ Manometer
 
-  // Stopfen mit Steigrohr und rundem Zifferblatt darüber; der Zeiger von 0 bis 2 bar über einen Dreiviertelkreis
+  // Stopfen mit Steigrohr und rundem Zifferblatt darüber. Wie bei Rohrfedermanometern (EN 837-1; Darstellung nach Herstellerunterlagen,
+  // der Normtext ist nicht frei lesbar): weißes Blatt mit schwarzer Skala über einen Dreiviertelkreis, Messbereich 0 bis 2,5 bar,
+  // Ziffern an den ganzen und halben bar, die Einheit „bar“, und eine rote Grenzmarke bei POP_BAR, wo der Stopfen herausfliegt.
+  var GAUGE = { r: 19, max: 2.5 }, POP_BAR = 1.5;
+  function gaugeAngle(value) { return (-135 + 270 * Math.max(0, Math.min(GAUGE.max, value)) / GAUGE.max) * Math.PI / 180; }
   L.registerPart("manometer", {
-    width: function () { return 56; },
-    bounds: function (t, place) { var x = place ? place.x : 0, y = place ? place.rim - 46 : -40; return { x0: x - 20, x1: x + 20, top: y - 20, bottom: place ? place.rim + 8 : 0 }; },
+    width: function () { return 60; },
+    bounds: function (t, place) { var x = place ? place.x : 0, y = place ? place.rim - 50 : -44; return { x0: x - GAUGE.r - 4, x1: x + GAUGE.r + 4, top: y - GAUGE.r - 4, bottom: place ? place.rim + 8 : 0 }; },
     draw: function (w, ctx, place) {
-      var x = place ? place.x : 0, rim = place ? place.rim : -10, y = rim - 46, value = Math.max(0, Math.min(2, w.value == null ? 1 : w.value));
-      var a = (-135 + 270 * value / 2) * Math.PI / 180, out = place ? plugShape(x, rim, place.w) : plugShape(x, rim, 20);
-      out += '<line class="cl-rod" x1="' + f(x) + '" y1="' + f(rim - 4) + '" x2="' + f(x) + '" y2="' + f(y + 16) + '"/>' +
-        '<circle class="cl-device" cx="' + f(x) + '" cy="' + f(y) + '" r="16"/>' +
-        '<line class="cl-mark" x1="' + f(x) + '" y1="' + f(y) + '" x2="' + f(x + 12 * Math.sin(a)) + '" y2="' + f(y - 12 * Math.cos(a)) + '" stroke-width="1.6"/>';
-      if (ctx.numbers && w.value != null) out += '<g class="cl-tag"><rect x="' + f(x + 18) + '" y="' + f(y - 9) + '" width="52" height="17" rx="4"/><text x="' + f(x + 44) + '" y="' + f(y + 3) + '" text-anchor="middle">' + num(w.value, 2, ctx.lang) + " bar</text></g>";
+      var x = place ? place.x : 0, rim = place ? place.rim : -10, y = rim - 50, R = GAUGE.r, a = gaugeAngle(w.value == null ? 1 : w.value), out = place ? plugShape(x, rim, place.w) : plugShape(x, rim, 20), v, b, k, len;
+      out += '<line class="cl-rod" x1="' + f(x) + '" y1="' + f(rim - 4) + '" x2="' + f(x) + '" y2="' + f(y + R) + '"/>' +
+        '<circle class="cl-dial" cx="' + f(x) + '" cy="' + f(y) + '" r="' + R + '"/>';
+      // rote Grenzmarke: ein Bogen von POP_BAR bis zum Ende der Skala
+      var p1 = gaugeAngle(POP_BAR), p2 = gaugeAngle(GAUGE.max), rr = R - 3;
+      out += '<path class="cl-dial-limit" d="M' + f(x + rr * Math.sin(p1)) + "," + f(y - rr * Math.cos(p1)) + "A" + rr + "," + rr + " 0 0 1 " + f(x + rr * Math.sin(p2)) + "," + f(y - rr * Math.cos(p2)) + '"/>';
+      for (k = 0; k <= 25; k++) {                                   // Teilung 0,1 bar, jeder fünfte Strich lang
+        v = k / 10; b = gaugeAngle(v); len = k % 5 ? 2.2 : 4;
+        out += '<line class="cl-dial-mark" x1="' + f(x + (R - 1.5) * Math.sin(b)) + '" y1="' + f(y - (R - 1.5) * Math.cos(b)) + '" x2="' + f(x + (R - 1.5 - len) * Math.sin(b)) + '" y2="' + f(y - (R - 1.5 - len) * Math.cos(b)) + '"' + (k % 5 ? "" : ' stroke-width="0.9"') + "/>";
+        if (k % 10 === 0) out += '<text class="cl-dial-text" x="' + f(x + (R - 9) * Math.sin(b)) + '" y="' + f(y - (R - 9) * Math.cos(b) + 2) + '" text-anchor="middle">' + trim(v, ctx.lang) + "</text>";
+      }
+      out += '<text class="cl-dial-text" x="' + f(x) + '" y="' + f(y + 11) + '" text-anchor="middle">bar</text>' +
+        '<line class="cl-needle" x1="' + f(x) + '" y1="' + f(y) + '" x2="' + f(x + (R - 4) * Math.sin(a)) + '" y2="' + f(y - (R - 4) * Math.cos(a)) + '"/>' +
+        '<circle class="cl-needle-hub" cx="' + f(x) + '" cy="' + f(y) + '" r="1.6"/>';
+      if (ctx.numbers && w.value != null) out += '<g class="cl-tag"><rect x="' + f(x + R + 3) + '" y="' + f(y - 9) + '" width="52" height="17" rx="4"/><text x="' + f(x + R + 29) + '" y="' + f(y + 3) + '" text-anchor="middle">' + num(w.value, 2, ctx.lang) + " bar</text></g>";
       return out + (place ? "" : badge(0, 14, ctx.no));
     }
   });
+  L.gaugeAngle = gaugeAngle;
 
   // ------------------------------------------------------------------ Kolbenprober
 
@@ -1380,8 +1408,12 @@
     },
     draw: function (w, ctx, place) {
       var x0 = place ? place.x + (place.off || 20) : -56, y = place ? place.rim - 26 : -14, value = Math.max(0, Math.min(100, w.value || 0));
-      var px = x0 + 6 + (BARREL - 14) * value / 100, out = "", ml;
+      var px = x0 + 6 + (BARREL - 14) * value / 100, out = "", ml, cx = x0 + BARREL / 2, lift = ctx.lift || 0;
       if (place) {
+        // Stativ: die Stange hinter der Mitte der Hülse, eine Klemme umfasst sie (wie in 3D)
+        out += '<rect class="cl-stand" x="' + f(cx - 17) + '" y="' + (lift - 5) + '" width="34" height="5" rx="2"/>' +
+          '<line class="cl-rod" x1="' + f(cx) + '" x2="' + f(cx) + '" y1="' + (lift - 5) + '" y2="' + (y - 16) + '"/>' +
+          '<rect class="cl-boss" x="' + f(cx - 5) + '" y="' + (y + 13) + '" width="10" height="10" rx="2"/>';
         out += '<path class="cl-stopper" d="M' + f(place.x - place.w / 2) + "," + (place.rim - 4) + "L" + f(place.x + place.w / 2) + "," + (place.rim - 4) + "L" +
           f(place.x + place.w / 2 - 2) + "," + (place.rim + 7) + "L" + f(place.x - place.w / 2 + 2) + "," + (place.rim + 7) + 'Z"/>' +
           '<path class="cl-hose" d="M' + place.x + "," + (place.rim + 4) + "L" + place.x + "," + y + "L" + x0 + "," + y + '"/>';
@@ -1390,7 +1422,8 @@
         '<rect class="cl-glass" x="' + x0 + '" y="' + (y - 8) + '" width="' + BARREL + '" height="16" rx="2"/>' +
         '<rect class="cl-plunger" x="' + f(px) + '" y="' + (y - 6.5) + '" width="4" height="13"/>' +
         '<line class="cl-rod" x1="' + f(px + 4) + '" x2="' + f(px + 34) + '" y1="' + y + '" y2="' + y + '"/>' +
-        '<line class="cl-rod" x1="' + f(px + 34) + '" x2="' + f(px + 34) + '" y1="' + (y - 7) + '" y2="' + (y + 7) + '"/>';
+        '<line class="cl-rod" x1="' + f(px + 34) + '" x2="' + f(px + 34) + '" y1="' + (y - 7) + '" y2="' + (y + 7) + '"/>' +
+        (place ? '<path class="cl-clamp" d="M' + f(cx - 7) + "," + (y - 10) + "L" + f(cx + 7) + "," + (y - 10) + "M" + f(cx - 7) + "," + (y + 10) + "L" + f(cx + 7) + "," + (y + 10) + '"/>' : "");
       // Skala gestuft wie bei ISO 384 (für Kolbenprober gibt es keine eigene Norm): die Striche hängen von der Oberkante herab,
       // kurz, mittel, lang; die Ziffern stehen über den langen
       graduation(100, 1, (BARREL - 14) / 100, 2.5, true).forEach(function (m) {
@@ -1515,10 +1548,12 @@
   // depth der Wasserstand über dem Rost (eine flache Schale steht nicht unter Wasser)
   L.registerPart("bath", {
     width: function () { return 180; },
-    // im Bad ist nur der Streifen unter dem Gefäß antippbar, bis unter die Tischkante zu seiner Nummer; das Gefäß selbst bleibt frei
+    // steht ein Gefäß darin, ist das Bad am Streifen unter dem Gefäß antippbar, bis unter die Tischkante zu seiner Nummer, und
+    // dazu (also) am Thermostat auf dem Rand; das Gefäß selbst bleibt frei
     bounds: function (t, place) {
-      var a = place ? place.half : 50;
-      return { x0: -a - 2, x1: a + 40, top: place ? -BATH.lift + 3 : -BATH.lift - BATH.depth - BATH.rim - 4, bottom: 24 };
+      var a = place ? place.half : 50, top = place ? -BATH.lift - place.depth - BATH.rim : 0;
+      return place ? { x0: -a - 2, x1: a + 40, top: -BATH.lift + 3, bottom: 24, also: { x0: a - 12, x1: a + 30, top: top - 24, bottom: top + 10 } }
+        : { x0: -a - 2, x1: a + 40, top: -BATH.lift - BATH.depth - BATH.rim - 26, bottom: 24 };
     },
     stand: function (host) {
       var def = L.parts[host.type], b = def.bounds(host);
@@ -1544,14 +1579,17 @@
           out += '<rect class="cl-ice" x="' + f(x) + '" y="' + (level - 4 + (i % 2)) + '" width="9" height="8" rx="2" transform="rotate(' + (i * 37 % 50 - 25) + " " + f(x + 4.5) + " " + level + ')"/>';
         }
       }
-      out += '<path class="cl-glass" d="M' + -a + "," + top + "L" + -a + ",-4Q" + -a + ",0 " + (-a + 4) + ",0L" + (a - 4) + ",0Q" + a + ",0 " + a + ",-4L" + a + "," + top + '"/>' +
-        // Thermostat neben der Wanne auf dem Tisch (dort ist er mit dem Bad antippbar): Gehäuse mit Anzeige, Heizstab über den Rand ins Wasser
-        '<path class="cl-heater" d="M' + (a + 14) + ",-24L" + (a + 14) + "," + (top - 6) + "L" + (a - 9) + "," + (top - 6) + "L" + (a - 9) + "," + f(level + depth * 0.6) + '"/>' +
-        '<rect class="cl-device" x="' + (a + 4) + '" y="-25" width="35" height="25" rx="3"/>' +
-        (ctx.numbers ? '<g class="cl-meter"><rect x="' + (a + 7) + '" y="-21" width="29" height="14" rx="2"/><text x="' + (a + 21.5) + '" y="-10.5' +
+      // Wanne aus durchsichtigem Polycarbonat (Transparentbad, damit man die Proben sieht), oben ein umlaufender Rand
+      out += '<path class="cl-tank" d="M' + -a + "," + top + "L" + -a + ",-4Q" + -a + ",0 " + (-a + 4) + ",0L" + (a - 4) + ",0Q" + a + ",0 " + a + ",-4L" + a + "," + top + '"/>' +
+        '<path class="cl-tank-rim" d="M' + (-a - 3) + "," + top + "L" + (-a + 3) + "," + top + "M" + (a - 3) + "," + top + "L" + (a + 3) + "," + top + '"/>' +
+        // Einhängethermostat am rechten Rand (Begriffe nach DIN 12876-1): Kopf mit Anzeige über dem Rand, Heizung und Pumpe im Wasser
+        '<rect class="cl-heater-rod" x="' + (a - 9) + '" y="' + (top + 6) + '" width="5" height="' + f(level + depth * 0.7 - top - 6) + '" rx="1.5"/>' +
+        '<rect class="cl-device" x="' + (a - 12) + '" y="' + (top - 22) + '" width="40" height="30" rx="3"/>' +
+        '<path class="cl-clamp" d="M' + (a - 1) + "," + (top + 8) + "L" + (a - 1) + "," + (top + 13) + '"/>' +
+        (ctx.numbers ? '<g class="cl-meter"><rect x="' + (a - 9) + '" y="' + (top - 19) + '" width="34" height="15" rx="2"/><text x="' + (a + 8) + '" y="' + (top - 8) +
           '" text-anchor="middle" style="font-size:8.5px">' + num(w.temp, 0, ctx.lang) + " °C</text></g>" : "") +
-        '<circle class="cl-knob" cx="' + (a + 21.5) + '" cy="-3.5" r="1.8"/>';
-      return out + badge(place ? a + 21.5 : 0, 14, ctx.no);
+        '<circle class="cl-knob" cx="' + (a + 2) + '" cy="' + (top + 2) + '" r="2"/><circle class="cl-knob" cx="' + (a + 14) + '" cy="' + (top + 2) + '" r="2"/>';
+      return out + badge(place ? a + 14 : 0, 14, ctx.no);
     }
   });
 
@@ -1671,9 +1709,23 @@
 
   // ------------------------------------------------------------------ Rundkolben
 
-  // Kugel mit dem Radius R auf einem Korkring, darüber der Hals; rechts am Hals das Ansatzrohr für den Kühler
+  // Kugel mit dem Radius R auf einem Korkring, darüber der Hals. Was im Kolben steckt (fit, die Arten der Geräte), bestimmt seine Form:
+  // mit Liebigkühler ein Destillierkolben mit Seitenrohr (ISO 918:1983, Bild 2: das Rohr 75° zum Hals), mit Rückflusskühler ein
+  // Zweihalskolben: der Kühler senkrecht im Haupthals, ein Fühler im parallelen Nebenhals SIDE. Sonst ein schlichter Hals.
   var FLASK = { R: 30, neck: 7, rim: -128, arm: -112 };
   var FLASK_CY = -4 - FLASK.R;
+  var SIDE = { x: -18, neck: 5, rim: -92 };      // Nebenhals: Mitte, halbe Breite, Rand
+  var FLASK_ROD = 54;                             // so weit neben der Mitte steht die Stativstange
+
+  // Ein Fühler, der in die Flüssigkeit taucht (nicht der Kolbenprober, das Manometer oder die Waage)
+  function dips(type) { var d = L.parts[type]; return !!(d && d.sense && !d.under && !d.bath && d.sense !== "V" && d.sense !== "p" && d.sense !== "m"); }
+  function flaskKit(fit) {
+    fit = fit || [];
+    var duct = fit.indexOf("condenser") >= 0, reflux = fit.indexOf("reflux") >= 0;
+    return { duct: duct, reflux: reflux, side: reflux && fit.some(dips), head: duct && fit.indexOf("thermometer") >= 0 };
+  }
+  // Thermometer im Kopf: die Kugel endet mit ihrer Oberkante auf Höhe der Unterkante des Seitenrohrs (ISO 918:1983, 5.2.1)
+  var HEAD_BULB = FLASK.arm + 3 + 10;
 
   function flaskSurface(w) {
     var R = FLASK.R - 1, share = Math.min(1, w.ml / w.cap), lo = 0, hi = 2 * R, h, i;
@@ -1688,32 +1740,66 @@
     return "M" + f(-half) + "," + f(y) + "A" + R + "," + R + " 0 " + (y < FLASK_CY ? 1 : 0) + " 0 " + f(half) + "," + f(y) + "Z";
   }
 
+  // Stativ mit Klemme am Hals, sobald der Kolben erhitzt wird oder ein Kühler darin steckt (so in ISO 918:1983, Bild 1, und in jedem
+  // Praktikum: ein Rundkolben steht nicht von allein). Mit Rückflusskühler steht das Stativ rechts und hält auch den Kühler,
+  // sonst links, damit das Seitenrohr frei bleibt.
+  function flaskStand(k, ctx) {
+    var lift = ctx.lift || 0, side = k.reflux && !k.duct ? 1 : -1, x = side * FLASK_ROD, grip = FLASK.arm + 22, high = FLASK.rim - REFLUX / 2, out;
+    if (!lift && !k.duct && !k.reflux) return "";
+    function clamp(y, a) {
+      return '<path class="cl-clamp" d="M' + x + "," + y + "L" + side * (a + 2) + "," + y + "M" + side * (a + 2) + "," + (y - 7) + "L" + side * (a + 2) + "," + (y + 7) +
+        "M" + -side * (a + 2) + "," + (y - 7) + "L" + -side * (a + 2) + "," + (y + 7) + '"/>' +
+        '<rect class="cl-boss" x="' + (x - 5) + '" y="' + (y - 5) + '" width="10" height="10" rx="2"/>';
+    }
+    out = '<rect class="cl-stand" x="' + (x - 17 + side * 6) + '" y="' + (lift - 5) + '" width="34" height="5" rx="2"/>' +
+      '<line class="cl-rod" x1="' + x + '" x2="' + x + '" y1="' + (lift - 5) + '" y2="' + ((k.reflux ? high : grip) - 30) + '"/>' +
+      clamp(grip, FLASK.neck);
+    return out + (k.reflux ? clamp(high, REFLUX_R) : "");
+  }
+
   L.registerPart("flask", {
-    width: function () { return 2 * FLASK.R + 46; },
+    width: function () { return 2 * (FLASK_ROD + 22); },      // Platz für das Stativ daneben
     bounds: function () { return { x0: -FLASK.R - 6, x1: FLASK.R + 6, top: FLASK.rim - 6 }; },
     surface: flaskSurface,
     foot: function () { return 14; },
     // slot beim Kühler: die Seite, auf der die Vorlage steht (−1 oder 1); dorthin zeigt das Ansatzrohr
-    probe: function (v, type, slot) {
+    probe: function (v, type, slot, fit) {
+      var k = flaskKit(fit), x = k.side ? SIDE.x : 0;
       if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4 };
       if (type === "tube") return { x: 0, rim: FLASK.rim, w: 2 * FLASK.neck + 4, top: FLASK.rim - PIPE_RISE };
       if (type === "condenser") return { x: (slot < 0 ? -1 : 1) * (FLASK.neck + 12), rim: FLASK.arm + 4 };
       if (type === "bridge") return { x: 0, rim: FLASK.rim };
-      if (type === "reflux") return { x: FLASK.neck + 14, rim: FLASK.arm - 2, top: FLASK.arm - 2 - REFLUX, lean: 18 };      // auf dem Ansatzrohr: der Hals bleibt frei
-      if (type === "conductometer" || type === "photometer") return { x: 1, bottom: FLASK_CY + 14, top: FLASK.rim - 76, box: -70 };
-      return type === "phmeter" ? { x: 2, bottom: FLASK_CY + 14, top: FLASK.rim - 46, box: -62 } : { x: -2, bottom: FLASK_CY + 14, top: FLASK.rim - 70, tag: -62 };
+      if (type === "reflux") return { x: 0, rim: FLASK.rim, top: FLASK.rim - REFLUX };      // senkrecht im Haupthals (wie auf Wikimedia Commons)
+      if (type === "thermometer" && k.head) return { x: 0, bottom: HEAD_BULB, top: HEAD_BULB - 178, tag: -62 };
+      if (type === "conductometer" || type === "photometer") return { x: x + 1, bottom: FLASK_CY + 14, top: FLASK.rim - 76, box: -70 };
+      return type === "phmeter" ? { x: x + 2, bottom: FLASK_CY + 14, top: FLASK.rim - 46, box: -62 } : { x: x - 2, bottom: FLASK_CY + 14, top: FLASK.rim - 70, tag: -62 };
     },
     mount: function (w) { return { x: 0, rim: FLASK.rim, surface: w.ml > 0.005 ? flaskSurface(w) : FLASK_CY + FLASK.R, edge: FLASK.R + 6 }; },
     draw: function (w, ctx) {
-      var R = FLASK.R, n = FLASK.neck, y = flaskSurface(w), meet = FLASK_CY - Math.sqrt(R * R - n * n), half;
+      var R = FLASK.R, n = FLASK.neck, y = flaskSurface(w), k = flaskKit(ctx.fit), half, glass;
+      var top = function (x) { return FLASK_CY - Math.sqrt(R * R - x * x); };      // wo die Kugel oben bei x endet
       if (w.broken) return shards(R, ctx);
       half = Math.sqrt(Math.max(0, (R - 1) * (R - 1) - (y - FLASK_CY) * (y - FLASK_CY)));
-      return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
+      glass = k.side
+        // Zweihalskolben: vom Haupthals über die Kugel zum Nebenhals, dann von dessen anderer Wand unten herum zurück
+        ? "M" + -n + "," + FLASK.rim + "L" + -n + "," + f(top(n)) + "A" + R + "," + R + " 0 0 0 " + (SIDE.x + SIDE.neck) + "," + f(top(SIDE.x + SIDE.neck)) +
+          "L" + (SIDE.x + SIDE.neck) + "," + SIDE.rim + "M" + (SIDE.x - SIDE.neck) + "," + SIDE.rim + "L" + (SIDE.x - SIDE.neck) + "," + f(top(SIDE.x - SIDE.neck)) +
+          "A" + R + "," + R + " 0 1 0 " + n + "," + f(top(n)) + "L" + n + "," + FLASK.rim
+        : "M" + -n + "," + FLASK.rim + "L" + -n + "," + f(top(n)) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(top(n)) + "L" + n + "," + FLASK.rim;
+      return flaskStand(k, ctx) + (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
         contents(w, ctx, { path: flaskFill(y), fill: flaskFill, x0: -half, x1: half, top: y, bottom: FLASK_CY + R - 1, rim: FLASK.rim, tall: true }) +
-        '<path class="cl-glass" d="M' + -n + "," + FLASK.rim + "L" + -n + "," + f(meet) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(meet) + "L" + n + "," + FLASK.rim + '"/>' +
-        '<path class="cl-glass" d="M' + n + "," + (FLASK.arm - 3) + "L" + (n + 12) + "," + (FLASK.arm + 1) + "M" + n + "," + (FLASK.arm + 3) + "L" + (n + 12) + "," + (FLASK.arm + 7) + '"/>' +
+        // Siedesteine am Boden, wenn destilliert wird: „einige Stückchen poröser Ton“ (ISO 918:1983, 7.2)
+        (k.duct ? [[-9, 2.6, 15], [-1, 3.1, -20], [7, 2.4, 40]].map(function (c) {
+          return '<rect class="cl-chip" x="' + (c[0] - c[1]) + '" y="' + f(FLASK_CY + R - 2 - 2 * c[1]) + '" width="' + 2 * c[1] + '" height="' + f(1.7 * c[1]) + '" rx="1" transform="rotate(' + c[2] + " " + c[0] + " " + f(FLASK_CY + R - 2 - c[1]) + ')"/>';
+        }).join("") : "") +
+        '<path class="cl-glass" d="' + glass + '"/>' +
+        // Seitenrohr zum Kühler, um 75° gegen den Hals geneigt (ISO 918:1983, Bild 2)
+        (k.duct ? '<path class="cl-glass" d="M' + n + "," + (FLASK.arm - 3) + "L" + (n + 12) + "," + (FLASK.arm + 1) + "M" + n + "," + (FLASK.arm + 3) + "L" + (n + 12) + "," + (FLASK.arm + 7) + '"/>' : "") +
         // Kegelschliff oben am Hals: mattes Glas (ISO 6414 nennt nur die Kennzahl, etwa 29/32)
         '<rect class="cl-ground" x="' + (-n + 1) + '" y="' + FLASK.rim + '" width="' + (2 * n - 2) + '" height="9"/>' +
+        (k.side ? '<rect class="cl-ground" x="' + (SIDE.x - SIDE.neck + 1) + '" y="' + SIDE.rim + '" width="' + (2 * SIDE.neck - 2) + '" height="7"/>' : "") +
+        // das Thermometer im Kopf hält ein Stopfen im Hals (ISO 918:1983, 5.2.1)
+        (k.head ? plugShape(0, FLASK.rim, 2 * n + 4) : "") +
         '<line class="cl-shine" x1="-14" y1="' + (FLASK_CY - 16) + '" x2="-19" y2="' + (FLASK_CY + 4) + '"/>' +
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
@@ -1814,6 +1900,13 @@
     return { x1: p.x1, y1: p.y1, x3: p.x2, y3: low, y4: p.y2 + 10, s2: p.s2 };
   }
 
+  // Fließrichtung des Kühlwassers wie auf Wikimedia Commons (Simple_distillation_apparatus.svg): ein blauer Pfeil am Schlauchende,
+  // bei (x, y) mit der Spitze in Richtung dx (−1 oder 1, waagrecht) oder dy (senkrecht)
+  function flowArrow(x, y, dx, dy) {
+    var u = dx || 0, v = dy || 0;
+    return '<path class="cl-flow-arrow" d="M' + f(x + u * 5) + "," + f(y + v * 5) + "L" + f(x - 3 * v - u) + "," + f(y - 3 * u - v) + "L" + f(x + 3 * v - u) + "," + f(y + 3 * u - v) + 'Z"/>';
+  }
+
   L.registerPart("condenser", {
     width: function () { return 90; },
     room: 120,                                                  // Platz bis zur Vorlage
@@ -1823,11 +1916,22 @@
     },
     draw: function (w, ctx, place) {
       var d = ductAt(place), dx = d.x3 - d.x1, dy = d.y3 - d.y1, a = { x: d.x1 + dx * 0.15, y: d.y1 + dy * 0.15 }, b = { x: d.x1 + dx * 0.8, y: d.y1 + dy * 0.8 };
-      var len = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / len * 7, ny = dx / len * 7, out;
-      out = '<path class="cl-jacket" d="M' + f(a.x + nx) + "," + f(a.y + ny) + "L" + f(b.x + nx) + "," + f(b.y + ny) + "L" + f(b.x - nx) + "," + f(b.y - ny) + "L" + f(a.x - nx) + "," + f(a.y - ny) + 'Z"/>' +
-        // Kühlwasser: unten hinein, oben heraus
-        '<path class="cl-hose" d="M' + f(b.x + nx) + "," + f(b.y + ny) + "l0,10M" + f(a.x - nx) + "," + f(a.y - ny) + 'l0,-10"/>' +
+      var len = Math.sqrt(dx * dx + dy * dy) || 1, nx = -dy / len * 7, ny = dx / len * 7, out = "", m, lift = ctx.lift || 0;
+      if (ny > 0) { nx = -nx; ny = -ny; }                        // n zeigt nach oben: dorthin weisen beide Oliven
+      if (place) {
+        // ein eigenes Stativ hält den Kühler in der Mitte (ISO 918:1983, Bild 1); die Stange steht hinter dem Mantel
+        m = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+        out += '<rect class="cl-stand" x="' + f(m.x - 17) + '" y="' + (lift - 5) + '" width="34" height="5" rx="2"/>' +
+          '<line class="cl-rod" x1="' + f(m.x) + '" x2="' + f(m.x) + '" y1="' + (lift - 5) + '" y2="' + f(m.y - 34) + '"/>';
+      }
+      out += '<path class="cl-jacket" d="M' + f(a.x + nx) + "," + f(a.y + ny) + "L" + f(b.x + nx) + "," + f(b.y + ny) + "L" + f(b.x - nx) + "," + f(b.y - ny) + "L" + f(a.x - nx) + "," + f(a.y - ny) + 'Z"/>' +
+        // Kühlwasser im Gegenstrom: am unteren Ende hinein, am oberen heraus; beide Oliven auf derselben Seite (ISO 4799:1978, 6.2)
+        // die Schläuche biegen nach rechts ab; der Pfeil zeigt am unteren in den Kühler hinein, am oberen hinaus
+        '<path class="cl-hose" d="M' + f(b.x + nx * 0.85) + "," + f(b.y + ny * 0.85) + "l0,-9q0,-4 4,-4l5,0M" + f(a.x + nx * 0.85) + "," + f(a.y + ny * 0.85) + 'l0,-9q0,-4 4,-4l5,0"/>' +
+        flowArrow(b.x + nx * 0.85 + 13, b.y + ny * 0.85 - 13, -1) + flowArrow(a.x + nx * 0.85 + 11, a.y + ny * 0.85 - 13, 1) +
         '<path class="cl-glass" d="M' + f(d.x1) + "," + f(d.y1) + "L" + f(d.x3) + "," + f(d.y3) + "L" + f(d.x3) + "," + f(d.y4) + '"/>';
+      if (m) out += '<path class="cl-clamp" d="M' + f(m.x - nx * 1.5) + "," + f(m.y - ny * 1.5) + "L" + f(m.x + nx * 1.5) + "," + f(m.y + ny * 1.5) + '"/>' +
+        '<rect class="cl-boss" x="' + f(m.x - 5) + '" y="' + f(m.y + 12) + '" width="10" height="10" rx="2"/>';
       if (w.drip && place && L.fx) out += L.fx.drops(d.x3, d.y4, d.s2, ctx.t || 0, ctx.still);
       return out + (place ? "" : badge(0, 14, ctx.no));
     }
@@ -1864,20 +1968,33 @@
   // ------------------------------------------------------------------ Rückflusskühler
 
   var REFLUX = 110;                     // so weit ragt er über die Öffnung
+  var REFLUX_R = 9;                     // halbe Breite des Kühlmantels
 
-  // place: { x, rim, top } aus probe() des Gefäßes: aufrecht über dessen Öffnung
+  // Kugelkühler nach Allihn (ISO 4799:1978, 8.2): im Mantel ein Innenrohr mit Kugeln; beide Schlaucholiven auf derselben Seite (6.2),
+  // das Kühlwasser unten hinein, oben heraus. place: { x, rim, top } aus probe() des Gefäßes: senkrecht über dessen Öffnung;
+  // lean: schräg gestellt (Grad), um den Fuß gedreht (nur noch für eigene Gefäße, die es so wollen)
   L.registerPart("reflux", {
     width: function () { return 40; },
     bounds: function (t, place) {
       var p = place || { x: 0, rim: 0, top: -REFLUX }, reach = (p.lean || 0) * Math.PI / 180, h = p.rim - p.top;
-      return { x0: p.x - 14, x1: p.x + 14 + h * Math.sin(reach), top: p.rim - h * Math.cos(reach) - 6, bottom: p.rim };
+      return { x0: p.x - REFLUX_R - 4, x1: p.x + REFLUX_R + 14 + h * Math.sin(reach), top: p.rim - h * Math.cos(reach) - 6, bottom: p.rim };
     },
     draw: function (w, ctx, place) {
-      var p = place || { x: 0, rim: 0, top: -REFLUX }, x = p.x, low = p.rim - 14, high = p.top + 14;
-      // lean: schräg gestellt (Grad), um den Fuß gedreht
-      return (p.lean ? '<g transform="rotate(' + p.lean + " " + x + " " + p.rim + ')">' : "") + '<path class="cl-jacket" d="M' + (x - 8) + "," + low + "L" + (x - 8) + "," + high + "L" + (x + 8) + "," + high + "L" + (x + 8) + "," + low + 'Z"/>' +
-        '<path class="cl-hose" d="M' + (x + 8) + "," + (low - 6) + "l10,0M" + (x - 8) + "," + (high + 6) + 'l-10,0"/>' +
-        '<path class="cl-glass" d="M' + (x - 3) + "," + (p.rim + 6) + "L" + (x - 3) + "," + p.top + "M" + (x + 3) + "," + (p.rim + 6) + "L" + (x + 3) + "," + p.top + '"/>' +
+      var p = place || { x: 0, rim: 0, top: -REFLUX }, x = p.x, low = p.rim - 12, high = p.top + 12, a = REFLUX_R, y, left = "", right = "", bulb = 15;
+      // Innenrohr: zwischen den Kugeln eng, die Kugeln bauchig
+      left = "M" + (x - 3) + "," + (p.rim + 6) + "L" + (x - 3) + "," + (low - 3);
+      right = "M" + (x + 3) + "," + (p.rim + 6) + "L" + (x + 3) + "," + (low - 3);
+      for (y = low - 3; y - bulb >= high + 3; y -= bulb) {
+        left += "Q" + (x - 12) + "," + (y - bulb / 2) + " " + (x - 3) + "," + (y - bulb);
+        right += "Q" + (x + 12) + "," + (y - bulb / 2) + " " + (x + 3) + "," + (y - bulb);
+      }
+      left += "L" + (x - 3) + "," + p.top; right += "L" + (x + 3) + "," + p.top;
+      return (p.lean ? '<g transform="rotate(' + p.lean + " " + x + " " + p.rim + ')">' : "") +
+        '<path class="cl-jacket" d="M' + (x - a) + "," + low + "L" + (x - a) + "," + high + "L" + (x + a) + "," + high + "L" + (x + a) + "," + low + 'Z"/>' +
+        '<path class="cl-hose" d="M' + (x + a) + "," + (low - 5) + "l9,0M" + (x + a) + "," + (high + 5) + 'l9,0"/>' +
+        flowArrow(x + a + 15, low - 5, -1) + flowArrow(x + a + 12, high + 5, 1) +
+        '<path class="cl-glass" d="' + left + right + '"/>' +
+        '<rect class="cl-ground" x="' + (x - 6) + '" y="' + (p.rim - 4) + '" width="12" height="9"/>' +
         (p.lean ? "</g>" : "") + (place ? "" : badge(0, 14, ctx.no));
     }
   });
@@ -2188,7 +2305,7 @@
         : id === "lamp" ? '<circle class="cl-bulb" cx="14" cy="11" r="8" style="fill:#ffe98a"/><rect class="cl-device" x="10" y="18" width="8" height="5"/><rect class="cl-device" x="6" y="23" width="16" height="5" rx="1"/>'
         : id === "bridge" ? '<path class="cl-bridge" d="M7,26L7,12Q7,6 13,6L15,6Q21,6 21,12L21,26"/>'
         : id === "flask" ? '<path class="cl-glass" d="M11.5,2L11.5,10A8,8 0 1 0 16.5,10L16.5,2"/>'
-        : id === "reflux" ? '<rect class="cl-jacket" x="9" y="5" width="10" height="16"/><path class="cl-glass" d="M12,1L12,27M16,1L16,27"/>'
+        : id === "reflux" ? '<rect class="cl-jacket" x="8" y="4" width="12" height="18"/><path class="cl-glass" d="M12,1L12,6Q9,9 12,12Q9,15 12,18L12,27M16,1L16,6Q19,9 16,12Q19,15 16,18L16,27"/>'
         : id === "manometer" ? '<path class="cl-stopper" d="M9,22L19,22L18,28L10,28Z"/><line class="cl-rod" x1="14" y1="22" x2="14" y2="15"/><circle class="cl-device" cx="14" cy="9" r="7"/><line class="cl-mark" x1="14" y1="9" x2="18" y2="6"/>'
         : id === "stopper" ? '<path class="cl-stopper" d="M7,10L21,10L19,22L9,22Z"/>'
         : id === "centrifuge" ? '<rect class="cl-device" x="2" y="15" width="24" height="12" rx="3"/><path class="cl-glass" d="M12,15L12,3L16,3L16,15"/><circle class="cl-knob" cx="8" cy="21" r="3.5"/>'
@@ -2244,5 +2361,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, flatShape: flatShape, crucible: crucShape, cruc: CRUC, trough: TROUGH, troughSurface: troughSurface, dropAt: dropAt, drop: DROP, buchAt: buchAt, buchner: BUCH, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, flatShape: flatShape, crucible: crucShape, cruc: CRUC, trough: TROUGH, troughSurface: troughSurface, dropAt: dropAt, drop: DROP, buchAt: buchAt, buchner: BUCH, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, flaskSide: SIDE, flaskRod: FLASK_ROD, flaskKit: flaskKit, headBulb: HEAD_BULB, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, refluxR: REFLUX_R, gauge: GAUGE, popBar: POP_BAR, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

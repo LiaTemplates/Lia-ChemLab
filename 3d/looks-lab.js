@@ -71,7 +71,7 @@
           w.foam > 0.3 ? opts.level(Object.assign({}, w, { ml: Math.min(w.cap, w.ml + w.foam) }), d) : null);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
         u.tag.position.set(0, 0.15 - kit.up(d.lift), (shape.front || shape.inner(shape.rim)) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist; front: weiteste Stelle
-        if (opts.refresh) opts.refresh(group, d, shape);
+        if (opts.refresh) opts.refresh(group, d, shape, kit);
       }
     };
   }
@@ -335,6 +335,12 @@
       lid.position.y = shape.rim + 0.07;
       lid.castShadow = true;
       group.add(lid);
+      // Ringrührer wie in 2D: ein Draht durch die Öffnung, unten ein Ring um das Thermometer, oben eine Öse
+      var wire = fx.steel(), x = r * 0.62 - cm(5), ring = new THREE.Mesh(new THREE.TorusGeometry(x, 0.04, 6, 40).rotateX(Math.PI / 2), wire);
+      ring.position.y = cm(9);
+      var eye = new THREE.Mesh(new THREE.TorusGeometry(cm(3), 0.04, 6, 20), wire);
+      eye.position.set(x, shape.rim + cm(29), 0);
+      group.add(fx.rod(new THREE.Vector3(x, cm(9), 0), new THREE.Vector3(x, shape.rim + cm(26), 0), 0.04, wire), ring, eye);
     }
   }));
 
@@ -642,16 +648,20 @@
     }
   };
 
+  // Glasrohr von a nach b (offen), Radius r
+  function glassTube(a, b, r) {
+    var m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, a.distanceTo(b), 16, 1, true), fx.glass());
+    m.position.copy(a).add(b).multiplyScalar(0.5);
+    m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
+    m.renderOrder = 2;
+    return m;
+  }
+
   L.registerLook("flask", "lab", vessel({
     tall: true, thick: 0.06, lip: 0.06,
     shape: function () { return flaskShape; },
     level: function (w) { return w.ml > 0.005 ? cm(-L.parts.flask.surface(w)) : flaskShape.floor; },
     extra: function (group) {
-      var a = new THREE.Vector3(cm(F.neck) - 0.1, cm(-F.arm), 0), b = new THREE.Vector3(cm(F.neck + 12), cm(-(F.arm + 4)), 0);
-      var arm = new THREE.Mesh(new THREE.CylinderGeometry(cm(3), cm(3), a.distanceTo(b), 16, 1, true), fx.glass());
-      arm.position.copy(a).add(b).multiplyScalar(0.5);
-      arm.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-      arm.renderOrder = 2;
       var cork = new THREE.Mesh(new THREE.TorusGeometry(cm(13), cm(3), 10, 32).rotateX(Math.PI / 2), fx.matte(0xb58b5c, 0.9));
       cork.position.y = cm(3);
       cork.castShadow = cork.receiveShadow = true;
@@ -660,10 +670,40 @@
         new THREE.MeshStandardMaterial({ color: 0xe8edf1, roughness: 1, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide }));
       ground.position.y = cm(-F.rim) - cm(4.5);
       ground.renderOrder = 3;
-      group.add(arm, cork, ground);
+      group.add(cork, ground);
       group.userData.cork = cork;
     },
-    refresh: function (group, d) { group.userData.cork.visible = !d.lift; }
+    // was im Kolben steckt, bestimmt wie in 2D Seitenrohr (Liebigkühler), Nebenhals (Rückflusskühler mit Fühler), Stopfen und Stativ
+    refresh: function (group, d, shape, kit) {
+      var k = S.flaskKit(d.ctx.fit), lift = d.lift || 0, floor = -kit.up(lift);
+      group.userData.cork.visible = !lift;
+      fx.rebuild(group, "fit", [k.duct, k.side, k.head, k.reflux, lift, floor].join("|"), function (sub) {
+        var side = S.flaskSide, x = cm(side.x), r = cm(side.neck - 0.5), dir = k.reflux && !k.duct ? 1 : -1, grips;
+        if (k.duct) {
+          sub.add(glassTube(new THREE.Vector3(cm(F.neck) - 0.1, cm(-F.arm), 0), new THREE.Vector3(cm(F.neck + 12), cm(-(F.arm + 4)), 0), cm(3)));
+          [[-0.55, 0.2, 0.17], [0, -0.35, 0.2], [0.45, 0.25, 0.15]].forEach(function (c, i) {      // Siedesteine am Boden (ISO 918:1983, 7.2)
+            var chip = new THREE.Mesh(new THREE.DodecahedronGeometry(c[2], 0), fx.matte(0xe4ddd0, 0.95));
+            chip.position.set(c[0], flaskCY - flaskR + c[2] + 0.05 + Math.abs(c[0]) * 0.12, c[1]);
+            chip.rotation.set(i, i * 1.3, 0);
+            sub.add(chip);
+          });
+        }
+        if (k.side) {                                              // Nebenhals: von der Kugel senkrecht nach oben
+          sub.add(glassTube(new THREE.Vector3(x, flaskCY + Math.sqrt(flaskR * flaskR - x * x) - 0.1, 0), new THREE.Vector3(x, cm(-side.rim), 0), r));
+        }
+        if (k.head) {                                              // Stopfen im Hals, der das Thermometer hält
+          var plug = new THREE.Mesh(new THREE.CylinderGeometry(cm(F.neck + 2), cm(F.neck), cm(11), 24), fx.matte(0x4a4d52, 0.8));      // wie der Gummistopfen
+          plug.position.y = cm(-(F.rim + 1.5));
+          plug.castShadow = true;
+          sub.add(plug);
+        }
+        if (lift || k.duct || k.reflux) {
+          grips = [{ x: 0, y: cm(-(F.arm + 22)), r: cm(F.neck) }];
+          if (k.reflux) grips.push({ x: 0, y: cm(-(F.rim - S.reflux / 2)), r: cm(S.refluxR) });
+          fx.stand(sub, dir * cm(S.flaskRod), fx.STAND.z, floor, grips[grips.length - 1].y + cm(30), grips);
+        }
+      });
+    }
   }));
 
   // ------------------------------------------------------------------ Messkolben

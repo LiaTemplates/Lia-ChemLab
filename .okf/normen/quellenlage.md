@@ -48,7 +48,8 @@ Abschnitte mit den Tabellen. OIML R 4 ist frei und wurde vollständig gelesen. D
 - **ISO 648:2008:** nur die Ausgabe 1977 gelesen.
 - **EN 1089-3:** nur über die Zusammenfassung BCGA TIS 6, siehe [Gasflaschen](/normen/en-1089-3-gasflaschen.md).
 - **ISO 4787, ISO 383, ISO 4797, ISO 3585, ISO 7010-Zeichen:** nicht frei lesbar; nur über Verweise in anderen Normen belegt.
-- **ISO 4799 (Kühler):** keine Leseprobe gefunden; der Liebig- und der Rückflusskühler bleiben ohne Normdetails.
+- **ISO 4799 (Kühler):** am 18.11.2026 doch gefunden und vollständig gelesen, siehe [ISO 4799](/normen/iso-4799-kuehler.md).
+- **DIN 12876-1, EN 837-1, EN 12547:** nicht frei lesbar; siehe [Wasserbad, Manometer und Zentrifuge](/normen/laborgeraete-wasserbad-manometer-zentrifuge.md).
 - **ISO 386, Abschnitt 9 (Striche und Ziffern am Thermometer):** nicht in der Leseprobe; ISO 1770 ist zurückgezogen.
 - **Kolbenprober:** keine Norm gefunden; die Skala folgt dem Muster von ISO 384.
 - ISO 385 und ISO 1773 sind laut Normverzeichnissen in periodischer Überprüfung (Stand 2024).

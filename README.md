@@ -1547,7 +1547,7 @@ Ethanol und Eisessig reagieren zu Ethylacetat und Wasser, einem Ester mit frucht
  "show":{"charts":["T","n"]}}
 ```
 
-Schneller geht es beim Sieden. Damit dabei nichts verdampft, steckt im Kolben ein **Rückflusskühler**: Der Dampf wird darin wieder flüssig und läuft zurück. Das Gemisch siedet bei gut 80 °C, und nach etwa zehn Minuten sind gut sechzig Prozent des Ethanols verestert; mehr wird es nicht, denn dann ist das Gleichgewicht erreicht.
+Schneller geht es beim Sieden. Damit dabei nichts verdampft, steht senkrecht im Kolben ein **Rückflusskühler**, ein Kugelkühler: Der Dampf wird darin wieder flüssig und läuft zurück. Das Thermometer steckt im zweiten Hals des Kolbens und misst die Flüssigkeit. Das Gemisch siedet bei gut 80 °C, und nach etwa zehn Minuten sind gut sechzig Prozent des Ethanols verestert; mehr wird es nicht, denn dann ist das Gleichgewicht erreicht.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -1564,7 +1564,7 @@ Schneller geht es beim Sieden. Damit dabei nichts verdampft, steckt im Kolben ei
 
 @[ChemLab.pack](packs/organic.json)
 
-Wein im Rundkolben, darüber der Liebigkühler, der den Dampf in das Becherglas leitet. Den Brenner anzünden: Bei gut 90 °C beginnt der Wein zu sieden, unter dem Siedepunkt des Wassers, und aus dem Kühler tropft das Destillat. Der Dampf ist reicher an Alkohol als die Flüssigkeit, aus der er kommt: Das erste Destillat ist etwa zur Hälfte Alkohol. Im Kolben bleibt immer weniger davon, die Siedetemperatur steigt auf 100 °C, und zuletzt kommt fast nur noch Wasser. Wer die Vorlage zwischendurch tauscht, bekommt Destillate verschiedener Stärke. Den Kühler setzt man aus dem Regal: erst den Kolben antippen, dann die Vorlage.
+Wein im Rundkolben, am Seitenrohr der Liebigkühler, der den Dampf in das Becherglas leitet. Das Thermometer steckt in einem Stopfen, seine Kugel sitzt genau auf Höhe des Seitenrohrs: Es misst den Dampf, der hinübergeht, nicht die Flüssigkeit. Den Brenner anzünden: Lange zeigt das Thermometer nur die Raumtemperatur, dann kommt der Dampf an, und es springt auf gut 90 °C. So heiß siedet der Wein, unter dem Siedepunkt des Wassers, und aus dem Kühler tropft das Destillat. Der Dampf ist reicher an Alkohol als die Flüssigkeit, aus der er kommt: Das erste Destillat ist etwa zur Hälfte Alkohol. Im Kolben bleibt immer weniger davon, die Siedetemperatur steigt auf 100 °C, und zuletzt kommt fast nur noch Wasser. Wer die Vorlage zwischendurch tauscht, bekommt Destillate verschiedener Stärke. Den Kühler setzt man aus dem Regal: erst den Kolben antippen, dann die Vorlage.
 
 ```json @ChemLab.sim
 {"table":true,
@@ -1950,7 +1950,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 |---|---|---|
 | `testtube` | Reagenzglas, 20 mL | `contains` |
 | `beaker` | Becherglas | `ml` Größe: 50, 100 (Vorgabe), 250 oder 600; `contains` |
-| `calorimeter` | Kalorimeter: zwei Styroporbecher mit Deckel, 250 mL, 7 g; hält die Wärme. Es kommt nicht auf Brenner oder Wasserbad, und Elektroden passen nicht hinein | `contains` |
+| `calorimeter` | Kalorimeter: zwei Styroporbecher mit Deckel und Ringrührer, 250 mL, 7 g; hält die Wärme. Es kommt nicht auf Brenner oder Wasserbad, und Elektroden passen nicht hinein | `contains` |
 | `cylinder` | Messzylinder mit feiner Skala und Fuß; kommt nicht auf Brenner oder Wasserbad, Elektroden passen nicht hinein | `ml` Größe: 10, 25, 50 oder 100 (Vorgabe); `contains` |
 | `jar` | Standzylinder ohne Skala, zum Auffangen von Gasen (mit Gummistopfen verschließen); kommt nicht auf Brenner oder Wasserbad | `ml` Größe: 250, 500 (Vorgabe) oder 1000; `contains` |
 | `pipette5`, `pipette10`, `pipette20`, `pipette25` | Vollpipette mit 5, 10, 20 oder 25 mL, nur im Regal (`shelf`): erst das Gefäß antippen, aus dem sie aufzieht, dann das Ziel; nicht aus Bürette oder Trichter, nicht durch einen Stopfen | – |
@@ -1961,10 +1961,10 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `phmeter` | pH-Meter | `in` |
 | `burner` | Brenner; unter Becherglas und Schale mit Dreifuß, unter dem Reagenzglas mit Stativklemme | `under`, `flame` |
 | `balance` | Waage unter einem Gefäß: zeigt Glas und Inhalt auf 0,01 g; „Tara“ setzt die Anzeige auf null. Unter einem Gefäß steht nur eines: Waage, Brenner, Wasserbad oder Zentrifuge | `under` |
-| `centrifuge` | Tischzentrifuge unter einem Reagenzglas (andere Gefäße passen nicht hinein, und darunter steht dann nichts anderes); an- und ausschalten in ihrer Karte. Solange sie läuft, setzt sich ein Niederschlag 20-mal so schnell ab, und auch ein Kolloid setzt sich ab, langsamer (Zeitkonstante etwa eine Minute); das Glas ist dann zu. Anlaufen kann sie nur mit einem Glas, wenn nichts mehr hinein- oder herausfließt, außer einem Stopfen nichts im Glas steckt und nichts darüber hängt oder hineinführt (Rohr, Kühler, Salzbrücke) | `under`, `spin` |
-| `bath` | Wasserbad mit Thermostat, 0 °C (Eiswasser) bis 95 °C; das Gefäß darin nimmt seine Temperatur an | `under`, `temp` |
-| `syringe` | Kolbenprober, 100 mL, mit Manometer; verschließt das Gefäß und misst Gasvolumen und Druck | `in` |
-| `manometer` | Manometer: ein Stopfen mit Druckanzeige in bar; fliegt bei 1,5 bar heraus wie ein Gummistopfen und zeigt dann den Luftdruck | `in` |
+| `centrifuge` | Tischzentrifuge unter einem Reagenzglas (andere Gefäße passen nicht hinein, und darunter steht dann nichts anderes); an- und ausschalten in ihrer Karte. Solange sie läuft, ist ihr durchsichtiger Deckel zu, und ein Niederschlag setzt sich 20-mal so schnell ab; auch ein Kolloid setzt sich ab, langsamer (Zeitkonstante etwa eine Minute); das Glas ist dann zu. Anlaufen kann sie nur mit einem Glas, wenn nichts mehr hinein- oder herausfließt, außer einem Stopfen nichts im Glas steckt und nichts darüber hängt oder hineinführt (Rohr, Kühler, Salzbrücke) | `under`, `spin` |
+| `bath` | Wasserbad: durchsichtige Wanne mit Einhängethermostat am Rand, 0 °C (Eiswasser) bis 95 °C; das Gefäß darin nimmt seine Temperatur an | `under`, `temp` |
+| `syringe` | Kolbenprober, 100 mL, mit Manometer, an einem Stativ; verschließt das Gefäß und misst Gasvolumen und Druck | `in` |
+| `manometer` | Manometer: ein Stopfen mit Zifferblatt von 0 bis 2,5 bar, rot markiert ab 1,5 bar; dort fliegt es heraus wie ein Gummistopfen und zeigt dann den Luftdruck | `in` |
 | `stopper` | Gummistopfen: verschließt das Gefäß `in` ganz. Steigt der Druck darin über 1,5 bar, fliegt er heraus und liegt dann frei auf dem Tisch | `in` |
 | `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
@@ -1977,7 +1977,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `ammeter`, `voltmeter` | Strommesser (im Stromkreis), Spannungsmesser (zwischen den beiden Elektroden) | `in` |
 | `lamp` | Glühlämpchen 3,8 V / 0,07 A, im Stromkreis | `in` |
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
-| `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
+| `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad, dort an einem Stativ geklemmt; mit Liebigkühler ein Destillierkolben mit Seitenrohr (ein Thermometer sitzt dann im Stopfen und misst den Dampf, ISO 918), mit Rückflusskühler und Fühler ein Zweihalskolben | `contains` |
 | `volflask` | Messkolben mit Eichstrich, 100 oder 250 mL (`ml`); „Bis zur Marke auffüllen“ gibt genau so viel Wasser zu, wie bis zum Strich fehlt; nicht erhitzen | `ml`, `contains` |
 | `erlenmeyer` | Erlenmeyerkolben (Enghals, ISO 1773), 100 oder 250 mL (`ml`); voll heißt bis zur Schulter; Messfühler stecken im Hals, eine Bürette kann darüber hängen | `ml`, `contains` |
 | `flatflask` | Stehkolben (Enghals, flacher Boden, ISO 1773), 100 oder 250 mL (`ml`); steht von selbst, kann erhitzt werden | `ml`, `contains` |
@@ -1986,8 +1986,8 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `dropfunnel` | Tropftrichter (ISO 4800), 100 mL, hängt wie die Bürette über einem Gefäß (`over`) und tropft durch den Hahn zu | `over`, `contains` |
 | `crucible` | Porzellantiegel, 15 mL; auf dem Brenner im Tondreieck, direkt in der Flamme | `contains` |
 | `trough` | Pneumatische Wanne mit umgestülptem Standzylinder (100 mL): Gas aus einem Gasableitungsrohr (`tube` mit `to`), das sich nicht löst, sammelt sich im Zylinder | `contains` |
-| `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
-| `reflux` | Rückflusskühler: steht aufrecht im Gefäß; was verdampft, läuft zurück | `in` |
+| `condenser` | Liebigkühler (ISO 4799) an einem eigenen Stativ: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
+| `reflux` | Rückflusskühler, ein Kugelkühler nach Allihn (ISO 4799): steht senkrecht im Gefäß; was verdampft, läuft zurück | `in` |
 | `splint`, `glowsplint`, `rod`, `paper` | brennender Holzspan, Glimmspan, Magnesiastäbchen, feuchtes Indikatorpapier: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
 
 **Ziele einer Aufgabe** – jedes mit wahlweise `in` (nur dieses Gefäß, mit seinem Namen) und `label` (eigener Text statt des erzeugten):

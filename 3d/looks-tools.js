@@ -125,7 +125,9 @@
       // um 1880 eine Wanne aus Kupfer: undurchsichtig, deshalb reicht ihr Rand nur knapp über das Wasser
       var copper = fx.style.tank === "copper", grate = kit.up(BATH.lift), level = grate + cm(p.depth), top = level + (copper ? 0.3 : cm(BATH.rim)), cold = r.temp <= 4;
       u.body = fx.rebuild(group, "tank", [a, level, p.clamp, cold, copper].join("|"), function (sub) {
-        var glass = copper ? new THREE.MeshStandardMaterial({ color: 0xb8693a, metalness: 1, roughness: 0.35, side: THREE.DoubleSide }) : fx.glass(), k, wall = function (w, h, x, y, z, ry) {
+        // heute eine durchsichtige Wanne aus Polycarbonat (Transparentbad), leicht getönt
+        var glass = copper ? new THREE.MeshStandardMaterial({ color: 0xb8693a, metalness: 1, roughness: 0.35, side: THREE.DoubleSide })
+          : new THREE.MeshPhysicalMaterial({ color: 0xdfe9f2, roughness: 0.15, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide }), k, wall = function (w, h, x, y, z, ry) {
           var m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glass);
           m.position.set(x, y, z); m.rotation.y = ry || 0; m.renderOrder = 2; sub.add(m);
         };
@@ -148,13 +150,19 @@
           ice.rotation.set(k, k * 1.7, 0);
           sub.add(ice);
         }
-        // Thermostat rechts neben der Wanne, Heizstab über den Rand ins Wasser
-        var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(fx.style.device, 0.5), a + 2, 3, 0);
-        sub.add(box, fx.rod(V(a + 1.2, 6, 0), V(a + 1.2, top + 0.8, 0), 0.18, fx.steel()), fx.rod(V(a + 1.2, top + 0.8, 0), V(a - 0.8, top + 0.8, 0), 0.18, fx.steel()),
-          fx.rod(V(a - 0.8, top + 0.8, 0), V(a - 0.8, grate + 1, 0), 0.18, fx.steel()));
+        // Einhängethermostat am rechten Rand (DIN 12876-1): Kopf über dem Rand, Heizung und Pumpe im Wasser; um 1880 ein Heizstab
+        if (copper) {
+          var box = mesh(new THREE.BoxGeometry(3.4, 6, 5), fx.matte(fx.style.device, 0.5), a + 2, 3, 0);
+          sub.add(box, fx.rod(V(a + 1.2, 6, 0), V(a + 1.2, top + 0.8, 0), 0.18, fx.steel()), fx.rod(V(a + 1.2, top + 0.8, 0), V(a - 0.8, top + 0.8, 0), 0.18, fx.steel()),
+            fx.rod(V(a - 0.8, top + 0.8, 0), V(a - 0.8, grate + 1, 0), 0.18, fx.steel()));
+        } else {
+          sub.add(mesh(new THREE.BoxGeometry(2.9, 1.9, 4), fx.matte(fx.style.device, 0.5), a + cm(8), top + 0.45, 0),
+            mesh(new THREE.CylinderGeometry(0.28, 0.28, top - grate - 0.6, 12), fx.steel(), a - cm(6.5), grate + 0.6 + (top - grate - 0.6) / 2, 0));
+        }
         if (p.clamp) fx.stand(sub, -a - 1.3, fx.STAND.z, 0, grate + cm(150), [{ y: grate + cm(120), x: 0, r: cm(13) }]);
       });
-      u.screen.position.set(a + 2, 4.3, 2.52);
+      if (copper) u.screen.position.set(a + 2, 4.3, 2.52);
+      else u.screen.position.set(a + cm(8), top + 0.45, 2.02);
       u.screen.userData.write(d.ctx.numbers ? L.num(r.temp, 0, d.ctx.lang) + " °C" : "");
     }
   });
@@ -188,9 +196,15 @@
     build: function () {
       var group = new THREE.Group(), rotor = new THREE.Group(), led = mesh(new THREE.SphereGeometry(0.25, 12, 8), new THREE.MeshStandardMaterial({ color: 0x8f9aa5 }));
       rotor.add(mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.2, 24), fx.matte(0xf7f9fb, 0.4)).rotateX(Math.PI / 2));
-      rotor.add(mesh(new THREE.BoxGeometry(1.8, 0.25, 0.3), fx.matte(0xd8322c, 0.4)), mesh(new THREE.BoxGeometry(0.25, 1.8, 0.3), fx.matte(0xd8322c, 0.4)));
-      group.add(rotor, led);
-      group.userData = { rotor: rotor, led: led };
+      // Drehpfeil wie in 2D, kein Kreuz
+      var dark = fx.matte(0x3a4652, 0.5), arc = mesh(new THREE.TorusGeometry(0.62, 0.07, 6, 24, Math.PI * 1.5), dark, 0, 0, 0.14), head = mesh(new THREE.ConeGeometry(0.2, 0.36, 10), dark, 0.62, -0.12, 0.14);
+      head.rotation.z = Math.PI;
+      rotor.add(arc, head);
+      // durchsichtiger Deckel: zu, solange sie läuft
+      var hood = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshPhysicalMaterial({ color: 0xdbe8f3, roughness: 0.1, transparent: true, opacity: 0.22, depthWrite: false }));
+      hood.renderOrder = 3;
+      group.add(rotor, led, hood);
+      group.userData = { rotor: rotor, led: led, hood: hood };
       return group;
     },
     update: function (group, d, kit) {
@@ -203,6 +217,10 @@
       u.rotor.position.set(-a + 1.6, body / 2, deep / 2 + 0.12);
       u.rotor.rotation.z = d.data.spin ? -(d.ctx.still ? 0.5 : d.ctx.t * 5.2) : 0;
       u.led.position.set(a - 1, body * 0.7, deep / 2 + 0.05);
+      var lid = p.top != null ? kit.up(p.lift) + cm(-p.top - p.lift) + 0.6 - body : 4;      // vom Gehäuse bis über den Rand des Glases
+      u.hood.visible = !!d.data.spin;
+      u.hood.scale.set(2 * a - 0.6, Math.max(1, lid), deep - 0.6);
+      u.hood.position.set(0, body + Math.max(1, lid) / 2, 0);
       u.led.material.color.set(d.data.spin ? 0x2fae4f : 0x8f9aa5);
       u.led.material.emissive.set(d.data.spin ? 0x1c8a3a : 0x000000);
     }
@@ -328,24 +346,48 @@
   });
 
   // Manometer: Stopfen, Steigrohr und rundes Zifferblatt mit Anzeige
+  // Zifferblatt wie in 2D: weiß, schwarze Teilung 0,1 bar, Ziffern an den ganzen und halben bar, „bar“, rote Grenzmarke
+  var dialTex = {};
+  function dialFace(lang) {
+    if (dialTex[lang]) return dialTex[lang];
+    var c = doc.createElement("canvas"), g = c.getContext("2d"), S = 256, m = S / 2, G = L.shapes.gauge, k, b, R = m - 10, tex;
+    c.width = c.height = S;
+    g.fillStyle = "#ffffff"; g.beginPath(); g.arc(m, m, m, 0, 7); g.fill();
+    g.strokeStyle = "#c0392b"; g.lineWidth = 12; g.beginPath();
+    g.arc(m, m, R - 14, L.gaugeAngle(L.shapes.popBar) - Math.PI / 2, L.gaugeAngle(G.max) - Math.PI / 2); g.stroke();
+    g.strokeStyle = "#22262b"; g.fillStyle = "#22262b"; g.textAlign = "center"; g.textBaseline = "middle"; g.font = "bold 30px system-ui, sans-serif";
+    for (k = 0; k <= G.max * 10; k++) {
+      b = L.gaugeAngle(k / 10);
+      g.lineWidth = k % 5 ? 3 : 6;
+      g.beginPath(); g.moveTo(m + R * Math.sin(b), m - R * Math.cos(b)); g.lineTo(m + (R - (k % 5 ? 14 : 26)) * Math.sin(b), m - (R - (k % 5 ? 14 : 26)) * Math.cos(b)); g.stroke();
+      if (k % 10 === 0) g.fillText(L.trim(k / 10, lang), m + (R - 52) * Math.sin(b), m - (R - 52) * Math.cos(b));
+    }
+    g.fillText("bar", m, m + 60);
+    tex = dialTex[lang] = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    return tex;
+  }
+
   L.registerLook("manometer", "lab", {
     build: function () {
-      var group = new THREE.Group(), screen = fx.screen(1.6, 0.7), needle = new THREE.Mesh(new THREE.BoxGeometry(cm(1.2), cm(12), cm(0.6)).translate(0, cm(6), 0), fx.matte(0xc0392b, 0.6));
+      var group = new THREE.Group(), screen = fx.screen(1.6, 0.7), needle = new THREE.Mesh(new THREE.BoxGeometry(cm(1.2), cm(15), cm(0.6)).translate(0, cm(7.5), 0), fx.matte(0x22262b, 0.6));
       group.add(screen, needle); group.userData = { screen: screen, needle: needle }; return group;
     },
     update: function (group, d, kit) {
-      var u = group.userData, p = d.place, floor = -kit.up(d.lift), x = p ? cm(p.x) : 0, y0 = p ? cm(-(p.rim + 1.5)) : floor + cm(5.5), dial = y0 + cm(46);
-      u.body = fx.rebuild(group, "gauge", p ? [p.x, p.rim, p.w, d.lift].join("|") : "alone", function (sub) {
+      var u = group.userData, p = d.place, floor = -kit.up(d.lift), x = p ? cm(p.x) : 0, y0 = p ? cm(-(p.rim + 1.5)) : floor + cm(5.5), dial = y0 + cm(50);
+      u.body = fx.rebuild(group, "gauge", (p ? [p.x, p.rim, p.w, d.lift].join("|") : "alone") + d.ctx.lang, function (sub) {
         var w = p ? p.w : 20;
         sub.add(mesh(new THREE.CylinderGeometry(cm(w / 2), cm(w / 2 - 2), cm(11), 24), fx.matte(0x4a4d52, 0.8), x, y0));
         sub.add(mesh(new THREE.CylinderGeometry(cm(1.5), cm(1.5), cm(30), 10), fx.steel(), x, y0 + cm(20)));
-        sub.add(mesh(new THREE.CylinderGeometry(cm(16), cm(16), cm(6), 32).rotateX(Math.PI / 2), fx.matte(fx.style.device, 0.45), x, dial));
-        sub.add(mesh(new THREE.TorusGeometry(cm(16), cm(1.4), 8, 40), fx.matte(0x3a3d42, 0.5), x, dial));      // dunkler Rand: das helle Gehäuse vor heller Wand
+        var R = cm(L.shapes.gauge.r);
+        sub.add(mesh(new THREE.CylinderGeometry(R, R, cm(6), 32).rotateX(Math.PI / 2), fx.matte(fx.style.device, 0.45), x, dial));
+        sub.add(mesh(new THREE.CircleGeometry(R - 0.02, 40), new THREE.MeshStandardMaterial({ map: dialFace(d.ctx.lang), roughness: 0.6 }), x, dial, cm(3) + 0.01));
+        sub.add(mesh(new THREE.TorusGeometry(R, cm(1.4), 8, 40), fx.matte(0x3a3d42, 0.5), x, dial));      // dunkler Rand: das helle Gehäuse vor heller Wand
       });
-      // Zeiger wie in 2D: 0 bar links unten, 2 bar rechts unten, 1 bar senkrecht
+      // Zeiger wie in 2D: 0 bar links unten, 2,5 bar rechts unten
       u.needle.position.set(x, dial, cm(3.4));
-      u.needle.rotation.z = -(-135 + 135 * Math.max(0, Math.min(2, d.data.value == null ? 1 : d.data.value))) * Math.PI / 180;
-      u.screen.position.set(x + cm(16) + 0.9, dial, cm(4));
+      u.needle.rotation.z = -L.gaugeAngle(d.data.value == null ? 1 : d.data.value);
+      u.screen.position.set(x + cm(L.shapes.gauge.r) + 0.9, dial, cm(4));
       u.screen.userData.write(d.ctx.numbers && d.data.value != null ? L.shown(d.data, d.ctx.lang) : "");
     }
   });
