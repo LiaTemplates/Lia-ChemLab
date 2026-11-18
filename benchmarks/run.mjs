@@ -238,6 +238,26 @@ const models = {
     return out;
   },
 
+  // B18: (1) Eisen und Zink, über den Strommesser verbunden, in belüfteter Kochsalzlösung: Am Mischpotential geben die Oxidationen so viele
+  // Elektronen ab, wie die Reduktionen aufnehmen; sonst entstünde in der Lösung Ladung. Zink löst sich mindestens mit dem Strom I/(2F).
+  // (2) Aluminiumfolie in 0,01 M NaCl, belüftet: Mischpotential der Folie gegen das gemessene Ruhepotential, und dort noch kein Lochfraß
+  mixedPotential({ seconds, aluminium }, tol) {
+    if (!L.db.species["Al(s)"]) L.register(JSON.parse(fs.readFileSync(new URL("../packs/ionen.json", here), "utf8")));
+    const l = L.createLab(L.normalize({ room: 25, oxygen: true, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "NaCl 0.5M", ml: 80 }] },
+      { type: "electrode-Fe", id: "fe", in: "b" }, { type: "electrode-Zn", id: "zn", in: "b" }, { type: "ammeter", id: "a", in: "b" }] }));
+    L.shake(l, "b", "shake");
+    const zn0 = L.reading(l, "zn").g;
+    let q = 0, worst = 0;
+    for (let i = 0; i < seconds * 20; i++) { L.step(l, 0.05); q += Math.abs(L.circuit(l, "b").I) * 0.05; worst = Math.max(worst, Math.abs(inventory(l).charge)); }
+    const zinc = (zn0 - L.reading(l, "zn").g) / L.species("Zn(s)").M;
+    const al = L.createLab(L.normalize({ room: 25, oxygen: true, bench: [{ type: "beaker", id: "b", contains: [{ reagent: `NaCl ${aluminium.nacl}M`, ml: 50 }, { reagent: "Al foil", g: 0.05 }] }] }));
+    L.shake(al, "b", "shake");
+    L.step(al, 1800);
+    const phi = al.warm["b/Al(s)"], measured = aluminium.measured_V_SCE + aluminium.SCE_V_SHE, pit = L.vessel(al, "b").pit || {};
+    return [check("charge_in_solution", worst, tol.charge_absolute), { name: "zinc_at_least_current", value: zinc * 2 * L.FARADAY / q, limit: 1, pass: q > 0 && zinc * 2 * L.FARADAY >= q * (1 - 1e-9) },
+      check("aluminium_potential_error_V", Math.abs(phi - measured), tol.potential_V), check("aluminium_pitting_at_rest", pit["Al(s)"] ? 1 : 0, 0)];
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {
