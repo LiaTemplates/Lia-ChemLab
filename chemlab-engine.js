@@ -1016,6 +1016,11 @@
           item.contains = item.oneOf[item.pick].contains;
         } else item.contains = fill(raw.contains);
         if (def.dispenser) item.over = raw.over == null ? null : String(raw.over);
+        // spatial: ein Feld im Becherglas (siehe fieldStep); true oder der Zeitraffer der Diffusion
+        if (raw.spatial != null && raw.spatial !== false) {
+          if (type !== "beaker" || !L.spatial || !(raw.spatial === true || (typeof raw.spatial === "number" && raw.spatial >= 1 && raw.spatial <= 1e5))) throw fail("spatial", item.id);
+          item.spatial = raw.spatial === true ? FIELD.speed : raw.spatial;
+        }
       } else {
         if (raw.unknown != null || raw.oneOf != null) throw fail("sample", item.id);      // nur ein Gefäß kann eine Probe sein
         item.in = raw.in != null ? String(raw.in) : raw.under != null ? String(raw.under) : null;      // der Brenner steht "under"
@@ -1421,7 +1426,8 @@
       // fizz: seit wie vielen Rechenschritten Gas entsteht
       flag: { gas: false, color: "colorless", next: "", count: 0, heat: 0, base: lab.room, max: lab.room, solid: {}, boil: false, smell: {}, wet: false, torch: null, shown: 0, opaque: false,
         seen: null, tinted: -1000, fizz: 0 },
-      walk: 0                                                    // Weg der Teilchen in der Teilchenlupe: die Zeit, gewichtet mit der Wurzel der Temperatur
+      walk: 0,                                                   // Weg der Teilchen in der Teilchenlupe: die Zeit, gewichtet mit der Wurzel der Temperatur
+      field: item.spatial ? { speed: item.spatial, n: null, total: 0 } : null      // siehe fieldStep
     };
   }
 
@@ -1480,6 +1486,7 @@
       lab.vessels.push(v);
       item.contains.forEach(function (c) { putReagent(lab, v, reagent(c.reagent), c); });
       settle(lab, v);
+      fieldStep(lab, v);                                         // ein Feld beginnt gleichmäßig
     });
     survey(lab);
     lab.tools.forEach(function (t) { prime(lab, t); });
@@ -4177,6 +4184,7 @@
     });
     v.walk = (v.walk || 0) + DT * Math.sqrt((v.T + KELVIN) / (T_REF + KELVIN));      // je wärmer, desto schneller laufen die Teilchen ihren Weg ab
     notice(lab, v, gases, emit, dissolved, !!bath);
+    fieldStep(lab, v);
   }
 
   // ------------------------------------------------------------------ Proben
@@ -4368,6 +4376,7 @@
     if (kind === "kappa") return vol > 0 && v.n[WATER] > 0 && !thick(v, vol) ? conduct(v, vol) * 1000 : null;
     if (kind === "A") return vol > 0 && !thick(v, vol) ? Math.min(def.range[1], extinction(v, t.nm, def.d)) : null;
     if (kind !== "pH") return null;
+    if (v && v.field && v.field.n && vol > 0 && !thick(v, vol)) return fieldProbe(lab, v);
     return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null;
   }
 
@@ -4677,6 +4686,109 @@
     return tint(conc, spec(v).d);
   }
 
+  // ------------------------------------------------------------------ Feld im Gefäß
+
+  // Ein Becherglas mit "spatial" rechnet, wo im Glas die starke Säure oder Lauge ist: als Zylinder um die Achse (r, z), FIELD.nr × FIELD.nz
+  // Zellen, j = 0 oben. Je Zelle wandert nur die Ladung der starken Ionen (Na+, Cl-, …: die an keinem Gleichgewicht mit H+ oder OH- teilhaben),
+  // in mol; alles andere gilt als gleichmäßig verteilt. Was dazukommt, kommt oben an der Achse an (Tropfen, Bürette, Umgießen), Schütteln
+  // verteilt es gleichmäßig. Die Diffusion läuft im Zeitraffer (speed): D = 2·10⁻⁹ m²/s bräuchte für einen Zentimeter fast einen Tag.
+  // pH und Farbe einer Zelle sind die der ganzen Lösung mit dem Überschuss dieser Zelle (fieldLook); ein gleichmäßiges Feld zeigt also genau das Gefäß.
+  // Die Chemie des Gefäßes selbst bleibt gut durchmischt; nur das pH-Meter liest an seiner Spitze im Feld.
+  // shortcut: ohne Strömung (eine schwere Zugabe sinkt in Wirklichkeit ab und mischt sich in Sekunden), schwache Säuren und Puffer, Fällungen und
+  // Indikatoren sind überall gleich verteilt, ein D für alle Ionen (Elektroneutralität ohne Nernst-Planck); nur im Becherglas (Zylinder)
+  var FIELD = { nr: 10, nz: 20, D: 2e-9, speed: 600, probe: [1, 18], mix: 1 };      // mix: mit so viel mL mischt sich ein Tropfen oder Strahl beim Auftreffen (geschätzt)      // probe: Zelle (i, j) an der Spitze des pH-Meters, wie gezeichnet (r ≈ R/8, knapp über dem Boden)
+  var STRONG = {};
+  function strongIon(id) {         // schwach: Säure-Base-Stufe mit genau einem Partner (HCO3- ⇌ CO3^2- + H+); Cl- im Chlor-Gleichgewicht bleibt stark
+    if (STRONG[id] === undefined) STRONG[id] = !!L.db.species[id].charge && id !== PROTON && id !== HYDROXIDE &&
+      !L.db.equilibria.some(function (e) {
+        return e.aq && e.model !== "real" && e.nu[id] && (e.nu[PROTON] || e.nu[HYDROXIDE]) &&
+          Object.keys(e.nu).filter(function (k) { return k !== PROTON && k !== HYDROXIDE && k !== WATER; }).length === 2;
+      });
+    return STRONG[id];
+  }
+  function strongCharge(v) { var sum = 0, id; for (id in v.n) if (strongIon(id)) sum += L.db.species[id].charge * v.n[id]; return sum; }
+
+  function fieldGrid(lab, v) {      // das Gitter zur jetzigen Füllhöhe; im Cache, damit es nicht in die Aufzeichnung kommt
+    var R = spec(v).d / 200, h = volume(v) / 1000 / (Math.PI * R * R), key = "field " + v.id, c = lab.cache[key];
+    if (!c || Math.abs(c.h - h) > 1e-9) {
+      c = lab.cache[key] = { h: h, G: L.spatial.cylinder(FIELD.nr, FIELD.nz, R, h) };
+      // die Zellen nach ihrem Abstand von der Stelle, an der Zugegebenes ankommt (oben an der Achse)
+      c.G.near = Array.from({ length: c.G.n }, function (_, k) { return k; }).sort(function (a, b) {
+        return Math.pow(c.G.r(a), 2) + Math.pow(c.G.z(a), 2) - Math.pow(c.G.r(b), 2) - Math.pow(c.G.z(b), 2);
+      });
+    }
+    return c.G;
+  }
+
+  function fieldStep(lab, v) {
+    var f = v.field, G, now, i, add, cells, room = 0, sum;
+    if (!f || !L.spatial) return;
+    if (!(volume(v) > 0)) { f.n = null; return; }
+    G = fieldGrid(lab, v); now = strongCharge(v);
+    if (!f.n || v.shook > lab.t) { f.n = Array.prototype.slice.call(L.spatial.spread(G, now)); f.total = now; f.ml = volume(v) * 1000; return; }
+    add = volume(v) * 1000 - f.ml;                              // mL, die dazukamen
+    if (now !== f.total) {
+      // Zugegebenes mischt sich oben an der Achse mit den Zellen, die sein Volumen, mindestens aber FIELD.mix fassen; was ohne Zugabe
+      // wegging oder sich änderte (Ausgießen, Reaktion), überall gleich
+      for (i = 0, cells = []; i < G.n && (i === 0 || (add > 0 && room < Math.max(add, FIELD.mix))); i++) { cells.push(G.near[i]); room += G.vol[G.near[i]] * 1e6; }
+      if (!(add > 0)) cells = G.near, room = 0;
+      for (i = 0, sum = 0; i < cells.length; i++) sum += G.vol[cells[i]];
+      for (i = 0; i < cells.length; i++) f.n[cells[i]] += (now - f.total) * G.vol[cells[i]] / sum;
+    }
+    f.total = now; f.ml = volume(v) * 1000;
+    L.spatial.diffuse(G, f.n, FIELD.D * f.speed, DT);
+    for (i = 0; i < f.n.length; i++) if (!isFinite(f.n[i])) { f.n = null; return; }
+  }
+
+  // Überschuss an starker Lauge je Zelle gegenüber dem Mittel, in mol/L
+  function fieldExcess(lab, v) {
+    var f = v.field, G = fieldGrid(lab, v), mean = f.total / volume(v), out = new Array(G.n), k;
+    for (k = 0; k < G.n; k++) out[k] = f.n[k] / (G.vol[k] * 1000) - mean;
+    return out;
+  }
+
+  // pH und Farbe zu einem Überschuss x (mol/L): die Lösung des Gefäßes mit x mol/L Natronlauge (x > 0) oder Salzsäure (x < 0) mehr, ins
+  // Gleichgewicht gebracht. Als Tabelle über den Bereich des Felds (asinh-geteilt), neu, wenn die Uhr eine Viertelsekunde weiterlief oder der Bereich nicht reicht.
+  function fieldTable(lab, v, lo, hi) {
+    var key = "fieldTable " + v.id, c = lab.cache[key], vol = volume(v), rows = [], i, x, w, a, b, S = 1e-7;
+    if (c && Math.abs(c.tick - lab.tick) < TICKS / 4 && c.lo <= lo && c.hi >= hi) return c.rows;
+    lo = Math.min(lo, 0); hi = Math.max(hi, 0);
+    a = Math.asinh(lo / S); b = Math.asinh(hi / S);
+    for (i = 0; i <= 24; i++) {
+      x = S * Math.sinh(a + (b - a) * i / 24);
+      w = { id: v.id + "#field", type: v.type, size: v.size, n: Object.assign({}, v.n), lumps: [], T: v.T, real: v.real, org: {}, ext: {}, rate: {}, flag: { solid: {} } };
+      if (x > 0) { w.n["Na+(aq)"] = (w.n["Na+(aq)"] || 0) + x * vol; w.n[HYDROXIDE] = (w.n[HYDROXIDE] || 0) + x * vol; }
+      else if (x < 0) { w.n["Cl-(aq)"] = (w.n["Cl-(aq)"] || 0) - x * vol; w.n[PROTON] = (w.n[PROTON] || 0) - x * vol; }
+      equilibrate(lab, w, null);
+      rows.push({ x: x, pH: w.n[PROTON] > 0 ? -Math.log10(w.n[PROTON] / vol) - gammas(w, vol)(PROTON) : null, rgb: colorOf(w).rgb });
+    }
+    lab.cache[key] = { tick: lab.tick, lo: lo, hi: hi, rows: rows };
+    return rows;
+  }
+
+  function fieldAt(rows, x) {       // linear zwischen den Zeilen der Tabelle
+    var i = 1, u, a, b;
+    while (i < rows.length - 1 && rows[i].x < x) i++;
+    a = rows[i - 1]; b = rows[i]; u = b.x > a.x ? Math.max(0, Math.min(1, (x - a.x) / (b.x - a.x))) : 0;
+    return { pH: a.pH == null || b.pH == null ? null : a.pH + (b.pH - a.pH) * u, rgb: a.rgb.map(function (q, k) { return Math.round(q + (b.rgb[k] - q) * u); }) };
+  }
+
+  // Was die Ansicht zeigt: je Zelle pH und Farbe (Reihen von oben), dazu der Zeitraffer
+  function fieldLook(lab, v) {
+    var f = v.field, ex, lo = Infinity, hi = -Infinity, rows, k, cells = [];
+    if (!f || !f.n || !(volume(v) > 0)) return null;
+    ex = fieldExcess(lab, v);
+    for (k = 0; k < ex.length; k++) { lo = Math.min(lo, ex[k]); hi = Math.max(hi, ex[k]); }
+    rows = fieldTable(lab, v, lo, hi);
+    for (k = 0; k < ex.length; k++) cells.push(fieldAt(rows, ex[k]));
+    return { nr: FIELD.nr, nz: FIELD.nz, speed: f.speed, cells: cells };
+  }
+
+  function fieldProbe(lab, v) {     // pH an der Spitze des pH-Meters
+    var ex = fieldExcess(lab, v), k = FIELD.probe[1] * FIELD.nr + FIELD.probe[0];
+    return fieldAt(fieldTable(lab, v, Math.min.apply(null, ex), Math.max.apply(null, ex)), ex[k]).pH;
+  }
+
   // ------------------------------------------------------------------ Ablesen
 
   // Alles, was man an einem Gefäß sieht oder daran abliest
@@ -4724,6 +4836,7 @@
       mirror: mirror,
       // der pH-Wert ist der negative Logarithmus der Aktivität; strength: Ionenstärke in mol/L, nur im realen Modell
       pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
+      field: v.field && !paste ? fieldLook(lab, v) : null,      // spatial: pH und Farbe je Zelle
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
       // foam: Schaum über der Flüssigkeit in mL; fog: Farbe des Gasraums (farbige Gase wie NO2), sonst null
@@ -5124,6 +5237,7 @@
       if (v.broken) return;
       if (def.sizes) item.ml = v.size;
       if (def.dispenser && v.over && vessel(lab, v.over) && !vessel(lab, v.over).broken) item.over = v.over;
+      if (v.field) item.spatial = v.field.speed === FIELD.speed ? true : v.field.speed;
       if (cfg && cfg.unknown) {                                 // eine unbekannte Probe bleibt unbekannt: wie sie beschrieben war, ohne was danach hineinkam
         item.unknown = cfg.unknown;
         if (cfg.oneOf) item.oneOf = cfg.oneOf.map(function (o) { return { name: o.name, contains: o.contains.map(plain) }; });

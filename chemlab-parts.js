@@ -474,6 +474,23 @@
     return css(rgb.map(function (c, i) { return Math.round(c - clear * clear * (255 - tint[i])); }));
   }
 
+  // Feld im Becherglas (spatial): je Zelle die Farbe der Lösung dort, an der Achse gespiegelt, weichgezeichnet wie die Strömung;
+  // unten links der Zeitraffer der Diffusion
+  function fieldCells(field, box, clip) {
+    var cols = 2 * field.nr, cw = (box.x1 - box.x0) / cols, ch = (box.bottom - box.top) / field.nz, out = "", c, j, i, x, y;
+    if (!(cw > 0 && ch > 0)) return "";
+    for (j = 0; j < field.nz; j++) for (c = 0; c < cols; c++) {
+      i = c < field.nr ? field.nr - 1 - c : c - field.nr;
+      x = box.x0 + c * cw; y = box.top + j * ch;
+      // die äußeren Zellen reichen über den Rand, damit das Weichzeichnen dort nicht ausbleicht
+      out += '<rect x="' + f(c === 0 ? x - cw : x) + '" y="' + f(j === 0 ? y - ch : y) + '" width="' + f(cw * (1 + (c === 0) + (c === cols - 1)) + 0.3) +
+        '" height="' + f(ch * (1 + (j === 0) + (j === field.nz - 1)) + 0.3) + '" fill="' + liquidColor(field.cells[j * field.nr + i].rgb) + '"/>';
+    }
+    return '<filter id="' + clip + '-field" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="' + f(Math.min(cw, ch) * 0.6) + '"/></filter>' +
+      '<g class="cl-field" filter="url(#' + clip + '-field)">' + out + "</g>" +
+      '<text class="cl-field-speed" x="' + f(box.x0 + 3) + '" y="' + f(box.bottom - 3) + '">⏱ ×' + field.speed + "</text>";
+  }
+
   function pseudo(seed, i) {        // feste „Zufallszahl“ zwischen 0 und 1
     var x = Math.sin(seed * 12.9898 + i * 78.233) * 43758.5453;
     return x - Math.floor(x);
@@ -652,6 +669,7 @@
     if (w.ml > 0.005) {
       out += '<clipPath id="' + esc(clip) + '"><path d="' + shape.path + '"/></clipPath>' +
         '<path class="cl-liquid" d="' + shape.path + '" fill="' + liquidColor((w.oil && w.oil.top ? w.oil.color : w.color).rgb) + '"/>';
+      if (w.field) out += '<g clip-path="url(#' + esc(clip) + ')">' + fieldCells(w.field, box, esc(clip)) + "</g>";
       // zwei Schichten: die obere füllt alles, die untere bis zu ihrer eigenen Höhe, dazwischen die Grenze
       if (w.oil && (shape.level || L.parts[w.type].surface)) {
         layer = w.oil.top ? w.ml - w.oil.ml : w.oil.ml;

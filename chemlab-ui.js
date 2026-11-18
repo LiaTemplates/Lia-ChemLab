@@ -38,7 +38,7 @@
 
   // Welche Datei fehlt noch? Eine, die auf den Rechenkern wartet, ist angekommen.
   function missing() {
-    return [["chemlab-engine.js", L.normalize], ["chemlab-data.js", L.core], ["chemlab-parts.js", L.text && L.icon], ["chemlab-fx.js", L.fx]]
+    return [["chemlab-engine.js", L.normalize], ["chemlab-data.js", L.core], ["chemlab-parts.js", L.text && L.icon], ["chemlab-fx.js", L.fx], ["chemlab-spatial.js", L.spatial]]
       .filter(function (file) { return !file[1] && !(L.pending && L.pending[file[0]]); }).map(function (file) { return file[0]; });
   }
 

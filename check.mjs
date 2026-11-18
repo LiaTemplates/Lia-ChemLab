@@ -6,6 +6,7 @@ import vm from "node:vm";
 
 import "./chemlab-engine.js";
 import "./chemlab-data.js";
+import "./chemlab-spatial.js";
 
 const L = globalThis.LiaChemLab;
 
@@ -1439,7 +1440,7 @@ test("README: jeder Beispielblock lädt, und alle Geräte und Stoffe kommen vor"
   for (const id of Object.keys(L.core.reagents)) assert.ok(reagents.has(id.split(" ")[0]), id);
   for (const id of Object.keys(L.core.reagents)) assert.ok(readme.includes("`" + id), `${id} steht in der Tabelle der Stoffe`);
   assert.match(readme, /^version:\s+0\.\d+\.\d+$/m, "Version unter 1.0.0");
-  for (const file of ["chemlab-engine.js", "chemlab-data.js", "chemlab-parts.js", "chemlab-fx.js", "chemlab-ui.js", "chemlab.css"]) assert.ok(readme.includes("./" + file), file);
+  for (const file of ["chemlab-engine.js", "chemlab-data.js", "chemlab-parts.js", "chemlab-fx.js", "chemlab-ui.js", "chemlab-spatial.js", "chemlab.css"]) assert.ok(readme.includes("./" + file), file);
 });
 
 test("Ohne Build-Schritt: der Ordner enthält genau die Dateien des Bausteins", () => {
@@ -6316,18 +6317,18 @@ test("Klang: ein Begrenzer hinter dem Hauptregler fängt die Spitzen des Knalls 
   assert.ok(b.links.includes("master>out"), "ohne Begrenzer im Browser klingt es wie bisher: " + b.links.join(" "));
 });
 
-test("Laden: die fünf Dateien dürfen in jeder Reihenfolge ankommen", () => {
+test("Laden: die sechs Dateien dürfen in jeder Reihenfolge ankommen", () => {
   // Der Browser führt sie nicht verlässlich in der Reihenfolge des Kurskopfs aus: unter Last kam die große Datei des Rechenkerns zuletzt.
-  const files = ["chemlab-engine.js", "chemlab-data.js", "chemlab-parts.js", "chemlab-fx.js", "chemlab-ui.js"];
+  const files = ["chemlab-engine.js", "chemlab-data.js", "chemlab-parts.js", "chemlab-fx.js", "chemlab-ui.js", "chemlab-spatial.js"];
   const code = files.map((file) => fs.readFileSync(new URL(file, here), "utf8"));
-  for (const order of [[1, 0, 2, 3, 4], [4, 3, 2, 1, 0], [2, 1, 0, 4, 3], [3, 2, 4, 1, 0], [1, 2, 3, 4, 0], [0, 1, 2, 3, 4]]) {
+  for (const order of [[1, 0, 2, 3, 4, 5], [5, 4, 3, 2, 1, 0], [2, 1, 0, 5, 4, 3], [3, 2, 4, 1, 0, 5], [1, 2, 3, 4, 0, 5], [0, 1, 2, 3, 5, 4]]) {
     const box = vm.createContext({}), label = order.map((i) => files[i]).join(" → "), ready = [];
     for (const i of order) {
       vm.runInContext(code[i], box, { filename: files[i] });
       ready.push(!!(box.LiaChemLab && box.LiaChemLab.loaded && box.LiaChemLab.loaded()));
     }
     const C = box.LiaChemLab;
-    assert.deepEqual(ready, [false, false, false, false, true], label + ": vollständig ist der Baustein erst mit der letzten Datei");
+    assert.deepEqual(ready, [false, false, false, false, false, true], label + ": vollständig ist der Baustein erst mit der letzten Datei");
     assert.deepEqual(Array.from(C.missing()), [], label);
     assert.ok(C.db.reagents.HCl && C.parts.beaker.draw && C.parts["electrode-Cu"].draw && C.fx.flame && C.mount, label);
     const l = C.createLab(C.normalize({ bench: [{ type: "beaker", id: "b", contains: [{ reagent: "HCl 1M", ml: 20 }] }] }));
@@ -6337,7 +6338,7 @@ test("Laden: die fünf Dateien dürfen in jeder Reihenfolge ankommen", () => {
   const part = vm.createContext({});
   vm.runInContext(code[4], part);
   vm.runInContext(code[1], part);
-  assert.deepEqual(Array.from(part.LiaChemLab.missing()), ["chemlab-engine.js", "chemlab-parts.js", "chemlab-fx.js"], "was fehlt, lässt sich benennen");
+  assert.deepEqual(Array.from(part.LiaChemLab.missing()), ["chemlab-engine.js", "chemlab-parts.js", "chemlab-fx.js", "chemlab-spatial.js"], "was fehlt, lässt sich benennen");
   const readme = fs.readFileSync(new URL("README.md", here), "utf8");
   assert.match(readme, /C\.loaded\(\)\) return C\.mount\(/, "der Befehl im Kurskopf wartet, bis alles geladen ist");
 });
@@ -11293,6 +11294,73 @@ test("Siedepunkterhöhung: gelöste Teilchen lassen später sieden, beim Eindamp
   assert.ok(later.ml < first.ml && later.heat.boil > first.heat.boil, "weniger Wasser, höhere Siedetemperatur");
   L.step(salty, 600);
   assert.ok(!(L.view(salty, L.vessel(salty, "b")).ml > 0), "es dampft trotzdem ganz ein");
+});
+
+// ---------------------------------------------------------------- Feld im Becherglas (spatial)
+
+const strongCharge = (l, id) => Object.entries(L.vessel(l, id || "b").n).reduce((sum, [sp, n]) => sum + (["Na+(aq)", "Cl-(aq)"].includes(sp) ? L.species(sp).charge * n : 0), 0);
+
+test("Feld: nur im Becherglas, mit true oder einem Zeitraffer; ohne Angabe kein Feld", () => {
+  assert.equal(L.vessel(beaker([{ reagent: "H2O", ml: 50 }]), "b").field, null);
+  const fresh = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "H2O", ml: 50 }] }]);
+  assert.ok(look(fresh).field && look(fresh).field.cells.length === 200, "schon vor dem ersten Schritt da (die Fläche steht anfangs still)");
+  assert.equal(L.normalize({ bench: [{ type: "beaker", spatial: true }] }).bench[0].spatial, 600);
+  assert.equal(L.normalize({ bench: [{ type: "beaker", spatial: 60 }] }).bench[0].spatial, 60);
+  for (const bad of [{ type: "flask", spatial: true }, { type: "beaker", spatial: "ja" }, { type: "beaker", spatial: 0 }])
+    assert.throws(() => L.normalize({ bench: [bad] }), (e) => e.code === "spatial", JSON.stringify(bad));
+});
+
+test("Feld: gleichmäßig zeigt es genau das Gefäß, auch mit Puffer und Indikator", () => {
+  for (const contains of [[{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }], [{ reagent: "CH3COOH 0.1M", ml: 40 }, { reagent: "NaOH 0.1M", ml: 20 }, { reagent: "BTB", drops: 5 }]]) {
+    const l = beaker(contains, { room: 25 }), b = L.vessel(l, "b");
+    const s = lab([{ type: "beaker", id: "b", spatial: true, contains }, { type: "phmeter", id: "p", in: "b" }], { room: 25 });
+    L.step(l, 2); L.step(s, 2);
+    const plain = L.view(l, b), field = L.view(s, L.vessel(s, "b")).field;
+    assert.equal(field.cells.length, field.nr * field.nz);
+    // die Tabelle bringt die Lösung neu ins Gleichgewicht: gleich bis auf die Genauigkeit des Lösers (mit Puffer 3e-4)
+    for (const cell of field.cells) { near(cell.pH, plain.pH, 1e-3, "pH je Zelle"); cell.rgb.forEach((c, k) => near(c, plain.color.rgb[k], 1, "Farbe je Zelle")); }
+    near(L.reading(s, "p").value, plain.pH, 0.02, "das pH-Meter zeigt dasselbe");
+  }
+});
+
+test("Feld: Säure tropft oben an der Achse ein, die Front wandert nach unten; die Ladung der starken Ionen bleibt im Feld", () => {
+  const l = lab([{ type: "beaker", id: "b", spatial: true, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] }, { type: "phmeter", id: "p", in: "b" }], { room: 25 });
+  L.step(l, 1);
+  L.add(l, "b", "HCl 1M", { ml: 1 });
+  L.step(l, 5);
+  const v = L.vessel(l, "b"), look = () => L.view(l, v).field, pH = (f, i, j) => f.cells[j * f.nr + i].pH, sum = () => v.field.n.reduce((a, b) => a + b, 0);
+  let f = look();
+  near(sum(), strongCharge(l), 1e-15, "Bilanz");
+  assert.ok(pH(f, 0, 0) < 1 && pH(f, 0, 0) >= 0, `oben an der Achse sauer, aber nicht saurer als die Salzsäure: ${pH(f, 0, 0)}`);
+  assert.ok(pH(f, 0, f.nz - 1) > 11.9 && pH(f, f.nr - 1, 0) > 11, "unten und außen noch Lauge");
+  assert.ok(L.reading(l, "p").value > 11.9, "das pH-Meter am Boden merkt noch nichts");
+  assert.ok(L.view(l, v).pH < 3, "das Gefäß selbst rechnet durchmischt");
+  L.step(l, 200);
+  f = look();
+  assert.ok(pH(f, 0, 0) < 3 && pH(f, 0, f.nz - 1) > 10, `nach 200 s: oben sauer, unten noch basisch (${pH(f, 0, 0)}, ${pH(f, 0, f.nz - 1)})`);
+  assert.ok(L.reading(l, "p").value < 11.5, "die Front kommt am pH-Meter an");
+  near(sum(), strongCharge(l), 1e-15, "Bilanz");
+  assert.ok(f.cells.every((c) => c.pH >= 0 && c.pH <= 14), "kein pH außerhalb dessen, was die Lösungen hergeben");
+  L.shake(l, "b", "shake");
+  L.step(l, 1);
+  for (const c of look().cells) near(c.pH, L.view(l, v).pH, 1e-6, "geschüttelt: überall gleich");
+});
+
+test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit dem Zeitraffer", () => {
+  const run = L.createRun(L.normalize({ room: 25, bench: [{ type: "beaker", id: "b", spatial: 300, contains: [{ reagent: "NaOH 0.01M", ml: 80 }, { reagent: "UI", drops: 10 }] }] }));
+  L.act(run, (l) => L.add(l, "b", "HCl 1M", { ml: 1 }));
+  L.advance(run, 30);
+  const later = JSON.stringify(L.vessel(run.lab, "b").field.n);
+  L.seek(run, 1);
+  assert.notEqual(JSON.stringify(L.vessel(run.lab, "b").field.n), later, "früher sah es anders aus");
+  L.toEnd(run);
+  assert.equal(JSON.stringify(L.vessel(run.lab, "b").field.n), later, "und am Ende wieder wie zuvor");
+  const svg = L.parts.beaker.draw(L.view(run.lab, L.vessel(run.lab, "b")), { lang: "de", uid: "u", t: 0, still: true, seed: 1 });
+  assert.match(svg, /class="cl-field"/);
+  assert.match(svg, /⏱ ×300/);
+  const plain = beaker([{ reagent: "H2O", ml: 50 }]);
+  assert.doesNotMatch(L.parts.beaker.draw(look(plain), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }), /cl-field/);
+  assert.equal(JSON.parse(L.describe(run, {})).bench[0].spatial, 300, "Aufbau kopieren behält das Feld");
 });
 
 // ---------------------------------------------------------------- Benchmarks (benchmarks/run.mjs)

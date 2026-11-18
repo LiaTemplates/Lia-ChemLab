@@ -9,6 +9,7 @@ script:   ./chemlab-engine.js
           ./chemlab-data.js
           ./chemlab-parts.js
           ./chemlab-fx.js
+          ./chemlab-spatial.js
           ./chemlab-ui.js
           ./chemlab-3d.js
 
@@ -1267,6 +1268,27 @@ Die Strömung ist ein Bild für die Vorstellung. Gerechnet wird weiter mit einem
  ],
  "shelf":["H2O"],
  "show":{"charts":["T"],"flow":"temp"}}
+```
+
+## Wo ist die Säure? Ein Feld im Becherglas
+
+Warum wird nicht das ganze Glas auf einmal rot, wenn man Säure in eine Lauge mit Universalindikator gibt? Mit `"spatial": true` rechnet ein Becherglas, wo die starke Säure oder Lauge gerade ist: im Querschnitt des Glases, rund um seine Achse.
+
+- **Salzsäure zugeben** (1 mL, Flasche in die Hand nehmen und das Glas antippen): Sie kommt oben in der Mitte an. Dort wird es sofort rot, der Rest bleibt violett.
+- **Warten** (▶): Die Säure wandert durch Diffusion nach außen und unten, an der Front schlägt die Farbe um. Das pH-Meter misst an seiner Spitze, knapp über dem Boden. Es zeigt erst dann weniger, wenn die Front dort ankommt.
+- **Schütteln**: Danach ist alles gleich verteilt, und überall gilt der pH-Wert der gemischten Lösung.
+
+Die Diffusion läuft im Zeitraffer, ⏱ ×600 unten im Glas: Eine Sekunde zeigt zehn Minuten. In Wirklichkeit dauert es Stunden, bis sich die Säure in einem ruhigen Glas so verteilt hat. Meist geht es aber viel schneller: Die schwerere Säure sinkt ab, und die Flüssigkeit strömt. Diese Strömung rechnet das Feld nicht. Es zeigt nur die Diffusion. Mit `"spatial": 60` läuft der Zeitraffer langsamer.
+
+Wie das Feld rechnet: Es verfolgt nur die starken Ionen (Na⁺, Cl⁻, …). Für den Überschuss an starker Säure oder Lauge in jeder Zelle rechnet ChemLab die Lösung des ganzen Glases ins Gleichgewicht und nimmt deren pH-Wert und Farbe. Puffer, schwache Säuren und der Indikator gelten als gleichmäßig verteilt. Das Gefäß selbst rechnet weiter durchmischt; nur die Farbe im Glas und das pH-Meter zeigen das Feld.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"glas","spatial":true,"contains":[{"reagent":"NaOH 0.01M","ml":80},{"reagent":"UI","drops":10}]},
+  {"type":"phmeter","in":"glas"}
+ ],
+ "shelf":["HCl 1M","HCl 0.1M","NaOH 1M","UI","BTB"],
+ "show":{"charts":["pH"]}}
 ```
 
 ## Ideale und reale Lösung
