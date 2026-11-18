@@ -142,6 +142,56 @@ const models = {
     return [check("rate_error", rel(fe - v.n["Fe(s)"], 2 * flux), tol.relative)];
   },
 
+  // B21: 14 g KNO3 in 20 mL bei 60 °C gelöst, dann im Bad abgekühlt. Auf 40 °C: übersättigt unter der Schwelle, es bleibt klar.
+  // Auf 30 °C: ab Q/K ≥ S zählt die Wartezeit, der Feststoff erscheint nach t (auf einen Rechenschritt genau); K und N bleiben erhalten
+  nucleation({ g, ml, metastable, labile }, tol) {
+    const make = () => {
+      const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml }, { reagent: "KNO3 salt", g }] }, { type: "bath", id: "wb", under: "b", temp: 60 }], 20);
+      L.step(l, 600);
+      return l;
+    };
+    const e = L.db.equilibria.find((q) => q.solid === "KNO3(s)"), S = e.nucleate.S, t = e.nucleate.t;
+    const omega = (v) => { const vol = L.volume(v); return (v.n["K+(aq)"] / vol) * (v.n["NO3-(aq)"] / vol) / 10 ** (e.ideal[0] - e.ideal[1] * 1000 / (8.314462618 * Math.LN10) * (1 / (v.T + 273.15) - 1 / 298.15)); };
+    const a = make(), va = L.vessel(a, "b"), clear = va.n["KNO3(s)"] || 0, before = inventory(a);
+    L.setTemp(a, "wb", metastable);
+    L.step(a, 900);
+    const w = omega(va);
+    const b = make(), vb = L.vessel(b, "b");
+    L.setTemp(b, "wb", labile);
+    let over = null, seen = null;
+    for (let i = 0; i < 20 * 120 && seen == null; i++) {
+      L.step(b, 0.05);
+      if (over == null && omega(vb) >= S) over = b.t;
+      if (vb.n["KNO3(s)"] > 0) seen = b.t;
+    }
+    const after = inventory(b);
+    return [check("dissolved_at_60", clear, 0), check("metastable_solid", va.n["KNO3(s)"] || 0, 0),
+      { name: "metastable_omega", value: w, limit: S, pass: w > 1 && w < S },
+      check("delay_error", over == null || seen == null ? Infinity : Math.abs(seen - over - t), tol.delay_absolute),
+      check("balance_error", Math.max(rel(after.K, before.K), rel(after.N, before.N)), tol.balance_relative)];
+  },
+
+  // B22: ein Korn KNO3 in viel Wasser: die Fläche schrumpft wie bei einer Kugel (p = 2/3), n(t) = n0·(1 − t/(3τ))³ mit τ = 15 s (pace)
+  shrinkingGrain({ g, ml, times, until }, tol) {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml }] }]);
+    L.add(l, "b", "KNO3 salt", { g });
+    const v = L.vessel(l, "b"), n0 = g / L.species("KNO3(s)").M, start = l.t;
+    let worst = 0, scheme = 0, n = n0;
+    for (const t of times) {
+      L.step(l, start + t - l.t);
+      worst = Math.max(worst, rel(v.n["KNO3(s)"], n0 * (1 - t / 45) ** 3));
+    }
+    // das diskrete Verfahren: je Schritt n · exp(−DT/τ(n)), τ(n) = 15 s · (n/n0)^(1/3)
+    const m = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml }] }]);
+    L.add(m, "b", "KNO3 salt", { g });
+    for (let k = 1; k <= until * 20; k++) {
+      L.step(m, 0.05);
+      n *= Math.exp(-0.05 / (15 * Math.max(0.01, (n / n0) ** (1 / 3))));
+      scheme = Math.max(scheme, rel(L.vessel(m, "b").n["KNO3(s)"], n));
+    }
+    return [check("curve_error", worst, tol.relative), check("scheme_error", scheme, tol.scheme_relative)];
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {

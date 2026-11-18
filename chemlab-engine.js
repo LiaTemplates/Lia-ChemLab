@@ -341,6 +341,13 @@
             });
             entry.rate = { k: +item.rate.k, Ea: +item.rate.Ea || 0, order: Object.assign({}, item.rate.order) };
           }
+          // nucleate: { S, t, grow } – ohne Keim (kein Stück dieses Feststoffs im Gefäß) fällt er erst aus, wenn Q/K mindestens S ist,
+          // und das t Sekunden lang; dann wächst er mit der Zeitkonstante grow in s (Vorgabe GROW). Ein Impfkristall gibt den Weg sofort frei.
+          if (item.nucleate != null) {
+            var nu = item.nucleate;
+            if (!(nu && nu.S > 1 && isFinite(nu.S) && nu.t > 0 && isFinite(nu.t) && (nu.grow == null || (nu.grow > 0 && isFinite(nu.grow))))) throw fail("logK", "nucleate");
+            entry.nucleate = { S: +nu.S, t: +nu.t, grow: nu.grow == null ? GROW : +nu.grow };
+          }
           entry.f = -1 / eq.nu[solids[0]];
           entry.d = {};
           ids.forEach(function (id) { if (id !== WATER && id !== solids[0]) entry.d[id] = eq.nu[id] * entry.f; });
@@ -1893,8 +1900,8 @@
   // Stellt zu dem, was im Gefäß ist, das Gleichungssystem auf:
   // alle gelösten Teilchen, die über die eingetragenen Gleichgewichte erreichbar sind, ausgedrückt durch Grundteilchen,
   // und alle Feststoffe, die daraus ausfallen können oder schon da sind.
-  function system(aq, solid, real) {
-    var key = (real ? "real#" : "") + aq.join("|") + "#" + solid.join("|");
+  function system(aq, solid, real, blocked) {      // blocked: Feststoffe, die (noch) keinen Keim haben
+    var key = (real ? "real#" : "") + aq.join("|") + "#" + solid.join("|") + (blocked && blocked.length ? "#!" + blocked.join("|") : "");
     if (key in systems) return systems[key];
     var set = {}, here = {}, eqs = [], hets = [], grew = true;
     aq.forEach(function (id) { set[id] = true; });
@@ -1911,6 +1918,7 @@
           Object.keys(e.nu).forEach(function (id) { if (id !== WATER) set[id] = true; });
           grew = true;
         } else if (e.solid && hets.indexOf(e) < 0) {
+          if (blocked && blocked.indexOf(e.solid) >= 0) return;      // ohne Keim fällt er nicht aus
           ions = Object.keys(e.d);
           // möglich, wenn der Feststoff da ist oder alle Teilchen gelöst sind, aus denen er ausfällt
           if (!here[e.solid] && !ions.every(function (id) { return e.d[id] < 0 || set[id]; })) return;
@@ -2180,6 +2188,39 @@
 
   // Zeitkonstante, mit der sich ein Feststoff löst. Ein Stück aus dem Regal löst sich über seine Oberfläche:
   // sie schrumpft mit ihm, und so ist es nach endlicher Zeit verschwunden (Körner nach dem Dreifachen von tau).
+  // ------------------------------------------------------------------ Keimbildung
+  // Ein Feststoff mit nucleate fällt ohne Keim nicht aus, obwohl die Lösung übersättigt ist (metastabil). Steht Q/K mindestens bei S,
+  // zählt die Wartezeit (v.nuc, Anteil an t); ist sie um, darf er ausfallen. Unter Q/K = 1 beginnt sie von vorn. Liegt der Feststoff
+  // im Gefäß (Impfkristall, Bodensatz, schon ausgefallen), ist er sein eigener Keim. Gleich ablaufend für gleiche Lösungen: kein Zufall.
+  // shortcut: eine feste Schwelle und Wartezeit statt der Keimbildungsrate nach der klassischen Theorie (exp(−B/ln²S)), keine Größenklassen;
+  // Werte je Stoff geschätzt, wo nicht anders angegeben
+  function seeds(v) {
+    return L.db.equilibria.filter(function (e) { return e.nucleate && !(v.n[e.solid] > 0); });
+  }
+  function unseeded(v) {
+    return seeds(v).filter(function (e) { return !(v.nuc && v.nuc[e.solid] >= 1); }).map(function (e) { return e.solid; }).sort();
+  }
+  function supersaturation(v, e, vol) {      // Q/K des Feststoffs in der Lösung, wie das Gleichgewicht es rechnet (ideal oder mit Aktivitäten)
+    var own = v.real || e.ideal == null ? null : [].concat(e.ideal), h = own && own.length > 1 ? own[1] : heatOf(e), lg = gammas(v, vol), logQ = 0, id;
+    for (id in e.d) {
+      if (!(v.n[id] > 0)) { if (e.d[id] > 0) return 0; continue; }
+      logQ += e.d[id] * (Math.log10(v.n[id] / vol) + lg(id));
+    }
+    return Math.pow(10, logQ - shift((own ? own[0] : e.logK) * e.f, h == null ? null : h * e.f, v.T + KELVIN));
+  }
+  function nucleation(v, vol) {
+    if (!(vol > 0) || thick(v, vol)) return;
+    seeds(v).forEach(function (e) {
+      var w = supersaturation(v, e, vol);
+      v.nuc = v.nuc || {};
+      if (w < 1) { delete v.nuc[e.solid]; return; }
+      if (w < e.nucleate.S || v.nuc[e.solid] >= 1) return;
+      v.nuc[e.solid] = (v.nuc[e.solid] || 0) + DT / e.nucleate.t;
+      if (v.nuc[e.solid] >= 1) v.dirty = true;                 // nun darf er ausfallen
+    });
+    if (v.nuc) for (var id in v.nuc) if (v.n[id] > 0) delete v.nuc[id];      // er ist da: sein eigener Keim
+  }
+
   function pace(v, id) {
     var tau = MELT;
     v.lumps.forEach(function (l) { if (l.id === id && !l.made) tau = (l.tau || 15) * Math.max(0.01, Math.pow(l.n / l.n0, 1 - l.p)); });
@@ -2313,7 +2354,7 @@
       phase = L.db.species[id].phase;
       if (phase === "aq") aq.push(id); else if (phase === "s") sol.push(id);
     }
-    var sys = system(aq.sort(), sol.sort(), !!v.real);
+    var sys = system(aq.sort(), sol.sort(), !!v.real, unseeded(v));
     if (!sys) return false;
 
     var T = v.T + KELVIN, ids = sys.ids, nb = sys.basis.length, ns = ids.length, np = sys.solids.length;
@@ -2390,7 +2431,7 @@
           for (k = 0; k < np; k++) {
             gap = goal.s[k] - own[k];
             if (!(Math.abs(gap) > 1e-4 * Math.max(goal.s[k], own[k]) + 1e-12)) continue;
-            part = gap > 0 ? GROW : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
+            part = gap > 0 ? (sys.solids[k].eq.nucleate ? sys.solids[k].eq.nucleate.grow : GROW) : held[k] > 0 ? MELT : pace(v, sys.solids[k].id);
             // Was dabei langsamer überginge, als man sehen kann (REST), gilt als angekommen: sonst hielte ein Niederschlag,
             // dem eine unmerklich langsame Reaktion Stoff nachliefert, das Gefäß für immer in Bewegung.
             if (Math.abs(gap) * vol / part > REST) slow = Math.max(slow, part);
@@ -4108,6 +4149,7 @@
     boilOff(lab, v, emit, false);                              // Flüssigkeit in einem heißen Gefäß: gerechnet wird nie mit einer Lösung über ihrem Siedepunkt
     kinetics(v, emit, stoppered(lab, v));
     hotSpots(lab, v, emit);
+    nucleation(v, volume(v));
     if (v.dirty || Math.abs(v.T - v.Teq) > 0.02) {              // auch wenn nur die Temperatur wandert: K hängt von ihr ab
       moving = equilibrate(lab, v, emit);
       v.Teq = v.T;
@@ -4509,6 +4551,9 @@
       if (lab.t - v.flag.tinted < FADE) return false;            // die Farbe hat sich eben noch geändert
       for (key in v.lit) return false;
       if (v.drop) return false;                                  // Tropfen schweben noch
+      // übersättigt über der Schwelle: die Wartezeit bis zum Keim läuft; ein Feld gleicht sich noch aus
+      if (volume(v) > 0 && seeds(v).some(function (e) { return supersaturation(v, e, volume(v)) >= e.nucleate.S; })) return false;
+      if (v.field && v.field.n && (function (f) { var lo = Infinity, hi = -Infinity; f.cells.forEach(function (c) { lo = Math.min(lo, c.pH); hi = Math.max(hi, c.pH); }); return hi - lo > 0.01; })(fieldLook(lab, v))) return false;
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
       if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && filled(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte

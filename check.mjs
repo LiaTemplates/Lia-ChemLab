@@ -11368,6 +11368,36 @@ test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit d
   assert.deepEqual(cells.flow(0.5, 0.5), [0, 0]);
 });
 
+// ---------------------------------------------------------------- Keimbildung
+
+test("Keimbildung: nucleate nur an einem Löslichkeitsgleichgewicht, mit S > 1 und t > 0", () => {
+  for (const nucleate of [{ S: 1, t: 5 }, { S: 2, t: 0 }, { S: 2, t: 5, grow: -1 }, "ja"])
+    assert.throws(() => L.register({ equilibria: [{ eq: "KNO3(s) <=> K+(aq) + NO3-(aq)", logK: -0.2061, nucleate, src: "Probe" }] }), (e) => e.code === "data", JSON.stringify(nucleate));
+  assert.throws(() => L.register({ equilibria: [{ eq: "CO2(aq) + H2O(l) <=> H+(aq) + HCO3-(aq)", logK: -6.352, nucleate: { S: 2, t: 5 }, src: "Probe" }] }), (e) => e.code === "data", "nicht in der Lösung");
+});
+
+test("Keimbildung: Kaliumnitrat bleibt knapp unter der Sättigung klar, ein Impfkristall lässt es auskristallisieren und warm werden; kälter keimt es von selbst", () => {
+  const run = L.createRun(L.normalize({ room: 20, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "KNO3 salt", g: 14 }] }, { type: "bath", id: "wb", under: "b", temp: 60 }] }));
+  const v = () => L.vessel(run.lab, "b");
+  L.advance(run, 600);
+  L.act(run, (l) => L.setTemp(l, "wb", 40));
+  L.advance(run, 900);
+  assert.equal(v().n["KNO3(s)"] || 0, 0, "übersättigt, aber ohne Keim: klar");
+  assert.equal(L.atRest(run.lab), true, "und in Ruhe: unter der Schwelle wartet es nicht auf einen Keim");
+  const T0 = v().T;
+  L.act(run, (l) => L.add(l, "b", "KNO3 salt", { g: 0.05 }));
+  L.advance(run, 10);
+  assert.ok(v().n["KNO3(s)"] * 101.1 > 0.8, `Kristalle wachsen: ${v().n["KNO3(s)"] * 101.1} g`);
+  assert.ok(v().T > T0 + 0.5, "die Kristallisationswärme wärmt die Lösung");
+  const cold = L.createLab(L.normalize({ room: 20, bench: [{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }, { reagent: "KNO3 salt", g: 14 }] }, { type: "bath", id: "wb", under: "b", temp: 60 }] }));
+  L.step(cold, 600);
+  L.setTemp(cold, "wb", 30);
+  let waited = false;
+  for (let i = 0; i < 2000 && !(L.vessel(cold, "b").n["KNO3(s)"] > 0); i++) { L.step(cold, 0.05); waited = waited || L.vessel(cold, "b").nuc?.["KNO3(s)"] > 0.5; }
+  assert.ok(L.vessel(cold, "b").n["KNO3(s)"] > 0, "weiter abgekühlt: von selbst");
+  assert.ok(waited, "erst nach der Wartezeit, die im Zustand des Gefäßes steht (und damit in der Aufzeichnung)");
+});
+
 // ---------------------------------------------------------------- Benchmarks (benchmarks/run.mjs)
 
 test("Benchmarks: kein gerechneter Fall schlägt fehl, und kein Fall heißt PASS, ohne gerechnet zu sein", async () => {
