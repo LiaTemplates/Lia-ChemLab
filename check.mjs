@@ -10429,6 +10429,17 @@ test("Ampel: Indigocarmin geschüttelt grün, dann rot, dann gelb", () => {
   assert.ok(red > 0 && yellow > red + 5, `rot, dann gelb: ${[...new Set(seen)].join(", ")}`);
 });
 
+test("Schaum: ein geleertes Gefäß hat keinen Schaum mehr und meldet keinen", () => {
+  const l = lab([{ type: "cylinder", ml: 100, id: "b", contains: [{ reagent: "H2O2 9.8M", ml: 20 }, { reagent: "detergent", ml: 5 }] }], { room: 20 }), seen = [];
+  L.add(l, "b", "KI 2M", { ml: 5 });
+  L.step(l, 15);
+  assert.ok(look(l).foam > 10, "es schäumt");
+  L.empty(l, "b");
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(look(l).foam, 0);
+  assert.ok(!seen.some((e) => e.key === "foam" || e.key === "foamOver"), seen.map((e) => e.key).join());
+});
+
 // ---------------------------------------------------------------- Leuchten: Luminol und UV-Lampe
 
 const organicPack = () => L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
@@ -10474,7 +10485,8 @@ test("Dunkler Raum: show.dark beginnt dunkel, der Knopf schaltet das Licht; was 
   const el = mount(JSON.stringify({ bench: [{ type: "beaker", id: "f", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "fluorescein", drops: 5 }] }, { type: "uvlamp", in: "f" }], show: { dark: true } }));
   frames(1);
   assert.equal(el.attributes["data-dark"], "true");
-  assert.match(item(el, "f").innerHTML, /class="cl-shine"/);
+  assert.match(item(el, "f").innerHTML, /class="cl-glowing"/);
+  assert.doesNotMatch(item(el, "f").innerHTML, /class="cl-shine[^"]*" d=/, "nicht mit dem Glanzstreif des Glases verwechselt");
   assert.match(item(el, "uvlamp1").innerHTML, /cl-uvbeam/);
   press(el, "dark");
   assert.equal(el.attributes["data-dark"], "false");

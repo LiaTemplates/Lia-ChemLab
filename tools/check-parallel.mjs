@@ -14,6 +14,7 @@ const runs = Array.from({ length: n }, (_, i) => new Promise((done) => {
 const results = await Promise.all(runs);
 let pass = 0, fail = 0;
 for (const { out } of results) {
+  if (!/^# pass /m.test(out)) console.log(out.split("\n").slice(-20).join("\n"));      // der Teil kam gar nicht zum Prüfen
   pass += Number((out.match(/^# pass (\d+)/m) || [0, 0])[1]);
   fail += Number((out.match(/^# fail (\d+)/m) || [0, 0])[1]);
   // fehlgeschlagene Prüfungen mit ihrer Meldung

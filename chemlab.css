@@ -426,4 +426,4 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 .lia-chemlab .cl-uvglass { fill: #8d5bff; }
 .lia-chemlab .cl-uvbeam { fill: #8d5bff; fill-opacity: 0.14; }
 .lia-chemlab[data-dark="true"] .cl-wall, .lia-chemlab[data-dark="true"] .cl-bench { fill: #07080d; }
-.lia-chemlab[data-dark="true"] .cl-item > :not(.cl-shine):not(.cl-glow):not(.cl-hit) { opacity: 0.22; }
+.lia-chemlab[data-dark="true"] .cl-item > :not(.cl-glowing):not(.cl-glow):not(.cl-hit) { opacity: 0.22; }

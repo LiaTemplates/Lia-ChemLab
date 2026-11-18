@@ -622,9 +622,9 @@
       }
       // die Lösung leuchtet (Luminol, unter der UV-Lampe): in ihrer Farbe, mit einem Schein ums Glas; bleibt im dunklen Raum hell
       if (w.shine) {
-        out += '<ellipse class="cl-shine cl-halo" cx="' + f((shape.x0 + shape.x1) / 2) + '" cy="' + f((shape.top + shape.bottom) / 2) + '" rx="' + f((shape.x1 - shape.x0) / 2 + 10) +
+        out += '<ellipse class="cl-glowing cl-halo" cx="' + f((shape.x0 + shape.x1) / 2) + '" cy="' + f((shape.top + shape.bottom) / 2) + '" rx="' + f((shape.x1 - shape.x0) / 2 + 10) +
           '" ry="' + f((shape.bottom - shape.top) / 2 + 10) + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.4 * w.shine.level).toFixed(2) + '"/>' +
-          '<path class="cl-shine" d="' + shape.path + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.15 + 0.8 * w.shine.level).toFixed(2) + '"/>';
+          '<path class="cl-glowing" d="' + shape.path + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.15 + 0.8 * w.shine.level).toFixed(2) + '"/>';
       }
       if (w.sediment && w.sediment.ml > 0.002) {
         layer = Math.min((shape.bottom - shape.top) * 0.45, 3 + 9 * Math.sqrt(w.sediment.ml) * (shape.tall ? 1 : 0.5));
@@ -1019,8 +1019,8 @@
     draw: function (w, ctx, place) {
       if (!place) return '<rect class="cl-uvlamp" x="-18" y="-16" width="36" height="12" rx="3"/><rect class="cl-uvglass" x="-14" y="-6" width="28" height="3"/>' + badge(0, 14, ctx.no);
       var x = place.x, y = place.top - 8;
-      return '<path class="cl-shine cl-uvbeam" d="M' + f(x - 12) + "," + f(y + 10) + "L" + f(x + 12) + "," + f(y + 10) + "L" + f(x + 22) + "," + f(place.bottom) + "L" + f(x - 22) + "," + f(place.bottom) + 'Z"/>' +
-        '<rect class="cl-uvlamp" x="' + f(x - 18) + '" y="' + f(y - 4) + '" width="36" height="12" rx="3"/><rect class="cl-shine cl-uvglass" x="' + f(x - 14) + '" y="' + f(y + 6) + '" width="28" height="3"/>';
+      return '<path class="cl-glowing cl-uvbeam" d="M' + f(x - 12) + "," + f(y + 10) + "L" + f(x + 12) + "," + f(y + 10) + "L" + f(x + 22) + "," + f(place.bottom) + "L" + f(x - 22) + "," + f(place.bottom) + 'Z"/>' +
+        '<rect class="cl-uvlamp" x="' + f(x - 18) + '" y="' + f(y - 4) + '" width="36" height="12" rx="3"/><rect class="cl-glowing cl-uvglass" x="' + f(x - 14) + '" y="' + f(y + 6) + '" width="28" height="3"/>';
     }
   });
 

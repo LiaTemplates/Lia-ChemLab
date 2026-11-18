@@ -1635,7 +1635,7 @@
       if (!sound) return;
       sound.set(st.play > 0 ? L.fx.levels(run.lab) : {});
       // Geigerzähler: jeder Impuls der eben verstrichenen Zeit ein Klick, im Takt der Uhr (nach einem Sprung keiner)
-      if (st.play > 0 && run.time > tickAt && run.time - tickAt < 2) run.lab.tools.forEach(function (t) {
+      if (st.play > 0 && run.time > tickAt && run.time - tickAt < 1 + 0.2 * st.speed) run.lab.tools.forEach(function (t) {
         if (L.parts[t.type].sense === "cpm") L.ticks(run.lab, t.id, tickAt, run.time).slice(0, 200).forEach(function (at) { sound.tick((at - tickAt) / st.speed); });
       });
       tickAt = run.time;

@@ -1533,7 +1533,7 @@
     if (!v) return false;
     lab.flows = lab.flows.filter(function (f) { return f.to !== vesselId && f.from !== vesselId; });
     v.n = {}; v.org = {}; v.drop = null; v.out = {}; v.lumps = []; v.ext = {}; v.rate = {}; v.gas = 0; v.T = lab.room; v.tap = 0;
-    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null;
+    v.air = {}; v.taken = {}; v.lit = {}; v.boil = 0; v.half = {}; v.eg = 0; v.seal = null; v.foam = 0; v.shook = 0;
     v.flag = makeVessel(lab, v).flag;
     v.dirty = true;
     lab.vessels.forEach(function (b) { if (b.over === vesselId) b.given = 0; });   // eine neue Probe: die Bürette zählt von vorn
@@ -2018,7 +2018,7 @@
   // scheidet aus. Was noch nicht dazugehört, bleibt liegen, wie es ist. So ist jeder Zwischenschritt ein Zustand, den es geben
   // kann, und die Rechnung bleibt in der Nähe dessen, was sie schon kennt.
   function balance(sys, logB, rhs, dissolved, x0, cur) {
-    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, before = null, found, k, round, worst, at, value, melt, out, order, t;
+    var np = sys.solids.length, active = [], used = {}, state = null, saved = null, before = null, tried = null, found, k, round, worst, at, value, melt, out, order, t;
     // used: der Feststoff nimmt an der Stoffbilanz teil (er ist dabei oder aufgebraucht)
     function attempt() {
       var total = dissolved.map(function (sum, b) {
@@ -2067,6 +2067,7 @@
       if (!found && saved) {
         // Der zuletzt Aufgenommene müsste sich lösen, lässt sich aber nicht sättigen: Das verlangte Konzentrationen, die es nicht
         // gibt, oder seine Zusammensetzung hängt von den anderen ab. Dann löst er sich ganz.
+        tried = active;
         active = saved;
         found = attempt();
       }
@@ -2078,7 +2079,7 @@
         order = before.map(function (q, i) { return { q: [q], s: state ? state.s[i] : 0 }; }).sort(function (a, b) { return a.s - b.s; });
         order.slice(0, 4).forEach(function (a, i, small) { small.slice(i + 1).forEach(function (b) { order.push({ q: a.q.concat(b.q), s: 1e6 + a.s + b.s }); }); });      // Paare nur aus den vier kleinsten
         // gilt nur, wenn danach keiner eine negative Menge hätte; sonst der erste, der sich überhaupt rechnen ließ
-        var joined = active.slice(before.length), first = null, keep = null;
+        var joined = (tried || active).slice(before.length), first = null, keep = null;      // mit dem Neuzugang, auch wenn er sich lösen sollte
         for (t = 0; t < order.length; t++) {
           active = before.filter(function (q) { return order[t].q.indexOf(q) < 0; }).concat(joined);
           found = attempt();
@@ -3355,6 +3356,7 @@
     v.lumps.forEach(function (l) { if (l.made && L.db.species[l.id].colloid) haze += l.n * (1 - l.settled); });
     haze = volume(v) > 0 ? 1 - Math.exp(-haze / volume(v) / HAZE) : 0;
     if (!f.opaque && haze >= OPAQUE) { f.opaque = true; if (emit) emit({ key: "opaque", vessel: v.id }); }
+    else if (f.opaque && haze < OPAQUE - 0.2) f.opaque = false;
     // Schaum: gemeldet, sobald er steht, und wenn er über den Rand quillt
     if (!f.foam && v.foam > 1) { f.foam = true; if (emit) emit({ key: "foam", vessel: v.id }); }
     else if (f.foam && !(v.foam > 0.2)) f.foam = false;
@@ -3363,7 +3365,6 @@
     glow = shineOf(lab, v);                                    // die Lösung leuchtet: einmal, wenn es beginnt, und wenn es vergeht
     if (!f.shine && glow && glow.level > 0.1) { f.shine = true; if (emit) emit({ key: "shine", vessel: v.id, name: colorName(glow.rgb).name }); }
     else if (f.shine && !(glow && glow.level > 0.03)) { f.shine = false; if (emit) emit({ key: "shineEnd", vessel: v.id }); }
-    else if (f.opaque && haze < OPAQUE - 0.2) f.opaque = false;
 
     name = volume(v) > 0 && !thick(v, volume(v)) ? colorOf(v) : { name: f.color };      // ohne Flüssigkeit gibt es keine Farbe der Lösung zu melden
     // Ändert sich die Extinktion merklich, ist die Lösung in Bewegung, auch wenn dabei kaum Stoff umgesetzt wird (ein Farbstoff
@@ -4253,7 +4254,7 @@
     var bq = 0, id, el, lambda, u, k = 0, p, F;
     if (v && !v.broken) for (id in v.n) for (el in RADIO) bq += v.n[id] * (L.db.species[id].atoms[el] || 0) * RADIO[el];
     lambda = (NULL_RATE + bq * YIELD * 60) / 60 * GATE;
-    u = (jitter("geiger" + gate, t.id, "n") + 1) / 2;
+    u = Math.min(1 - 1e-12, Math.max(1e-12, (jitter("geiger" + gate, t.id, "n") + 1) / 2));
     if (lambda > 500) k = Math.max(0, Math.round(lambda + Math.sqrt(lambda) * Math.SQRT2 * inverf(2 * u - 1)));
     else for (p = Math.exp(-lambda), F = p; u > F && k < 10 * lambda + 50; ) { k++; p *= lambda / k; F += p; }
     return k;
