@@ -11361,6 +11361,11 @@ test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit d
   const plain = beaker([{ reagent: "H2O", ml: 50 }]);
   assert.doesNotMatch(L.parts.beaker.draw(look(plain), { lang: "de", uid: "u", t: 0, still: true, seed: 1 }), /cl-field/);
   assert.equal(JSON.parse(L.describe(run, {})).bench[0].spatial, 300, "Aufbau kopieren behält das Feld");
+  // für die 3D-Bühne: dieselben Farben, quer über das Glas an der Achse gespiegelt
+  const cells = L.fx.fieldCells(L.view(run.lab, L.vessel(run.lab, "b")).field);
+  cells.color(0.2, 0.3).forEach((c, k) => near(c, cells.color(0.8, 0.3)[k], 1e-9, "links wie rechts"));
+  assert.notDeepEqual(cells.color(0.5, 0.02), cells.color(0.02, 0.98), "oben an der Achse anders als unten am Rand");
+  assert.deepEqual(cells.flow(0.5, 0.5), [0, 0]);
 });
 
 // ---------------------------------------------------------------- Benchmarks (benchmarks/run.mjs)

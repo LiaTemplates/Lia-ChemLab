@@ -489,6 +489,22 @@
     };
   };
 
+  // Das Feld im Becherglas (spatial, aus L.view) wie flowCells für die 3D-Bühne: color(x, y) mit x quer über das Glas (an der Achse
+  // gespiegelt), y von oben, bilinear zwischen den Zellmitten, voll deckend; es strömt nichts, Spurteilchen gibt es keine
+  fx.fieldCells = function (field) {
+    function at(i, j) { return field.cells[Math.max(0, Math.min(field.nz - 1, j)) * field.nr + Math.max(0, Math.min(field.nr - 1, i))].rgb; }
+    return {
+      cols: 2 * field.nr, rows: field.nz,
+      color: function (x, y) {
+        var a = Math.abs(2 * x - 1) * field.nr - 0.5, b = y * field.nz - 0.5, i = Math.floor(a), j = Math.floor(b), u = a - i, v = b - j, c = [0, 0, 0, 1], n;
+        for (n = 0; n < 3; n++) c[n] = (1 - u) * (1 - v) * at(i, j)[n] + u * (1 - v) * at(i + 1, j)[n] + (1 - u) * v * at(i, j + 1)[n] + u * v * at(i + 1, j + 1)[n];
+        return c;
+      },
+      flow: function () { return [0, 0]; },
+      dots: []
+    };
+  };
+
   function css(rgb) { return "rgb(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + ")"; }
 
   function drop(x, base, w, h, sway) {       // Flammenform: unten breit, oben spitz

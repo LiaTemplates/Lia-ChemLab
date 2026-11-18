@@ -279,7 +279,9 @@
         }
         // Strömung: Temperatur, Wirbel, Druck oder Schlieren; ctx.flow3d wählt, wie: als Schnittebene ("cut") oder als Teilchen ("particles").
         // Grundton ist die Farbe der Schicht, darüber das Feld, kräftiger als in 2D: Glas und Brechung machen es blasser
-        var cells = wet && ctx.flow && L.fx && L.fx.flowCells ? L.fx.flowCells(w, ctx.t, "3d-" + (ctx.uid || "") + "-" + w.id, ctx.flow, ctx.still) : null;
+        // ein Feld im Becherglas (spatial) zeigt sich immer, auch ohne Strömungsansicht, und hat Vorrang vor ihr
+        var cells = wet && w.field && L.fx && L.fx.fieldCells ? L.fx.fieldCells(w.field)
+          : wet && ctx.flow && L.fx && L.fx.flowCells ? L.fx.flowCells(w, ctx.t, "3d-" + (ctx.uid || "") + "-" + w.id, ctx.flow, ctx.still) : null;
         var shown = cells ? ctx.flow3d || "cut" : null;
         function tint3(c, yy) {
           var base = (two && (yy > split) === w.oil.top) || allOil ? w.oil.color.rgb : w.color.rgb, a = Math.min(1, 1.5 * c[3]);
@@ -605,6 +607,7 @@
   fx.badge = function (kit, d, w) {
     var text = String(d.ctx.no || "");
     if (d.ctx.numbers && d.ctx.volumes !== false && w.ml > 0.005) text += (text ? " · " : "") + L.num(w.ml, 1, d.ctx.lang) + " mL";
+    if (w.field) text += (text ? " · " : "") + "⏱ ×" + w.field.speed;      // das Feld läuft im Zeitraffer
     return text;
   };
 

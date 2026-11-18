@@ -232,7 +232,7 @@
       if (u.column.visible) { u.column.scale.y = top - g - mouth; u.column.position.set(cx, mouth + u.column.scale.y / 2, 0); }
       u.gas.visible = g > 0.02;
       if (u.gas.visible) { u.gas.scale.y = g; u.gas.position.set(cx, top - g / 2, 0); }
-      u.tag.userData.write(String(d.ctx.no || " ") + (d.ctx.numbers && w.ml > 0.005 ? " · " + L.num(w.ml, 0, d.ctx.lang) + " mL" : ""));
+      u.tag.userData.write(String(d.ctx.no || " ") + (d.ctx.numbers && w.ml > 0.005 ? " · " + L.num(w.ml, 0, d.ctx.lang) + " mL" : "") + (w.field ? " · ⏱ ×" + w.field.speed : ""));
       u.tag.position.set(0, 0.15 - kit.up(d.lift), 6);
       u.held.visible = !!d.ctx.numbers && (w.caught || 0) > 0.05;
       if (u.held.visible) { u.held.userData.write(L.num(w.caught, 1, d.ctx.lang) + " mL"); u.held.position.set(cx, top + 0.4, 0); }
