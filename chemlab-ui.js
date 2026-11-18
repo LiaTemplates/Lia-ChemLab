@@ -118,7 +118,7 @@
     if (st.flow3d == null) st.flow3d = Math.max(0, FLOWS3D.indexOf(show.flow3d));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
-    var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0;      // heard: so viele Zeilen des Protokolls sind schon verklungen
+    var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0, tickAt = 0;      // tickAt: bis zu dieser Zeit hat der Geigerzähler getickt      // heard: so viele Zeilen des Protokolls sind schon verklungen
     if (sound) sound.mute(st.mute);
 
     // Oben eine schmale Leiste: das Regal zum Aufklappen, 3D und ein Menü für das Seltene.
@@ -1634,6 +1634,11 @@
       var run = st.run, n = run.frames[run.cursor].n;
       if (!sound) return;
       sound.set(st.play > 0 ? L.fx.levels(run.lab) : {});
+      // Geigerzähler: jeder Impuls der eben verstrichenen Zeit ein Klick, im Takt der Uhr (nach einem Sprung keiner)
+      if (st.play > 0 && run.time > tickAt && run.time - tickAt < 2) run.lab.tools.forEach(function (t) {
+        if (L.parts[t.type].sense === "cpm") L.ticks(run.lab, t.id, tickAt, run.time).slice(0, 200).forEach(function (at) { sound.tick((at - tickAt) / st.speed); });
+      });
+      tickAt = run.time;
       if (n > heard && st.play > 0) run.log.slice(heard, n).forEach(function (event) {
         if (event.key === "pop" || (event.key === "splint" && (event.result === "pop" || event.result === "burn"))) sound.shot("pop", event.level);
         else if (event.key === "splint") sound.shot(event.result === "out" ? "hiss" : event.result === "relight" || event.result === "flare" ? "whoosh" : "", 0);

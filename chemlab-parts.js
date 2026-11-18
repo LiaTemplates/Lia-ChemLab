@@ -343,12 +343,12 @@
     if (def.bath) return num(r.temp, 0, lang) + " °C";
     // Extinktion: im Deutschen E, im Englischen A (absorbance); am Ende der Skala „> 3“
     if (r.unit === "E") return text("unit.E", lang) + (v == null ? " –" : r.over ? " > " + trim(def.range[1], lang) : " " + num(v, 3, lang));
+    if (r.unit === "cpm") return (v == null ? "–" : num(v, 0, lang)) + " " + text("unit.cpm", lang);
     if (v == null) return "– " + r.unit;
     if (r.unit === "A") return v < 0.9995 ? num(v * 1000, 1, lang) + " mA" : num(v, 2, lang) + " A";
     if (r.unit === "V") return num(v, 2, lang) + " V";
     if (r.unit === "mS/cm") return v >= 0.1 ? trim(v, lang) + " mS/cm" : trim(v * 1000, lang) + " µS/cm";
     if (r.unit === "bar") return num(v, 2, lang) + " bar";
-    if (r.unit === "cpm") return num(v, 0, lang) + " " + text("unit.cpm", lang);
     if (def.sense === "V") return num(v, 1, lang) + " mL · " + num(r.p == null ? 1 : r.p, 2, lang) + " bar";      // Kolbenprober mit Manometer
     if (def.scale) return num(Math.abs(v) < 0.005 ? 0 : v, 2, lang) + " g";      // Waage: auf 0,01 g, ohne „−0,00“
     if (r.unit === "g") return num(v, 3, lang) + " g";

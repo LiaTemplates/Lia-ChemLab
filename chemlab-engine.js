@@ -4248,15 +4248,34 @@
   var NULL_RATE = 25;             // Imp./min: Nulleffekt eines Zählrohrs (Höhenstrahlung, Umgebung), üblich 20 bis 30
   var YIELD = 0.0015;             // Impulse je Zerfall in der Probe darunter: Raumwinkel, Selbstabsorption, Fenster (geschätzt)
   var GATE = 10;                  // s: Torzeit
-  // Zählrate über dem Gefäß in Imp./min, mit der Zählstatistik (Poisson) je Torzeit: fest für Gerät und Torzeit
-  function geiger(lab, t, v) {
-    var bq = 0, gate = Math.floor(lab.t / GATE + 1e-9), id, el, lambda, u, k = 0, p, F;
+  // Impulse des Zählers t in der Torzeit gate über dem Gefäß v, mit der Zählstatistik (Poisson): fest für Gerät und Torzeit
+  function counted(t, v, gate) {
+    var bq = 0, id, el, lambda, u, k = 0, p, F;
     if (v && !v.broken) for (id in v.n) for (el in RADIO) bq += v.n[id] * (L.db.species[id].atoms[el] || 0) * RADIO[el];
     lambda = (NULL_RATE + bq * YIELD * 60) / 60 * GATE;
     u = (jitter("geiger" + gate, t.id, "n") + 1) / 2;
     if (lambda > 500) k = Math.max(0, Math.round(lambda + Math.sqrt(lambda) * Math.SQRT2 * inverf(2 * u - 1)));
     else for (p = Math.exp(-lambda), F = p; u > F && k < 10 * lambda + 50; ) { k++; p *= lambda / k; F += p; }
-    return k * 60 / GATE;
+    return k;
+  }
+  // Anzeige wie am echten Gerät: die Impulse der letzten abgeschlossenen Torzeit, auf die Minute hochgerechnet; davor nichts
+  function geiger(lab, t, v) {
+    var gate = Math.floor(lab.t / GATE + 1e-9) - 1;
+    return gate < 0 ? null : counted(t, v, gate) * 60 / GATE;
+  }
+  // Wann der Zähler toolId zwischen from und to (s) tickt: In jeder Torzeit liegen so viele Impulse, wie sie zählt, gleichverteilt
+  // und unabhängig – so verteilt ein Poisson-Prozess seine Ereignisse. Zurück: die Zeitpunkte, aufsteigend
+  function ticks(lab, toolId, from, to) {
+    var t = tool(lab, toolId), out = [], g, k, i, at;
+    if (!t || L.parts[t.type].sense !== "cpm") return out;
+    for (g = Math.max(0, Math.floor(from / GATE)); g * GATE < to; g++) {
+      k = counted(t, t.in ? vessel(lab, t.in) : null, g);
+      for (i = 0; i < k; i++) {
+        at = (g + (jitter("tick" + g, t.id, i) + 1) / 2) * GATE;
+        if (at >= from && at < to) out.push(at);
+      }
+    }
+    return out.sort(function (a, b) { return a - b; });
   }
   function inverf(x) {            // Umkehrung der Fehlerfunktion (Winitzki), genau genug für die Streuung großer Zählraten
     var a = 0.147, l = Math.log(1 - x * x), b = 2 / (Math.PI * a) + l / 2;
@@ -5059,6 +5078,7 @@
   L.FARADAY = FARADAY;
   L.step = step;
   L.atRest = atRest;
+  L.ticks = ticks;
   L.tint = tint;
   L.sample = sample;
   L.view = view;

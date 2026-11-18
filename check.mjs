@@ -10489,6 +10489,39 @@ test("Geigerzähler: über Wasser nur der Nulleffekt, über 50 g Kaliumchlorid v
   near(sd(salt), Math.sqrt(100 / 6) * 6, 8, "Streuung wie bei Poisson");
   assert.ok(salt.every((x) => x % 6 === 0), "gezählt in 10 s, hochgerechnet auf die Minute");
   assert.match(L.parts.geiger.draw({ type: "geiger", value: 96, unit: "cpm" }, { numbers: true, lang: "de", no: 1 }), /96 Imp\.\/min/);
+  // die Impulse: in jeder Torzeit so viele, wie die Anzeige danach zeigt, gleichverteilt
+  const all = L.ticks(l, "geiger2", 0, 900);
+  assert.ok(all.every((t, i) => i === 0 || t >= all[i - 1]), "aufsteigend");
+  near(all.length / 15, mean(salt), 12, "so viele Klicks, wie gezählt");
+  const back = lab([{ type: "beaker", id: "k" }, { type: "geiger", in: "k" }]);
+  L.add(back, "k", "KCl salt", { g: 50 });
+  L.step(back, 5);
+  assert.equal(L.reading(back, "geiger1").value, null, "vor der ersten vollen Torzeit zeigt er nichts");
+  for (let g = 0; g < 6; g++) {
+    L.step(back, 10);
+    assert.equal(L.reading(back, "geiger1").value, 6 * L.ticks(back, "geiger1", g * 10, g * 10 + 10).length, "die Anzeige zählt, was in der Torzeit davor tickte");
+  }
+});
+
+test("Geigerzähler: tickt hörbar, ein Klick je Impuls; stumm nicht", () => {
+  const { made, Fake } = audio();
+  globalThis.AudioContext = Fake;
+  try {
+    const el = mount(JSON.stringify({ bench: [{ type: "beaker", id: "k", contains: [{ reagent: "KCl salt", g: 50 }] }, { type: "geiger", in: "k" }] }));
+    press(el, "play");
+    if (!state(el).play) press(el, "play");                    // in Ruhe: zweimal, dann läuft die Uhr
+    const before = made.sources;
+    frames(20);
+    const run = state(el).run;
+    assert.ok(run.time > 15, "die Uhr läuft");
+    const clicks = made.sources - before;
+    assert.ok(clicks > 10, `${clicks} Klicks`);
+    near(clicks, L.ticks(run.lab, "geiger1", 0, run.time).length, 2, "ein Klick je Impuls");
+    press(el, "sound");
+    const muted = made.sources;
+    frames(10);
+    assert.equal(made.sources, muted, "stumm geschaltet tickt er nicht");
+  } finally { delete globalThis.AudioContext; }
 });
 
 // ---------------------------------------------------------------- Landolt-Reaktion
