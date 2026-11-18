@@ -251,6 +251,9 @@
           liquid.roughness = 0.04 + 0.4 * cloud;
           // dünn gerechnet: bei der vollen Dicke des Glases verschiebt die Brechung, was in der Flüssigkeit steht (Elektroden, Fühler), aus dem Bild
           liquid.thickness = Math.min(0.4, 0.5 * r);
+          // die Lösung leuchtet (Luminol, UV-Lampe): selbstleuchtend in ihrer Farbe
+          if (w.shine) liquid.emissive.copy(fx.color(w.shine.rgb)).multiplyScalar(1.5 * w.shine.level);
+          else liquid.emissive.setRGB(0, 0, 0);
           // Öl: die Farbe aus 2D, in der Tiefe nur halb so kräftig (sonst wird goldgelbes Öl im breiten Glas braun)
           if (w.oil) { oil.color.copy(fx.color(w.oil.color.rgb)); oil.attenuationColor.copy(oil.color).lerp(new THREE.Color(0xffffff), 0.5); oil.thickness = liquid.thickness; }
         }

@@ -1321,7 +1321,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin) und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin), dem Leuchten von Luminol, Fluorescein und Chinin und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1448,6 +1448,27 @@ In beiden Kolben sind Glucose-Lösung und Natronlauge, links mit ein paar Tropfe
  ],
  "shelf":["glucose","NaOH 1M","methylene blue","indigo carmine","flask","bath","stopper"],
  "show":{"charts":false}}
+```
+
+## Leuchten: Luminol und UV-Lampe
+
+@[ChemLab.pack](packs/organic.json)
+
+Mach das Licht aus (**Licht aus**, oben rechts).
+
+- **Luminol** (links): In Natronlauge mit etwas Wasserstoffperoxid passiert nichts. Gib die gelbe Kaliumhexacyanoferrat(III)-Lösung dazu: Die Lösung leuchtet blau, eine halbe Minute hell, dann verblasst sie. Das Eisen beschleunigt die Oxidation des Luminols, und das entstehende Aminophthalat gibt seine Energie als Licht ab (Chemolumineszenz). So weist die Spurensicherung Blut nach: Das Eisen im Hämoglobin wirkt wie hier das Hexacyanoferrat.
+- **Fluorescein** (Mitte) leuchtet unter der UV-Lampe grün, **Tonic Water** (rechts) blau, denn darin ist Chinin. Stell die Lampe ins rechte Glas, um es zu sehen. Ohne Lampe leuchtet nichts.
+- Gib zum Fluorescein etwas Salzsäure: Das Leuchten erlischt. Nur das Dianion des Fluoresceins fluoresziert, und in Säure nimmt es ein Proton auf.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"luminol","contains":[{"reagent":"luminol","ml":50},{"reagent":"H2O2 1M","ml":5}]},
+  {"type":"beaker","id":"fluorescein","contains":[{"reagent":"H2O","ml":50},{"reagent":"fluorescein","drops":5}]},
+  {"type":"uvlamp","in":"fluorescein"},
+  {"type":"beaker","id":"tonic","contains":[{"reagent":"tonic water","ml":50}]}
+ ],
+ "shelf":["K3Fe(CN)6 0.05M","luminol","H2O2 1M","fluorescein","tonic water","HCl 1M","uvlamp","beaker"],
+ "show":{"charts":false,"dark":true}}
 ```
 
 ## Zähe Flüssigkeiten
@@ -1742,7 +1763,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
   - `g` – bei einer Elektrode ihre Masse in g, falls sie von der Vorgabe abweichen soll.
 
 - `shelf` – was das Regal anbietet: Stoffe und Geräte; ohne Angabe alles, nach Fächern geordnet.
-- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur mit fester Farbskala, `"diff"` Unterschiede zum Mittelwert, `"mix"` Schlieren (Dichte dessen, was zugegossen wurde), `"vortex"` Wirbel, `"pressure"` Druck. `flow3d` wählt, wie die Strömung in 3D erscheint: `"cut"` als Schnittebene (Vorgabe) oder `"particles"` als Teilchen im ganzen Glas. Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
+- `show` – was unter der Fläche erscheint. `numbers: false` blendet alle Zahlen aus; `equations`, `log` und `charts` schalten Gleichungen, Protokoll und Diagramme. `shelf: true` klappt die Regalleiste von Anfang an auf (sonst ist sie zu, außer auf einem Tisch ohne Gefäß). `flow` zeigt gleich zu Beginn die Strömung in den Gefäßen: `"temp"` Temperatur mit fester Farbskala, `"diff"` Unterschiede zum Mittelwert, `"mix"` Schlieren (Dichte dessen, was zugegossen wurde), `"vortex"` Wirbel, `"pressure"` Druck. `flow3d` wählt, wie die Strömung in 3D erscheint: `"cut"` als Schnittebene (Vorgabe) oder `"particles"` als Teilchen im ganzen Glas. `dark: true` beginnt mit ausgeschaltetem Raumlicht; dann tritt alles zurück außer dem, was leuchtet (der Knopf **Licht aus** schaltet um). Diagramme: `"T"` Temperatur, `"n"` Stoffmengen, `"pH"` pH-Wert über der Zeit, `"titration"` pH-Wert, Leitfähigkeit oder Extinktion über dem Volumen aus der Bürette (je nachdem, welches Messgerät im Gefäß darunter steckt), `"V"` Gasvolumen im Kolbenprober, `"I"` Stromstärke, `"U"` Spannung, `"A"` Extinktion am Fotometer über der Zeit, `"spectrum"` Extinktion über der Wellenlänge, `"IU"` Stromstärke über der Spannung des Netzgeräts, `"m"` Massenänderung der Elektroden und auf den Waagen, `"kappa"` Leitfähigkeit; `false` für keines. Jedes Diagramm erscheint nur, wenn das Messgerät dazu angeschlossen ist. `"titration"` zeigt mit einem Leitfähigkeitsmessgerät unter der Bürette die Leitfähigkeit über dem Volumen.
   `particles: false` nimmt die Teilchenlupe aus dem Feld der Gefäße, für Kurse ohne Teilchenmodell. `volumes: false` blendet die Milliliter unter den Gefäßen und das Abgegebene der Bürette aus (auch in der Messwerttabelle).
 - `task` – eine Aufgabe: `text` und eine Liste von Zielen (`goals`), siehe unten. Ein bloßer Text ist eine Aufgabe ohne Ziele.
 - `lock` – `true`: Die Geräte bleiben, wo sie stehen; das Regal bietet nur Stoffe und Proben an.
@@ -1776,6 +1797,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `stopper` | Gummistopfen: verschließt das Gefäß `in` ganz. Steigt der Druck darin über 1,5 bar, fliegt er heraus und liegt dann frei auf dem Tisch | `in` |
 | `tube` | Gasableitungsrohr mit Stopfen: verschließt das Gefäß `in` und leitet das Gas, das dort entsteht, in das Gefäß `to`; dort perlt es durch die Flüssigkeit, oder es sammelt sich im leeren Gefäß. In einem Stopfen steckt entweder ein Rohr oder ein Kolbenprober | `in`, `to` |
 | `photometer` | Fotometer mit Tauchsonde: Extinktion bei einer Wellenlänge über 1 cm, bis 3 | `in`, `nm` |
+| `uvlamp` | UV-Handlampe (365 nm) über dem Gefäß: Stoffe mit `fluor` leuchten | `in` |
 | `conductometer` | Leitfähigkeitsmessgerät, zeigt mS/cm oder µS/cm | `in` |
 | `electrode-C`, `electrode-Pt` | Elektrode aus Graphit (5 g) oder Platin (10 g); sie lösen sich nicht auf. Elektroden stehen nur in Bechergläsern | `in`, `g` |
 | `electrode-Cu`, `electrode-Zn`, `electrode-Fe`, `electrode-Ag`, `electrode-Pb` | Elektrode aus Kupfer, Zink, Eisen, Silber oder Blei, 10 g | `in`, `g` |
@@ -1796,7 +1818,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `has` mit `min` und/oder `max` in mol | von dem Stoff liegt so viel vor, gelöst, fest oder im Gasraum; ohne Angabe mindestens 1 µmol | `{"has":"Cu(s)"}`, `{"has":"Mg(s)","max":0}` |
 | `disposed` | richtig entsorgt: mindestens einmal und jedes Mal in den passenden Behälter; mit `in` nur dieses Gefäß | `{"disposed":true,"in":"b"}` |
 | `identify` | die unbekannte Probe mit diesem Namen (`unknown`, mit `oneOf`) ist richtig benannt; im Feld der Probe wählt man „Das ist: …“, die letzte Wahl zählt | `{"identify":"A"}` |
-| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (ein Belag scheidet sich an einer Elektrode ab: ein Metall, Silberchlorid, Bleisulfat oder Bleidioxid), `lamp`, `broken`; bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
+| `seen` | die Beobachtung steht im Protokoll: `gas`, `pop` (Knallgasprobe), `relight` (Glimmspan flammt auf), `out` (Span erlischt), `paper` (Indikatorpapier an der Öffnung, mit `name` eine bestimmte Farbe), `solid` (Niederschlag), `dissolved` (ein Niederschlag verschwindet), `color` (Farbumschlag, mit `name` eine bestimmte Farbe: `yellow`, `orange`, `red`, `pink`, `violet`, `blue`, `cyan`, `green`, `brown`, `grey`, `black`, `colorless`), `boil`, `smell`, `ignite`, `flame` (Flammenfärbung), `plated` (ein Belag scheidet sich an einer Elektrode ab: ein Metall, Silberchlorid, Bleisulfat oder Bleidioxid), `lamp`, `broken`, `shine` (die Lösung leuchtet); bei Stoffen wahlweise mit `species` | `{"seen":"solid","species":"AgCl(s)"}` |
 
 Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum Beispiel `HCl 0.1M` oder `AgNO3 0.05M`. Ohne Zahl sind es 1 mol/L.
 
@@ -1882,6 +1904,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
 | `symbol` | Kurzzeichen für große Moleküle, zum Beispiel `"HInd"` für einen Indikator; ersetzt die Formel in der Anzeige |
+| `fluor` | Wellenlänge in nm, in der ein gelöster Stoff unter der UV-Lampe leuchtet (Fluorescein: `515`). Das Leuchten wächst mit der Konzentration und ist ab etwa 2·10⁻⁵ mol/L kräftig; zum Roten hin fällt die Bande flacher ab als zum Blauen |
 | `bands` | Farbe eines gelösten Teilchens als Absorptionsbanden: je Bande Wellenlänge des Maximums in nm, Halbwertsbreite in nm, molarer Absorptionskoeffizient in L/(mol cm) |
 | `src` | Quelle der Werte – Pflicht im Grundpaket |
 
@@ -1909,6 +1932,7 @@ Ein **Katalysator** ist ein Stoff, der in `rate.order` oder `rate.surface` steht
 | `rate.fast` | `true`: läuft in Lösung sofort ab, bis einer der Ausgangsstoffe verbraucht ist, zum Beispiel Iod mit Thiosulfat. Braucht kein `k`. |
 | `rate.needs` | Nur mit `rate.fast`: Stoffe, die da sein müssen, ohne verbraucht zu werden, mit der Menge je Formelumsatz, etwa `{"H2O(l)":3}`: Schwefelsäure löst sich nur, soweit Wasser sie aufnimmt. Was schon umgesetzt ist, hat seinen Anteil gebunden; gezählt wird es an den Produkten der Gleichung (dem kleinsten Anteil) oder, mit `rate.bound`, an der Summe der dort genannten Teilchen, etwa `["HSO4-(aq)","SO4^2-(aq)"]`. Ein Stoff in `needs` darf nicht in der Gleichung stehen. |
 | `logK` | Nur mit `rate.fast`: Die Reaktion läuft bis zu diesem Gleichgewicht (mit Konzentrationen in mol/L; Feststoffe, Wasser und Gase zählen 1) und nicht weiter. Der Wert gilt bei jeder Temperatur. Ohne die Angabe läuft sie vollständig ab. Die Rückreaktion wird nicht gerechnet. |
+| `light` | Wellenlänge in nm, in der diese Reaktion leuchtet (Chemolumineszenz, Luminol: `425`); je schneller sie läuft, desto heller, ab etwa 2·10⁻⁵ mol/(L s) kräftig |
 | `mirror` | `true`: Was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas, so hoch, wie die Flüssigkeit gerade steht (Silberspiegel der Tollens-Probe). Er trübt nicht, liegt nicht am Boden und bleibt beim Umgießen im Gefäß; ab 0,5 µmol je cm² benetzter Wand ist er dicht. |
 | `spark` | Zündgrenzen eines Gasgemischs als Anteile am Gasraum, zum Beispiel `[0.04, 0.75]` für Wasserstoff. Eine solche Reaktion braucht keine Geschwindigkeit: Sie läuft, wenn ein Span oder eine Brennerflamme sie zündet. |
 | `dH` | Reaktionsenthalpie in kJ/mol, falls eine Bildungsenthalpie fehlt |
@@ -2075,6 +2099,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Redoxreaktionen laufen an Metallen und Elektroden ab. Zwischen gelösten Teilchen laufen nur die eigens eingetragenen: Peroxodisulfat mit Iodid, Iod mit Thiosulfat, Permanganat mit Eisen(II) und mit Wasserstoffperoxid, Kupfer(II) und Eisen(III) mit Iodid. Andere bleiben ohne Wirkung, etwa Permanganat mit Oxalsäure oder mit Iodid und Dichromat mit Eisen(II). Auch Metalle reduzieren Permanganat nicht, weil dafür kein Redoxpaar eingetragen ist.
 - Permanganat reagiert in der Schreibweise für saure Lösung, zu farblosem Mangan(II). Ohne Säure entstünde im Labor Braunstein; hier läuft dieselbe Reaktion, soweit Wasserstoff-Ionen nachkommen. Kupfer(I)-iodid bleibt, wie es ausfällt: Kupfer(I) in Lösung gibt es nicht.
 - Gelöster Luftsauerstoff wird nur gerechnet, wo eine Reaktion ihn verbraucht (Blaue Flasche, Ampel): Die Lösung nimmt ihn an der Oberfläche langsam auf, beim Schütteln in Sekunden; die blaue Schicht oben an der Oberfläche eines ruhig stehenden Kolbens fehlt, denn jede Schicht gilt als durchmischt. Eisen rostet nicht, und Kupfer löst sich in Säure auch an der Luft nicht. Zink und Kupfer in derselben Säure (Volta-Element) zeigen deshalb etwa 0,5 V statt der 0,9 V im Versuch. Überhaupt sagt die Spannung nur dort etwas, wo jede Elektrode in einer Lösung ihrer eigenen Ionen steht (oder Gas an ihr entsteht): Kupfer in reinem Wasser oder Graphit in Kochsalzlösung haben kein festes Potential, der Spannungsmesser zeigt dann einen Wert ohne Bedeutung.
+- Leuchten (Luminol, UV-Lampe) zeigt nur Farbe und Helligkeit, keine Lichtmenge; die Banden der Emission sind geschätzt. Die UV-Lampe beleuchtet nur das Gefäß, in dem sie steht, und gibt kein sichtbares Licht ab, das Farben verändert. Chinin fluoresziert vereinfacht bei jedem pH-Wert, Luminol braucht Hexacyanoferrat(III) als Katalysator (Blut, Kupfer oder Bleichlauge wirken hier nicht). In 3D ist die UV-Lampe ein Platzhalter.
 - Chlor löst sich nach dem Henry-Gesetz und bildet mit Wasser hypochlorige Säure; gelöstes Chlor, hypochlorige Säure und das Hypochlorit-Ion bleichen die Indikatorfarbstoffe und Kristallviolett zu einem farblosen Stoff, der vereinfacht ein Sauerstoffatom mehr trägt. Die Geschwindigkeit des Bleichens ist geschätzt. Andere Farbstoffe (Iod-Stärke, Metallkomplexe) bleicht es nicht, und Chlor oxidiert Iodid oder Bromid hier nicht.
 - Ein Belag auf einer Elektrode hemmt den Strom nicht, außer Bleisulfat und Bleidioxid. Das Silberchlorid, mit dem sich eine Silber-Elektrode am Pluspol in Kochsalzlösung überzieht, wächst deshalb beliebig weiter; im Labor wird die Schicht dicht, und der Strom geht zurück. Die Bleibeläge decken die Platte dagegen ab einer festen Dicke ganz ab (geschätzt 1 µm), bezogen auf die eingetauchte Fläche: Wer nachfüllt, legt wieder Blei frei. Ein Bleiakku fasst deshalb immer gleich viel; dass er mit jedem Laden mehr fasst (Formieren), fehlt. Ganz entladen zeigt er ohne Last etwa 1 V statt knapp 2 V, weil das Blei unter dem dichten Bleisulfat im Modell kein festes Potential mehr hat.
 - Zink löst sich in Natronlauge nur langsam und nur als Pulver sichtbar, in der Wärme deutlich schneller. Wie schnell genau, ist geschätzt.

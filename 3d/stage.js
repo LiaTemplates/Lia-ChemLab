@@ -140,6 +140,22 @@
     def.build(kit);
 
     var entries = {}, order = [], width = 0, framed = -1, dead = false, queued = 0, sorted = false;
+    var darkened = false;
+    function dim() {                // shortcut: Faktor 0,04 für Lampen und Umgebung; die Lichtfarbe des Raums bleibt
+      var k = darkened ? 0.04 : 1;
+      world.traverse(function (o) {
+        if (o.isLight) { if (o.userData.power == null) o.userData.power = o.intensity; o.intensity = o.userData.power * k; }
+        [].concat(o.material || []).forEach(function (m) {
+          if (m.envMapIntensity == null) return;
+          if (m.userData.env == null) m.userData.env = m.envMapIntensity;
+          m.envMapIntensity = m.userData.env * k;
+        });
+      });
+      if (world.background && world.background.isColor) {
+        if (!world.userData.sky) world.userData.sky = world.background.clone();
+        world.background = darkened ? new THREE.Color(0x05060a) : world.userData.sky;
+      }
+    }
     // Leitungen: hängende Kabel zwischen den Anschlüssen (obj.userData.terminals, im Raum des Geräts); neu nur, wenn sich etwas bewegt
     var wires = new THREE.Group(), wiresKey = "", WIRE = { " cl-plus": 0xc62828, " cl-minus": 0x1f4fbf, "": 0x202326 };
     world.add(wires);
@@ -292,6 +308,13 @@
         selection.visible = !!sel;
         if (sel) selection.box.setFromObject(entries[sel].obj.userData.body || entries[sel].obj).expandByScalar(0.4);
         wire(links || []);
+        if (darkened) dim();                                   // auch was eben neu dazukam
+        render();
+      },
+      // Raumlicht aus: Lampen und Spiegelung der Umgebung fast dunkel, was selbst leuchtet, bleibt hell
+      dark: function (on) {
+        darkened = on;
+        dim();
         render();
       },
       stop: function () {

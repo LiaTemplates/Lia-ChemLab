@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.uvlamp": "UV lamp", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -157,7 +157,7 @@
       "say.tap": "{vessel}: tap set to “{state}”", "say.tapOff": "{vessel}: tap closed",
       "say.tapFull": "{vessel}: The vessel below is full, the tap closes.",
       "say.solid": "{vessel}: A {color} precipitate forms.", "say.dissolved": "{vessel}: The precipitate dissolves.",
-      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.", "say.foam": "{vessel}: Foam forms.", "say.foamOver": "{vessel}: The foam swells over the rim.",
+      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.", "say.foam": "{vessel}: Foam forms.", "say.foamOver": "{vessel}: The foam swells over the rim.", "say.shine": "{vessel}: The solution glows {color}.", "say.shineEnd": "{vessel}: The glow fades.",
       "say.crystals": "{vessel}: {color} crystals separate out.",
       "say.dissolvedOne": "{vessel}: The {color} precipitate dissolves.",
       "the.white": "white", "the.yellow": "yellow", "the.orange": "orange", "the.red": "red",
@@ -213,7 +213,7 @@
       "measure.T": "Temperature", "measure.pH": "pH", "measure.kappa": "Conductivity", "measure.A": "Absorbance", "measure.V": "Gas volume", "measure.m": "Mass",
       "measure.I": "Current", "measure.U": "Voltage",
       "seen.gas": "Gas evolves", "seen.pop": "Hydrogen test: it pops", "seen.relight": "Glowing splint: it flares up", "seen.out": "Burning splint: it goes out",
-      "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
+      "seen.solid": "Precipitate", "seen.dissolved": "A solid dissolves", "seen.shine": "The solution glows", "seen.color": "Colour change", "seen.colorOf": "The solution turns {color}",
       "seen.paper": "Indicator paper held to the opening", "seen.paperOf": "Indicator paper turns {color}", "seen.paperWhite": "Indicator paper is bleached", "part.paper": "indicator paper",
       "say.paper": "{vessel}: The moist indicator paper turns {color}.", "say.paperWhite": "{vessel}: The moist indicator paper is bleached.",
       "part.stopper": "rubber stopper", "part.manometer": "manometer", "measure.p": "Pressure", "hint.stopper": "Now tap the vessel that should be closed.", "say.plugged": "{vessel} closed with {part}",
@@ -442,6 +442,7 @@
         vars.result = text("splint." + event.result + (event.result === "pop" ? event.level : ""), lang);
         break;
       case "pop": return text("say.pop" + (event.level || 0), lang, vars);
+      case "shine": vars.color = text("color." + event.name, lang); break;
       case "flameTest":
         if (!event.name) return text("say.flameNone", lang, vars);
         vars.color = text("color." + event.name, lang);
@@ -617,6 +618,12 @@
       if (w.cloud && w.cloud.alpha > 0.02) {
         // etwas abgedunkelt, damit auch ein weißer Niederschlag vor der hellen Wand als milchige Trübung zu sehen ist
         out += '<path class="cl-cloud" d="' + shape.path + '" fill="' + css(shade(w.cloud.rgb, 0.93)) + '" fill-opacity="' + (w.cloud.alpha * 0.92).toFixed(2) + '"/>';
+      }
+      // die Lösung leuchtet (Luminol, unter der UV-Lampe): in ihrer Farbe, mit einem Schein ums Glas; bleibt im dunklen Raum hell
+      if (w.shine) {
+        out += '<ellipse class="cl-shine cl-halo" cx="' + f((shape.x0 + shape.x1) / 2) + '" cy="' + f((shape.top + shape.bottom) / 2) + '" rx="' + f((shape.x1 - shape.x0) / 2 + 10) +
+          '" ry="' + f((shape.bottom - shape.top) / 2 + 10) + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.4 * w.shine.level).toFixed(2) + '"/>' +
+          '<path class="cl-shine" d="' + shape.path + '" fill="' + css(w.shine.rgb) + '" fill-opacity="' + (0.15 + 0.8 * w.shine.level).toFixed(2) + '"/>';
       }
       if (w.sediment && w.sediment.ml > 0.002) {
         layer = Math.min((shape.bottom - shape.top) * 0.45, 3 + 9 * Math.sqrt(w.sediment.ml) * (shape.tall ? 1 : 0.5));
@@ -999,6 +1006,20 @@
           '<text x="' + (x0 + 45) + '" y="' + (y - 18) + '" text-anchor="middle">' + shown(Object.assign({}, w, { value: value }), ctx.lang) + "</text></g>";
       }
       return out + (place ? "" : badge(0, 14, ctx.no));
+    }
+  });
+
+  // ------------------------------------------------------------------ UV-Lampe
+
+  // Handlampe über dem Gefäß, ihr violettes Licht fällt hinein; place wie beim Thermometer, ohne Gefäß liegt sie auf dem Tisch
+  L.registerPart("uvlamp", {
+    width: function () { return 48; },
+    bounds: function () { return { x0: -20, x1: 20, top: -22 }; },
+    draw: function (w, ctx, place) {
+      if (!place) return '<rect class="cl-uvlamp" x="-18" y="-16" width="36" height="12" rx="3"/><rect class="cl-uvglass" x="-14" y="-6" width="28" height="3"/>' + badge(0, 14, ctx.no);
+      var x = place.x, y = place.top - 8;
+      return '<path class="cl-shine cl-uvbeam" d="M' + f(x - 12) + "," + f(y + 10) + "L" + f(x + 12) + "," + f(y + 10) + "L" + f(x + 22) + "," + f(place.bottom) + "L" + f(x - 22) + "," + f(place.bottom) + 'Z"/>' +
+        '<rect class="cl-uvlamp" x="' + f(x - 18) + '" y="' + f(y - 4) + '" width="36" height="12" rx="3"/><rect class="cl-shine cl-uvglass" x="' + f(x - 14) + '" y="' + f(y + 6) + '" width="28" height="3"/>';
     }
   });
 

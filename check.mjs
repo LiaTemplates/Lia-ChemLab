@@ -10424,6 +10424,58 @@ test("Ampel: Indigocarmin geschüttelt grün, dann rot, dann gelb", () => {
   assert.ok(red > 0 && yellow > red + 5, `rot, dann gelb: ${[...new Set(seen)].join(", ")}`);
 });
 
+// ---------------------------------------------------------------- Leuchten: Luminol und UV-Lampe
+
+const organicPack = () => L.register(JSON.parse(fs.readFileSync(new URL("packs/organic.json", here), "utf8")));
+
+test("Luminol: mit Hexacyanoferrat(III) leuchtet es blau, erst hell, nach zwei Minuten kaum noch; ohne Katalysator nichts", () => {
+  organicPack();
+  const start = () => lab([{ type: "beaker", id: "b", contains: [{ reagent: "luminol", ml: 50 }, { reagent: "H2O2 1M", ml: 5 }] }], { room: 25 });
+  const l = start(), seen = [];
+  L.add(l, "b", "K3Fe(CN)6 0.05M", { ml: 5 });
+  L.step(l, 5, (e) => seen.push(e));
+  const before = totals(l);
+  assert.ok(look(l).shine && look(l).shine.level > 0.9, "hell");
+  assert.equal(seen.find((e) => e.key === "shine").name, "blue", "blau");
+  L.step(l, 120, (e) => seen.push(e));
+  assert.ok(!look(l).shine || look(l).shine.level < 0.3, "verblasst");
+  assert.ok(amount(l, "C8H5NO4^2-(aq)") > 0, "Luminol wird zu Aminophthalat");
+  near(totals(l).mass, before.mass, 1e-9, "Masse");
+  const blank = start();
+  L.add(blank, "b", "H2O", { ml: 5 });
+  L.step(blank, 10);
+  assert.equal(look(blank).shine, null, "ohne Katalysator kein Licht");
+});
+
+test("UV-Lampe: Fluorescein leuchtet grün, Chinin blau, nur unter der Lampe; Säure löscht das Fluorescein", () => {
+  organicPack();
+  const l = lab([{ type: "beaker", id: "f", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "fluorescein", drops: 5 }] },
+    { type: "beaker", id: "q", contains: [{ reagent: "tonic water", ml: 50 }] }, { type: "uvlamp", in: "f" }], { room: 25 }), seen = [];
+  L.step(l, 1, (e) => seen.push(e));
+  assert.ok(look(l, "f").shine.level > 0.3, "Fluorescein leuchtet");
+  assert.equal(seen.find((e) => e.key === "shine" && e.vessel === "f").name, "green");
+  assert.equal(look(l, "q").shine, null, "Chinin ohne Lampe dunkel");
+  L.place(l, { type: "uvlamp", in: "q" });
+  L.step(l, 1, (e) => seen.push(e));
+  assert.equal(seen.find((e) => e.key === "shine" && e.vessel === "q").name, "blue", "Chinin unter der Lampe blau");
+  L.add(l, "f", "HCl 1M", { ml: 1 });
+  L.step(l, 2, (e) => seen.push(e));
+  assert.ok(!look(l, "f").shine || look(l, "f").shine.level < 0.03, "angesäuert erlischt das Fluorescein");
+  assert.ok(seen.some((e) => e.key === "shineEnd" && e.vessel === "f"));
+});
+
+test("Dunkler Raum: show.dark beginnt dunkel, der Knopf schaltet das Licht; was leuchtet, ist gezeichnet", () => {
+  organicPack();
+  const el = mount(JSON.stringify({ bench: [{ type: "beaker", id: "f", contains: [{ reagent: "H2O", ml: 50 }, { reagent: "fluorescein", drops: 5 }] }, { type: "uvlamp", in: "f" }], show: { dark: true } }));
+  frames(1);
+  assert.equal(el.attributes["data-dark"], "true");
+  assert.match(item(el, "f").innerHTML, /class="cl-shine"/);
+  assert.match(item(el, "uvlamp1").innerHTML, /cl-uvbeam/);
+  press(el, "dark");
+  assert.equal(el.attributes["data-dark"], "false");
+  assert.equal(part(el, '[data-act="dark"]').attributes["aria-pressed"], "false");
+});
+
 // ---------------------------------------------------------------- Landolt-Reaktion
 
 // Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag

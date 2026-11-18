@@ -288,6 +288,8 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity" && data.smell !== "rotten") throw fail("species", id + " smell");
+        // fluor: Wellenlänge in nm, in der der gelöste Stoff unter der UV-Lampe leuchtet
+        if (data.fluor != null && !(phase === "aq" && typeof data.fluor === "number" && data.fluor >= 380 && data.fluor <= 730)) throw fail("species", id + " fluor");
         // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
         if (data.oil != null && !(phase === "aq" && data.Vm > 0 && data.oil && typeof data.oil.sol === "number" && data.oil.sol >= 0)) throw fail("species", id + " oil");
         // kd: Verteilung c(Ölschicht)/c(Wasser) eines gelösten Stoffs; oilBands: seine Banden, wenn er im Öl gelöst ist
@@ -370,6 +372,8 @@
           if ((air ? next.species[id].phase !== "g" : next.species[id].phase !== "aq" && id !== WATER) || typeof rate.order[id] !== "number" || !isFinite(rate.order[id])) throw fail("rate", id);
         });
         if (rate.surface) known(rate.surface);
+        // light: Wellenlänge in nm, in der die Reaktion leuchtet (Chemolumineszenz, Luminol)
+        if (item.light != null && !(typeof item.light === "number" && item.light >= 380 && item.light <= 730)) throw fail("rate", "light");
         // mirror: was diese Reaktion als Feststoff bildet, legt sich als Spiegel an das Glas (Silberspiegel der Tollens-Probe)
         if (item.mirror != null && (item.mirror !== true || !Object.keys(eq.nu).some(function (id) { return eq.nu[id] > 0 && next.species[id].phase === "s"; }))) throw fail("rate", "mirror");
         // needs: was da sein muss, ohne verbraucht zu werden (nur bei sofortigen Reaktionen)
@@ -760,6 +764,8 @@
   registerPart("centrifuge", { kind: "tool", under: true, spin: 20, fits: "testtube" });
   registerPart("bath", { kind: "tool", under: true, bath: true, unit: "°C", lag: 0, range: [0, 95], gain: 25 });
   // Fotometer mit Tauchsonde: misst die Extinktion bei einer Wellenlänge (nm, einstellbar zwischen waves) über die Schichtdicke d in cm
+  // UV-Handlampe (365 nm), von oben auf das Gefäß gerichtet: Stoffe mit fluor leuchten
+  registerPart("uvlamp", { kind: "tool", uv: 365 });
   registerPart("photometer", { kind: "tool", lag: 0.5, unit: "E", sense: "A", fine: 0.002, nm: 525, waves: [380, 730], d: 1, range: [0, 3], spread: [0.005, 0.01, 0.002, 0] });
   // test: liegt nicht auf dem Tisch, sondern wird an ein Gefäß gehalten
   registerPart("splint", { kind: "test", probe: "flame" });        // brennender Holzspan
@@ -797,7 +803,7 @@
   //   { seen }                eine Beobachtung steht im Protokoll; bei "color" wahlweise mit name, bei Stoffen mit species
   // jeweils wahlweise mit in (nur dieses Gefäß) und label (eigener Text).
   var MEASURES = { T: "°C", pH: "", kappa: "mS/cm", A: "", V: "mL", I: "A", U: "V", m: "g", p: "bar" };
-  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken"];
+  var OBSERVED = ["gas", "pop", "relight", "out", "paper", "popped", "suckBack", "plungerOut", "spatter", "solid", "dissolved", "color", "boil", "smell", "ignite", "flame", "plated", "lamp", "broken", "shine"];
   var COLORS = ["colorless", "yellow", "orange", "red", "pink", "violet", "blue", "cyan", "green", "brown", "grey", "black"];
 
   function readTask(raw, bench) {
@@ -1041,6 +1047,7 @@
         shelf: show.shelf === true,                                // ob die Regalleiste von Anfang an offen ist
         flow: ["temp", "diff", "mix", "vortex", "pressure"].indexOf(show.flow) >= 0 ? show.flow : null,      // Strömung im Gefäß gleich zu Beginn
         flow3d: show.flow3d === "particles" ? "particles" : "cut",       // wie sie in 3D erscheint
+        dark: show.dark === true,                                  // das Raumlicht ist von Anfang an aus
         charts: show.charts === false ? [] : Array.isArray(show.charts)
           ? show.charts.filter(function (c) { return CHARTS.indexOf(c) >= 0; }) : CHARTS.slice()
       },
@@ -3324,7 +3331,7 @@
   }
 
   function notice(lab, v, gases, emit, dissolved, bathed) {
-    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, tone, th, size = spec(v).cap;
+    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, tone, th, size = spec(v).cap, glow;
     // gemeldet wird Gas, sobald es die Uhr am Laufen hält (REST); dann zeigt die Fläche auch Blasen. Ein einzelner Rechenschritt mit
     // Gas zählt nicht: gemeldet wird, was eine Fünftelsekunde anhält.
     f.fizz = v.gas > 2 * REST ? (f.fizz || 0) + 1 : 0;
@@ -3351,6 +3358,9 @@
     else if (f.foam && !(v.foam > 0.2)) f.foam = false;
     if (!f.foamOver && v.foam > 1 && filled(v) * 1000 + v.foam > size) { f.foamOver = true; if (emit) emit({ key: "foamOver", vessel: v.id }); }
     else if (f.foamOver && !(filled(v) * 1000 + v.foam > 0.9 * size)) f.foamOver = false;
+    glow = shineOf(lab, v);                                    // die Lösung leuchtet: einmal, wenn es beginnt, und wenn es vergeht
+    if (!f.shine && glow && glow.level > 0.1) { f.shine = true; if (emit) emit({ key: "shine", vessel: v.id, name: colorName(glow.rgb).name }); }
+    else if (f.shine && !(glow && glow.level > 0.03)) { f.shine = false; if (emit) emit({ key: "shineEnd", vessel: v.id }); }
     else if (f.opaque && haze < OPAQUE - 0.2) f.opaque = false;
 
     name = volume(v) > 0 && !thick(v, volume(v)) ? colorOf(v) : { name: f.color };      // ohne Flüssigkeit gibt es keine Farbe der Lösung zu melden
@@ -4354,6 +4364,16 @@
     });
   }
 
+  // Farbe einer Emissionsbande mit dem Maximum bei nm, so hell wie möglich: zum Roten hin fällt sie doppelt so flach ab wie zum Blauen
+  // (Halbwertsbreite etwa 70 nm, wie bei gelösten Farbstoffen; geschätzt)
+  function bandRgb(nm) {
+    var sum = [0, 0, 0], rgb, top, i, k, g;
+    for (i = 0; i < WAVES.length; i++) { g = Math.exp(-0.5 * Math.pow((WAVES[i] - nm) / (WAVES[i] < nm ? 20 : 40), 2)); for (k = 0; k < 3; k++) sum[k] += g * CMF[i][k]; }
+    rgb = linear(sum).map(function (value) { return Math.max(0, value); });
+    top = Math.max(rgb[0], rgb[1], rgb[2]) || 1;
+    return rgb.map(function (value) { var u = value / top; return Math.round(255 * (u <= 0.0031308 ? 12.92 * u : 1.055 * Math.pow(u, 1 / 2.4) - 0.055)); });
+  }
+
   function fromHex(hex) {
     var m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex || "");
     return m ? [1, 2, 3].map(function (i) {
@@ -4451,6 +4471,19 @@
     return any ? tint(conc, spec(v).d) : null;
   }
 
+  // Leuchten der Lösung: Reaktionen mit light (je nach Umsatz) und, unter der UV-Lampe, Stoffe mit fluor (je nach Konzentration).
+  // Zurück: { rgb, level 0 bis 1 } oder null
+  var LIGHT = 2e-5;               // mol/(L s): bei so viel Umsatz leuchtet die Lösung zu 63 % (geschätzt)
+  var FLUOR = 2e-5;               // mol/L: bei so viel fluoreszierendem Stoff ebenso (geschätzt)
+  function shineOf(lab, v) {
+    var vol = volume(v), sum = 0, rgb = [0, 0, 0], parts = [], id;
+    if (!(vol > 0) || v.broken) return null;
+    L.db.reactions.forEach(function (r) { if (r.light && v.rate[r.key] > 0) parts.push([r.light, v.rate[r.key] / vol / LIGHT]); });
+    if (toolAt(lab, v, function (def) { return def.uv; })) for (id in v.n) if (L.db.species[id].fluor) parts.push([L.db.species[id].fluor, v.n[id] / vol / FLUOR]);
+    parts.forEach(function (p) { var c = bandRgb(p[0]), k; sum += p[1]; for (k = 0; k < 3; k++) rgb[k] += c[k] * p[1]; });
+    return sum > 0.01 ? { rgb: rgb.map(function (c) { return Math.round(c / sum); }), level: 1 - Math.exp(-sum) } : null;
+  }
+
   function colorOf(v) {
     var vol = volume(v), conc = {}, id;
     if (vol > 0) for (id in v.n) if (L.db.species[id].phase === "aq") conc[id] = v.n[id] / vol;
@@ -4506,7 +4539,8 @@
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
       // foam: Schaum über der Flüssigkeit in mL; fog: Farbe des Gasraums (farbige Gase wie NO2), sonst null
-      foam: v.foam || 0, fog: fogOf(lab, v),
+      // shine: die Lösung leuchtet (Luminol, unter der UV-Lampe), sonst null
+      foam: v.foam || 0, fog: fogOf(lab, v), shine: shineOf(lab, v),
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
       // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet), Zähigkeit und Dichte
