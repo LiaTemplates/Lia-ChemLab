@@ -192,6 +192,31 @@ const models = {
     return [check("curve_error", worst, tol.relative), check("scheme_error", scheme, tol.scheme_relative)];
   },
 
+  // B20: Aluminiumfolie (Ionen-Paket). Wasser, belüftet: höchstens der Reststrom i·A, kein Lochfraß. Schwefelsäure 1 M (ohne Chlorid, sonst
+  // setzt sofort Lochfraß ein, und ohne Luftsauerstoff, der den Wasserstoff verbrennen könnte): die Schicht wird linear dünner (1 − t/off),
+  // bis dahin geht nichts in Lösung, danach schon; 3 Elektronen je Al, 2 je H2. Kochsalzlösung, belüftet: Lochfraß
+  passiveFilm({ g, ml }, tol) {
+    if (!L.db.species["Al(s)"]) L.register(JSON.parse(fs.readFileSync(new URL("../packs/ionen.json", here), "utf8")));
+    const pv = L.db.species["Al(s)"].passive, make = (sol, oxygen) => L.createLab(L.normalize({ room: 25, oxygen, bench: [{ type: "testtube", id: "t", contains: [{ reagent: sol, ml }, { reagent: "Al foil", g }] }] }));
+    const water = make("H2O", true), w = L.vessel(water, "t"), n0 = w.n["Al(s)"], A = L.reagent("Al foil").area * g;
+    L.step(water, 300);
+    const passive = (n0 - w.n["Al(s)"]) / 300 - pv.i * A / (3 * L.FARADAY);
+    const acid = make("H2SO4 1M", false), a = L.vessel(acid, "t");
+    let film = 0, early = 0;
+    for (let k = 1; k * 0.05 < pv.off - 1e-9; k++) {
+      L.step(acid, 0.05);
+      film = Math.max(film, Math.abs(a.film["Al(s)"] - Math.max(0, 1 - acid.t / pv.off)));
+      early = Math.max(early, n0 - a.n["Al(s)"]);
+    }
+    L.step(acid, 30);
+    const lost = n0 - (a.n["Al(s)"] || 0), h2 = (a.out["H2(g)"] || 0) + (a.air["H2(g)"] || 0) + (a.n["H2(g)"] || 0);
+    const salt = make("NaCl 0.5M", true), sv = L.vessel(salt, "t");
+    L.step(salt, 120);
+    return [check("passive_excess", Math.max(0, passive), 0), check("film_error", film, tol.film_absolute), check("early_loss", early, 0),
+      { name: "active_loss", value: lost, limit: 0, pass: lost > 0 }, check("balance_error", rel(3 * lost, 2 * h2), tol.balance_relative),
+      check("pits_without_chloride", w.pit && w.pit["Al(s)"] ? 1 : 0, 0), { name: "pits_with_chloride", value: sv.pit && sv.pit["Al(s)"] ? 1 : 0, limit: 1, pass: !!(sv.pit && sv.pit["Al(s)"]) }];
+  },
+
   // B04: Wasser, mit einer Spur O2 angeimpft (sonst rechnet die Engine keine Aufnahme), geschüttelt bis gesättigt; Vergleich
   // der Henry-Konstante mit dem Messwert bei gleichem O2-Partialdruck (die Engine rechnet mit 0,21 bar trockener Luft)
   henryO2({ reference_mg_per_L, reference_pO2_atm }, tol) {

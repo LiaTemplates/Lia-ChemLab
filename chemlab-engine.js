@@ -288,6 +288,14 @@
         if (data.mix != null && !(data.Tb != null && Array.isArray(data.mix) && data.mix.length === 2 &&
           data.mix.every(function (a) { return typeof a === "number" && a >= 0 && a < 20; }))) throw fail("species", id + " mix");
         if (data.smell != null && data.smell !== true && data.smell !== "fruity" && data.smell !== "rotten") throw fail("species", id + " smell");
+        // passive: ein Metall mit Oxidschicht (siehe passivate): { i: Reststrom in A/cm², pH: [von, bis] (Schicht beständig),
+        // pit: [a, b] mit E_Lochfraß = a + b·lg a(Cl−) in V gegen die Wasserstoffelektrode, on/off: Zeitkonstanten in s, pits: Anteil der Fläche im Lochfraß }
+        if (data.passive != null) {
+          var pv = data.passive, num = function (x) { return typeof x === "number" && isFinite(x); };
+          if (!(phase === "s" && pv && pv.i > 0 && Array.isArray(pv.pH) && pv.pH.length === 2 && pv.pH.every(num) && pv.pH[0] < pv.pH[1] &&
+            (pv.pit == null || (Array.isArray(pv.pit) && pv.pit.length === 2 && pv.pit.every(num))) && pv.on > 0 && pv.off > 0 && (pv.pits == null || (pv.pits > 0 && pv.pits <= 1))))
+            throw fail("species", id + " passive");
+        }
         // fluor: Wellenlänge in nm, in der der gelöste Stoff unter der UV-Lampe leuchtet
         if (data.fluor != null && !(phase === "aq" && typeof data.fluor === "number" && data.fluor >= 380 && data.fluor <= 730)) throw fail("species", id + " fluor");
         // oil: { sol } – eine Flüssigkeit, die sich nicht mit Wasser mischt: über ihrer Löslichkeit sol (mol/L Wasser) bildet sie eine eigene Schicht
@@ -2188,6 +2196,50 @@
 
   // Zeitkonstante, mit der sich ein Feststoff löst. Ein Stück aus dem Regal löst sich über seine Oberfläche:
   // sie schrumpft mit ihm, und so ist es nach endlicher Zeit verschwunden (Körner nach dem Dreifachen von tau).
+  // ------------------------------------------------------------------ Passivschicht
+  // Ein Metall mit passive (Aluminium) trägt eine Oxidschicht, v.film[id] ist ihre Dicke als Anteil der vollen (aus dem Regal: 1).
+  // Liegt der pH der Lösung im Bereich passive.pH, wächst sie nach (Zeitkonstante on), sonst wird sie gleichmäßig dünner und ist nach
+  // off Sekunden fort (Abtrag nullter Ordnung); erst dann liegt das Metall frei: die Wartezeit, bevor Aluminium in Säure loslegt. Darunter geht das
+  // Metall nur mit dem Reststrom passive.i in Lösung, und auch jede Reduktion an ihr ist so begrenzt (sie leitet kaum). Mit Chlorid und
+  // einem Mischpotential über dem Lochfraßpotential reißt die Schicht an einem Anteil pits der Fläche auf (v.pit), bis das Chlorid fort ist.
+  // Ohne Flüssigkeit bleibt sie, wie sie ist.
+  // shortcut: ein pH-Bereich statt der Löslichkeit des Oxids, feste Zeiten, Lochfraß als aktiver Flächenanteil ohne Lochwachstum; nur an Stücken, nicht an Elektroden
+  function filmOf(v, id) {
+    var pv = L.db.species[id].passive, f;
+    if (!pv) return 0;
+    f = v.film && v.film[id] != null ? v.film[id] : 1;
+    f = f > 0 ? 1 : 0;                                           // solange noch Schicht da ist, deckt sie alles
+    return v.pit && v.pit[id] ? f * (1 - (pv.pits || 1)) : f;
+  }
+  // Ändert sich eine Schicht gerade (dünner außerhalb des pH-Bereichs, nachwachsend darin)? Dann ruht das Gefäß nicht.
+  function filming(v, vol) {
+    if (!(vol > 0)) return false;
+    return metalsIn(v).some(function (id) {
+      var pv = L.db.species[id].passive, f = v.film && v.film[id] != null ? v.film[id] : 1, pH;
+      if (!pv) return false;
+      pH = v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
+      return pH >= pv.pH[0] && pH <= pv.pH[1] ? f < 1 - 1e-6 : f > 0;
+    });
+  }
+
+  function passivate(lab, v, vol) {
+    if (!(vol > 0) || thick(v, vol)) return;
+    metalsIn(v).forEach(function (id) {
+      var pv = L.db.species[id].passive, f, pH, inside, cl, phi;
+      if (!pv) return;
+      v.film = v.film || {}; v.pit = v.pit || {};
+      f = v.film[id] != null ? v.film[id] : 1;
+      pH = v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : 7;
+      inside = pH >= pv.pH[0] && pH <= pv.pH[1];
+      v.film[id] = inside ? f + (1 - f) * (1 - Math.exp(-DT / pv.on)) : Math.max(0, f - DT / pv.off);
+      cl = v.n["Cl-(aq)"] > 0 ? Math.log10(v.n["Cl-(aq)"] / vol) + gammas(v, vol)("Cl-(aq)") : null;
+      phi = lab.warm[v.id + "/" + id];
+      // ein Loch heilt in Chloridlösung nicht von selbst: es bleibt, bis kein Chlorid mehr da ist
+      if (cl == null) delete v.pit[id];
+      else if (pv.pit && phi != null && phi > pv.pit[0] + pv.pit[1] * cl) v.pit[id] = true;
+    });
+  }
+
   // ------------------------------------------------------------------ Keimbildung
   // Ein Feststoff mit nucleate fällt ohne Keim nicht aus, obwohl die Lösung übersättigt ist (metastabil). Steht Q/K mindestens bei S,
   // zählt die Wartezeit (v.nuc, Anteil an t); ist sie um, darf er ausfallen. Unter Q/K = 1 beginnt sie von vorn. Liegt der Feststoff
@@ -2821,6 +2873,8 @@
       var eta = c.over[face.top] != null ? c.over[face.top] : c.over.default, entry = { c: c, E0: c.E0, a: null, k: null, ghost: 0 }, lacks = { a: false, k: false };
       [[c.red, "a", 1], [c.ox, "k", -1]].forEach(function (dir) {
         var q = Math.log(face.area * I_REF) - eta / b, lim = face.area * J_MAX, ok = true, ghost = false;
+        // durch eine Oxidschicht (face.film: bedeckter Anteil) geht jeder Vorgang nur mit dem Reststrom: sie leitet kaum
+        if (face.film > 0) lim = face.area * ((1 - face.film) * J_MAX + face.film * L.db.species[face.top].passive.i);
         if (dir[2] < 0 && face.skip && face.skip[c.key]) return;
         dir[0].forEach(function (t) {
           var sp = L.db.species[t.id], supply;
@@ -3000,7 +3054,7 @@
   // Alle Stücke eines Metalls in einem Gefäß als eine Oberfläche
   function lumpFace(v, id) {
     return {
-      id: id, top: id, whole: id, area: area(v, id), skip: L.db.metals[id].skip,
+      id: id, top: id, whole: id, area: area(v, id), skip: L.db.metals[id].skip, film: filmOf(v, id),
       has: function (x) { return x === id; },
       amount: function (x) { return x === id ? v.n[id] || 0 : 0; },
       take: function (x, n, emit) { takeSolid(v, x, n, emit); },
@@ -4150,6 +4204,7 @@
     kinetics(v, emit, stoppered(lab, v));
     hotSpots(lab, v, emit);
     nucleation(v, volume(v));
+    passivate(lab, v, volume(v));
     if (v.dirty || Math.abs(v.T - v.Teq) > 0.02) {              // auch wenn nur die Temperatur wandert: K hängt von ihr ab
       moving = equilibrate(lab, v, emit);
       v.Teq = v.T;
@@ -4554,6 +4609,7 @@
       // übersättigt über der Schwelle: die Wartezeit bis zum Keim läuft; ein Feld gleicht sich noch aus
       if (volume(v) > 0 && seeds(v).some(function (e) { return supersaturation(v, e, volume(v)) >= e.nucleate.S; })) return false;
       if (v.field && v.field.n && v.field.calm === false) return false;
+      if (filming(v, volume(v))) return false;                    // eine Oxidschicht löst sich auf oder wächst nach
       if (ready(lab, v, stoppered(lab, v))) return false;                                // auch gleich nach dem Aufbau: was reagieren kann, ruht nicht
       if ((v.tap > 0 || L.parts[v.type].filter) && vessel(lab, v.over) && filled(v) > 0 && free(lab, vessel(lab, v.over)) > 1e-6) return false;      // die Bürette oder der Filter läuft
       // es setzt sich noch ab: solange so viel schwebt, dass man die Trübung sehen könnte

@@ -1046,6 +1046,31 @@ Die Geschwindigkeit hängt an einem geschätzten Stoffübergang zur Oberfläche.
  "show":{"charts":["I","m"]}}
 ```
 
+## Aluminium: geschützt durch seine Oxidschicht
+
+@[ChemLab.pack](packs/ionen.json)
+
+Aluminium ist ein unedles Metall, unedler als Zink. Trotzdem korrodiert eine Aluminiumfolie in Wasser nicht, denn eine wenige Nanometer dünne Oxidschicht deckt sie ab. In allen vier Reagenzgläsern liegt ein Stück Aluminiumfolie (`"oxygen": true`, mit gelöster Luft).
+
+- **Wasser:** Es geschieht nichts. Durch die Schicht fließt nur ein Reststrom von 0,09 µA/cm²; so viel hat man an reinem Aluminium gemessen.
+- **Salzsäure:** Erst steigen nur wenige Bläschen auf: Chlorid reißt die Schicht an einzelnen Stellen auf (Lochfraß). Nach etwa einer Minute hat die Säure die Schicht aufgelöst, dann reagiert das Metall heftig, und die Lösung wird warm.
+- **Natronlauge:** Auch die Lauge löst die Schicht. Danach geht Aluminium als Aluminat in Lösung, und Wasserstoff perlt kräftig.
+- **Kochsalzlösung:** Die Lösung ist neutral, die Schicht bleibt. Chlorid lässt sie aber an einzelnen Stellen aufreißen, und dort frisst sich die Korrosion langsam hinein. Blasen sieht man dabei kaum.
+
+Was gerechnet ist: Die Schicht ist zwischen pH 4 und 8,5 beständig, wie das Pourbaix-Diagramm zeigt; außerhalb wird sie gleichmäßig dünner. Durch sie geht jeder Vorgang nur mit dem Reststrom, auch die Reduktion von Sauerstoff, denn das Oxid leitet kaum. Lochfraß setzt ein, wenn das Potential der Folie über dem Lochfraßpotential liegt, und das sinkt mit dem Chloridgehalt (gemessen an reinem Aluminium). Geschätzt sind: wie lange die Schicht in Säure und Lauge hält (60 s), wie schnell sie im Neutralen nachwächst (1 s) und welcher Anteil der Fläche im Lochfraß arbeitet (0,1 %). Die Raten in Säure und Lauge sind darum nur ungefähr.
+
+```json @ChemLab.sim
+{"oxygen":true,
+ "bench":[
+  {"type":"testtube","id":"wasser","contains":[{"reagent":"H2O","ml":10},{"reagent":"Al foil","g":0.05}]},
+  {"type":"testtube","id":"saure","contains":[{"reagent":"HCl 1M","ml":10},{"reagent":"Al foil","g":0.05}]},
+  {"type":"testtube","id":"lauge","contains":[{"reagent":"NaOH 1M","ml":10},{"reagent":"Al foil","g":0.05}]},
+  {"type":"testtube","id":"salz","contains":[{"reagent":"NaCl 0.5M","ml":10},{"reagent":"Al foil","g":0.05}]}
+ ],
+ "shelf":["Al foil","H2O","HCl 1M","NaOH 1M","NaCl 0.5M","H2SO4 1M","testtube"],
+ "show":{"charts":false}}
+```
+
 ## Reaktionsgeschwindigkeit: Konzentration
 
 Natriumthiosulfat zerfällt in Säure: Fein verteilter Schwefel trübt die Lösung, bis man nicht mehr hindurchsieht. In beide Gläser je 5 mL Salzsäure geben und im Protokoll die Zeit vom Zugeben bis zur Meldung „Durch die Flüssigkeit sieht man nicht mehr hindurch“ ablesen: Mit der halben Konzentration dauert es etwa doppelt so lang. Mit Wasser und Thiosulfat-Lösung aus dem Regal lassen sich weitere Verdünnungen ansetzen.
@@ -2176,6 +2201,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `oil` | `{"sol": …}`: eine Flüssigkeit, die sich nicht mit Wasser mischt (Hexan, Öl). Über ihrer Löslichkeit `sol` in mol je Liter Wasser bildet sie eine eigene Schicht, die leichtere liegt oben; ohne Wasser ist sie die Flüssigkeit allein. Braucht `Vm` |
 | `kd`, `oilBands` | Wie sich ein ungeladener gelöster Stoff auf Ölschicht und Wasser verteilt, c(Öl) = kd · c(Wasser), und seine Banden im Öl (Brom: `20`, `[[415, 100, 200]]`). Mit `"via": [Träger, Rest]` kommt der Stoff aus dem Träger und lässt den Rest im Wasser: Iod geht aus dem Triiodid ins Hexan, c(Öl) = kd · c(I₃⁻) / c(I⁻) |
 | `eta` | Zähigkeit einer Flüssigkeit in mPa·s bei 25 und 50 °C, `[η25, η50]`, für die Strömungsansicht (Glycerin: `[934, 152]`). Dazwischen und darüber hinaus folgt sie der Temperatur nach Andrade; eine Mischung mischt den Logarithmus nach den Stoffmengenanteilen. Ohne Angabe zählt ein Stoff wie Wasser |
+| `passive` | Für ein Metall mit Oxidschicht (Aluminium im Paket Ionen): `{"i": Reststrom in A/cm², "pH": [von, bis], "pit": [a, b], "on": …, "off": …, "pits": …}`. Im pH-Bereich wächst die Schicht in `on` Sekunden nach, außerhalb ist sie nach `off` Sekunden aufgelöst. Solange sie da ist, geht jeder Vorgang an dem Metall nur mit dem Reststrom. Liegt das Potential über dem Lochfraßpotential a + b·lg a(Cl⁻) (in V gegen die Wasserstoffelektrode), arbeitet der Anteil `pits` der Fläche ungeschützt, bis kein Chlorid mehr da ist. |
 | `mix` | Für einen flüchtigen Stoff: die Konstanten der Van-Laar-Gleichung mit Wasser, `[A Stoff, A Wasser]`, für Mischungen, die sich nicht ideal verhalten (Ethanol: `[1.6798, 0.9227]`) |
 | `gamma` | Für das reale Modell: `[å, b]`, die Ionengröße in Å und das Zusatzglied der Gleichung von Truesdell und Jones für den Aktivitätskoeffizienten eines gelösten Teilchens (in den Dateien von PHREEQC die Zeile `-gamma`); å von 0 bis 20, b zwischen −1 und 1. Bei einem ungeladenen Teilchen zählt nur b: lg γ = b · I. Ohne Angabe rechnet ein Ion nach Davies, ein ungeladenes Teilchen mit lg γ = 0,1 · I |
 | `at` | bei einem gelösten Teilchen mit `color` statt `bands`: die Konzentration in mol/L, bei der die Lösung diese Farbe hat |
@@ -2385,6 +2411,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 - Weil jedes Gefäß durchmischt ist, zeigt ein Indikator bei der Elektrolyse nur das Ergebnis für die ganze Lösung, nicht die Zonen an den Elektroden. Wie viel Gas an Platin und Graphit haftet und wie schnell es sich verliert, ist geschätzt; an anderen Metallen und unter einem Belag haftet keines, und Chlor haftet nie. Gelöster Wasserstoff und Sauerstoff wandern nicht zur anderen Elektrode.
 - Die Leitfähigkeit gilt für unendliche Verdünnung. In konzentrierten Lösungen ist sie zu hoch; mehrwertige Salze wie Kupfersulfat leiten im idealen Modell dagegen schlechter als im Labor, weil die ideale Rechnung zu viele Ionenpaare bildet. Im realen Modell zerfallen die Ionenpaare weiter: Kupfersulfat mit 0,5 mol/L leitet dann gut viermal so gut wie im idealen Modell und etwa doppelt so gut wie im Labor, und bei der Elektrolyse fließt entsprechend mehr Strom.
 - Überspannungen und der Stoffübergang an Oberflächen sind geschätzt. Das Zink ist als technisches Zink eingestellt, das in Salzsäure sichtbar Wasserstoff entwickelt; reines Zink reagiert viel träger. Im Volta-Element entsteht deshalb der größere Teil des Wasserstoffs am Zink selbst und nur der Teil am Kupfer, der dem Strom entspricht. Die Hemmung von Magnesium und Eisen steht für ihre Oxidschichten.
+- Aluminium (Paket Ionen) schützt seine Oxidschicht nur als Ganzes: Sie ist zwischen pH 4 und 8,5 beständig (Pourbaix-Diagramm), außerhalb nach geschätzten 60 s aufgelöst. Ihre Dicke, das Nachwachsen an Luft und Rauigkeit kennt das Modell nicht, Lochfraß nur als festen Flächenanteil (0,1 %, geschätzt) ohne wachsende Löcher, und nur an Stücken, nicht an Elektroden. Konzentrierte Salpetersäure, die Aluminium im Labor passiviert, löst hier die Schicht wie jede Säure.
 - Elektroden passen nur in Bechergläser, zwei je Glas; nur dort lassen sich Netzgerät, Messgeräte und Lämpchen anschließen. Zu einem Glas (oder einem Paar mit Salzbrücke) gehört ein Stromkreis; frei verdrahten lässt sich nichts. An jedem Glas hängt höchstens eine Salzbrücke, und sie erschöpft sich nicht.
 - Das Gasableitungsrohr gibt ein lösliches Gas vollständig an die Lösung ab, soweit sie es aufnehmen kann; im Labor steigt ein Teil der Blasen ungelöst hindurch. Deshalb gibt jede Blase nur einen Teil ab, je nach Löslichkeit: den Anteil 1 − e^(−K·R·T) mit der Henry-Konstante K des Gases (Kohlenstoffdioxid gut die Hälfte, Ammoniak und Chlorwasserstoff praktisch alles); der Rest steigt durch. Lauge bindet ein Gas schon unterwegs: Die wirksame Löslichkeit wächst um den Faktor 1 + 50 L/mol · [OH⁻] (geschätzt); so schluckt Natronlauge von 1 mol/L das Kohlenstoffdioxid fast ganz, Kalkwasser gut vier Fünftel. Wie tief die Flüssigkeit ist, zählt nicht.
 - Die Waage rechnet ohne Auftrieb in der Luft, und Elektroden, Messfühler und Kolbenprober zählen nicht mit: Sie hängen am Stativ. Ein Gefäß auf der Waage lässt sich nicht zugleich heizen.

@@ -11396,6 +11396,18 @@ test("Feld: Zurückspulen stellt es wieder her, und die Zeichnung zeigt es mit d
   assert.deepEqual(cells.flow(0.5, 0.5), [0, 0]);
 });
 
+// ---------------------------------------------------------------- Passivschicht
+
+test("Passivschicht: passive nur an einem Feststoff, mit Reststrom, pH-Bereich und Zeiten", () => {
+  for (const passive of [{ i: 0, pH: [4, 8.5], on: 1, off: 60 }, { i: 1e-7, pH: [9, 4], on: 1, off: 60 }, { i: 1e-7, pH: [4, 8.5], on: 1, off: 0 }, { i: 1e-7, pH: [4, 8.5], on: 1, off: 60, pits: 2 }])
+    assert.throws(() => L.register({ species: { "Ti(s)": { name: { de: "Titan", en: "titanium" }, Hf: 0, passive, src: "Probe" } } }), (e) => e.code === "data", JSON.stringify(passive));
+  assert.throws(() => L.register({ species: { "TiO2(aq)": { name: { de: "x", en: "x" }, Hf: null, passive: { i: 1e-7, pH: [4, 8.5], on: 1, off: 60 }, src: "Probe" } } }), (e) => e.code === "data", "nur an einem Feststoff");
+  L.register(JSON.parse(fs.readFileSync(new URL("packs/ionen.json", here), "utf8")));
+  const foil = (reagent) => lab([{ type: "testtube", id: "t", contains: [{ reagent, ml: 10 }, { reagent: "Al foil", g: 0.05 }] }], { room: 25 });
+  assert.equal(L.atRest(foil("H2O")), true, "in Wasser ruht die Folie");
+  assert.equal(L.atRest(foil("NaOH 1M")), false, "in Lauge wird die Schicht dünner: die Uhr läuft, auch bevor etwas zu sehen ist");
+});
+
 // ---------------------------------------------------------------- Keimbildung
 
 test("Keimbildung: nucleate nur an einem Löslichkeitsgleichgewicht, mit S > 1 und t > 0", () => {
