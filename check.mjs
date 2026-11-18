@@ -10591,6 +10591,24 @@ test("Stickstoff: Ammoniumchlorid und Natriumnitrit geben im heißen Wasserbad S
   assert.ok(airOf(cold, "a", "N2(g)") < 0.05, "bei Raumtemperatur kaum");
 });
 
+// ---------------------------------------------------------------- Löslichkeit sehr gut löslicher Salze
+
+test("Löslichkeit: das ideale Modell trifft mit ideal die gemessenen Werte bei 25 °C; das reale rechnet mit logK", () => {
+  // gesättigt: 0,8 mol in 20 mL Wasser, eine halbe Stunde gerührt; gelöst in mol je kg Wasser
+  const dissolved = (reagent, solid, model) => {
+    const l = lab([{ type: "beaker", id: "b", contains: [{ reagent: "H2O", ml: 20 }] }], { room: 25, model }), n0 = 0.8;
+    L.add(l, "b", reagent, { g: n0 * L.species(solid).M });
+    L.step(l, 1800);
+    const v = L.vessel(l, "b");
+    assert.ok(v.n[solid] > 0, `${solid}: Bodensatz bleibt`);
+    return (n0 - v.n[solid]) / (v.n["H2O(l)"] * 0.018015);
+  };
+  for (const [reagent, solid, want] of [["KCl salt", "KCl(s)", 4.81], ["NaHCO3 powder", "NaHCO3(s)", 1.224], ["KMnO4 crystals", "KMnO4(s)", 0.481], ["CH3COONa salt", "CH3COONa(s)", 6.14]])
+    near(dissolved(reagent, solid, "ideal"), want, 0.03 * want, `${solid} im idealen Modell`);
+  near(dissolved("KCl salt", "KCl(s)", "real"), 4.5, 0.2, "Kaliumchlorid im realen Modell, mit der Datenbankkonstante");
+  assert.throws(() => L.register({ equilibria: [{ eq: "NaCl(s) <=> Na+(aq) + Cl-(aq)", logK: 1.6, ideal: "x" }] }), (e) => e.code === "data", "ideal ist eine Zahl");
+});
+
 // ---------------------------------------------------------------- Landolt-Reaktion
 
 // Iodat, Schwefelsäure und Stärke im Becherglas, dazu Natriumsulfit. Zurück: das Labor, die Meldungen und die Sekunden bis zum Farbumschlag

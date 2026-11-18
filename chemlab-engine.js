@@ -322,6 +322,8 @@
         var rest = ids.filter(function (id) { return id !== WATER && next.species[id].phase !== "aq" && next.species[id].phase !== "s"; });
         entry.aq = !solids.length && !rest.length;
         if (item.model != null && !entry.aq) throw fail("model", String(item.eq));      // nur ein Gleichgewicht in der Lösung kann einem Modell vorbehalten sein
+        // ideal: logK, mit dem das ideale Modell (ohne Aktivitäten) die gemessene Löslichkeit eines sehr gut löslichen Salzes trifft
+        if (item.ideal != null && !(typeof item.ideal === "number" && isFinite(item.ideal) && solids.length === 1 && !rest.length)) throw fail("logK", "ideal");
         if (solids.length === 1 && !rest.length) {
           // Löslichkeit eines Feststoffs. d: was beim Lösen von 1 mol an gelösten Teilchen entsteht (+) oder verbraucht wird (−);
           // f rechnet den Umsatz der Auflösung in den der eingetragenen Schreibweise um.
@@ -1897,7 +1899,7 @@
       return basis.map(function (b) { return row < 0 ? (b === i ? 1 : 0) : -rows[row].c[b]; });
     });
     return (systems[key] = {
-      ids: ids, eqs: eqs, rows: rows, pivot: pivot, basis: basis, a: a,
+      ids: ids, eqs: eqs, rows: rows, pivot: pivot, basis: basis, a: a, real: !!real,
       hydrogen: ids.map(function (id) { return parse(id).atoms.H || 0; }),
       // plain: dieses Grundteilchen steckt in keinem Teilchen mit negativem Anteil; ist nichts davon da, fehlt alles, was es enthält
       plain: basis.map(function (q, b) { return a.every(function (row) { return row[b] >= 0; }); }),
@@ -2263,7 +2265,7 @@
       return sum;
     });
     var rhs = sys.solids.map(function (s) {
-      var h = heatOf(s.eq), sum = at(s.eq.logK * s.eq.f, h == null ? null : h * s.eq.f);
+      var h = heatOf(s.eq), sum = at((sys.real || s.eq.ideal == null ? s.eq.logK : s.eq.ideal) * s.eq.f, h == null ? null : h * s.eq.f);
       for (var ion in s.eq.d) sum -= s.eq.d[ion] * logB[ids.indexOf(ion)];
       return sum;
     });
