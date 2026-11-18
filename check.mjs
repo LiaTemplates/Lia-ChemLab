@@ -677,6 +677,7 @@ function node() {
     innerHTML: "", textContent: "", value: "", hidden: false, isConnected: true, attributes: {}, listeners: {}, kids: {},
     setAttribute(k, v) { this.attributes[k] = String(v); },
     getAttribute(k) { return k in this.attributes ? this.attributes[k] : null; },
+    hasAttribute(k) { return k in this.attributes; },
     removeAttribute(k) { delete this.attributes[k]; },
     addEventListener(type, fn) { this.listeners[type] = fn; },
     removeEventListener(type) { delete this.listeners[type]; },
@@ -696,6 +697,7 @@ const queue = [];
 let now = 0;
 globalThis.requestAnimationFrame = (fn) => { queue.push(fn); return queue.length; };
 globalThis.cancelAnimationFrame = () => {};
+globalThis.PointerEvent = function () {};          // die Fläche hört dann auf pointerdown, wie in heutigen Browsern
 await import("./chemlab-ui.js");
 
 // lässt die Bilder laufen: 20 je Sekunde, wie ein Browser mit 50 ms je Bild
@@ -10084,6 +10086,20 @@ test("3D: geht es nicht, bleibt die Fläche 2D und sagt warum", async () => {
     assert.match(part(el, ".cl-status").textContent, /Diese Szene gibt es nicht: lab2/);
     assert.match(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, /cl-glass/);
   } finally { delete L.stage3d; }
+});
+
+test("3D: kann der Browser kein 3D, ist der Knopf aus und die Fläche bleibt 2D", async () => {
+  let asked = false;
+  L.stage3d = () => { asked = true; return Promise.reject(new Error("kein WebGL")); };
+  L.can3d = () => false;
+  try {
+    const el = mount({ bench: [{ type: "beaker", id: "b" }], view: "3d" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.match(el.innerHTML, /data-act="view"[^>]* disabled/, "der Knopf ist da, aber aus");
+    assert.equal(state(el).view, "2d");
+    assert.equal(asked, false, "die 3D-Dateien werden gar nicht erst geladen");
+    assert.match(part(el, ".cl-svg").querySelector('[data-id="b"]').innerHTML, /cl-glass/);
+  } finally { delete L.stage3d; delete L.can3d; }
 });
 
 test("3D: Erweiterungen eines Kurses warten, bis der Baustein geladen ist", () => {

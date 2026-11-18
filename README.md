@@ -45,7 +45,8 @@ send.register("ChemLab:@2", function (cmd) {
   }
   if (tries < 300) setTimeout(function () { wait(tries + 1); }, tries < 50 ? 100 : 500);
 })(0);
-"LIA: wait"
+// stop, nicht wait: Ein Skript, das noch wartet, führt LiaScript beim nächsten Besuch der Folie nicht wieder aus; send.lia wirkt auch danach
+"LIA: stop"
 </script>
 @end
 

@@ -31,6 +31,11 @@
     return '<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="' + ICON[name] + '"/></svg>';
   }
 
+  // Ist die Fläche nicht mehr auf der Seite? isConnected kennt Firefox erst ab 49 (KaiOS 2.5 hat 48)
+  function detached(el) {
+    return el.isConnected != null ? !el.isConnected : !(el.ownerDocument && el.ownerDocument.contains(el));
+  }
+
   // Welche Datei fehlt noch? Eine, die auf den Rechenkern wartet, ist angekommen.
   function missing() {
     return [["chemlab-engine.js", L.normalize], ["chemlab-data.js", L.core], ["chemlab-parts.js", L.text && L.icon], ["chemlab-fx.js", L.fx]]
@@ -117,6 +122,7 @@
     if (st.flow == null) st.flow = Math.max(0, FLOWS.indexOf(show.flow));
     if (st.flow3d == null) st.flow3d = Math.max(0, FLOWS3D.indexOf(show.flow3d));
     if (!st.view) st.view = st.config.view;       // die Wahl der Lernenden bleibt, wenn die Folie wiederkommt
+    var no3d = !!(L.can3d && !L.can3d());          // dieser Browser kann kein 3D: der Knopf ist aus, die Fläche bleibt 2D
     var still = !!(global.matchMedia && global.matchMedia("(prefers-reduced-motion: reduce)").matches);
     var sound = L.fx.sound ? L.fx.sound(global) : null, heard = 0, tickAt = 0;      // tickAt: bis zu dieser Zeit hat der Geigerzähler getickt      // heard: so viele Zeilen des Protokolls sind schon verklungen
     if (sound) sound.mute(st.mute);
@@ -128,7 +134,7 @@
       '<div class="cl-top"><button type="button" class="cl-btn cl-barbtn" data-act="bar" aria-pressed="false">' + SHELF_ICON + "<span>" + esc(T("shelf")) + "</span></button>" +
       '<span class="cl-fill"></span><div class="cl-side">' +
       '<button type="button" class="cl-btn" data-act="dark" aria-pressed="false">' + esc(T("dark")) + "</button>" +
-      (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false">' + esc(T("view")) + "</button>" : "") +
+      (L.stage3d ? '<button type="button" class="cl-btn" data-act="view" aria-pressed="false"' + (no3d ? ' disabled title="' + esc(T("view.failed")) + '"' : "") + ">" + esc(T("view")) + "</button>" : "") +
       '<details class="cl-more"><summary class="cl-btn cl-round" title="' + esc(T("menu")) + '" aria-label="' + esc(T("menu")) + '">' + MORE_ICON + "</summary>" +
       '<div class="cl-menu">' +
       (sound ? '<button type="button" class="cl-btn cl-sound" data-act="sound" aria-pressed="' + (st.mute ? "false" : "true") + '">' + esc(T("sound")) + "</button>" : "") +
@@ -1747,7 +1753,7 @@
 
     function frame(now) {
       raf = 0;
-      if (stopped || !el.isConnected) { if (!stopped) stop(); return; }       // die Folie ist weg: Schleife und Ton enden
+      if (stopped || detached(el)) { if (!stopped) stop(); return; }       // die Folie ist weg: Schleife und Ton enden
       var dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
       last = now;
       move(dt);
@@ -1768,6 +1774,7 @@
     var asked = 0;                  // zählt die Wünsche: eine Bühne, die zu spät fertig wird, kommt nicht mehr zum Zug
     function setView(view) {
       var mine = ++asked;
+      if (no3d) view = "2d";
       st.view = view;
       if (ui.view) ui.view.setAttribute("aria-pressed", view === "3d" ? "true" : "false");
       if (view === "2d" || !L.stage3d) { show3d(null); return; }
@@ -1801,7 +1808,11 @@
     function onClick(ev) {
       var b = ev.target && ev.target.closest && ev.target.closest("[data-act]"), act, id, r, lab = st.run.lab;
       // ein Tipp irgendwo sonst in der Fläche schließt das Menü
-      if (ui.more && ui.more.open && ev.target && ev.target.closest && !ev.target.closest(".cl-more")) ui.more.removeAttribute("open");
+      if (ui.more && ui.more.hasAttribute("open") && ev.target && ev.target.closest && !ev.target.closest(".cl-more")) ui.more.removeAttribute("open");
+      // Firefox 48 (KaiOS 2.5) kennt details nicht: dort klappt der Tipp auf die Zusammenfassung das Menü selbst auf und zu
+      if (ui.more && !("open" in ui.more) && ev.target && ev.target.closest && ev.target.closest(".cl-more > summary")) {
+        if (ui.more.hasAttribute("open")) ui.more.removeAttribute("open"); else ui.more.setAttribute("open", "");
+      }
       if (!b) return;
       act = b.getAttribute("data-act"); id = b.getAttribute("data-id");
       if (sound) sound.wake();                                  // Ton gibt der Browser erst nach einer Bedienung frei
@@ -1942,7 +1953,7 @@
     // Ändert sich der Platz auf der Seite, wird die Fläche neu eingeteilt
     var size = "";
     function onResize() {
-      if (stopped || !el.isConnected) { stop(); return; }           // die Folie ist weg: nichts mehr festhalten
+      if (stopped || detached(el)) { stop(); return; }           // die Folie ist weg: nichts mehr festhalten
       var box = ui.svg.getBoundingClientRect ? ui.svg.getBoundingClientRect() : null;
       var now = box ? Math.round(box.width) + "x" + Math.round(box.height) : "";
       if (now === size) return;
@@ -1967,11 +1978,12 @@
     }
     // Antippen über Zeiger-Ereignisse: der Inhalt eines Geräts wird in jedem Bild neu gezeichnet,
     // ein "click" fände deshalb oft kein gemeinsames Ziel von Drücken und Loslassen.
-    ui.svg.addEventListener("pointerdown", function (ev) {
+    var POINTER = global.PointerEvent ? "pointer" : "mouse";        // Firefox 48 (KaiOS 2.5) kennt nur Maus-Ereignisse
+    ui.svg.addEventListener(POINTER + "down", function (ev) {
       if (sound) sound.wake();
       down = ev.button ? null : { id: itemOf(ev), x: ev.clientX, y: ev.clientY };      // nur die linke Taste, der Finger oder der Stift
     });
-    ui.svg.addEventListener("pointerup", function (ev) {
+    ui.svg.addEventListener(POINTER + "up", function (ev) {
       var d = down;
       down = null;
       if (d && Math.abs(ev.clientX - d.x) + Math.abs(ev.clientY - d.y) < 10) tap(d.id);

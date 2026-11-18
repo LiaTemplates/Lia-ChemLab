@@ -68,6 +68,7 @@ html.lia-variant-dark .lia-chemlab {
   display: flex; flex-direction: column; gap: 0.3em; padding: 0.4em;
   background: var(--cl-bg); border: 1px solid var(--cl-line); border-radius: 0.6em; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
+.lia-chemlab .cl-more:not([open]) > .cl-menu { display: none; }      /* für Browser ohne details (Firefox 48, KaiOS 2.5) */
 .lia-chemlab .cl-menu .cl-btn { text-align: left; }
 
 /* ---------- Regalleiste: Fächer als Reiter, ein Fach als Zeile zum Schieben */

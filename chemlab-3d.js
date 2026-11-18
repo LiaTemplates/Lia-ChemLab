@@ -56,6 +56,22 @@
     });
   }
 
+  // import() als Text: so liest auch ein Browser ohne Module (Firefox 48, KaiOS 2.5) diese Datei, nur 3D fehlt ihm dann
+  var importer = (function () { try { return new Function("u", "return import(u)"); } catch (e) { return null; } })();
+
+  // Kann dieser Browser 3D? Three.js braucht import() und WebGL 2. Einmal geprüft, der Kontext wird gleich wieder freigegeben.
+  var can = null;
+  L.can3d = function () {
+    if (can === null) {
+      try {
+        var gl = importer && doc.createElement("canvas").getContext("webgl2"), lose = gl && gl.getExtension("WEBGL_lose_context");
+        if (lose) lose.loseContext();
+        can = !!gl;
+      } catch (e) { can = false; }
+    }
+    return can;
+  };
+
   var ready = null;
   function load() {
     if (ready) return ready;
@@ -63,14 +79,14 @@
     L.base3d = base;
     ready = fetchText(base + THREE_FILE).then(function (code) {
       var url = blob(code);
-      return import(url).then(function (THREE) {
+      return importer(url).then(function (THREE) {
         L.THREE = THREE;
         L.three = {};
         var names = Object.keys(ADDONS);
         // Die Zusätze holen Three.js über einen relativen Pfad; als blob: zeigt er auf die eben geladene Kopie
         return Promise.all(names.map(function (name) {
           return fetchText(base + ADDONS[name]).then(function (text) {
-            return import(blob(text.split("'../three.module.min.js'").join(JSON.stringify(url))));
+            return importer(blob(text.split("'../three.module.min.js'").join(JSON.stringify(url))));
           }).then(function (mod) { L.three[name] = mod[name]; });
         }));
       });
