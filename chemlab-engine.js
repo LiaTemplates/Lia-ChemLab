@@ -754,7 +754,9 @@
   var PIPETTE = 0.002;                                            // Fehlergrenze als Anteil (Klasse AS: 5 mL ±0,3 %, 25 mL ±0,12 %)
   [5, 10, 20, 25].forEach(function (ml) { registerPart("pipette" + ml, { kind: "test", probe: "pipette", ml: ml, label: "pipette" }); });
   // Rundkolben für die Destillation; steht wie das Becherglas auf dem Dreifuß
-  registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22 });
+  // head: steckt ein Liebigkühler im Seitenrohr, sitzt ein Thermometer im Hals mit der Kugel auf Höhe des Seitenrohrs (ISO 918:1983, 5.2.1)
+  // und misst den Dampf, nicht die Flüssigkeit
+  registerPart("flask", { kind: "vessel", cap: 100, d: 5.8, Cv: 40, loss: 0.13, heat: 0.22, head: true });
   // Messkolben: Kugel mit langem, engem Hals; der Eichstrich (mark, mL) sitzt am Hals, darüber ist noch etwas Platz. Nicht erhitzen
   registerPart("volflask", {
     kind: "vessel", size: 100, noHeat: true,
@@ -4307,7 +4309,7 @@
     if (def.electrode) return massOf(t);
     if (def.circuit) return def.circuit === "supply" ? t.volts : t.goal;
     if (def.bath) return t.temp;
-    if (kind === "T") return Math.max(L.parts[t.type].range[0], Math.min(L.parts[t.type].range[1], v ? v.T : lab.room));
+    if (kind === "T") return Math.max(L.parts[t.type].range[0], Math.min(L.parts[t.type].range[1], v ? (atHead(lab, t, v) ? (v.boil > 0 ? v.T : lab.room) : v.T) : lab.room));
     if (kind === "V") return syringe(lab, t, v).ml;           // aufgefangenes Gas samt Luft in mL
     if (kind === "p") return v && !v.broken && v.p != null ? v.p : P_AIR;
     if (kind === "m") return (v && !v.broken ? weigh(lab, v) : 0) - t.tare;
@@ -4318,6 +4320,13 @@
     if (kind !== "pH") return null;
     return vol > 0 && v.n[PROTON] > 0 && !thick(v, vol) ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null;
   }
+
+  // Sitzt das Thermometer t im Kopf über dem Seitenrohr? Dort kommt erst Wärme an, wenn Dampf hinüberströmt: beim Sieden zeigt es
+  // dessen Temperatur, sonst kühlt es langsam auf die Raumtemperatur ab (HEAD_LAG)
+  function atHead(lab, t, v) {
+    return !!(v && L.parts[v.type].head && L.parts[t.type].sense === "T" && toolAt(lab, v, function (def) { return def.condenser; }));
+  }
+  var HEAD_LAG = 40;              // s: so träge kühlt der Kopf ab, wenn kein Dampf mehr kommt (Glas und Stopfen halten die Wärme; geschätzt)
 
   // Streuung der Anzeige: eine Zahl in [−1, 1], fest für Auslosung, Gerät und Schlüssel
   function jitter(seed, id, key) {
@@ -4411,7 +4420,7 @@
       if (t.tint && lab.t >= t.tint.until) t.tint = null;      // die Flammenfärbung vergeht
       if (target == null || t[key] == null) t[key] = target;
       else {
-        t[key] += (target - t[key]) * (1 - Math.exp(-DT / L.parts[t.type].lag));
+        t[key] += (target - t[key]) * (1 - Math.exp(-DT / (target < t[key] && atHead(lab, t, t.in ? vessel(lab, t.in) : null) ? HEAD_LAG : L.parts[t.type].lag)));
         if (Math.abs(target - t[key]) < 1e-9) t[key] = target;
       }
       if (noisy) t.value = wobble(lab, t, t.smooth);           // mit Streuung: die geglättete Anzeige und darauf das Rauschen

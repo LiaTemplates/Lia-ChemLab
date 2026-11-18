@@ -693,10 +693,10 @@
         if (host) {
           free.push({ id: t.id, type: t.type, host: t.in, under: !!def.under });
           if (!def.under && !def.electrode && !def.bridge && !def.condenser) {      // Messgeräte ragen über das Gefäß hinaus, erst recht über ein gehobenes
-            place = L.parts[host.type].probe(host, t.type);
+            place = probeOf(lab, host, t.type);
             reach = Math.max(reach, (lifts[host.id] || 0) - (place.top != null ? place.top : place.rim - 60) + 44);
             far = def.pipe && L.vessel(lab, t.to);              // das Rohr steigt auch über ein erhöhtes zweites Gefäß
-            if (far) reach = Math.max(reach, (lifts[far.id] || 0) - L.parts[far.type].probe(far, "tube").top + 44);
+            if (far) reach = Math.max(reach, (lifts[far.id] || 0) - probeOf(lab, far, "tube").top + 44);
           }
         } else list.push({ id: t.id, type: t.type, w: def.width(t) });
       });
@@ -713,7 +713,7 @@
       // und so steht kein Stab vor der Anzeige einer kürzeren Sonde.
       free.forEach(function (item) {
         var def = L.parts[item.type], host = L.vessel(lab, item.host);
-        item.reach = !item.vessel && !item.under && def.sense && def.sense !== "V" && host ? L.parts[host.type].probe(host, item.type).top : null;
+        item.reach = !item.vessel && !item.under && def.sense && def.sense !== "V" && host ? probeOf(lab, host, item.type).top : null;
       });
       free = free.filter(function (item) { return item.reach == null; }).concat(free.filter(function (item) { return item.reach != null; }).sort(function (a, b) {
         return a.host === b.host ? a.reach - b.reach : a.host < b.host ? -1 : 1;
@@ -755,9 +755,10 @@
     }
 
     // Die Trefferfläche eines Geräts. Nur sie nimmt Zeiger-Ereignisse an (siehe chemlab.css).
+    // also: eine zweite Fläche desselben Geräts (der Thermostat am Rand des Wasserbads)
     function frameBox(b, selected) {
       return '<rect class="cl-hit' + (selected ? " cl-sel" : "") + '" x="' + b.x0 + '" y="' + b.top + '" width="' + (b.x1 - b.x0) +
-        '" height="' + ((b.bottom == null ? 2 : b.bottom) - b.top) + '" rx="6"/>';
+        '" height="' + ((b.bottom == null ? 2 : b.bottom) - b.top) + '" rx="6"/>' + (b.also ? frameBox(b.also, selected) : "");
     }
 
     function shownValue(r) {        // Anzeige eines Messgeräts als Text: „20,0 °C“, „pH 7,00“
@@ -781,19 +782,23 @@
 
     function at(id) { return items.filter(function (item) { return item.id === id; })[0]; }
 
+    // Was in einem Gefäß steckt (die Arten der Geräte): ein Rundkolben zeichnet danach Seitenrohr oder zweiten Hals und legt fest, wo ein Fühler sitzt
+    function fitOf(lab, v) { return lab.tools.filter(function (t) { return t.in === v.id; }).map(function (t) { return t.type; }); }
+    function probeOf(lab, v, type, slot) { return L.parts[v.type].probe(v, type, slot, fitOf(lab, v)); }
+
     // Die Salzbrücke reicht vom Gefäß, an dem sie hängt, zum anderen: Stellen in den Koordinaten ihres eigenen Platzes
     function span(lab, t) {
       var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), dir, pa, pb, up;
       if (!host || !a) return null;
       dir = b && b.x < a.x ? -1 : 1;
-      pa = L.parts[host.type].probe(host, "bridge", dir);
+      pa = probeOf(lab, host, "bridge", dir);
       // beide Enden tauchen ein Stück unter den Flüssigkeitsspiegel, wenn Flüssigkeit da ist
       function end(vessel, p) {
         var w = L.view(lab, vessel), top = w.ml > 0.005 ? L.parts[vessel.type].surface(w) : p.rim + 30;
         return Math.min(-6, Math.max(p.rim + 30, top + 16));
       }
       if (!b) return { x1: pa.x, y1: pa.rim, s1: end(host, pa), x2: pa.x + 30 * dir, y2: pa.rim, s2: pa.rim + 12 };       // das andere Ende hängt frei
-      pb = L.parts[far.type].probe(far, "bridge", -dir);
+      pb = probeOf(lab, far, "bridge", -dir);
       up = (a.lift || 0) - (b.lift || 0);
       return { x1: pa.x, y1: pa.rim, s1: end(host, pa), x2: b.x - a.x + pb.x, y2: pb.rim + up, s2: end(far, pb) + up };
     }
@@ -803,9 +808,9 @@
       var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && at(t.to), dir, pa, pb, up, w;
       if (!host || !a) return null;
       dir = b && b.x < a.x ? -1 : 1;
-      pa = L.parts[host.type].probe(host, "condenser", dir);
+      pa = probeOf(lab, host, "condenser", dir);
       if (!b) return { x1: pa.x, y1: pa.rim, x2: pa.x + 70 * dir, y2: pa.rim + 30, s2: pa.rim + 60, up: 0 };       // das andere Ende hängt frei
-      pb = L.parts[far.type].probe(far, "bridge", -dir);
+      pb = probeOf(lab, far, "bridge", -dir);
       up = (a.lift || 0) - (b.lift || 0);
       w = L.view(lab, far);
       // up: so viel tiefer steht die Vorlage (Hub); die 3D-Ansicht streckt den Hub und braucht ihn deshalb getrennt
@@ -817,14 +822,14 @@
     function pipeline(lab, t) {
       var host = L.vessel(lab, t.in), far = L.vessel(lab, t.to), a = at(t.in), b = far && !far.broken && at(t.to), pa, pb, up, w, s2;
       if (!host || !a) return null;
-      pa = L.parts[host.type].probe(host, "tube");
+      pa = probeOf(lab, host, "tube");
       if (!b) return { x1: pa.x, y1: pa.rim, w: pa.w, x2: pa.x + 60, y2: pa.rim, end: pa.rim + 30, up: 0 };       // das andere Ende hängt frei
-      pb = L.parts[far.type].probe(far, "tube");
+      pb = probeOf(lab, far, "tube");
       up = (a.lift || 0) - (b.lift || 0);
       w = L.view(lab, far);
       s2 = w.ml > 0.005 ? L.parts[far.type].surface(w) : null;
       return { x1: pa.x, y1: pa.rim, w: pa.w, x2: b.x - a.x + pb.x - 4, y2: pb.rim + up, s2: s2 == null ? null : s2 + up,
-        end: (s2 == null ? L.parts[far.type].probe(far, "thermometer").bottom : Math.min(s2 + 22, L.parts[far.type].probe(far, "thermometer").bottom)) + up, up: up };
+        end: (s2 == null ? probeOf(lab, far, "thermometer").bottom : Math.min(s2 + 22, probeOf(lab, far, "thermometer").bottom)) + up, up: up };
     }
 
     // Leitungen der Stromkreise: von der linken Elektrode über Netzgerät, Lämpchen und Strommesser zur rechten; der Spannungsmesser hängt an beiden.
@@ -832,6 +837,8 @@
     // Gilt für 2D und 3D; ends sagt nur, welche Geräte Anschlüsse haben.
     function links(lab, ends) {
       var out = [];
+      // Farben wie üblich: was am Pluspol hängt, rot, was am Minuspol hängt, blau; ohne bekannten Pol dunkel
+      function pole(id) { var p = L.reading(lab, id).pole; return p === "+" ? " cl-plus" : p === "-" ? " cl-minus" : ""; }
       L.circuits(lab).forEach(function (c, circuit) {
         var a = L.tool(lab, c.a), b = L.tool(lab, c.b), from = [c.a, 0], sign = "";
         var parts = lab.tools.filter(function (t) { return L.parts[t.type].circuit && ends[t.id] && (t.in === a.in || t.in === b.in); });
@@ -841,16 +848,16 @@
           parts.forEach(function (t) {
             var r = L.reading(lab, t.id);
             if (L.parts[t.type].circuit !== kind) return;
-            link(from, [t.id, 0], kind === "supply" ? (r.flip ? " cl-minus" : " cl-plus") : sign);
+            link(from, [t.id, 0], kind === "supply" ? (r.flip ? " cl-minus" : " cl-plus") : sign || (from[0] === c.a ? pole(c.a) : ""));
             sign = kind === "supply" ? (r.flip ? " cl-plus" : " cl-minus") : sign;
             from = [t.id, 1];
           });
         });
-        if (from[0] !== c.a) link(from, [c.b, 0], sign);
+        if (from[0] !== c.a) link(from, [c.b, 0], sign || pole(c.b));
         parts.forEach(function (t) {
           if (L.parts[t.type].circuit !== "voltmeter") return;
-          link([c.a, 0], [t.id, 0], "");
-          link([t.id, 1], [c.b, 0], "");
+          link([c.a, 0], [t.id, 0], pole(c.a));
+          link([t.id, 1], [c.b, 0], pole(c.b));
         });
       });
       return out;
@@ -885,7 +892,7 @@
       }
       items.forEach(function (item, index) {
         var g = nodes[item.id], def = L.parts[item.type];
-        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], flow3d: FLOWS3D[st.flow3d || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id],
+        var ctx = { lang: lang, numbers: show.numbers, volumes: show.volumes, uid: el.id, t: now, still: still, seed: index + 1, flow: FLOWS[st.flow || 0], flow3d: FLOWS3D[st.flow3d || 0], no: ordinal(item.id), lift: item.lift || 0, marks: marks[item.id], fit: item.vessel ? fitOf(lab, item) : null,
           // der Dampf geht in einen Kühler und steigt nicht aus der Öffnung
           sealed: lab.tools.some(function (t) { return t.in === item.id && L.parts[t.type].duct && L.vessel(lab, t.to) && !L.vessel(lab, t.to).broken; }) };
         var v, w, r, host, place, b, content, hang, aria;
@@ -915,7 +922,7 @@
           r = L.reading(lab, item.id);
           host = L.vessel(lab, r.in);
           place = !host || def.circuit ? null : def.bridge ? span(lab, L.tool(lab, item.id)) : def.pipe ? pipeline(lab, L.tool(lab, item.id)) : def.condenser ? duct(lab, L.tool(lab, item.id)) : def.under ? def.stand(host)
-            : L.parts[host.type].probe(host, item.type, def.electrode ? slotOf(lab, L.tool(lab, item.id)) : 0);
+            : probeOf(lab, host, item.type, def.electrode ? slotOf(lab, L.tool(lab, item.id)) : 0);
           if (def.sense === "V" && place && lab.vessels.some(function (o) { return o.over === host.id; })) {
             // hängt über dem Gefäß eine Bürette, beginnt der Zylinder des Kolbenprobers erst rechts von ihr und ihrem Stativ
             w = L.parts[host.type].mount(L.view(lab, host));

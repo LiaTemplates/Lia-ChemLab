@@ -20,6 +20,9 @@
 * [ISO 4800 – Scheide- und Tropftrichter](iso-4800-scheidetrichter.md) - Kegel- und Birnenform, Maße, Stopfenschliff, Aufdruck; Hahngriff rechts.
 * [ISO 4142 – Reagenzgläser](iso-4142-reagenzglas.md) - Drei Glasarten, halbkugeliger Boden, Aufdruck „boro 3.3“.
 * [ISO 4798 – Filtriertrichter](iso-4798-trichter.md) - Kegel mit 60° Öffnungswinkel, Rohrende schräg angeschliffen.
+* [ISO 918 – Destillationsapparatur](iso-918-destillation.md) - Thermometerkugel am Seitenrohr, Kühler am Stativ, Seitenrohr 75° zum Hals.
+* [ISO 4799 – Kühler](iso-4799-kuehler.md) - Liebig-West und Allihn; Oliven auf derselben Seite, Abtropfspitze schräg, Aufdruck.
+* [Wasserbad, Manometer und Zentrifuge](laborgeraete-wasserbad-manometer-zentrifuge.md) - DIN 12876-1, EN 837-1, EN 12547 nicht frei lesbar; Darstellung nach Herstellern und Wikipedia.
 
 # Sicherheit und Kennfarben
 

@@ -33,6 +33,14 @@
     return hose;
   }
 
+  // blauer Pfeil für die Fließrichtung des Kühlwassers (wie in 2D): Kegel bei at, die Spitze in Richtung dir
+  function flow(sub, at, dir) {
+    var m = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.38, 12), fx.matte(0x2b8cc4, 0.5));
+    m.position.copy(at);
+    m.quaternion.setFromUnitVectors(V(0, 1, 0), dir.clone().normalize());
+    sub.add(m);
+  }
+
   function stub(sub, from, to, mat) {
     var m = pipe(from, to, 0.16, mat);
     m.castShadow = true;
@@ -60,13 +68,20 @@
       var a = p ? V(cm(p.x1), cm(-p.y1), 0) : V(-2, 2.5, 0), y2 = p ? cm(-p.y2) + drop : 1.2, s2 = p ? cm(-p.s2) + drop : 0.25;
       var c = V(p ? cm(p.x2) : 2, Math.min(a.y - cm(24), y2 + cm(22)), 0), e = V(c.x, y2 - cm(10), 0);
       u.end = e; u.s2 = s2;
-      u.body = fx.rebuild(group, "duct", [a.x, a.y, c.x, c.y, e.y, !!p].map(String).join("|"), function (sub) {
+      var floor = -kit.up(d.lift || 0);
+      u.body = fx.rebuild(group, "duct", [a.x, a.y, c.x, c.y, e.y, !!p, floor].map(String).join("|"), function (sub) {
         var ja = a.clone().lerp(c, 0.15), jb = a.clone().lerp(c, 0.8), dir = c.clone().sub(a).normalize(), n = V(-dir.y, dir.x, 0), R = cm(7), hose;
         sub.add(pipe(a, c, 0.13, fx.glass()), pipe(c, e, 0.13, fx.glass()));
         sub.add(new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 8), fx.glass()).translateX(c.x).translateY(c.y));          // Knie
         hose = jacket(sub, ja, jb, R);
-        stub(sub, jb.clone().addScaledVector(n, -R), jb.clone().addScaledVector(n, -R).add(V(0, -0.7, 0)), hose);      // Kühlwasser hinein
-        stub(sub, ja.clone().addScaledVector(n, R), ja.clone().addScaledVector(n, R).add(V(0, 0.7, 0)), hose);         // und heraus
+        if (n.y < 0) n.negate();                               // n zeigt nach oben: beide Oliven auf derselben Seite (ISO 4799:1978, 6.2)
+        var inTop = jb.clone().addScaledVector(n, R * 0.85).add(V(0, 0.7, 0)), outTop = ja.clone().addScaledVector(n, R * 0.85).add(V(0, 0.7, 0));
+        stub(sub, jb.clone().addScaledVector(n, R * 0.85), inTop, hose);      // Kühlwasser unten hinein
+        stub(sub, ja.clone().addScaledVector(n, R * 0.85), outTop, hose);     // und oben heraus
+        flow(sub, inTop.clone().add(V(0, 0.45, 0)), V(0, -1, 0));
+        flow(sub, outTop.clone().add(V(0, 0.4, 0)), V(0, 1, 0));
+        // ein eigenes Stativ hält den Mantel in der Mitte (ISO 918:1983, Bild 1)
+        if (p) { var m = ja.clone().lerp(jb, 0.5); fx.stand(sub, m.x, fx.STAND.z, floor, m.y + cm(34), [{ x: m.x, y: m.y, r: R, across: true }]); }
         if (!p) sub.add(new THREE.Mesh(new THREE.BoxGeometry(5, 0.4, 1.6), fx.wood()).translateY(0.2));
       });
       // Destillat tropft aus dem Rohr in die Vorlage
@@ -107,19 +122,27 @@
 
   // ------------------------------------------------------------------ Rückflusskühler
 
-  // place: { x, rim, top, lean } aus probe() des Gefäßes: aufrecht über der Öffnung, lean: schräg gestellt in Grad (auf dem Ansatzrohr des Kolbens)
+  // Kugelkühler nach Allihn (ISO 4799:1978, 8.2) wie in 2D: im Mantel ein Innenrohr mit Kugeln, beide Oliven rechts, unten hinein, oben heraus.
+  // place: { x, rim, top, lean } aus probe() des Gefäßes: aufrecht über der Öffnung; lean: schräg gestellt in Grad
   L.registerLook("reflux", "lab", {
     build: function () { var group = new THREE.Group(); group.userData = {}; return group; },
     update: function (group, d) {
       var p = d.place || { x: 0, rim: 0, top: -L.shapes.reflux, lean: 0 };
       group.userData.body = fx.rebuild(group, "column", [p.x, p.rim, p.top, p.lean || 0, !!d.place].join("|"), function (sub) {
-        var foot = V(cm(p.x), cm(-p.rim), 0), h = cm(p.rim - p.top), tilt = new THREE.Group(), R = cm(8), hose;
+        var foot = V(cm(p.x), cm(-p.rim), 0), h = cm(p.rim - p.top), tilt = new THREE.Group(), R = cm(L.shapes.refluxR), hose, y, bulb = cm(15);
         tilt.position.copy(foot);
         tilt.rotation.z = -(p.lean || 0) * Math.PI / 180;       // in 2D um den Fuß im Uhrzeigersinn
         tilt.add(pipe(V(0, -cm(6), 0), V(0, h, 0), cm(3), fx.glass()));
-        hose = jacket(tilt, V(0, cm(14), 0), V(0, h - cm(14), 0), R);
-        stub(tilt, V(R, cm(20), 0), V(R + 0.7, cm(20), 0), hose);            // Kühlwasser unten hinein, oben heraus
-        stub(tilt, V(-R, h - cm(20), 0), V(-R - 0.7, h - cm(20), 0), hose);
+        for (y = cm(15) + bulb / 2; y + bulb / 2 <= h - cm(15); y += bulb) {      // die Kugeln des Innenrohrs
+          var ball = new THREE.Mesh(new THREE.SphereGeometry(cm(6.5), 18, 12), fx.glass());
+          ball.scale.y = 1.15; ball.position.y = y; ball.renderOrder = 2;
+          tilt.add(ball);
+        }
+        hose = jacket(tilt, V(0, cm(12), 0), V(0, h - cm(12), 0), R);
+        stub(tilt, V(R, cm(17), 0), V(R + 0.6, cm(17), 0), hose);            // Kühlwasser unten hinein, oben heraus
+        stub(tilt, V(R, h - cm(17), 0), V(R + 0.6, h - cm(17), 0), hose);
+        flow(tilt, V(R + 0.95, cm(17), 0), V(-1, 0, 0));
+        flow(tilt, V(R + 0.85, h - cm(17), 0), V(1, 0, 0));
         sub.add(tilt);
         if (!d.place) sub.add(new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.4, 2.4), fx.wood()).translateY(0.2));
       });

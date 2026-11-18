@@ -5604,6 +5604,17 @@ test("Netzgerät bedienen: Spannung einstellen, umpolen; Leitungen zeigen den St
   assert.match(info, /Belag: Kupfer/, "nach dem Umpolen sitzt noch Kupfer auf der rechten Elektrode");
 });
 
+test("Kabelfarben: ohne Netzgerät nach den Polen der Zelle, Plus rot, Minus blau", () => {
+  const el = mount({ bench: [
+    { type: "beaker", id: "links", contains: [{ reagent: "ZnSO4 1M", ml: 80 }] }, { type: "electrode-Zn", id: "zn", in: "links" },
+    { type: "beaker", id: "rechts", contains: [{ reagent: "CuSO4 1M", ml: 80 }] }, { type: "electrode-Cu", id: "cu", in: "rechts" },
+    { type: "bridge", in: "links", to: "rechts" }, { type: "voltmeter", id: "u", in: "rechts" }] });
+  frames(1);
+  const wires = part(el, ".cl-svg").querySelector(".cl-wires").innerHTML;
+  assert.equal((wires.match(/cl-wire cl-plus/g) || []).length, 1, "die Leitung vom Kupfer (Pluspol) ist rot");
+  assert.equal((wires.match(/cl-wire cl-minus/g) || []).length, 1, "die vom Zink (Minuspol) blau");
+});
+
 test("Diagramme: Stromstärke, Spannung, Kennlinie und Masse der Elektroden", () => {
   const el = mount(electro);
   tap(el, "n");
@@ -7365,7 +7376,8 @@ test("Durchsicht, Meilenstein 5: kleinere Befunde an Zeichnung und Oberfläche",
   // das Wasserbad: der Thermostat liegt in der antippbaren Fläche; eine Schale steht nicht unter Wasser
   const l = bathed(water5, 50), stand = L.parts.bath.stand(L.vessel(l, "b")), hit = L.parts.bath.bounds(L.reading(l, "wb"), stand);
   const svg = L.parts.bath.draw(L.reading(l, "wb"), ctx(), stand), box = /class="cl-meter"><rect x="([-\d.]+)" y="([-\d.]+)" width="([\d.]+)" height="([\d.]+)"/.exec(svg).slice(1).map(Number);
-  assert.ok(box[0] >= hit.x0 && box[0] + box[2] <= hit.x1 && box[1] >= hit.top && box[1] + box[3] <= hit.bottom, `Anzeige ${box} in der Fläche ${JSON.stringify(hit)}`);
+  // der Einhängethermostat sitzt auf dem Rand; dort ist das Bad eigens antippbar (also)
+  assert.ok([hit, hit.also].some((h) => h && box[0] >= h.x0 && box[0] + box[2] <= h.x1 && box[1] >= h.top && box[1] + box[3] <= h.bottom), `Anzeige ${box} in der Fläche ${JSON.stringify(hit)}`);
   const dish = L.parts.bath.stand({ type: "dish" });
   assert.ok(dish.depth < 40 && L.parts.bath.stand({ type: "testtube" }).depth === 50, `Wasserstand an der Schale ${dish.depth}`);
   // das Fotometer: seine Anzeige steht links der Sonde, die Bürette hängt rechts
@@ -9193,6 +9205,77 @@ test("Destillation: Ethanol 96 % siedet bei 78 °C, reines Wasser weiter bei 100
   until(water, () => distillate(water).ml >= 2, 900);
   assert.deepEqual(Object.entries(L.vessel(water, "v").n).filter(([, n]) => n > 1e-8).map(([id]) => id), ["H2O(l)"], "das Destillat ist Wasser (mit seinen Ionen in Spuren)");
   near(L.vessel(water, "v").T, 20, 3, "der Kühler kühlt das Destillat auf Raumtemperatur");
+});
+
+test("Destillation nach ISO 918: das Thermometer im Kopf misst den Dampf, nicht die Flüssigkeit", () => {
+  L.register(organic);
+  const l = still([{ reagent: "wine", ml: 50 }]), k = L.vessel(l, "k"), th = () => L.reading(l, "th").value;
+  until(l, () => k.T > 60, 900);
+  near(th(), 20, 0.5, "solange nichts siedet, kommt am Seitenrohr keine Wärme an");
+  until(l, () => k.boil > 0, 900);
+  L.step(l, 20);
+  near(th(), k.T, 1, "beim Sieden zeigt es die Temperatur des Dampfes");
+  const hot = th();
+  L.setFlame(l, "br", 0);
+  L.step(l, 5);
+  assert.ok(th() > hot - 15, `der Kopf kühlt langsam ab (${th().toFixed(1)} °C nach 5 s)`);
+  L.step(l, 300);
+  assert.ok(th() < 30, `nach fünf Minuten fast Raumtemperatur (${th().toFixed(1)} °C)`);
+  // ohne Kühler steckt es in der Flüssigkeit
+  const open = lab([{ type: "flask", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }, { type: "burner", id: "br", under: "k", flame: 2 }, { type: "thermometer", id: "th", in: "k" }], { room: 20 });
+  until(open, () => L.vessel(open, "k").T > 60, 900);
+  near(L.reading(open, "th").value, L.vessel(open, "k").T, 3, "ohne Kühler misst es die Flüssigkeit");
+});
+
+test("Rundkolben: Seitenrohr nur mit Liebigkühler, Zweihalskolben beim Rückfluss, Stativ beim Erhitzen (ISO 918, ISO 4799)", () => {
+  const F = L.shapes.flask;
+  const v = { id: "k", type: "flask" }, flask = L.parts.flask;
+  const plain = L.view(lab([{ type: "flask", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }]), L.vessel(lab([{ type: "flask", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }]), "k"));
+  const draw = (fit, more) => flask.draw(plain, ctx(Object.assign({ fit: fit }, more)));
+  const tubes = (svg) => (svg.match(/class="cl-glass"/g) || []).length;
+  assert.equal(tubes(draw([])), 1, "für sich: ein schlichter Hals ohne Seitenrohr");
+  assert.doesNotMatch(draw([]), /cl-rod/, "auf dem Korkring ohne Stativ");
+  assert.match(draw([], { lift: 104 }), /cl-rod/, "über dem Brenner hält ihn eine Klemme am Stativ");
+  // Destillation: Seitenrohr, Thermometer im Stopfen, Kugel am Seitenrohr
+  const still2 = draw(["condenser", "thermometer"]);
+  assert.equal(tubes(still2), 2, "mit Liebigkühler: Seitenrohr");
+  assert.match(still2, /cl-stopper/, "ein Stopfen hält das Thermometer");
+  const head = flask.probe(v, "thermometer", 0, ["condenser", "thermometer"]);
+  near(head.bottom - 10, F.arm + 3, 0.01, "Oberkante der Kugel auf Höhe der Unterkante des Seitenrohrs");
+  assert.equal(head.x, 0);
+  assert.ok(flask.probe(v, "thermometer", 0, ["thermometer"]).bottom > F.arm + 60, "ohne Kühler taucht es ein");
+  // Rückfluss: senkrecht im Haupthals, der Fühler im Nebenhals, das Stativ hält Kolben und Kühler
+  const up = flask.probe(v, "reflux", 0, ["reflux", "thermometer"]);
+  assert.equal(up.x, 0); assert.ok(!up.lean, "der Rückflusskühler steht senkrecht");
+  near(flask.probe(v, "thermometer", 0, ["reflux", "thermometer"]).x, L.shapes.flaskSide.x - 2, 0.01, "das Thermometer im Nebenhals");
+  const two = draw(["reflux", "thermometer"]);
+  assert.equal((two.match(/cl-ground/g) || []).length, 2, "zwei Schliffe: Haupt- und Nebenhals");
+  assert.equal((two.match(/cl-boss/g) || []).length, 2, "zwei Klemmen: Kolben und Kühler");
+  // Kühler: Allihn mit Kugeln, Oliven auf derselben Seite (ISO 4799:1978, 6.2 und 8.2)
+  const allihn = L.parts.reflux.draw({}, ctx(), up);
+  assert.match(allihn, /Q/, "Kugeln im Innenrohr");
+  assert.doesNotMatch(allihn, /rotate/);
+  const hoses = allihn.match(/class="cl-hose" d="([^"]+)"/)[1];
+  assert.deepEqual(hoses.match(/l(-?\d+),/g), ["l9,", "l9,"], "beide Oliven zeigen nach rechts");
+  const liebig = L.parts.condenser.draw({}, ctx({ lift: 104 }), { x1: 9, y1: -112, x2: 150, y2: -96, s2: -10 });
+  assert.deepEqual(liebig.match(/class="cl-hose" d="([^"]+)"/)[1].match(/l0,-?\d+/g), ["l0,-9", "l0,-9"], "beide Oliven des Liebigkühlers zeigen nach oben");
+  assert.match(liebig, /cl-rod/, "ein eigenes Stativ hält den Liebigkühler");
+});
+
+test("Laborpraxis: Kolbenprober am Stativ, Rührer im Kalorimeter, Siedesteine beim Destillieren, Pfeile am Kühlwasser", () => {
+  const syr = L.parts.syringe.draw({ value: 20 }, ctx({ lift: 0 }), { x: 0, rim: -60, w: 16 });
+  assert.match(syr, /cl-rod/, "eine Stativstange hält den Kolbenprober");
+  assert.match(syr, /cl-clamp/);
+  assert.doesNotMatch(L.parts.syringe.draw({ value: 0 }, ctx()), /cl-boss/, "für sich liegt er ohne Stativ");
+  const cal = lab([{ type: "calorimeter", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }]);
+  assert.match(L.parts.calorimeter.draw(L.view(cal, L.vessel(cal, "k")), ctx()), /cl-stirrer/, "ein Ringrührer im Kalorimeter");
+  const k = lab([{ type: "flask", id: "k", contains: [{ reagent: "H2O", ml: 50 }] }]), w = L.view(k, L.vessel(k, "k"));
+  assert.equal((L.parts.flask.draw(w, ctx({ fit: ["condenser"] })).match(/cl-chip/g) || []).length, 3, "Siedesteine im Destillierkolben (ISO 918, 7.2)");
+  assert.doesNotMatch(L.parts.flask.draw(w, ctx({ fit: [] })), /cl-chip/);
+  const liebig = L.parts.condenser.draw({}, ctx(), { x1: 9, y1: -112, x2: 150, y2: -96, s2: -10 });
+  const arrows = [...liebig.matchAll(/cl-flow-arrow" d="M([-\d.]+),([-\d.]+)L([-\d.]+)/g)].map((m) => Math.sign(+m[1] - +m[3]));
+  assert.deepEqual(arrows, [-1, 1], "unten zeigt der Pfeil in den Kühler hinein, oben hinaus");
+  assert.equal((L.parts.reflux.draw({}, ctx(), { x: 0, rim: -128, top: -238 }).match(/cl-flow-arrow/g) || []).length, 2);
 });
 
 test("Sieden ohne Kühler: der Dampf entweicht, das Ethanol zuerst", () => {
