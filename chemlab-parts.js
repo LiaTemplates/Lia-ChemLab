@@ -21,7 +21,7 @@
       "part.testtube": "test tube", "part.beaker": "beaker", "part.calorimeter": "calorimeter", "part.funnel": "funnel with filter paper", "part.cylinder": "measuring cylinder", "part.jar": "gas jar", "part.pipette": "volumetric pipette {ml} mL",
       "hint.pipette1": "Now tap the vessel the pipette should draw from.", "hint.pipette2": "Now tap the vessel it should deliver into.",
       "say.pipetted": "{ml} mL transferred with the pipette from {from} into {vessel}", "pipetteShort": "There is not enough in it for the pipette.", "pipetteFull": "There is no room for it in that vessel.", "pipetteDrawn": "Drawn up from {vessel}.",
-      "noHeat": "Measuring cylinders and gas jars are not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
+      "noHeat": "Measuring cylinders, gas jars and volumetric flasks are not heated.", "pipetteSame": "The pipette delivers into another vessel.", "hint.funnel": "Now tap the vessel the funnel should hang over.", "notHere.funnel": "That does not work on a funnel.", "part.thermometer": "thermometer", "part.flask": "round-bottom flask", "part.condenser": "Liebig condenser", "part.reflux": "reflux condenser",
       "hint.still1": "Now tap the vessel to distil from.", "hint.still2": "Now tap the receiver for the distillate.",
       "sameStill": "The condenser leads into another vessel.",
       "part.tube": "gas delivery tube", "hint.tube1": "Now tap the vessel the gas comes from.", "hint.tube2": "Now tap the vessel to lead the gas into.",

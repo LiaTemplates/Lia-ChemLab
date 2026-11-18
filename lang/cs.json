@@ -35,7 +35,7 @@
     "pipetteShort": "Není tam dost pro pipetu.",
     "pipetteFull": "V té nádobě na to není místo.",
     "pipetteDrawn": "Nasáto z {vessel}.",
-    "noHeat": "Odměrné a plynové válce se nezahřívají.",
+    "noHeat": "Odměrné válce, válce na plyny a odměrné baňky se nezahřívají.",
     "pipetteSame": "Pipeta vypouští do jiné nádoby.",
     "hint.funnel": "Teď klepni na nádobu, nad kterou má nálevka viset.",
     "notHere.funnel": "U nálevky to nejde.",

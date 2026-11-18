@@ -35,7 +35,7 @@
     "pipetteShort": "Nu e destul pentru pipetă.",
     "pipetteFull": "În acel vas nu e loc.",
     "pipetteDrawn": "Aspirat din {vessel}.",
-    "noHeat": "Cilindrii gradați și cei pentru gaze nu se încălzesc.",
+    "noHeat": "Cilindrii gradați, cilindrii pentru gaze și baloanele cotate nu se încălzesc.",
     "pipetteSame": "Pipeta golește în alt vas.",
     "hint.funnel": "Atinge acum vasul deasupra căruia trebuie să stea pâlnia.",
     "notHere.funnel": "La o pâlnie nu merge.",

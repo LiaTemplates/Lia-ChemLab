@@ -35,7 +35,7 @@
     "pipetteShort": "Pipetei nepietiek.",
     "pipetteFull": "Tajā traukā nav vietas.",
     "pipetteDrawn": "Iesūkts no {vessel}.",
-    "noHeat": "Mērcilindrus un gāzes cilindrus nekarsē.",
+    "noHeat": "Mērcilindrus, gāzu cilindrus un mērkolbas nekarsē.",
     "pipetteSame": "Pipete iztukšojas citā traukā.",
     "hint.funnel": "Tagad pieskaries traukam, virs kura jākarājas piltuvei.",
     "notHere.funnel": "Pie piltuves tas nedarbojas.",

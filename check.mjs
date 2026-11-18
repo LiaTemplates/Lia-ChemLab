@@ -10670,6 +10670,11 @@ test("Messkolben: bis zur Marke genau; 4 g Natriumhydroxid im 100-mL-Kolben erge
   assert.match(L.parts.volflask.draw(look(l, "m"), { lang: "de", numbers: true, volumes: true, uid: "x", no: 1 }), /class="cl-mark"/, "Eichstrich");
   const big = lab([{ type: "volflask", id: "m", ml: 250 }]);
   assert.equal(look(big, "m").mark, 250, "auch mit 250 mL");
+  L.add(big, "m", "H2O", { ml: 260 });
+  L.step(big, 60);
+  assert.equal(L.toMark(big, "m"), false, "über die Marke gefüllt: nichts zuzugeben");
+  assert.equal(L.tool(big, L.place(big, { type: "burner", under: "m" })).in, null, "ein Messkolben wird nicht erhitzt");
+  assert.throws(() => L.normalize({ bench: [{ type: "volflask", id: "m" }, { type: "burner", under: "m" }] }), (e) => e.code === "place");
 });
 
 test("Pyridin: schwache Base, 0,1 mol/L hat pH 9,1", () => {

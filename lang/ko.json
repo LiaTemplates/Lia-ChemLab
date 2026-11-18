@@ -35,7 +35,7 @@
     "pipetteShort": "피펫에 부족하다.",
     "pipetteFull": "그 용기에는 자리가 없다.",
     "pipetteDrawn": "{vessel}에서 빨아들였다.",
-    "noHeat": "눈금실린더와 기체 실린더는 가열하지 않습니다.",
+    "noHeat": "눈금 실린더, 기체 병, 부피 플라스크는 가열하지 않는다.",
     "pipetteSame": "피펫은 다른 용기에 옮긴다.",
     "hint.funnel": "이제 깔때기를 걸 용기를 누르세요.",
     "notHere.funnel": "깔때기에서는 그렇게 할 수 없다.",

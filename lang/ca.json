@@ -35,7 +35,7 @@
     "pipetteShort": "No n'hi ha prou per a la pipeta.",
     "pipetteFull": "En aquest recipient no hi cap.",
     "pipetteDrawn": "Xuclat de {vessel}.",
-    "noHeat": "Les provetes graduades i les de gasos no s'escalfen.",
+    "noHeat": "Les provetes, els flascons de gas i els matrassos aforats no s'escalfen.",
     "pipetteSame": "La pipeta aboca en un altre recipient.",
     "hint.funnel": "Toca ara el recipient sobre el qual ha de penjar l'embut.",
     "notHere.funnel": "En un embut això no es pot fer.",

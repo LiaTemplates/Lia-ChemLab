@@ -35,7 +35,7 @@
     "pipetteShort": "No hay suficiente para la pipeta.",
     "pipetteFull": "En ese recipiente no cabe.",
     "pipetteDrawn": "Tomado de {vessel}.",
-    "noHeat": "Las probetas graduadas y las de gases no se calientan.",
+    "noHeat": "Las probetas, los frascos de gas y los matraces aforados no se calientan.",
     "pipetteSame": "La pipeta vierte en otro recipiente.",
     "hint.funnel": "Toca ahora el recipiente sobre el que debe colgar el embudo.",
     "notHere.funnel": "Eso no se puede en un embudo.",

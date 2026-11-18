@@ -35,7 +35,7 @@
     "pipetteShort": "不够移液管吸取。",
     "pipetteFull": "那个容器装不下。",
     "pipetteDrawn": "已从{vessel}吸取。",
-    "noHeat": "量筒和集气瓶不能加热。",
+    "noHeat": "量筒、集气瓶和容量瓶不加热。",
     "pipetteSame": "移液管要放到另一个容器中。",
     "hint.funnel": "现在点按漏斗要放在其上方的容器。",
     "notHere.funnel": "漏斗上不能这样做。",

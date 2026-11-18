@@ -35,7 +35,7 @@
     "pipetteShort": "Det er ikke nok til pipetten.",
     "pipetteFull": "Det er ikke plass i det karet.",
     "pipetteDrawn": "Sugd opp fra {vessel}.",
-    "noHeat": "Målesylindre og gassylindre varmes ikke opp.",
+    "noHeat": "Målesylindre, gassylindre og målekolber varmes ikke opp.",
     "pipetteSame": "Pipetten tømmes i et annet kar.",
     "hint.funnel": "Trykk nå på karet trakten skal henge over.",
     "notHere.funnel": "Det går ikke ved en trakt.",

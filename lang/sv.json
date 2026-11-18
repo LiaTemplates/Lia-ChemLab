@@ -35,7 +35,7 @@
     "pipetteShort": "Det räcker inte till pipetten.",
     "pipetteFull": "Det får inte plats i det kärlet.",
     "pipetteDrawn": "Uppsuget från {vessel}.",
-    "noHeat": "Mätcylindrar och gascylindrar värms inte.",
+    "noHeat": "Mätcylindrar, gascylindrar och mätkolvar värms inte.",
     "pipetteSame": "Pipetten töms i ett annat kärl.",
     "hint.funnel": "Tryck nu på kärlet som tratten ska hänga över.",
     "notHere.funnel": "Det går inte vid en tratt.",

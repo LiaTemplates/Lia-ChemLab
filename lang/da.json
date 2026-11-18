@@ -35,7 +35,7 @@
     "pipetteShort": "Der er ikke nok til pipetten.",
     "pipetteFull": "Der er ikke plads i den beholder.",
     "pipetteDrawn": "Suget op fra {vessel}.",
-    "noHeat": "Måleglas og gascylindre opvarmes ikke.",
+    "noHeat": "Måleglas, gascylindre og målekolber opvarmes ikke.",
     "pipetteSame": "Pipetten tømmes i en anden beholder.",
     "hint.funnel": "Tryk nu på den beholder, tragten skal hænge over.",
     "notHere.funnel": "Det går ikke ved en tragt.",

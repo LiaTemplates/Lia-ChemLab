@@ -35,7 +35,7 @@
     "pipetteShort": "Non ce n'è abbastanza per la pipetta.",
     "pipetteFull": "In quel recipiente non c'è posto.",
     "pipetteDrawn": "Prelevato da {vessel}.",
-    "noHeat": "I cilindri graduati e per gas non si riscaldano.",
+    "noHeat": "Cilindri graduati, cilindri per gas e matracci tarati non si riscaldano.",
     "pipetteSame": "La pipetta versa in un altro recipiente.",
     "hint.funnel": "Ora tocca il recipiente sopra cui deve stare l'imbuto.",
     "notHere.funnel": "Con un imbuto non si può.",

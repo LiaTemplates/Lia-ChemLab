@@ -35,7 +35,7 @@
     "pipetteShort": "Ez dago nahikoa pipetarako.",
     "pipetteFull": "Ontzi horretan ez dago tokirik.",
     "pipetteDrawn": "{vessel} ontzitik xurgatua.",
-    "noHeat": "Probeta graduatuak eta gas-probetak ez dira berotzen.",
+    "noHeat": "Neurgailu-zilindroak, gas-zilindroak eta matraze aforatuak ez dira berotzen.",
     "pipetteSame": "Pipetak beste ontzi batean husten du.",
     "hint.funnel": "Ukitu orain inbutua gainean izan behar duen ontzia.",
     "notHere.funnel": "Inbutu batean ezin da hori egin.",

@@ -35,7 +35,7 @@
     "pipetteShort": "Nuk mjafton për pipetën.",
     "pipetteFull": "Në atë enë nuk ka vend.",
     "pipetteDrawn": "U thith nga {vessel}.",
-    "noHeat": "Cilindrat matës dhe cilindrat për gaze nuk ngrohen.",
+    "noHeat": "Cilindrat matës, cilindrat e gazit dhe balonat vëllimore nuk ngrohen.",
     "pipetteSame": "Pipeta derdh në një enë tjetër.",
     "hint.funnel": "Prek tani enën mbi të cilën duhet të varet hinka.",
     "notHere.funnel": "Te hinka kjo nuk bëhet.",

@@ -35,7 +35,7 @@
     "pipetteShort": "Er zit niet genoeg in voor de pipet.",
     "pipetteFull": "In dat vat is er geen plaats voor.",
     "pipetteDrawn": "Opgezogen uit {vessel}.",
-    "noHeat": "Maatcilinders en gascilinders worden niet verwarmd.",
+    "noHeat": "Maatcilinders, gascilinders en maatkolven worden niet verwarmd.",
     "pipetteSame": "De pipet geeft af in een ander vat.",
     "hint.funnel": "Tik nu op het vat waarboven de trechter moet hangen.",
     "notHere.funnel": "Bij een trechter kan dat niet.",

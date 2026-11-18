@@ -35,7 +35,7 @@
     "pipetteShort": "Pipet için yeterli değil.",
     "pipetteFull": "O kapta yer yok.",
     "pipetteDrawn": "{vessel} kabından çekildi.",
-    "noHeat": "Dereceli silindirler ve gaz silindirleri ısıtılmaz.",
+    "noHeat": "Dereceli silindirler, gaz silindirleri ve balon jojeler ısıtılmaz.",
     "pipetteSame": "Pipet başka bir kaba boşaltır.",
     "hint.funnel": "Şimdi hunin üstünde duracağı kaba dokun.",
     "notHere.funnel": "Hunide bu olmaz.",

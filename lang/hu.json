@@ -35,7 +35,7 @@
     "pipetteShort": "Nincs benne elég a pipettához.",
     "pipetteFull": "Abban az edényben nincs hely.",
     "pipetteDrawn": "Felszívva innen: {vessel}.",
-    "noHeat": "A mérőhengereket és gázhengereket nem melegítjük.",
+    "noHeat": "Mérőhengert, gázfelfogó hengert és mérőlombikot nem melegítünk.",
     "pipetteSame": "A pipetta másik edénybe enged.",
     "hint.funnel": "Most koppints arra az edényre, amely fölött a tölcsér legyen.",
     "notHere.funnel": "Tölcsérnél ez nem megy.",

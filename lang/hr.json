@@ -35,7 +35,7 @@
     "pipetteShort": "Nema dovoljno za pipetu.",
     "pipetteFull": "U toj posudi nema mjesta.",
     "pipetteDrawn": "Uzeto iz {vessel}.",
-    "noHeat": "Menzure i plinski cilindri se ne zagrijavaju.",
+    "noHeat": "Menzure, cilindri za plin i odmjerne tikvice ne zagrijavaju se.",
     "pipetteSame": "Pipeta ispušta u drugu posudu.",
     "hint.funnel": "Sada dodirni posudu iznad koje treba visjeti lijevak.",
     "notHere.funnel": "Kod lijevka to ne ide.",

@@ -35,7 +35,7 @@
     "pipetteShort": "Ni dovolj za pipeto.",
     "pipetteFull": "V tej posodi ni prostora.",
     "pipetteDrawn": "Vsrkano iz {vessel}.",
-    "noHeat": "Merilnih in plinskih valjev ne segrevamo.",
+    "noHeat": "Merilnih valjev, plinskih valjev in merilnih bučk ne segrevamo.",
     "pipetteSame": "Pipeta izpusti v drugo posodo.",
     "hint.funnel": "Zdaj tapni posodo, nad katero naj visi lij.",
     "notHere.funnel": "Pri liju to ne gre.",

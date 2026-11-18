@@ -35,7 +35,7 @@
     "pipetteShort": "Jest za mało na pipetę.",
     "pipetteFull": "W tym naczyniu nie ma na to miejsca.",
     "pipetteDrawn": "Pobrano z {vessel}.",
-    "noHeat": "Cylindrów miarowych i cylindrów na gazy się nie ogrzewa.",
+    "noHeat": "Cylindrów miarowych, cylindrów do gazów i kolb miarowych się nie ogrzewa.",
     "pipetteSame": "Pipeta oddaje do innego naczynia.",
     "hint.funnel": "Teraz dotknij naczynia, nad którym ma wisieć lejek.",
     "notHere.funnel": "Przy lejku to nie działa.",

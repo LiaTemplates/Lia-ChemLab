@@ -35,7 +35,7 @@
     "pipetteShort": "Tidak cukup untuk pipet.",
     "pipetteFull": "Tiada ruang dalam bekas itu.",
     "pipetteDrawn": "Disedut dari {vessel}.",
-    "noHeat": "Silinder penyukat dan silinder gas tidak dipanaskan.",
+    "noHeat": "Silinder penyukat, balang gas dan kelalang volumetrik tidak dipanaskan.",
     "pipetteSame": "Pipet mengisi ke bekas lain.",
     "hint.funnel": "Sekarang ketik bekas yang corong akan digantung di atasnya.",
     "notHere.funnel": "Itu tidak boleh pada corong.",

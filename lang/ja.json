@@ -35,7 +35,7 @@
     "pipetteShort": "ピペットに足りない。",
     "pipetteFull": "その容器には入らない。",
     "pipetteDrawn": "{vessel} から吸い取った。",
-    "noHeat": "メスシリンダーとガス捕集びんは加熱しない。",
+    "noHeat": "メスシリンダー、ガス捕集びん、メスフラスコは加熱しない。",
     "pipetteSame": "ピペットは別の容器に注ぐ。",
     "hint.funnel": "漏斗をのせる容器をタップしてください。",
     "notHere.funnel": "漏斗ではそれはできない。",

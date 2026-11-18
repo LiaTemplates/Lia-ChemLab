@@ -35,7 +35,7 @@
     "pipetteShort": "Pipeti jaoks ei jätku.",
     "pipetteFull": "Sellesse anumasse ei mahu.",
     "pipetteDrawn": "Imetud anumast {vessel}.",
-    "noHeat": "Mõõtsilindreid ja gaasisilindreid ei kuumutata.",
+    "noHeat": "Mõõtesilindreid, gaasisilindreid ja mõõtekolbe ei kuumutata.",
     "pipetteSame": "Pipett tühjendatakse teise anumasse.",
     "hint.funnel": "Puuduta nüüd anumat, mille kohale lehter riputada.",
     "notHere.funnel": "Lehtri juures see ei käi.",

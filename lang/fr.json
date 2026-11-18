@@ -35,7 +35,7 @@
     "pipetteShort": "Il n'y en a pas assez pour la pipette.",
     "pipetteFull": "Ce récipient n'a pas assez de place.",
     "pipetteDrawn": "Prélevé dans {vessel}.",
-    "noHeat": "Les éprouvettes graduées et à gaz ne se chauffent pas.",
+    "noHeat": "Les éprouvettes graduées et à gaz et les fioles jaugées ne se chauffent pas.",
     "pipetteSame": "La pipette verse dans un autre récipient.",
     "hint.funnel": "Touche maintenant le récipient au-dessus duquel l'entonnoir doit être placé.",
     "notHere.funnel": "Ce n'est pas possible sur un entonnoir.",
