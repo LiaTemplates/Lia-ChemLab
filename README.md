@@ -227,6 +227,22 @@ Ein **Puffer** hält den pH-Wert fest. Links stehen Essigsäure und Natriumaceta
  "show":{"charts":["pH"]}}
 ```
 
+## Phosphorsäure titrieren
+
+Phosphorsäure gibt ihre drei Protonen nacheinander ab: H₃PO₄ (pKs 2,2), H₂PO₄⁻ (pKs 7,2) und HPO₄²⁻ (pKs 12,3). Titriere 20 mL Phosphorsäure (0,1 mol/L) mit Natronlauge: Die Kurve springt zweimal, bei 20 mL und bei 40 mL. Bromkresolgrün schlägt am ersten Sprung von Gelb nach Blau um, Phenolrot am zweiten von Gelb nach Pink. Den dritten Sprung sieht man nicht: Das Phosphat-Ion ist eine zu starke Base.
+
+Zum Vergleich stehen im Regal die schwache Flusssäure (pKs 3,2) und drei starke Säuren: Perchlor-, Bromwasserstoff- und Iodwasserstoffsäure. Ein Gemisch aus Dihydrogenphosphat und Hydrogenphosphat ist der Phosphatpuffer, wie er in Zellen den pH-Wert hält. Im realen Modell (`"model":"real"`) hat er bei gleichen Teilen pH 6,86 wie die Eichlösung.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","ml":250,"contains":[{"reagent":"H3PO4 0.1M","ml":20},{"reagent":"BCG","drops":3}]},
+  {"type":"phmeter","in":"beaker1"},
+  {"type":"burette","over":"beaker1","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
+ ],
+ "shelf":["NaOH 0.1M","H3PO4 0.1M","NaH2PO4 0.1M","Na2HPO4 0.1M","Na3PO4 0.1M","HF 0.1M","HClO4 0.1M","HBr 0.1M","HI 0.1M","BCG","phenol red","beaker"],
+ "show":{"charts":["pH","titration"]}}
+```
+
 ## Rotkohl als Indikator
 
 Der Farbstoff aus Rotkohl (ein Anthocyan) ist ein Indikator aus der Küche, mit mehr Farben als jeder Laborindikator. Gib in jedes Glas ein paar Tropfen Rotkohlsaft:
@@ -271,7 +287,7 @@ Oder statt Ammoniak Kaliumiodid zum weißen Silberchlorid geben: Der Niederschla
  "show":{"charts":false}}
 ```
 
-**Sulfat mit Bariumchlorid, Eisen(III) mit Thiocyanat und mit Lauge:** Bariumsulfat fällt weiß aus. Eisen(III)-Ionen färben sich mit Thiocyanat blutrot, ohne Niederschlag; mit Natronlauge fällt rostbraunes Eisen(III)-hydroxid.
+**Sulfat mit Bariumchlorid, Eisen(III) mit Thiocyanat und mit Lauge:** Bariumsulfat fällt weiß aus. Eisen(III)-Ionen färben sich mit Thiocyanat blutrot, ohne Niederschlag; mit Natronlauge fällt rostbraunes Eisen(III)-hydroxid. Im Regal stehen dazu Natriumfluorid und Dinatriumhydrogenphosphat: Fluorid fällt mit Calcium weißes Calciumfluorid, Phosphat mit Silber gelbes Silberphosphat.
 
 ```json @ChemLab.sim
 {"bench":[
@@ -279,7 +295,7 @@ Oder statt Ammoniak Kaliumiodid zum weißen Silberchlorid geben: Der Niederschla
   {"type":"testtube","contains":[{"reagent":"FeCl3 0.1M","ml":5}]},
   {"type":"testtube","contains":[{"reagent":"FeCl3 0.1M","ml":5}]}
  ],
- "shelf":["BaCl2 0.1M","KSCN 0.1M","NaOH 1M","HCl 1M"],
+ "shelf":["BaCl2 0.1M","KSCN 0.1M","NaOH 1M","HCl 1M","NaF 0.1M","Na2HPO4 0.1M"],
  "show":{"charts":false}}
 ```
 
@@ -303,6 +319,24 @@ Vergleiche die Mengen unter den Gläsern. Hier streuen die Geräte wie echte (`"
   {"type":"beaker","id":"c"}
  ],
  "shelf":["pipette20","pipette5","pipette10","pipette25","cylinder"],
+ "show":{"charts":false}}
+```
+
+## Maßlösung im Messkolben
+
+Eine Lösung mit genau bekannter Konzentration setzt man im **Messkolben** an: Natriumhydroxid abwiegen, in wenig Wasser lösen, dann mit Wasser bis zum Eichstrich am Hals auffüllen. 4,00 g Natriumhydroxid sind 0,100 mol; im 100-mL-Kolben ergibt das genau 1 mol/L.
+
+1. Im Messkolben liegen schon 4 g Plätzchen in 60 mL Wasser. Warte, bis sie sich gelöst haben; die Lösung wird dabei warm.
+2. Kolben antippen und **Bis zur Marke auffüllen** wählen. Der Kolben fasst jetzt genau 100 mL.
+3. Prüfe mit der Teilchenlupe: Na⁺ hat 1 mol/L.
+
+Warum erst lösen und dann auffüllen? Gelöste Stoffe brauchen selbst Platz. Erst das Auffüllen danach macht das Volumen genau.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"volflask","id":"kolben","contains":[{"reagent":"H2O","ml":60},{"reagent":"NaOH pellets","g":4}]}
+ ],
+ "shelf":["NaOH pellets","KNO3 salt","H2O","volflask","balance"],
  "show":{"charts":false}}
 ```
 
@@ -337,6 +371,24 @@ Auch fein verteilter Schwefel, der durch das Filter läuft, setzt sich in der Ze
  ],
  "shelf":["NaOH 1M","Na2S2O3 1M","HCl 2M"],
  "show":{"charts":false}}
+```
+
+## Löslichkeitskurve von Kaliumnitrat
+
+In heißem Wasser löst sich viel mehr Kaliumnitrat als in kaltem: bei 20 °C knapp 32 g in 100 g Wasser, bei 60 °C 110 g. In beiden Gläsern sind 40 g Kaliumnitrat in 20 mL Wasser. Im Wasserbad bei 60 °C löst sich fast alles, bei 20 °C bleibt viel liegen. Stell das Wasserbad dann auf 10 °C: Aus der heißen Lösung wachsen wieder Kristalle. So reinigt man Salze durch Umkristallisieren.
+
+Lies die gelöste Menge mit der Teilchenlupe ab und trage sie gegen die Temperatur auf. Die Werte folgen der gemessenen Kurve im idealen Modell, für das die Konstante eigens angepasst ist (siehe Grenzen).
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"beaker","id":"kalt","contains":[{"reagent":"H2O","ml":20},{"reagent":"KNO3 salt","g":40}]},
+  {"type":"bath","under":"kalt","temp":20},
+  {"type":"beaker","id":"heiss","contains":[{"reagent":"H2O","ml":20},{"reagent":"KNO3 salt","g":40}]},
+  {"type":"bath","under":"heiss","temp":60},
+  {"type":"thermometer","in":"heiss"}
+ ],
+ "shelf":["KNO3 salt","H2O","beaker","bath","thermometer"],
+ "show":{"charts":["T"]}}
 ```
 
 ## Kupfer und Ammoniak
@@ -1384,7 +1436,7 @@ lab.seen.includes("gas") ? "Es sprudelt." : "Noch kein Gas."
 
 ## Erweiterungspakete
 
-Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin), dem Leuchten von Luminol, Fluorescein und Chinin und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
+Ein **Paket** ist eine JSON-Datei im selben Format wie das Feld `data` (siehe „Eigene Stoffe und Reaktionen“). Zum Baustein gehören das Paket `packs/organic.json` mit Ethanol, Eisessig, Ethylacetat und Wein, der Veresterung und den Angaben für die Destillation, dazu den Nachweisen mit Fehling, Tollens und Bromwasser (Ethanal, Glucose, Aceton, Hexen, Hexan), der Blauen Flasche und der Ampel (Methylenblau, Indigocarmin), dem Leuchten von Luminol, Fluorescein und Chinin, Pyridin als schwacher Base und mit Glycerin und Zuckersirup als zähen Flüssigkeiten, Olivenöl und Hexan als Schicht auf Wasser, das Paket `packs/alkali.json` mit Lithium, Natrium und Kalium und das Paket `packs/ionen.json` mit Vanadium und seinen Oxidationsstufen, Nickel und den Ionen und Sulfiden des Trennungsgangs. Ein Paket kommt auf drei Wegen in einen Kurs:
 
 - `@[ChemLab.pack](Adresse)` auf einer Folie lädt das Paket; von da an kennen es alle Flächen des Kurses. Flächen auf derselben Folie warten, bis es geladen ist, oder bauen sich dann neu auf. Antwortet der Server nicht, gilt es nach 30 Sekunden als gescheitert; wird die Folie wieder gezeigt, versucht der Baustein es erneut. Eine Adresse relativ zum Kurs geht, LiaScript macht sie vollständig.
 - `"packs":["https://…/organic.json"]` in der Beschreibung einer Fläche lädt das Paket, bevor die Fläche aufgebaut wird. So geht es auch, wenn jemand den Kurs auf dieser Folie öffnet und die Folie mit `@[ChemLab.pack]` nie gesehen hat. Hier muss die Adresse vollständig sein.
@@ -1870,6 +1922,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `lamp` | Glühlämpchen 3,8 V / 0,07 A, im Stromkreis | `in` |
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
 | `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
+| `volflask` | Messkolben mit Eichstrich, 100 oder 250 mL (`ml`); „Bis zur Marke auffüllen“ gibt genau so viel Wasser zu, wie bis zum Strich fehlt; nicht erhitzen | `ml`, `contains` |
 | `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
 | `reflux` | Rückflusskühler: steht aufrecht im Gefäß; was verdampft, läuft zurück | `in` |
 | `splint`, `glowsplint`, `rod`, `paper` | brennender Holzspan, Glimmspan, Magnesiastäbchen, feuchtes Indikatorpapier: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |
@@ -1890,6 +1943,8 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 |---|---|---|
 | `H2O` | destilliertes Wasser | `ml` |
 | `HCl`, `H2SO4`, `HNO3`, `CH3COOH` | Salzsäure, Schwefelsäure, Salpetersäure (bis 12 mol/L), Essigsäure | `ml` |
+| `H3PO4`, `HF`, `HClO4`, `HBr`, `HI` | Phosphorsäure, Flusssäure, Perchlorsäure, Bromwasserstoffsäure, Iodwasserstoffsäure | `ml` |
+| `NaH2PO4`, `Na2HPO4`, `Na3PO4`, `NaF` | Natriumdihydrogenphosphat, Dinatriumhydrogenphosphat, Trinatriumphosphat, Natriumfluorid | `ml` |
 | `H2SO4 conc` | konzentrierte Schwefelsäure, als reiner Stoff `H2SO4(l)`: Mit Wasser löst sie sich sofort zu H⁺ und HSO₄⁻ und setzt dabei etwa 73 kJ/mol frei; je Mol braucht sie dafür drei Mol Wasser, so dass sich mit wenig Wasser nur ein Teil löst | `ml` |
 | `NaOH`, `NH3` | Natronlauge, Ammoniaklösung | `ml` |
 | `limewater` | Kalkwasser: Calciumhydroxid-Lösung mit 0,011 mol/L (ohne Konzentration im Namen) | `ml` |
@@ -1904,7 +1959,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
 | `H2O2`, `sugar`, `detergent` | Wasserstoffperoxid, Zuckerlösung, Spülmittel | `ml` |
-| `BTB`, `PP`, `MO`, `UI`, `red cabbage` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator, Rotkohlsaft | `drops` |
+| `BTB`, `PP`, `MO`, `UI`, `red cabbage`, `BCG`, `phenol red` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator, Rotkohlsaft, Bromkresolgrün (pKs 4,7), Phenolrot (pKs 7,9) | `drops` |
 | `starch`, `Lugol` | Stärkelösung 1 %, Iod-Kaliumiodid-Lösung mit 0,01 mol/L Iod | `drops` |
 | `Mg ribbon` | Magnesiumband; 1 cm wiegt 0,0104 g | `g` |
 | `marble`, `marble powder` | Marmor (Calciumcarbonat) als Körner und als Pulver mit der zehnfachen Oberfläche | `g` |
@@ -1914,6 +1969,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `Fe wool`, `Cu sheet` | Eisenwolle, Kupferblech in Streifen | `g` |
 | `NH4NO3 salt`, `NaOH pellets`, `CaCl2 anhydrous` | Ammoniumnitrat, Natriumhydroxid-Plätzchen, wasserfreies Calciumchlorid; lösen sich in Wasser mit Lösungswärme | `g` |
 | `KCl salt` | Kaliumchlorid (Diätsalz), natürlich schwach radioaktiv (Geigerzähler) | `g` |
+| `KNO3 salt` | Kaliumnitrat, mit steiler Löslichkeitskurve | `g` |
 | `KMnO4 crystals`, `NaHCO3 powder`, `CH3COONa salt` | Kaliumpermanganat, Natron und Natriumacetat; geben trocken erhitzt Sauerstoff, Kohlenstoffdioxid und, mit Natriumhydroxid, Methan ab | `g` |
 
 ## Eigene Stoffe und Reaktionen
@@ -1976,7 +2032,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 
 **Gleichgewichte** (`equilibria`) in der Lösung stellen sich sofort ein: `{"eq":"H2O(l) <=> H+(aq) + OH-(aq)","logK":-14}`. `logK` gilt bei 25 °C; wie sich das Gleichgewicht mit der Temperatur verschiebt, folgt aus der Reaktionsenthalpie. Sie wird aus den Bildungsenthalpien berechnet; fehlt eine davon, gilt die Angabe `dH` in kJ/mol am Eintrag, und ohne beides rechnet der Vorgang ohne Wärme. Mit `"model":"real"` gilt ein Gleichgewicht in der Lösung nur im realen Modell (bei Feststoffen und Gasen ist die Angabe ein Fehler); so sind die schwachen Ionenpaare eingetragen, etwa `{"eq":"Na+(aq) + SO4^2-(aq) <=> NaSO4-(aq)","logK":0.94,"model":"real"}`.
 
-Steht in der Gleichung ein Feststoff, ist es ein **Löslichkeitsgleichgewicht**: `{"eq":"AgCl(s) <=> Ag+(aq) + Cl-(aq)","logK":-9.75}`. Für sehr gut lösliche Salze darf zusätzlich `ideal` stehen: die Konstante, mit der das ideale Modell (ohne Aktivitäten) die gemessene Löslichkeit trifft; das reale Modell rechnet weiter mit `logK`. So steht es bei Kaliumchlorid, Natron, Soda, Kaliumpermanganat, Natriumacetat und Ammoniumnitrat. Mehr braucht es für eine Fällung nicht. Der Feststoff fällt aus, sobald die Lösung übersättigt ist, und löst sich, wenn etwas anderes seine Ionen bindet. Mit `rate` (`k` in mol/(s cm²) je (mol/L) hoch Ordnung, `Ea`, `order`) folgt die Auflösung eines Stücks aus dem Regal einem Geschwindigkeitsgesetz: Wohin es geht, sagt weiter das Gleichgewicht, wie schnell, die Oberfläche und die Lösung. So ist Marmor eingetragen, mit `"order":{"H+(aq)":1}`.
+Steht in der Gleichung ein Feststoff, ist es ein **Löslichkeitsgleichgewicht**: `{"eq":"AgCl(s) <=> Ag+(aq) + Cl-(aq)","logK":-9.75}`. Für sehr gut lösliche Salze darf zusätzlich `ideal` stehen: die Konstante, mit der das ideale Modell (ohne Aktivitäten) die gemessene Löslichkeit trifft, oder `[logK, dH]` mit eigener Lösungsenthalpie, damit auch die Löslichkeitskurve stimmt; das reale Modell rechnet weiter mit `logK`. So steht es bei Kaliumchlorid, Natron, Soda, Kaliumpermanganat, Natriumacetat und Ammoniumnitrat. Mehr braucht es für eine Fällung nicht. Der Feststoff fällt aus, sobald die Lösung übersättigt ist, und löst sich, wenn etwas anderes seine Ionen bindet. Mit `rate` (`k` in mol/(s cm²) je (mol/L) hoch Ordnung, `Ea`, `order`) folgt die Auflösung eines Stücks aus dem Regal einem Geschwindigkeitsgesetz: Wohin es geht, sagt weiter das Gleichgewicht, wie schnell, die Oberfläche und die Lösung. So ist Marmor eingetragen, mit `"order":{"H+(aq)":1}`.
 
 Steht in der Gleichung ein Gas, ist es die **Löslichkeit eines Gases**: `{"eq":"CO2(g) <=> CO2(aq)","logK":-1.468}`; `logK` ist die gelöste Konzentration in mol/L bei 1 bar. Ist mehr gelöst, perlt das Gas aus; beim Sieden geht es mit dem Dampf fort, beim Eindampfen entweicht es ganz.
 
@@ -2152,6 +2208,7 @@ LiaChemLab.registerLook("beaker", "werkstatt", {
 
 - Übersättigung gibt es nicht: Was ausfallen kann, fällt aus. Darum fällt Magnesiumcarbonat mit Ammoniumcarbonat teilweise aus (mit viel Ammoniumchlorid etwa ein Fünftel), während es im Labor übersättigt gelöst bleibt. Nickel- und Cobaltsulfid fallen dagegen mit Absicht als langsame Reaktion, damit sie in salzsaurer Lösung ausbleiben und sich danach in verdünnter Salzsäure nicht wieder lösen, wie im Trennungsgang.
 - Sehr gut lösliche Salze: Im idealen Modell treffen Kaliumchlorid, Natron, Soda, Kaliumpermanganat und Natriumacetat ihre gemessene Löslichkeit bei 25 °C (`ideal`), Ammoniumnitrat nur bis 12 mol/kg statt 26,5. Das reale Modell rechnet mit den Datenbankkonstanten; über 6 mol/L Ionenstärke stehen dort die Aktivitätskoeffizienten still, und Soda (1,9 statt 2,9 mol/kg), Kaliumpermanganat (0,34 statt 0,48) und Ammoniumnitrat (8 statt 26,5) bleiben zu wenig löslich. Natriumacetat ist als wasserfreies Salz gerechnet, obwohl bei 25 °C das Trihydrat das beständige ist.
+- Kaliumnitrat folgt im idealen Modell der gemessenen Löslichkeitskurve von 0 bis 60 °C, mit eigener Lösungsenthalpie (`ideal: [logK, dH]`). Im realen Modell löst es sich viel zu wenig (bei 20 °C 13 statt 32 g in 100 g Wasser): Für so konzentrierte Lösungen sind die Aktivitätskoeffizienten dort zu klein.
 - Salzsäure und Salpetersäure rechnen bis 12 mol/L; konzentrierte Salpetersäure (65 %, 14 mol/L) steht deshalb als 12 mol/L im Regal. Welcher Weg beim Lösen von Kupfer überwiegt (NO oder NO2), folgt einem geschätzten Geschwindigkeitsgesetz, nicht dem Gleichgewicht der Stickstoffoxide in der Lösung.
 - Luftsauerstoff steht im Gasraum auch eines verschlossenen Gefäßes unbegrenzt bereit.
 - Jede Schicht gilt als durchmischt; Schlieren zeigt nur die Strömungsansicht, und an der Chemie ändern sie nichts. Zwei flüssige Schichten gibt es für Stoffe mit `oil` (Hexan, Hexen, Olivenöl); Ethylacetat löst sich noch immer ganz, auch wo es in Wasser eine Schicht bilden würde, denn die Regel kennt keine Mitlöser wie Ethanol. Iod und Brom verteilen sich auf beide Schichten (`kd`); die Verteilungskoeffizienten sind geschätzt. Schütteln und Mixen dauern immer zehn Sekunden, und die Tropfengröße ist für beide fest. Die Tropfen sind kleiner, als das Gitter der Strömungsansicht auflöst: Sie erscheinen dort als Trübung und gezeichnete Punkte, nicht als eigene Strömung; die Ölschicht dehnt sich mit der Wärme wie Wasser aus.

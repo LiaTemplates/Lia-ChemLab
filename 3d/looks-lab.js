@@ -446,4 +446,30 @@
     },
     refresh: function (group, d) { group.userData.cork.visible = !d.lift; }
   }));
+
+  // ------------------------------------------------------------------ Messkolben
+
+  // Kugel mit langem, engem Hals; ein Ring am Hals ist der Eichstrich
+  var V = S.volflask, vfR = cm(V.R - 1), vfCY = cm(4 + V.R), vfNeck = cm(V.neck - 0.5);
+  var vfShape = {
+    id: "volflask", floor: vfCY - vfR, rim: cm(-V.rim), front: cm(V.R), steps: 64,
+    inner: function (y) {
+      var dy = y - vfCY, r = Math.sqrt(Math.max(0, vfR * vfR - dy * dy));
+      return dy > 0 ? Math.max(vfNeck, r) : r;
+    }
+  };
+  L.registerLook("volflask", "lab", vessel({
+    tall: true, thick: 0.05, lip: 0.05,
+    shape: function () { return vfShape; },
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.volflask.surface(w)) : vfShape.floor; },
+    extra: function (group) {
+      var mark = new THREE.Mesh(new THREE.TorusGeometry(vfNeck + 0.03, 0.012, 6, 24).rotateX(Math.PI / 2), fx.matte(0x2a2f36, 0.6));
+      mark.position.y = cm(-V.mark);
+      var cork = new THREE.Mesh(new THREE.TorusGeometry(cm(13), cm(3), 10, 32).rotateX(Math.PI / 2), fx.matte(0xb58b5c, 0.9));
+      cork.position.y = cm(3);
+      group.add(mark, cork);
+      group.userData.cork = cork;
+    },
+    refresh: function (group, d) { group.userData.cork.visible = !d.lift; }
+  }));
 })(typeof globalThis !== "undefined" ? globalThis : this);

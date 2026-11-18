@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -1317,6 +1317,53 @@
     }
   });
 
+  // ------------------------------------------------------------------ Messkolben
+
+  // Kugel mit langem, engem Hals; in der Kugel steht bulb (Anteil) der Marke, der Rest bis zum Eichstrich steht im Hals
+  var VF = { R: 30, neck: 4.5, rim: -150, mark: -105, bulb: 0.92 };
+  var VF_CY = -4 - VF.R, VF_MEET = VF_CY - Math.sqrt(VF.R * VF.R - VF.neck * VF.neck);
+  function vfMark(w) { return w.mark || w.cap / 1.1; }
+  function vfSurface(w) {
+    var R = VF.R - 1, bulb = VF.bulb * vfMark(w), share = Math.min(1, w.ml / bulb), lo = 0, hi = 2 * R, h, i;
+    if (w.ml > bulb) return Math.max(VF.rim, VF_MEET - (w.ml - bulb) / ((1 - VF.bulb) * vfMark(w) / (VF_MEET - VF.mark)));
+    for (i = 0; i < 30; i++) { h = (lo + hi) / 2; if (h * h * (3 * R - h) / (4 * R * R * R) < share) lo = h; else hi = h; }
+    return VF_CY + R - (lo + hi) / 2;
+  }
+  function vfFill(y) {                    // Umriss der Flüssigkeit bis zur Höhe y: in der Kugel ein Kreisabschnitt, darüber die volle Kugel und der Hals
+    var R = VF.R - 1, n = VF.neck - 1, half;
+    if (y < VF_MEET) return "M0," + f(VF_CY - R) + "A" + R + "," + R + " 0 1 0 0.01," + f(VF_CY - R) + "Z" +
+      "M" + f(-n) + "," + f(VF_MEET + 2) + "L" + f(-n) + "," + f(y) + "L" + f(n) + "," + f(y) + "L" + f(n) + "," + f(VF_MEET + 2) + "Z";
+    if (y <= VF_CY - R + 0.5) return "M0," + f(VF_CY - R) + "A" + R + "," + R + " 0 1 0 0.01," + f(VF_CY - R) + "Z";
+    half = Math.sqrt(Math.max(0, R * R - (y - VF_CY) * (y - VF_CY)));
+    return "M" + f(-half) + "," + f(y) + "A" + R + "," + R + " 0 " + (y < VF_CY ? 1 : 0) + " 0 " + f(half) + "," + f(y) + "Z";
+  }
+
+  L.registerPart("volflask", {
+    width: function () { return 2 * VF.R + 30; },
+    bounds: function () { return { x0: -VF.R - 6, x1: VF.R + 6, top: VF.rim - 6 }; },
+    surface: vfSurface,
+    foot: function () { return 14; },
+    probe: function (v, type) {
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: VF.rim, w: 2 * VF.neck + 4 };
+      if (type === "tube") return { x: 0, rim: VF.rim, w: 2 * VF.neck + 4, top: VF.rim - PIPE_RISE };
+      if (type === "bridge") return { x: 0, rim: VF.rim };
+      if (type === "conductometer" || type === "photometer") return { x: 1, bottom: VF_CY + 14, top: VF.rim - 40, box: -70 };
+      return type === "phmeter" ? { x: 2, bottom: VF_CY + 14, top: VF.rim - 20, box: -62 } : { x: -2, bottom: VF_CY + 14, top: VF.rim - 40, tag: -62 };
+    },
+    mount: function (w) { return { x: 0, rim: VF.rim, surface: w.ml > 0.005 ? vfSurface(w) : VF_CY + VF.R, edge: VF.R + 6 }; },
+    draw: function (w, ctx) {
+      var R = VF.R, n = VF.neck, y = vfSurface(w), half;
+      if (w.broken) return shards(R, ctx);
+      half = y < VF_MEET ? n - 1 : Math.sqrt(Math.max(0, (R - 1) * (R - 1) - (y - VF_CY) * (y - VF_CY)));
+      return (ctx.lift ? "" : '<path class="cl-wood" d="M-16,-4L16,-4L13,0L-13,0Z"/>') +
+        contents(w, ctx, { path: vfFill(y), fill: vfFill, x0: -half, x1: half, top: y, bottom: VF_CY + R - 1, rim: VF.rim, tall: true }) +
+        '<path class="cl-glass" d="M' + -n + "," + VF.rim + "L" + -n + "," + f(VF_MEET) + "A" + R + "," + R + " 0 1 0 " + n + "," + f(VF_MEET) + "L" + n + "," + VF.rim + '"/>' +
+        '<line class="cl-mark" x1="' + (-n - 3) + '" x2="' + (n + 3) + '" y1="' + VF.mark + '" y2="' + VF.mark + '"/>' +
+        '<line class="cl-shine" x1="-14" y1="' + (VF_CY - 16) + '" x2="-19" y2="' + (VF_CY + 4) + '"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
   // ------------------------------------------------------------------ Liebigkühler
 
   // place: { x1, y1 } Ende des Ansatzrohrs, { x2, y2 } Öffnung der Vorlage, s2 ihr Flüssigkeitsspiegel. Das Rohr fällt zur Vorlage hin ab.
@@ -1723,5 +1770,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);
