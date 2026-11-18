@@ -102,6 +102,8 @@
       "CO3^2-(aq)": { name: name("carbonate ion"), Hf: -675.23, S: -50.0, D: 0.955, src: CODATA + DW },
       "HCO3-(aq)": { name: name("hydrogen carbonate ion"), Hf: -689.93, S: 98.4, D: 1.18, src: CODATA + DW },
       "CO2(aq)": { name: name("carbon dioxide, dissolved"), Hf: -413.26, S: 119.36, src: CODATA },
+      // Spülmittel: das Tensid vereinfacht als Dodecylsulfat; foam: es hält aufsteigendes Gas als Schaum fest
+      "C12H25SO4-(aq)": { name: name("dodecyl sulfate ion (detergent)"), symbol: "DS⁻", Hf: null, foam: true, src: NONE + "; the surfactant of washing-up liquid, simplified as dodecyl sulfate" },
       "H2O2(aq)": { name: name("hydrogen peroxide"), Hf: -191.17, src: "textbook value: enthalpy of formation in solution -191.17 kJ/mol" },
       "Mg^2+(aq)": { name: name("magnesium ion"), Hf: -467.0, S: -137, D: 0.705, src: CODATA + DW },
       // bands: [Wellenlänge des Maximums in nm, Halbwertsbreite in nm, molarer Absorptionskoeffizient in L/(mol cm)]
@@ -693,6 +695,7 @@
       "H2O2": { name: name("hydrogen peroxide solution"), solution: { "H2O2(aq)": 1 }, molar: true, group: "other" },
       // Kristallviolett-Lösung mit 25 µmol/L (10 mg/L), wie für die Fotometrie üblich
       "crystal violet": { name: name("crystal violet solution (25 µmol/L)"), solution: { "C25H30N3+(aq)": 2.5e-5, "Cl-(aq)": 2.5e-5 }, group: "other" },
+      "detergent": { name: name("washing-up liquid"), solution: { "C12H25SO4-(aq)": 0.5, "Na+(aq)": 0.5 }, group: "other" },
       "sugar": { name: name("sugar solution"), solution: { "C12H22O11(aq)": 1 }, molar: true, group: "other" },
 
       // Indikatorlösungen: Bromthymolblau 0,04 %, Phenolphthalein und Methylorange 0,1 %.
@@ -806,6 +809,7 @@
     "KIO3": { ate: 531, irrit: 10, src: "potassium iodate, not harmonised: self-classification of the suppliers (Acute Tox. 4, LD50 oral mouse 531 mg/kg; Skin Irrit. 2; Ox. Sol. 2 only as solid)" },
     "K2S2O8": { ate: 802, irrit: 10, stot: [3], resp: 1, sens: 1, src: "CLP Annex VI 016-061-00-1" },
     "NaOCl": { corr: [5, 1, 3, 1], aq: { acute: 10, chronic: [1, 1] }, per: { species: "OCl-(aq)", M: 74.44 }, src: "CLP Annex VI 017-011-00-1 (M = 10 acute, 1 chronic)" },
+    "detergent": { fixed: ["GHS07"], signal: "warning", src: "household washing-up liquid as usually labelled (Eye Irrit. 2, H319)" },
     "H2O2": { corr: [50, 35, 8, 5], ate: 1026, inh: 1.5, stot: [3, 35], high: [[50, "GHS03", true]], vm: 22,
       src: "CLP Annex VI 008-003-00-9 (SCL, Ox. Liq. from 50 %); ATE oral of the supplier (Neofroxx SDS), inhalation: conversion value of Acute Tox. 4" },
     "crystal violet": { cmr: [2, 1], ate: 500, corr: [null, null, 3, 1], aq: { acute: 10, chronic: [1, 10] }, src: "CLP Annex VI 612-204-00-2; M factor of the supplier (Neofroxx SDS)" },

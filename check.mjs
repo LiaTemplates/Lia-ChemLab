@@ -10435,3 +10435,31 @@ test("Rotkohl: rot in Säure, violett in Wasser, blau in Natron, grün in Soda; 
   const dye = ["C21H21O11+(aq)", "C21H20O11(aq)", "C21H19O11-(aq)", "C21H18O11^2-(aq)"].reduce((sum, id) => sum + amount(bleach.l, id), 0);
   assert.ok(dye < 0.05 * 10 * L.DROP / 1000 * 3e-3, "Bleichlauge zerstört den Farbstoff");
 });
+
+// ---------------------------------------------------------------- Schaum
+
+test("Elefantenzahnpasta: Wasserstoffperoxid mit Spülmittel und Kaliumiodid schäumt über den Rand; ohne Spülmittel kein Schaum; der Schaum zerfällt", () => {
+  const start = (soap) => {
+    const l = lab([{ type: "cylinder", ml: 100, id: "b", contains: [{ reagent: "H2O2 9.8M", ml: 20 }].concat(soap ? [{ reagent: "detergent", ml: 5 }] : []) }], { room: 20 });
+    const before = totals(l), seen = [];
+    L.add(l, "b", "KI 2M", { ml: 5 });
+    return { l, before, seen };
+  };
+  const { l, seen } = start(true);
+  const t = until(l, () => seen.some((e) => e.key === "foamOver"), 120, seen);
+  assert.ok(t < 60, `über den Rand nach ${t} s`);
+  assert.ok(seen.findIndex((e) => e.key === "foam") < seen.findIndex((e) => e.key === "foamOver"), "erst Schaum, dann über den Rand");
+  assert.equal(L.say(seen.find((e) => e.key === "foamOver"), { lang: "de", names: { b: "Messzylinder 1" } }), "Messzylinder 1: Der Schaum quillt über den Rand.");
+  let peak = 0;
+  for (let i = 0; i < 60; i++) { L.step(l, 1); peak = Math.max(peak, look(l).foam); }
+  assert.ok(peak > 500, `Schaum: ${peak} mL`);
+  L.step(l, 300);
+  assert.ok(look(l).foam < 0.1 * peak, "der Schaum zerfällt");
+  const plain = start(false);
+  L.step(plain.l, 60, (e) => plain.seen.push(e));
+  assert.ok(!plain.seen.some((e) => e.key === "foam"), "ohne Spülmittel kein Schaum");
+  assert.equal(look(plain.l).foam, 0);
+  assert.ok(gasOf(plain.l, "O2(g)") > 0.05, "der Sauerstoff entweicht trotzdem");
+  const after = totals(plain.l), added = 0.005 * 2 * (39.098 + 126.904) + 0.005 * 55.508 * 18.015;
+  assert.ok(Math.abs(after.mass - plain.before.mass - added) < 0.01 * added + 0.05, "Masse: nur das Zugegebene kam dazu");
+});

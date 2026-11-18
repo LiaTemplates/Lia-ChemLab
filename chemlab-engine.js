@@ -1791,6 +1791,8 @@
   var SEEN = 5e-5;                // mol/L: ab so viel ist ein Niederschlag als Trübung zu sehen
   var HAZE = 0.003;               // mol/L: so viel Schwebendes nimmt der Flüssigkeit 63 % ihrer Durchsicht
   var OPAQUE = 0.9;               // ab dieser Deckkraft sieht man nicht mehr hindurch
+  var FOAM_C = 0.002;             // mol/L Tensid (foam), ab dem fast alles aufsteigende Gas im Schaum hängen bleibt
+  var FOAM_T = 40;                // s: in dieser Zeit zerfällt Schaum auf ein Drittel (1/e)
 
   // Reaktionswärme in kJ/mol: nach Hess aus den Bildungsenthalpien; fehlt eine davon, gilt die Angabe dH am Eintrag.
   function heatOf(r) {
@@ -3297,7 +3299,7 @@
   }
 
   function notice(lab, v, gases, emit, dissolved, bathed) {
-    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, spec, th;
+    var f = v.flag, name, strong = {}, cap = headroom(lab, v), id, haze = 0, tone, th, size = spec(v).cap;
     // gemeldet wird Gas, sobald es die Uhr am Laufen hält (REST); dann zeigt die Fläche auch Blasen. Ein einzelner Rechenschritt mit
     // Gas zählt nicht: gemeldet wird, was eine Fünftelsekunde anhält.
     f.fizz = v.gas > 2 * REST ? (f.fizz || 0) + 1 : 0;
@@ -3319,15 +3321,20 @@
     v.lumps.forEach(function (l) { if (l.made && L.db.species[l.id].colloid) haze += l.n * (1 - l.settled); });
     haze = volume(v) > 0 ? 1 - Math.exp(-haze / volume(v) / HAZE) : 0;
     if (!f.opaque && haze >= OPAQUE) { f.opaque = true; if (emit) emit({ key: "opaque", vessel: v.id }); }
+    // Schaum: gemeldet, sobald er steht, und wenn er über den Rand quillt
+    if (!f.foam && v.foam > 1) { f.foam = true; if (emit) emit({ key: "foam", vessel: v.id }); }
+    else if (f.foam && !(v.foam > 0.2)) f.foam = false;
+    if (!f.foamOver && v.foam > 1 && filled(v) * 1000 + v.foam > size) { f.foamOver = true; if (emit) emit({ key: "foamOver", vessel: v.id }); }
+    else if (f.foamOver && !(filled(v) * 1000 + v.foam > 0.9 * size)) f.foamOver = false;
     else if (f.opaque && haze < OPAQUE - 0.2) f.opaque = false;
 
     name = volume(v) > 0 && !thick(v, volume(v)) ? colorOf(v) : { name: f.color };      // ohne Flüssigkeit gibt es keine Farbe der Lösung zu melden
     // Ändert sich die Extinktion merklich, ist die Lösung in Bewegung, auch wenn dabei kaum Stoff umgesetzt wird (ein Farbstoff
     // verblasst) oder die Farbe so satt ist, dass der Bildschirm den Unterschied nicht zeigt. Die erste Flüssigkeit im Glas zählt nicht.
     if (name.rgb) {
-      spec = shades(v);
-      if (!f.seen) f.seen = spec;
-      else if (spec.some(function (value, index) { return Math.abs(value - f.seen[index]) > DRIFT; })) { f.seen = spec; f.tinted = lab.t; }
+      tone = shades(v);
+      if (!f.seen) f.seen = tone;
+      else if (tone.some(function (value, index) { return Math.abs(value - f.seen[index]) > DRIFT; })) { f.seen = tone; f.tinted = lab.t; }
     } else f.seen = null;
     if (name.name === f.color) f.count = 0;
     else if (name.name === f.next) {
@@ -3350,6 +3357,13 @@
   }
 
   // ------------------------------------------------------------------ Gase, Sieden, Feuer
+
+  // Tensid in mol/L: gelöste Stoffe mit foam
+  function soap(v, vol) {
+    var sum = 0, id;
+    for (id in v.n) if (L.db.species[id].foam) sum += v.n[id];
+    return sum / vol;
+  }
 
   function molar(lab) { return R * (lab.room + KELVIN) / 1e5 * 1000; }      // L/mol bei Raumtemperatur und Luftdruck
 
@@ -3887,6 +3901,9 @@
       } else if (meter.hold == null && room.ml >= L.parts[meter.type].cap) { meter.full = true; if (emit) emit({ key: "syringeFull", part: meter.id, vessel: v.id }); }
     }
     v.gas = (vol > 0 && gas - v.eg > 1e-15 ? (gas - v.eg) / DT : 0) + (v.pipe || 0);      // Blasen in der Flüssigkeit; was an Elektroden entsteht, perlt dort
+    // Schaum: Ein Tensid in der Flüssigkeit hält das aufsteigende Gas als Schaum fest, der langsam zerfällt. Nur zum Ansehen,
+    // das Gas zählt schon zur Luft. foam: Schaum in mL
+    v.foam = (v.foam || 0) * Math.exp(-DT / FOAM_T) + (gas > 0 && vol > 0 ? gas * molar(lab) * 1000 * Math.min(1, soap(v, vol) / FOAM_C) : 0);
     v.pipe = 0;
     vent(lab, v, emit, gas);
     if (v.broken) return;
@@ -4378,6 +4395,8 @@
       pH: vol > 0 && !paste && v.n[WATER] > 0 && v.n[PROTON] > 0 ? -Math.log10(v.n[PROTON] / vol) - gammas(v, vol)(PROTON) : null,
       strength: v.real && vol > 0 && !paste && v.n[WATER] > 0 ? strength(v, vol) : null,
       color: colorOf(v), gas: v.gas, species: list,
+      // foam: Schaum über der Flüssigkeit in mL
+      foam: v.foam || 0,
       // steam: Dampf in mol/s, residue: eingedampfter Rückstand in mol, air: Anteil jedes Gases im Gasraum, broken: zersprungen
       steam: v.boil, residue: residue, air: air, broken: !!v.broken,
       // für die Strömungsansicht: Flamme, Verlust, Umgebung, Durchmesser, Siedetemperatur (null: nichts, was siedet), Zähigkeit und Dichte

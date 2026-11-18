@@ -416,3 +416,6 @@ html.lia-variant-dark .lia-chemlab .cl-rodlet { stroke: #d9d5ca; }
 
 .lia-chemlab .cl-error,
 .cl-error { color: #b00020; border: 1px solid currentColor; border-radius: 0.4em; padding: 0.5em 0.8em; }
+/* Schaum über der Flüssigkeit und über dem Rand: weiß mit feinem Umriss, Bläschen als Ringe */
+.lia-chemlab .cl-froth { stroke: #aeb6bf; stroke-width: 0.7; }
+.lia-chemlab .cl-froth-bubble { fill: none; stroke: #aeb6bf; stroke-width: 0.6; }

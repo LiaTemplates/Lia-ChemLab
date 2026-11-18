@@ -157,7 +157,7 @@
       "say.tap": "{vessel}: tap set to “{state}”", "say.tapOff": "{vessel}: tap closed",
       "say.tapFull": "{vessel}: The vessel below is full, the tap closes.",
       "say.solid": "{vessel}: A {color} precipitate forms.", "say.dissolved": "{vessel}: The precipitate dissolves.",
-      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.",
+      "say.haze": "{vessel}: The liquid turns cloudy: finely divided {name}.", "say.mirror": "{vessel}: A mirror of {name} forms on the wall of the vessel.", "hidden.mirror": "{vessel}: A mirror forms on the wall of the vessel.", "say.opaque": "{vessel}: You can no longer see through the liquid.", "say.foam": "{vessel}: Foam forms.", "say.foamOver": "{vessel}: The foam swells over the rim.",
       "say.crystals": "{vessel}: {color} crystals separate out.",
       "say.dissolvedOne": "{vessel}: The {color} precipitate dissolves.",
       "the.white": "white", "the.yellow": "yellow", "the.orange": "orange", "the.red": "red",
@@ -563,6 +563,33 @@
       ? '<text class="cl-label" x="0" y="' + y + '" text-anchor="middle">' + num(w.ml, w.ml < 99.95 ? 1 : 0, ctx.lang) + " mL</text>" : "";
   }
 
+  // Schaum über der Flüssigkeit, in einem blassen Ton ihrer Farbe; was nicht ins Gefäß passt, quillt oben heraus und läuft außen herab
+  function froth(w, ctx, shape) {
+    var part = L.parts[w.type], level = shape.level || (part.surface && function (ml) { return part.surface(Object.assign({}, w, { ml: ml })); });
+    var rgb = w.color.rgb.map(function (c) { return Math.round(c + (255 - c) * 0.75); }), fill = css(rgb), out = "", over, top, k, x, y, r, h;
+    if (!level) return "";
+    top = Math.max(shape.rim, level(Math.min(w.cap, w.ml + w.foam)));
+    out += '<path class="cl-froth" d="' + shape.fill(top) + '" fill="' + fill + '"/>';
+    for (k = 0; k < 14; k++) {                                // Bläschen im Schaum
+      y = top + (shape.top - top) * pseudo(17, k);
+      if (shape.top - top < 3) break;
+      out += '<circle class="cl-froth-bubble" cx="' + f(shape.x0 + (shape.x1 - shape.x0) * pseudo(19, k)) + '" cy="' + f(y) + '" r="' + f(1 + 1.5 * pseudo(23, k)) + '"/>';
+    }
+    over = w.ml + w.foam - w.cap;
+    if (over > 0) {                                           // über den Rand: eine Haube und Zungen, die außen herablaufen
+      h = Math.min(60, 6 + 12 * Math.log(1 + over / 10));
+      for (k = 0; k < 9; k++) {
+        x = shape.x0 - 4 + (shape.x1 - shape.x0 + 8) * k / 8; r = 5 + 4 * pseudo(29, k) + h * 0.25;
+        out += '<circle class="cl-froth" cx="' + f(x) + '" cy="' + f(shape.rim - h * 0.45 * (1 - Math.abs(k - 4) / 5)) + '" r="' + f(r) + '" fill="' + fill + '"/>';
+      }
+      [shape.x0 - 6, shape.x1 + 6].forEach(function (side, i) {
+        var run = Math.min(shape.bottom - shape.rim, h * 2.5 + 10 * pseudo(31, i));
+        out += '<rect class="cl-froth" x="' + f(side - 4) + '" y="' + f(shape.rim - 2) + '" width="8" height="' + f(run) + '" rx="4" fill="' + fill + '"/>';
+      });
+    }
+    return out;
+  }
+
   // Inhalt eines Gefäßes: Flüssigkeit, Feststoff, Blasen, Zulauf. shape: { path, x0, x1, top, bottom, rim, tall }
   function contents(w, ctx, shape) {
     var out = "", clip = "cl-" + ctx.uid + "-" + w.id + "-clip", box = { x0: shape.x0, x1: shape.x1, top: shape.top, bottom: shape.bottom };
@@ -602,6 +629,7 @@
       out += '<path class="cl-crust" d="' + shape.fill(shape.bottom - layer) + '"/>';
     }
     out += solids(w, box, shape.tall, ctx, w.ml > 0.005 ? shape.top : null);
+    if (w.foam > 0.3 && w.ml > 0.005) out += froth(w, ctx, shape);
     // ein Spiegel am Glas (Silberspiegel): bis zur Höhe, bei der er entstand, je dichter, desto deckender; mit einem Lichtstreif
     if (w.mirror && w.mirror.share > 0.02 && L.parts[w.type] && L.parts[w.type].surface) {
       layer = Math.min(shape.bottom - 2, L.parts[w.type].surface(Object.assign({}, w, { ml: w.mirror.ml })));

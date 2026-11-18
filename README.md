@@ -884,6 +884,22 @@ Wasserstoffperoxid zerfällt von selbst nicht merklich. Eine Spatelspitze Brauns
  "show":{"charts":["n","V","T"]}}
 ```
 
+## Elefantenzahnpasta
+
+Ein Schauversuch, der in Schulen nur mit Schutzscheibe und als Lehrerversuch erlaubt ist: Im Messzylinder ist 30-prozentiges Wasserstoffperoxid mit einem Schuss Spülmittel. Gib die Kaliumiodid-Lösung dazu. Das Iodid zersetzt das Peroxid zu Wasser und Sauerstoff, und die Reaktion wird dabei so heiß, dass sie sich selbst beschleunigt. Nach einer halben Minute schießt eine Schaumsäule aus dem Zylinder: Das Spülmittel hält den Sauerstoff in Bläschen fest. Die Mischung kocht dabei, und der Schaum zerfällt danach langsam.
+
+Ohne Spülmittel (rechts) entsteht genauso viel Sauerstoff, er perlt aber einfach aus.
+
+```json @ChemLab.sim
+{"bench":[
+  {"type":"cylinder","ml":100,"id":"links","contains":[{"reagent":"H2O2 9.8M","ml":20},{"reagent":"detergent","ml":5}]},
+  {"type":"cylinder","ml":100,"id":"rechts","contains":[{"reagent":"H2O2 9.8M","ml":20}]},
+  {"type":"thermometer","in":"links"}
+ ],
+ "shelf":["KI 2M","detergent","H2O2 9.8M","glowsplint","cylinder"],
+ "show":{"charts":["T"]}}
+```
+
 ## Ioduhr
 
 Im Glas stehen Kaliumiodid, etwas Natriumthiosulfat und 1 mL Stärkelösung (20 Tropfen). 20 mL Peroxodisulfat-Lösung dazugeben: Es entsteht langsam Iod, aber das Thiosulfat fängt es sofort wieder ab. Erst wenn das Thiosulfat verbraucht ist, bleibt Iod übrig und färbt die Stärke schlagartig blau, nach knapp einer Minute. Mit der verdünnten Lösung dauert es doppelt so lang, mit mehr Thiosulfat auch, im warmen Wasserbad geht es schneller.
@@ -1701,7 +1717,7 @@ Bei Lösungen steht die Konzentration im Namen: die Zahl vor `M` in mol/L, zum B
 | `NaOCl` | Natriumhypochlorit-Lösung (Bleichlauge) mit gleich viel Kochsalz und etwas Natronlauge | `ml` |
 | `K2CrO4`, `K2Cr2O7`, `KCr(SO4)2`, `CoCl2`, `KMnO4` | Kaliumchromat, Kaliumdichromat, Chromalaun, Cobalt(II)-chlorid, Kaliumpermanganat | `ml` |
 | `crystal violet` | Kristallviolett-Lösung, 25 µmol/L (ohne Konzentration im Namen) | `ml` |
-| `H2O2`, `sugar` | Wasserstoffperoxid, Zuckerlösung | `ml` |
+| `H2O2`, `sugar`, `detergent` | Wasserstoffperoxid, Zuckerlösung, Spülmittel | `ml` |
 | `BTB`, `PP`, `MO`, `UI`, `red cabbage` | Bromthymolblau, Phenolphthalein, Methylorange, Universalindikator, Rotkohlsaft | `drops` |
 | `starch`, `Lugol` | Stärkelösung 1 %, Iod-Kaliumiodid-Lösung mit 0,01 mol/L Iod | `drops` |
 | `Mg ribbon` | Magnesiumband; 1 cm wiegt 0,0104 g | `g` |
@@ -1755,6 +1771,7 @@ Hier kommt Zinn dazu: das Metall, sein Ion und das Redoxpaar mit seinem Standard
 | `smell` | `true`: das Gas riecht stechend, das Protokoll meldet es. `"fruity"`: riecht fruchtig; bei einem flüchtigen gelösten Stoff zählt sein Dampfdruck über der Lösung |
 | `solvent` | `true`: ein organisches Lösungsmittel, das nach seinem Volumen (`Vm`) zu den organischen Abfällen zählt, auch wenn es im Modell nicht verdampft (Hexan, Aceton). Ein flüchtiger Stoff mit `Tb` zählt ohnehin |
 | `colloid` | `true`: entsteht der Feststoff in einer Lösung, bleibt er fein verteilt in der Schwebe und setzt sich nicht ab (Schwefel aus Thiosulfat) |
+| `foam` | `true`: ein gelöstes Tensid (Spülmittel). Steigt in seiner Lösung Gas auf, bleibt es als Schaum über der Flüssigkeit hängen, ab etwa 2 mmol/L Tensid fast ganz; der Schaum zerfällt mit einer Zeitkonstante von 40 s und quillt über den Rand, wenn er nicht ins Gefäß passt. Das Gas zählt dabei schon zur Luft |
 | `D` | Diffusionskoeffizient eines gelösten Teilchens in 10⁻⁹ m²/s; aus ihm folgen die Leitfähigkeit und wie schnell das Teilchen an eine Oberfläche nachkommt. Ohne Angabe gilt 1 |
 | `Vm` | Eigenvolumen eines gelösten Stoffs in mL/mol (molare Masse durch Dichte). Er zählt dann zum Volumen, und eine Vorratslösung enthält nur so viel Wasser, wie daneben Platz hat: reines Ethanol fast keines, Wein 88 %. Ohne Angabe ist ein gelöster Stoff verdünnt und nimmt keinen Platz ein |
 | `Tb`, `Hvap` | Siedepunkt in °C und Verdampfungsenthalpie in kJ/mol eines flüchtigen gelösten Stoffs. Mit ihnen siedet eine Mischung nach dem Raoultschen Gesetz, und der Dampf ist reicher am Flüchtigeren |

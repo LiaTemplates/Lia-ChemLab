@@ -63,7 +63,8 @@
         // zwei Schichten: die Grenze in der Höhe, bis zu der die untere reicht
         var lower = w.oil ? (w.oil.top ? w.ml - w.oil.ml : w.oil.ml) : 0;
         u.inside.update(w, shape, level, d.ctx, !!opts.tall, w.mirror ? opts.level(Object.assign({}, w, { ml: Math.max(0.01, w.mirror.ml) }), d) : null,
-          w.oil && lower > 0.005 && w.oil.ml > 0.005 ? opts.level(Object.assign({}, w, { ml: lower }), d) : null);
+          w.oil && lower > 0.005 && w.oil.ml > 0.005 ? opts.level(Object.assign({}, w, { ml: lower }), d) : null,
+          w.foam > 0.3 ? opts.level(Object.assign({}, w, { ml: Math.min(w.cap, w.ml + w.foam) }), d) : null);
         u.tag.userData.write(fx.badge(null, d, w) || " ");
         u.tag.position.set(0, 0.15 - kit.up(d.lift), (shape.front || shape.inner(shape.rim)) + 1.4);      // vorn auf dem Tisch, auch wenn das Gefäß gehoben ist; front: weiteste Stelle
         if (opts.refresh) opts.refresh(group, d, shape);
