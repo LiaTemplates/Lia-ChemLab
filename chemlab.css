@@ -223,6 +223,9 @@ html.lia-variant-dark .lia-chemlab .cl-label { fill: #f3ead9; }
 .lia-chemlab .cl-cock-nut { fill: #8b949e; stroke: #4f5760; stroke-width: 0.6; }
 .lia-chemlab .cl-cock-handle { fill: #2c6fb5; stroke: #1d4f85; stroke-width: 0.6; }
 .lia-chemlab .cl-clamp-jaw { fill: none; stroke: #4f5760; stroke-width: 2; stroke-linejoin: round; }
+/* aufgezogene Vollpipette im Gefäß; Farbring nach ISO 1769 */
+.lia-chemlab .cl-held { pointer-events: none; }
+.lia-chemlab .cl-pipette-ring { stroke: #55606b; stroke-width: 0.4; }
 .lia-chemlab .cl-label-field { fill: #fbfbf7; fill-opacity: 0.85; stroke: #d8dde2; stroke-width: 0.4; }
 /* Schellbachstreifen der Bürette (ISO 385, 7), Doppelmuffe am Stativ, Ringmarke des Messkolbens, Kegelschliff */
 .lia-chemlab .cl-schellbach { fill: #fbfbf7; }

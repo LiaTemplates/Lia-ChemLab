@@ -78,6 +78,7 @@
     "part.bath": "водяная баня",
     "part.photometer": "фотометр",
     "part.volflask": "мерная колба",
+    "part.erlenmeyer": "колба Эрленмейера",
     "toMark": "Довести до метки",
     "say.toMark": "{vessel}: доведено до метки дистиллированной водой.",
     "part.geiger": "счётчик Гейгера",

@@ -5401,7 +5401,9 @@ test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Z
   tap(el, "a");
   assert.match(part(el, ".cl-hand").innerHTML, /abgeben/, "jetzt das Ziel");
   assert.equal(part(el, ".cl-status").textContent, "Aus Becherglas 1 aufgezogen.", "die Statuszeile sagt es an");
+  assert.match(item(el, "a").innerHTML, /cl-held[\s\S]*fill="#c1121c"/, "die aufgezogene Pipette steht im Gefäß, mit rotem Ring (10 mL, ISO 1769)");
   tap(el, "b");
+  assert.doesNotMatch(item(el, "a").innerHTML, /cl-held/, "nach dem Abgeben steht sie nicht mehr dort");
   frames(30);
   near(L.volume(L.vessel(state(el).run.lab, "b")) * 1000, 10, 1e-9);
   assert.match(logOf(el), /10 mL mit der Pipette aus Becherglas 1 in Becherglas 2 gegeben/);
@@ -5410,6 +5412,29 @@ test("Pipette in der Fläche: erst das Gefäß, aus dem sie aufzieht, dann das Z
   tap(el, "b");
   tap(el, "b");
   assert.match(part(el, ".cl-status").textContent, /anderes Gefäß/);
+});
+
+test("Erlenmeyerkolben (ISO 1773): Füllhöhe, Messfühler, Bürette darüber, Namen in allen Sprachen", () => {
+  const l = lab([{ type: "erlenmeyer", id: "e", contains: [{ reagent: "HCl 0.1M", ml: 20 }] }, { type: "erlenmeyer", id: "k", ml: 100 },
+    { type: "phmeter", id: "ph", in: "e" }, { type: "thermometer", id: "th", in: "e" }, { type: "burette", id: "bu", over: "e", contains: [{ reagent: "NaOH 0.1M", ml: 50 }] }]);
+  const e = look(l, "e");
+  assert.equal(e.cap, 250, "ohne Angabe 250 mL");
+  assert.equal(look(l, "k").cap, 100);
+  const level = (ml) => L.parts.erlenmeyer.surface(Object.assign({}, e, { ml }));
+  for (let ml = 5, last = level(1); ml <= 250; ml += 5) { assert.ok(level(ml) < last, `steigt (${ml} mL)`); last = level(ml); }
+  const s = L.shapes.erlenmeyer[250];
+  near(level(250), -2 - (s[1] - s[3]), 0.6, "voll bis zur Schulter");
+  assert.ok(level(125) - level(100) < level(25) - level(0.01), "oben im Kegel steigt es schneller als unten");
+  for (const numbers of [true, false]) clean(L.parts.erlenmeyer.draw(e, ctx({ numbers })), "Erlenmeyerkolben");
+  clean(L.parts.burette.draw(look(l, "bu"), ctx(), L.parts.erlenmeyer.mount(e)), "Bürette über dem Erlenmeyerkolben");
+  const probe = L.parts.erlenmeyer.probe(e, "thermometer"), neck = s[2];
+  assert.ok(Math.abs(probe.x) < neck && Math.abs(L.parts.erlenmeyer.mount(e).x) < neck, "Thermometer und Bürette stecken im Hals");
+  assert.match(L.icon("erlenmeyer"), /<svg/);
+  for (const code of fs.readdirSync(new URL("lang/", here)).map((f) => f.replace(".json", ""))) {
+    assert.ok(JSON.parse(fs.readFileSync(new URL(`lang/${code}.json`, here))).strings["part.erlenmeyer"], `${code}: part.erlenmeyer`);
+  }
+  L.step(l, 5);
+  near(look(l, "e").pH, 1.0, 0.05, "rechnet wie jedes Gefäß");
 });
 
 test("Filtrieren in der Fläche: den Trichter über ein Becherglas hängen, hineingießen; kein Hahn", () => {

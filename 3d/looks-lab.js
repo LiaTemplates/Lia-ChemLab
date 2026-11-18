@@ -139,6 +139,20 @@
     }
   }));
 
+  // ------------------------------------------------------------------ Erlenmeyerkolben
+
+  // Kegel mit kurzem Hals (ISO 1773), dasselbe Profil wie in 2D (S.erlenmeyerInner)
+  function erlShape(d) {
+    var s = S.erlenmeyer[d.data.size || d.data.cap] || S.erlenmeyer[250];
+    return { id: "erlenmeyer" + s[0], floor: cm(2), rim: cm(s[1]), front: cm(s[0]), size: s, steps: 64,
+      inner: function (y) { return cm(S.erlenmeyerInner(s, y * PX - 2)); } };
+  }
+  L.registerLook("erlenmeyer", "lab", vessel({
+    tall: true, thick: 0.06, lip: 0.06,
+    shape: erlShape,
+    level: function (w) { return w.ml > 0.005 ? cm(-L.parts.erlenmeyer.surface(w)) : cm(2); }
+  }));
+
   // ------------------------------------------------------------------ Kalorimeter
 
   // Styroporbecher mit Deckelring: durchscheinend, damit man den Inhalt noch ahnt. Innen eine dünne Wand (sie trägt den Boden,

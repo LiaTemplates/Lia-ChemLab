@@ -98,7 +98,7 @@ Einbinden im Kopf eines Kurses, mit fester Version oder immer der neuesten:
 
 Diesen Kurs in LiaScript öffnen: [ChemLab auf liascript.github.io](https://liascript.github.io/course/?https://raw.githubusercontent.com/LiaTemplates/Lia-ChemLab/master/README.md). Quelltext: [github.com/LiaTemplates/Lia-ChemLab](https://github.com/LiaTemplates/Lia-ChemLab).
 
-> **Stand:** Version 0.1.3, veröffentlicht. Es gibt Reagenzglas, Becherglas, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, über vierzig Lösungen, fünf Indikatoren (mit Rotkohlsaft), Stärke, Iodlösung und siebzehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen mit Siedepunkterhöhung, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator (Ioduhren, Chamäleon), Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben, Feststoffe, die beim Erhitzen Gas abgeben, Methan und Stickstoff, Reaktionen und Gleichgewichte im Gasraum (NO₂ und N₂O₄), Schaum, gelöster Luftsauerstoff beim Schütteln (Blaue Flasche), Leuchten durch Chemolumineszenz und unter der UV-Lampe (mit dem Knopf „Licht aus“) und die Zählrate über natürlich radioaktivem Kalium. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation, den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, dem Alkoholtest, Blauer Flasche und Ampel und Luminol, Fluorescein und Chinin, ein Paket mit den Alkalimetallen und ein Paket mit Ionen: Vanadium und seine Oxidationsstufen, Nickel und die Ionen und Sulfide des vollständigen Trennungsgangs. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
+> **Stand:** Version 0.1.3, veröffentlicht. Es gibt Reagenzglas, Becherglas, Erlenmeyerkolben, Kalorimeter, Messzylinder, Standzylinder, Vollpipetten, Abdampfschale, Bürette, Scheidetrichter, Trichter mit Filterpapier, Rundkolben, Liebig- und Rückflusskühler, Brenner, Wasserbad, Zentrifuge, Thermometer, pH-Meter, Leitfähigkeitsmessgerät, Fotometer, UV-Lampe, Geigerzähler, Manometer, Kolbenprober mit Manometer, Gasableitungsrohr, Gummistopfen und Waage; Elektroden aus sieben Materialien (mit Blei für den Bleiakku), Netzgerät, Strom- und Spannungsmesser, Lämpchen und Salzbrücke; dazu Holzspan, Glimmspan und Magnesiastäbchen für die Nachweise, Säuren, Laugen, Kalkwasser, über vierzig Lösungen, fünf Indikatoren (mit Rotkohlsaft), Stärke, Iodlösung und siebzehn Feststoffe. Gerechnet werden Säure-Base-Gleichgewichte, Puffer, Fällungen, Komplexe, Gase über der Lösung, Sieden und Eindampfen mit Siedepunkterhöhung, Verbrennungen, die Knallgasreaktion, Redoxreaktionen an Metallen und einige in Lösung (Redoxtitration), Elektrolyse und galvanische Zellen mit Bleiakku und Brennstoffzelle, Wärmetönung im Kalorimeter, die Gasgesetze von Boyle und Gay-Lussac, Filtrieren und Zentrifugieren, Reaktionen mit Geschwindigkeitsgesetz und Katalysator (Ioduhren, Chamäleon), Gleichgewichte, die sich mit Konzentration, Säure und Temperatur verschieben, Feststoffe, die beim Erhitzen Gas abgeben, Methan und Stickstoff, Reaktionen und Gleichgewichte im Gasraum (NO₂ und N₂O₄), Schaum, gelöster Luftsauerstoff beim Schütteln (Blaue Flasche), Leuchten durch Chemolumineszenz und unter der UV-Lampe (mit dem Knopf „Licht aus“) und die Zählrate über natürlich radioaktivem Kalium. Eine Teilchenlupe zeigt, was in der Lösung vorliegt; die Strömung im Gefäß zeigt, wie sich Wärme darin verteilt. Gleichgewichte rechnen ideal mit Konzentrationen oder, auf Wunsch, real mit Aktivitäten. Für den Unterricht gibt es Aufgaben mit Selbstkontrolle, unbekannte Proben mit zufälliger Füllung, Indikatorpapier für den Gasraum, gesperrte Aufbauten, eine Messwerttabelle und „Aufbau kopieren“; ein Labor mit Namen spricht mit dem Lehrtext seiner Folie (Stoffe zum Anklicken, Messwerte, Gleichungen und Diagramme im Text, eigene Skripte); Erweiterungspakete bringen weitere Stoffe: ein Paket zur Organik mit Veresterung, Destillation, den Nachweisen nach Fehling, Tollens (Silberspiegel) und mit Bromwasser, dem Alkoholtest, Blauer Flasche und Ampel und Luminol, Fluorescein und Chinin, ein Paket mit den Alkalimetallen und ein Paket mit Ionen: Vanadium und seine Oxidationsstufen, Nickel und die Ionen und Sulfide des vollständigen Trennungsgangs. Messwerte können wie bei echten Geräten streuen, Flaschen tragen ihre Gefahrstoff-Piktogramme, Reste kommen in den richtigen Behälter, das Protokoll lässt sich kopieren, und ab Kursversion 1.0.0 bleibt ein Versuch gespeichert und lässt sich im Klassenraum teilen.
 
 ## `@ChemLab.sim`
 
@@ -172,15 +172,15 @@ Magnesium löst sich in Salzsäure, Wasserstoff entweicht, und das Reagenzglas w
 
 ## Titration
 
-Die **Bürette** hängt über dem Becherglas, das **pH-Meter** steckt darin. Die Bürette antippen: Darunter erscheinen die Stellungen des Hahns – zu, tropfen, langsam, schnell – und was sie bisher abgegeben hat. Den Hahn öffnen und zusehen, wie der pH-Wert erst kaum steigt und am Äquivalenzpunkt springt. Bromthymolblau schlägt dort von Gelb über Grün nach Blau um.
+Die **Bürette** hängt über dem Erlenmeyerkolben, das **pH-Meter** steckt in seinem Hals. Die Bürette antippen: Darunter erscheinen die Stellungen des Hahns – zu, tropfen, langsam, schnell – und was sie bisher abgegeben hat. Den Hahn öffnen und zusehen, wie der pH-Wert erst kaum steigt und am Äquivalenzpunkt springt. Bromthymolblau schlägt dort von Gelb über Grün nach Blau um.
 
 Die **Titrationskurve** zeigt den pH-Wert über dem zugegebenen Volumen. Wer den Sprung verpasst hat, spult zurück und tropft das letzte Stück langsam zu.
 
 ```json @ChemLab.sim
 {"bench":[
-  {"type":"beaker","ml":250,"contains":[{"reagent":"HCl 0.1M","ml":20},{"reagent":"BTB","drops":5}]},
-  {"type":"phmeter","in":"beaker1"},
-  {"type":"burette","over":"beaker1","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
+  {"type":"erlenmeyer","ml":250,"contains":[{"reagent":"HCl 0.1M","ml":20},{"reagent":"BTB","drops":5}]},
+  {"type":"phmeter","in":"erlenmeyer1"},
+  {"type":"burette","over":"erlenmeyer1","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
  ],
  "shelf":["NaOH 0.1M","HCl 0.1M"],
  "show":{"charts":["pH","titration"]}}
@@ -190,9 +190,9 @@ Die **Titrationskurve** zeigt den pH-Wert über dem zugegebenen Volumen. Wer den
 
 ```json @ChemLab.sim
 {"bench":[
-  {"type":"beaker","ml":250,"contains":[{"reagent":"CH3COOH 0.1M","ml":20},{"reagent":"PP","drops":3}]},
-  {"type":"phmeter","in":"beaker1"},
-  {"type":"burette","over":"beaker1","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
+  {"type":"erlenmeyer","ml":250,"contains":[{"reagent":"CH3COOH 0.1M","ml":20},{"reagent":"PP","drops":3}]},
+  {"type":"phmeter","in":"erlenmeyer1"},
+  {"type":"burette","over":"erlenmeyer1","contains":[{"reagent":"NaOH 0.1M","ml":50}]}
  ],
  "shelf":["NaOH 0.1M","CH3COOH 0.1M","MO"],
  "show":{"charts":["titration"]}}
@@ -1940,6 +1940,7 @@ Die Beschreibung ist ein kurzer Text im JSON-Format.
 | `bridge` | Salzbrücke mit Kaliumnitrat zwischen zwei Gefäßen | `in`, `to` |
 | `flask` | Rundkolben, 100 mL, auf dem Korkring oder über Brenner und Wasserbad | `contains` |
 | `volflask` | Messkolben mit Eichstrich, 100 oder 250 mL (`ml`); „Bis zur Marke auffüllen“ gibt genau so viel Wasser zu, wie bis zum Strich fehlt; nicht erhitzen | `ml`, `contains` |
+| `erlenmeyer` | Erlenmeyerkolben (Enghals, ISO 1773), 100 oder 250 mL (`ml`); voll heißt bis zur Schulter; Messfühler stecken im Hals, eine Bürette kann darüber hängen | `ml`, `contains` |
 | `condenser` | Liebigkühler: führt den Dampf aus dem Gefäß `in` in die Vorlage `to` und kühlt ihn auf Raumtemperatur | `in`, `to` |
 | `reflux` | Rückflusskühler: steht aufrecht im Gefäß; was verdampft, läuft zurück | `in` |
 | `splint`, `glowsplint`, `rod`, `paper` | brennender Holzspan, Glimmspan, Magnesiastäbchen, feuchtes Indikatorpapier: nur im Regal (`shelf`), sie werden an ein Gefäß gehalten | – |

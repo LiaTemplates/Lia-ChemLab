@@ -357,7 +357,10 @@
     }
 
     // Was in der Hand liegt, schwebt oben links über der Fläche: Name, Menge und ein Knopf, der es zurücklegt
+    var shownPipette = null;          // aus welchem Gefäß die Vollpipette in der Hand aufgezogen hat: dort steht sie auf der Fläche
     function renderHand() {
+      var held = st.hand && st.hand.test && L.parts[st.hand.id] && L.parts[st.hand.id].probe === "pipette" ? st.hand.from || null : null;
+      if (held !== shownPipette) { shownPipette = held; if (items.length) paint(); }
       var h = st.hand, name, drop = '<button type="button" class="cl-btn cl-round cl-x" data-act="drop" title="' + esc(T("hand.drop")) + '" aria-label="' + esc(T("hand.drop")) + '">' + CLOSE_ICON + "</button>";
       ui.hand.hidden = !h;
       if (el.setAttribute) el.setAttribute("data-hand", !h ? "" : h.tool || h.test ? "tool" : "stuff");      // die Gefäße zeigen dann, dass sie Ziel sind
@@ -898,7 +901,8 @@
           b = def.bounds(v, hang);
           aria = T("aria.vessel", { name: label[item.id] + (host ? " " + T("aria.over", { vessel: label[host.id] }) : ""), content: content });
           if (three) three.item({ id: item.id, type: item.type, vessel: true, data: w, hang: hang, box: b, host: host ? host.id : null, x: item.x, lift: item.lift || 0, label: aria, name: label[item.id], selected: st.sel === item.id, ctx: ctx });
-          else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang);
+          else g.innerHTML = frameBox(b, st.sel === item.id) + def.draw(w, ctx, hang) +
+            (shownPipette === item.id && def.mount ? L.pipetteHeld(L.parts[st.hand.id].ml, w, def.mount(w), ctx) : "");
           g.setAttribute("aria-label", aria);
         } else {
           r = L.reading(lab, item.id);

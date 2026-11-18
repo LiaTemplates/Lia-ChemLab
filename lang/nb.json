@@ -78,6 +78,7 @@
     "part.bath": "vannbad",
     "part.photometer": "fotometer",
     "part.volflask": "målekolbe",
+    "part.erlenmeyer": "erlenmeyerkolbe",
     "toMark": "Fyll opp til merket",
     "say.toMark": "{vessel}: fylt opp til merket med destillert vann.",
     "part.geiger": "geigerteller",

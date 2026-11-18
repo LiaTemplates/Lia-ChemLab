@@ -78,6 +78,7 @@
     "part.bath": "水浴锅",
     "part.photometer": "光度计",
     "part.volflask": "容量瓶",
+    "part.erlenmeyer": "锥形瓶",
     "toMark": "定容至刻度",
     "say.toMark": "{vessel}：用蒸馏水定容至刻度。",
     "part.geiger": "盖革计数器",

@@ -41,7 +41,7 @@
       "flow": "Currents", "flow.temp": "temperature", "flow.diff": "temperature differences", "flow3d": "3D", "flow3d.cut": "cross-section", "flow3d.particles": "particles", "flow.mix": "streaks", "flow.vortex": "eddies", "flow.pressure": "pressure",
       "lens": "Particle view", "lens.scale": "1 dot stands for {c} mmol/L.", "lens.water": "Water is only hinted at.", "lens.dry": "No liquid in the vessel.",
       "lens.none": "So little is dissolved that this small sample would show none of it.", "lens.hang": "suspended", "lens.solid": "solid",
-      "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
+      "part.bath": "water bath", "part.photometer": "photometer", "part.volflask": "volumetric flask", "part.erlenmeyer": "Erlenmeyer flask", "toMark": "Fill to the mark", "say.toMark": "{vessel}: filled up to the mark with distilled water.", "part.uvlamp": "UV lamp", "part.geiger": "Geiger counter", "unit.cpm": "counts/min", "dark": "Lights off", "temp": "Temperature", "wave": "Wavelength", "transmission": "transmittance",
       "say.temp": "{part}: set to {temp} °C", "say.tempSet": "{part}: temperature changed",
       "hold": "Plunger", "release": "Let go", "say.hold": "{part}: plunger held at {ml} mL", "say.holdSet": "{part}: plunger moved", "say.release": "{part}: plunger let go",
       "say.wave": "{part}: set to {nm} nm", "say.waveSet": "{part}: wavelength changed", "unit.E": "A",
@@ -837,6 +837,97 @@
         badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
     }
   });
+
+  // ------------------------------------------------------------------ Erlenmeyerkolben
+
+  // Enghals-Erlenmeyerkolben nach ISO 1773: kegelförmiger Körper, kurzer Hals (1 bis 1,25 × sein Durchmesser, 3.5.2).
+  // Maße in Bildpunkten (16 je cm) nach üblichen Katalogmaßen: 100 mL Ø 64 mm, 105 mm hoch, Hals Ø 22 mm; 250 mL Ø 85 mm, 145 mm hoch,
+  // Hals Ø 34 mm; der Hals 1,1-mal so lang wie sein Durchmesser. [halbe Breite unten, Höhe, halbe Weite des Halses, Länge des Halses]
+  var ERL = { 100: [51, 168, 18, 39], 250: [68, 232, 27, 60] };
+  function erlSize(w) { return ERL[w.size || w.cap] || ERL[250]; }
+  // innen: halbe Weite in der Höhe h über dem Boden (eine Wand schmaler); bis zur Schulter ein Kegel, darüber der Hals
+  function erlInner(s, h) {
+    var shoulder = s[1] - s[3];
+    return h >= shoulder ? s[2] - 2 : (s[0] - 2) - ((s[0] - 2) - (s[2] - 2)) * Math.max(0, h) / shoulder;
+  }
+  // Füllhöhe: das Volumen des Kegelstumpfs bis zur Höhe h; voll (cap) heißt bis zur Schulter
+  function erlSurface(w) {
+    var s = erlSize(w), shoulder = s[1] - s[3], full = 0, want, h = 0, dh = 0.5, r;
+    for (h = 0; h < shoulder; h += dh) { r = erlInner(s, h + dh / 2); full += r * r * dh; }
+    want = Math.min(1, w.ml / w.cap) * full;
+    for (h = 0; h < shoulder && want > 0; h += dh) { r = erlInner(s, h + dh / 2); want -= r * r * dh; }
+    return -2 - Math.min(h, shoulder);
+  }
+  // Umriss der Flüssigkeit bis zur Höhe level (y, nach oben negativ)
+  function erlFill(s, level) {
+    var h = -2 - level, shoulder = s[1] - s[3], r0 = erlInner(s, 0), rh = erlInner(s, h);
+    return "M" + f(-r0 + 4) + ",-2L" + f(r0 - 4) + ",-2Q" + f(r0) + ",-2 " + f(erlInner(s, 4)) + ",-6" +
+      (h > shoulder ? "L" + f(s[2] - 2) + "," + f(-2 - shoulder) : "") + "L" + f(rh) + "," + f(level) + "L" + f(-rh) + "," + f(level) +
+      (h > shoulder ? "L" + f(-(s[2] - 2)) + "," + f(-2 - shoulder) : "") + "L" + f(-erlInner(s, 4)) + ",-6Q" + f(-r0) + ",-2 " + f(-r0 + 4) + ",-2Z";
+  }
+
+  L.registerPart("erlenmeyer", {
+    width: function (v) { return erlSize(v)[0] * 2 + 40; },
+    bounds: function (v) { var s = erlSize(v); return { x0: -s[0] - 8, x1: s[0] + 8, top: -s[1] - 8 }; },
+    surface: erlSurface,
+    foot: function (v) { return erlSize(v)[0] - 6; },        // halbe Standfläche, für den Dreifuß
+    // Messfühler stecken im engen Hals: das Thermometer links, die Elektrode des pH-Meters rechts davon, die Bürette in der Mitte rechts
+    probe: function (v, type, slot) {
+      var s = erlSize(v), n = s[2], H = s[1];
+      if (type === "syringe" || type === "stopper" || type === "manometer") return { x: 0, rim: -H, w: 2 * n + 2 };
+      if (type === "tube") return { x: 0, rim: -H, w: 2 * n + 2, top: -H - PIPE_RISE };
+      if (type === "bridge" || type === "condenser") return { x: (slot || 0) * (n - 4), rim: -H };
+      if (type === "reflux") return { x: 0, rim: -H, top: -H - REFLUX };
+      if (type === "conductometer") return { x: -n * 0.3, bottom: -8, top: -H - 76, box: -40 };
+      if (type === "photometer") return { x: n * 0.3, bottom: -8, top: -H - 100, box: -68 };
+      return type === "phmeter" ? { x: n * 0.1, bottom: -8, top: -H - 44, box: -38 } : { x: -n * 0.5, bottom: -8, top: -H - 70, tag: -62 };
+    },
+    mount: function (w) { var s = erlSize(w); return { x: s[2] * 0.45, rim: -s[1], surface: w.ml > 0.005 ? erlSurface(w) : -2, edge: s[0] + 6 }; },
+    draw: function (w, ctx) {
+      var s = erlSize(w), a = s[0], H = s[1], n = s[2], shoulder = H - s[3], y = erlSurface(w), marks = "", i, my, mx, outer;
+      var fill = function (level) { return erlFill(s, level); };
+      if (w.broken) return shards(a, ctx);
+      outer = function (h) { return h >= shoulder ? n : a - (a - n) * Math.max(0, h - 8) / (shoulder - 8); };
+      // Skala nur ungefähr (wie beim Becherglas), an der rechten Wand: Striche bei einem Fünftel bis vier Fünfteln, Zahl über dem Strich
+      for (i = 1; i <= 4; i++) {
+        my = erlSurface(Object.assign({}, w, { ml: w.cap * i / 5 }));
+        mx = outer(-my) - 3;
+        marks += '<line class="cl-mark' + (i % 2 ? "" : " cl-mark-long") + '" x1="' + f(mx - (i % 2 ? 7 : 10)) + '" x2="' + f(mx) + '" y1="' + f(my) + '" y2="' + f(my) + '"/>';
+        if (ctx.numbers && i % 2 === 0) marks += '<text class="cl-mark-text" x="' + f(mx - 1) + '" y="' + f(my - 1.5) + '" text-anchor="end">' + w.cap * i / 5 + "</text>";
+      }
+      // weißes Schriftfeld unten links, wie auf echtem Laborglas
+      marks += '<rect class="cl-label-field" x="' + f(-a * 0.55) + '" y="' + f(-H * 0.22) + '" width="' + f(a * 0.5) + '" height="9" rx="1"/>';
+      return contents(w, ctx, { path: fill(y), fill: fill, x0: -erlInner(s, -2 - y), x1: erlInner(s, -2 - y), top: y, bottom: -2, rim: -H, tall: true }) +
+        marks +
+        '<path class="cl-glass" d="M' + f(-n - 2.5) + "," + f(-H - 1.5) + "L" + (-n) + "," + (-H + 2) + "L" + (-n) + "," + (-shoulder) + "L" + (-a) + ",-8Q" + (-a) + ",0 " + (-a + 8) + ",0L" +
+          (a - 8) + ",0Q" + a + ",0 " + a + ",-8L" + n + "," + (-shoulder) + "L" + n + "," + (-H + 2) + "L" + f(n + 2.5) + "," + f(-H - 1.5) + '"/>' +
+        '<line class="cl-shine" x1="' + f(-a + 12) + '" y1="-14" x2="' + f(-n - 4) + '" y2="' + f(-shoulder + 10) + '"/>' +
+        badge(0, 14 + (ctx.lift || 0), ctx.no) + volumeLabel(w, ctx, 38);
+    }
+  });
+
+  // ------------------------------------------------------------------ Vollpipette, aufgezogen
+
+  // Farbring nach ISO 1769, Tabelle 1 (Vollpipetten): 5 mL weiß, 10 mL rot, 20 mL gelb, 25 mL blau
+  var PIPETTE_RING = { 1: "#1f5aa6", 2: "#e07b39", 5: "#ffffff", 10: "#c1121c", 20: "#f3c300", 25: "#1f5aa6", 50: "#c1121c", 100: "#f3c300" };
+  L.pipetteRing = function (ml) { return PIPETTE_RING[ml] || "#8b949e"; };
+  // Die Pipette steht im Gefäß, aus dem sie eben aufgezogen hat: die Spitze in der Flüssigkeit, gefüllt bis zur Ringmarke.
+  // Nicht maßstäblich (eine echte 10-mL-Pipette ist 45 cm lang). place: mount() des Gefäßes; w: dessen Ansicht (für die Farbe).
+  L.pipetteHeld = function (ml, w, place, ctx) {
+    var x = 0, tip = Math.min(-6, place.surface + 10), bulbLow = tip - 46, bulbHigh = bulbLow - 34, mark = bulbHigh - 22, top = mark - 40;
+    var fill = liquidColor(w.color.rgb), mid = (bulbLow + bulbHigh) / 2;
+    return '<g class="cl-held">' +
+      '<path class="cl-liquid" d="M' + (x - 1.2) + "," + f(tip - 2) + "L" + (x - 1.2) + "," + f(bulbLow) + "Q" + (x - 6) + "," + f(mid) + " " + (x - 1.2) + "," + f(bulbHigh) +
+        "L" + (x - 1.2) + "," + f(mark) + "L" + (x + 1.2) + "," + f(mark) + "L" + (x + 1.2) + "," + f(bulbHigh) + "Q" + (x + 6) + "," + f(mid) + " " + (x + 1.2) + "," + f(bulbLow) +
+        "L" + (x + 1.2) + "," + f(tip - 2) + 'Z" fill="' + fill + '"/>' +
+      '<path class="cl-glass cl-pipette" d="M' + (x - 2) + "," + f(top) + "L" + (x - 2) + "," + f(bulbHigh) + "Q" + (x - 9) + "," + f(mid) + " " + (x - 2) + "," + f(bulbLow) +
+        "L" + (x - 2) + "," + f(tip - 3) + "L" + x + "," + f(tip) + "L" + (x + 2) + "," + f(tip - 3) + "L" + (x + 2) + "," + f(bulbLow) +
+        "Q" + (x + 9) + "," + f(mid) + " " + (x + 2) + "," + f(bulbHigh) + "L" + (x + 2) + "," + f(top) + '"/>' +
+      // Ringmarke ganz herum; darüber der Farbring (6–10 mm breit, höchstens 70 mm unter dem oberen Ende)
+      '<path class="cl-ring" d="M' + (x - 2) + "," + f(mark) + "A2,0.8 0 0 0 " + (x + 2) + "," + f(mark) + '"/>' +
+      '<rect class="cl-pipette-ring" x="' + (x - 2.4) + '" y="' + f(top + 8) + '" width="4.8" height="5" fill="' + L.pipetteRing(ml) + '"/>' +
+      (ctx && ctx.numbers ? '<text class="cl-print" x="' + (x + 5) + '" y="' + f(bulbHigh + 12) + '">' + ml + " mL</text>" : "") + "</g>";
+  };
 
   // ------------------------------------------------------------------ Kalorimeter
 
@@ -1818,7 +1909,10 @@
         : id === "calorimeter" ? '<path class="cl-foam" d="M3,7L6,27L22,27L25,7L21,7L19,23L9,23L7,7Z"/><path class="cl-foam" d="M2,4L26,4L26,7L2,7Z"/>'
         : id === "jar" ? '<path class="cl-glass" d="M8,3L8,24M20,24L20,3M5,27L8,24L20,24L23,27Z"/>'
         : id === "cylinder" ? '<path class="cl-glass" d="M10,3L10,24M18,24L18,3M6,27L10,24L18,24L22,27Z"/><line class="cl-mark" x1="14" x2="18" y1="9" y2="9"/><line class="cl-mark" x1="14" x2="18" y1="15" y2="15"/>'
-        : L.parts[id] && L.parts[id].probe === "pipette" ? '<path class="cl-glass" d="M14,2L14,9M12,9Q8,14 12,19L14,19L14,27M14,19L16,19Q20,14 16,9Z"/><line class="cl-mark" x1="12" x2="16" y1="5" y2="5"/>'
+        : id === "erlenmeyer" ? '<path class="cl-glass" d="M11,3L11,10L4,25Q3,27 6,27L22,27Q25,27 24,25L17,10L17,3"/><line class="cl-mark" x1="16" x2="20" y1="19" y2="19"/>'
+        // Vollpipette mit dem Farbring ihres Volumens (ISO 1769)
+        : L.parts[id] && L.parts[id].probe === "pipette" ? '<path class="cl-glass" d="M14,2L14,9M12,9Q8,14 12,19L14,19L14,27M14,19L16,19Q20,14 16,9Z"/><line class="cl-mark" x1="12" x2="16" y1="6" y2="6"/>' +
+          '<rect x="12.5" y="2" width="3" height="2.5" fill="' + L.pipetteRing(L.parts[id].ml) + '" stroke="#55606b" stroke-width="0.4"/>'
         : id === "funnel" ? '<path class="cl-filter" d="M7,7L21,7L14,16Z"/><path class="cl-glass" d="M3,5L12,17L12,27M16,27L16,17L25,5"/>'
         : id === "beaker" ? '<path class="cl-glass" d="M5,6L5,24Q5,27 8,27L20,27Q23,27 23,24L23,6"/>'
         : id === "dish" ? '<path class="cl-porcelain-edge" d="M3,11Q5,25 11,25L17,25Q23,25 25,11"/>'
@@ -1890,5 +1984,5 @@
   L.ghsLabel = ghsLabel;
   L.liquidColor = liquidColor;
   // Maße der Zeichnungen in Bildpunkten, für die 3D-Ansicht: dort sind 16 Bildpunkte 1 cm
-  L.shapes = { tube: TUBE, beaker: BEAKER, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
+  L.shapes = { tube: TUBE, beaker: BEAKER, erlenmeyer: ERL, erlenmeyerInner: erlInner, dish: DISH, dishHalf: dishHalf, burette: BURETTE, buretteAt: buretteAt, separator: SEP, separatorAt: separatorAt, cylinder: CYL, cylFoot: CYL_FOOT, funnel: FUNNEL, funnelAt: funnelAt, flask: FLASK, volflask: VF, volflaskHalf: vfHalf, reflux: REFLUX, pipeRise: PIPE_RISE };
 })(typeof globalThis !== "undefined" ? globalThis : this);

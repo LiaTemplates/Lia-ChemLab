@@ -78,6 +78,7 @@
     "part.bath": "vesihaude",
     "part.photometer": "fotometri",
     "part.volflask": "mittapullo",
+    "part.erlenmeyer": "erlenmeyerpullo",
     "toMark": "Täytä merkkiin",
     "say.toMark": "{vessel}: täytetty merkkiin tislatulla vedellä.",
     "part.geiger": "Geiger-mittari",

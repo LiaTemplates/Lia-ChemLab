@@ -78,6 +78,7 @@
     "part.bath": "waterbad",
     "part.photometer": "fotometer",
     "part.volflask": "maatkolf",
+    "part.erlenmeyer": "erlenmeyer",
     "toMark": "Aanvullen tot de streep",
     "say.toMark": "{vessel}: aangevuld tot de streep met gedestilleerd water.",
     "part.geiger": "geigerteller",

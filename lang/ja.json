@@ -78,6 +78,7 @@
     "part.bath": "ウォーターバス",
     "part.photometer": "光度計",
     "part.volflask": "メスフラスコ",
+    "part.erlenmeyer": "三角フラスコ",
     "toMark": "標線まで満たす",
     "say.toMark": "{vessel}: 蒸留水で標線まで満たした。",
     "part.geiger": "ガイガーカウンター",

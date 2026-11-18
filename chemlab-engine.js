@@ -703,6 +703,15 @@
       600: { cap: 600, d: 9.0, Cv: 110, loss: 0.40, heat: 0.32 }
     }
   });
+  // Erlenmeyerkolben (Enghals, ISO 1773): voll heißt bis zur Schulter. d: Durchmesser des Körpers unten; Cv, loss und heat geschätzt
+  // nach dem Becherglas gleichen Inhalts (mehr Glas, eine kleinere Öffnung)
+  registerPart("erlenmeyer", {
+    kind: "vessel", size: 250,
+    sizes: {
+      100: { cap: 100, d: 6.4, Cv: 36, loss: 0.13, heat: 0.18 },
+      250: { cap: 250, d: 8.5, Cv: 70, loss: 0.22, heat: 0.24 }
+    }
+  });
   // Kalorimeter: zwei ineinandergesteckte Styroporbecher mit Deckel, 250 mL (geschätzt: Cv der Becher samt Rührer, Wärmeabgabe
   // etwa ein Zwanzigstel des Becherglases). insulated: es kommt nicht auf Brenner oder Wasserbad
   registerPart("calorimeter", { kind: "vessel", cap: 250, d: 7.0, Cv: 10, mass: 7, loss: 0.012, heat: 0.05, insulated: true });
